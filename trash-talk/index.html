@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TRASH TALK GENERATOR</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0a0f;
+  color: #fff;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+.setup-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 2rem;
+  gap: 1.5rem;
+}
+
+.setup-screen h1 {
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  background: linear-gradient(135deg, #ff4444, #ff8800, #ff4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+}
+
+.setup-screen p {
+  color: #888;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.name-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.name-inputs input {
+  padding: 1rem 1.2rem;
+  font-size: 1.1rem;
+  border: 2px solid #333;
+  border-radius: 12px;
+  background: #151520;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.name-inputs input:nth-child(1):focus { border-color: #ff4444; }
+.name-inputs input:nth-child(2):focus { border-color: #4488ff; }
+
+.start-btn {
+  padding: 1rem 3rem;
+  font-size: 1.3rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ff4444, #ff8800);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,68,68,0.4); }
+.start-btn:active { transform: scale(0.97); }
+.start-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+/* BATTLE SCREEN */
+.battle-screen {
+  display: none;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #111118;
+  border-bottom: 2px solid #222;
+}
+
+.score-block {
+  text-align: center;
+}
+
+.score-block .name {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.7;
+}
+
+.score-block .score {
+  font-size: 2.5rem;
+  font-weight: 900;
+}
+
+.p1-color { color: #ff4444; }
+.p2-color { color: #4488ff; }
+
+.vs-badge {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #555;
+  letter-spacing: 2px;
+}
+
+.roast-display {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.roast-text {
+  font-size: clamp(1.2rem, 4vw, 2rem);
+  font-weight: 700;
+  line-height: 1.4;
+  max-width: 700px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.roast-text.visible { opacity: 1; }
+
+.roast-text.p1-roast { color: #ff6666; }
+.roast-text.p2-roast { color: #6699ff; }
+
+.idle-text {
+  font-size: 1.5rem;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.button-area {
+  display: flex;
+  gap: 0;
+}
+
+.roast-btn {
+  flex: 1;
+  padding: 2.5rem 1rem;
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.1s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.roast-btn:active {
+  filter: brightness(1.3);
+  transform: scale(0.97);
+}
+
+.btn-p1 {
+  background: linear-gradient(180deg, #cc2222, #881111);
+  color: #fff;
+  border-right: 2px solid #0a0a0f;
+}
+
+.btn-p2 {
+  background: linear-gradient(180deg, #2255cc, #113388);
+  color: #fff;
+  border-left: 2px solid #0a0a0f;
+}
+
+.btn-label {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-top: 0.3rem;
+  letter-spacing: 1px;
+}
+
+/* WINNER OVERLAY */
+.winner-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.92);
+  gap: 1.5rem;
+}
+
+.winner-overlay.show { display: flex; }
+
+.winner-overlay h2 {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  animation: pulse 0.6s ease-in-out infinite alternate;
+}
+
+.winner-overlay .final-score {
+  font-size: 1.5rem;
+  color: #888;
+}
+
+.winner-overlay .replay-btn {
+  margin-top: 1rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 2px solid #555;
+  border-radius: 12px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.winner-overlay .replay-btn:hover { background: #222; }
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+/* CONFETTI */
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  z-index: 101;
+  pointer-events: none;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+}
+
+/* SCREEN FLASH */
+.flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+}
+
+.flash.p1-flash { background: #ff4444; animation: flash-anim 0.15s ease-out; }
+.flash.p2-flash { background: #4488ff; animation: flash-anim 0.15s ease-out; }
+
+@keyframes flash-anim {
+  0% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup-screen" id="setupScreen">
+  <h1>Trash Talk Generator</h1>
+  <p>Enter player names. Press your opponent's button when they choke.</p>
+  <div class="name-inputs">
+    <input type="text" id="p1Name" placeholder="Player 1 name" maxlength="20" autocomplete="off">
+    <input type="text" id="p2Name" placeholder="Player 2 name" maxlength="20" autocomplete="off">
+  </div>
+  <button class="start-btn" id="startBtn" disabled>FIGHT</button>
+</div>
+
+<!-- BATTLE -->
+<div class="battle-screen" id="battleScreen">
+  <div class="scoreboard">
+    <div class="score-block">
+      <div class="name p1-color" id="p1Label"></div>
+      <div class="score p1-color" id="p1Score">0</div>
+    </div>
+    <div class="vs-badge">L COUNT</div>
+    <div class="score-block">
+      <div class="name p2-color" id="p2Label"></div>
+      <div class="score p2-color" id="p2Score">0</div>
+    </div>
+  </div>
+
+  <div class="roast-display">
+    <div class="idle-text" id="idleText">Press a button to roast</div>
+    <div class="roast-text" id="roastText"></div>
+  </div>
+
+  <div class="button-area">
+    <button class="roast-btn btn-p1" id="btnP1">
+      ROAST <span id="btnP1Name"></span>
+      <span class="btn-label">They messed up!</span>
+    </button>
+    <button class="roast-btn btn-p2" id="btnP2">
+      ROAST <span id="btnP2Name"></span>
+      <span class="btn-label">They messed up!</span>
+    </button>
+  </div>
+</div>
+
+<!-- WINNER -->
+<div class="winner-overlay" id="winnerOverlay">
+  <h2 id="winnerTitle"></h2>
+  <div class="final-score" id="finalScore"></div>
+  <button class="replay-btn" id="replayBtn">REMATCH</button>
+</div>
+
+<!-- FLASH -->
+<div class="flash" id="flash"></div>
+
+<script>
+// ============================
+// 80+ TRASH TALK TEMPLATES
+// ============================
+const ROASTS = [
+  "[NAME] just missed that? My grandmother has better aim. She's 94.",
+  "That was so bad, [NAME]'s controller filed for divorce.",
+  "Someone check on [NAME]'s K/D ratio... actually don't, it's classified as a war crime.",
+  "[NAME] playing like they got the controller upside down.",
+  "Did [NAME] just lag in real life?",
+  "[NAME] out here playing like it's their first day with thumbs.",
+  "That move by [NAME] just made ESPN... the blooper reel.",
+  "[NAME]'s highlights? That's a very short film.",
+  "If [NAME] was a spice, they'd be flour.",
+  "[NAME] couldn't hit water if they fell out of a boat.",
+  "Bro, [NAME] got reverse clutch gene. Chokes on command.",
+  "[NAME] moves like they're paying per input.",
+  "That play by [NAME] just got studied at clown college.",
+  "[NAME] making the tutorial level look like Dark Souls.",
+  "[NAME]'s skill set includes: missing, choking, and excuses.",
+  "Even the AI bots feel bad for [NAME].",
+  "[NAME] plays like someone described the game to them over the phone.",
+  "Somewhere, a participation trophy is crying for [NAME].",
+  "[NAME] speedrunning their way to last place.",
+  "Scientists are studying [NAME] to understand how to be that consistently bad.",
+  "[NAME] is the reason they put instructions on shampoo bottles.",
+  "[NAME] couldn't win a coin flip with a two-headed coin.",
+  "That was [NAME]'s best? Oh no... oh NO.",
+  "[NAME] just made that look harder than it needed to be. Way harder.",
+  "[NAME]'s game plan is apparently chaos with extra steps.",
+  "If losing was an art form, [NAME] would be Picasso.",
+  "[NAME] out here giving master classes in disappointment.",
+  "That attempt by [NAME] should be in a museum. The Museum of Failure.",
+  "[NAME] with the reflexes of a tranquilized sloth.",
+  "[NAME]'s decision-making process: close eyes, panic, press random button.",
+  "Even autocorrect can't fix what [NAME] just did.",
+  "[NAME] playing like they're trying to throw but also failing at that.",
+  "That was [NAME]'s power move? More like power nap.",
+  "[NAME] just brought a rubber knife to a gunfight.",
+  "I've seen better plays from a cat walking across a keyboard. Sorry, [NAME].",
+  "[NAME] needs to check if their talent got lost in shipping.",
+  "What [NAME] just did should require a written apology.",
+  "[NAME]'s gameplay is the reason uninstall buttons exist.",
+  "If [NAME] had a dollar for every good play, they'd owe money.",
+  "[NAME] plays with the intensity of a loading screen.",
+  "That was [NAME]'s plan B? What was plan A, spontaneous combustion?",
+  "[NAME] just set the world record... for fastest L ever taken.",
+  "Somebody get [NAME] a GPS because they are LOST out there.",
+  "[NAME] thought they cooked. They burned the whole kitchen down.",
+  "That wasn't a play by [NAME], that was a cry for help.",
+  "[NAME] zigged when they should've stayed home.",
+  "[NAME]'s ancestors are looking away right now.",
+  "I'd say [NAME] tried their best, but that would be an insult to trying.",
+  "[NAME] has the game sense of a houseplant.",
+  "Whoever taught [NAME] to play owes us all an apology.",
+  "[NAME] playing like they googled 'how to lose fast'.",
+  "[NAME]'s talent left the chat. Actually, it never joined.",
+  "That move by [NAME] is why aliens won't visit us.",
+  "[NAME] out here collecting Ls like Pokemon. Gotta catch 'em all!",
+  "[NAME] just did the impossible: made losing look even worse.",
+  "Was that [NAME] playing or a random number generator?",
+  "[NAME] couldn't beat a tutorial with cheat codes on.",
+  "[NAME] is one L away from being the alphabet.",
+  "They should rename 'throwing' to 'pulling a [NAME]'.",
+  "[NAME] is built different. Unfortunately, built wrong.",
+  "If [NAME] had a highlight reel, it'd be a screensaver.",
+  "[NAME] just performed the worst play in recorded human history.",
+  "That wasn't a misplay by [NAME]. That was a lifestyle choice.",
+  "[NAME] plays like the WiFi is connected to a potato.",
+  "Alert: [NAME]'s skill has left the building. And the zip code.",
+  "[NAME] making everyone else look like a genius by comparison.",
+  "The scoreboard is basically [NAME]'s criminal record at this point.",
+  "[NAME] heard 'practice makes perfect' and chose neither.",
+  "[NAME] has the clutch factor of a wet paper bag.",
+  "[NAME] just gave a TED Talk on how not to play.",
+  "I didn't know it was possible to be that wrong, but [NAME] found a way.",
+  "Somewhere, [NAME]'s trophy case is just dust and cobwebs.",
+  "[NAME] just handed out a free W like it's charity.",
+  "If [NAME] was a weather forecast, they'd be 100% chance of L.",
+  "[NAME]'s strategy appears to be: lose, but make it dramatic.",
+  "That mistake by [NAME] has its own Wikipedia page now.",
+  "[NAME] just typed 'GG' to themselves and even that was premature.",
+  "[NAME] rolled the dice and got negative numbers somehow.",
+  "I've seen GPS recalculations smoother than [NAME]'s gameplay.",
+  "[NAME]'s controller should file a restraining order.",
+  "When they said 'everyone has potential,' they hadn't met [NAME] yet.",
+  "That was so bad, [NAME]'s screen turned itself off out of respect.",
+  "[NAME]'s gamertag should be 'Free Points'.",
+  "[NAME] playing like they owe someone money for each win.",
+  "[NAME] just dropped the ball. And the game. And their dignity.",
+  "Science can't explain what [NAME] just tried to do there.",
+  "[NAME] hits different. And by 'different' I mean they don't hit at all.",
+  "If [NAME]'s plays were a movie, it'd be rated L for Losers.",
+  "[NAME] threw so hard FEMA is responding.",
+  "[NAME] just made a play so bad it echoed.",
+  "[NAME]'s skill tree is just a stump.",
+];
+
+// ============================
+// GAME STATE
+// ============================
+let p1 = '', p2 = '';
+let scores = { p1: 0, p2: 0 };
+let gameOver = false;
+let usedIndices = [];
+const WIN_SCORE = 10;
+
+// ============================
+// DOM REFS
+// ============================
+const $ = id => document.getElementById(id);
+const setupScreen = $('setupScreen');
+const battleScreen = $('battleScreen');
+const p1Input = $('p1Name');
+const p2Input = $('p2Name');
+const startBtn = $('startBtn');
+const roastText = $('roastText');
+const idleText = $('idleText');
+const flash = $('flash');
+const winnerOverlay = $('winnerOverlay');
+
+// ============================
+// SETUP
+// ============================
+function checkReady() {
+  startBtn.disabled = !(p1Input.value.trim() && p2Input.value.trim());
+}
+p1Input.addEventListener('input', checkReady);
+p2Input.addEventListener('input', checkReady);
+
+startBtn.addEventListener('click', () => {
+  p1 = p1Input.value.trim();
+  p2 = p2Input.value.trim();
+  $('p1Label').textContent = p1;
+  $('p2Label').textContent = p2;
+  $('btnP1Name').textContent = p1;
+  $('btnP2Name').textContent = p2;
+  scores = { p1: 0, p2: 0 };
+  gameOver = false;
+  usedIndices = [];
+  updateScores();
+  setupScreen.style.display = 'none';
+  battleScreen.style.display = 'flex';
+  roastText.classList.remove('visible');
+  idleText.style.display = 'block';
+  winnerOverlay.classList.remove('show');
+});
+
+// ============================
+// ROAST LOGIC
+// ============================
+function getRandomRoast(name) {
+  if (usedIndices.length >= ROASTS.length) usedIndices = [];
+  let idx;
+  do { idx = Math.floor(Math.random() * ROASTS.length); } while (usedIndices.includes(idx));
+  usedIndices.push(idx);
+  return ROASTS[idx].replace(/\[NAME\]/g, name);
+}
+
+function updateScores() {
+  $('p1Score').textContent = scores.p1;
+  $('p2Score').textContent = scores.p2;
+}
+
+function doRoast(target) {
+  if (gameOver) return;
+
+  const name = target === 'p1' ? p1 : p2;
+  const roast = getRandomRoast(name);
+
+  // Update score
+  scores[target]++;
+  updateScores();
+
+  // Show roast
+  idleText.style.display = 'none';
+  roastText.className = 'roast-text';
+  roastText.textContent = roast;
+  // force reflow then show
+  void roastText.offsetWidth;
+  roastText.classList.add('visible', target === 'p1' ? 'p1-roast' : 'p2-roast');
+
+  // Flash
+  flash.className = 'flash';
+  void flash.offsetWidth;
+  flash.classList.add(target === 'p1' ? 'p1-flash' : 'p2-flash');
+
+  // Air horn
+  playAirHorn();
+
+  // Speak
+  speakRoast(roast);
+
+  // Check winner
+  if (scores[target] >= WIN_SCORE) {
+    gameOver = true;
+    const winner = target === 'p1' ? p2 : p1; // the OTHER player wins
+    // Wait, actually: if p1 gets roasted 10 times, p2 wins
+    setTimeout(() => declareWinner(winner, target === 'p1' ? p2 : p1, scores), 1500);
+  }
+}
+
+$('btnP1').addEventListener('click', () => doRoast('p1'));
+$('btnP2').addEventListener('click', () => doRoast('p2'));
+
+// ============================
+// WINNER
+// ============================
+function declareWinner(winnerName) {
+  const loser = winnerName === p1 ? p2 : p1;
+  const winnerTitle = $('winnerTitle');
+  const isP1Winner = winnerName === p1;
+  winnerTitle.textContent = winnerName + ' WINS!';
+  winnerTitle.style.color = isP1Winner ? '#ff4444' : '#4488ff';
+  $('finalScore').textContent = `${p1} ${scores.p1} Ls  -  ${p2} ${scores.p2} Ls`;
+  winnerOverlay.classList.add('show');
+  launchConfetti(isP1Winner ? '#ff4444' : '#4488ff');
+}
+
+$('replayBtn').addEventListener('click', () => {
+  scores = { p1: 0, p2: 0 };
+  gameOver = false;
+  usedIndices = [];
+  updateScores();
+  winnerOverlay.classList.remove('show');
+  roastText.classList.remove('visible');
+  idleText.style.display = 'block';
+  // Clear any leftover confetti
+  document.querySelectorAll('.confetti-piece').forEach(el => el.remove());
+});
+
+// ============================
+// SPEECH SYNTHESIS (commentator voice)
+// ============================
+function speakRoast(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.05;
+  utter.pitch = 0.85;
+  utter.volume = 1;
+
+  // Try to pick a deep/commentator-ish voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    /daniel|alex|tom|james|aaron|google us english|samantha/i.test(v.name)
+  ) || voices.find(v => /en/i.test(v.lang) && /male/i.test(v.name))
+    || voices.find(v => /en-US|en-GB/i.test(v.lang))
+    || voices[0];
+  if (preferred) utter.voice = preferred;
+
+  window.speechSynthesis.speak(utter);
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ============================
+// AIR HORN (Web Audio API)
+// ============================
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playAirHorn() {
+  try {
+    const ctx = getAudioContext();
+    if (ctx.state === 'suspended') ctx.resume();
+
+    const now = ctx.currentTime;
+    const duration = 0.45;
+
+    // Layer 1: fundamental honk
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(220, now);
+    osc1.frequency.linearRampToValueAtTime(280, now + 0.05);
+    osc1.frequency.setValueAtTime(280, now + 0.05);
+    gain1.gain.setValueAtTime(0.35, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + duration);
+    osc1.connect(gain1).connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + duration);
+
+    // Layer 2: high harmonic
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(440, now);
+    osc2.frequency.linearRampToValueAtTime(560, now + 0.05);
+    gain2.gain.setValueAtTime(0.15, now);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + duration * 0.8);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(now);
+    osc2.stop(now + duration);
+
+    // Layer 3: sub bass thump
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = 'sine';
+    osc3.frequency.setValueAtTime(110, now);
+    gain3.gain.setValueAtTime(0.4, now);
+    gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+    osc3.connect(gain3).connect(ctx.destination);
+    osc3.start(now);
+    osc3.stop(now + 0.25);
+
+    // Layer 4: noise burst for attack
+    const bufSize = ctx.sampleRate * 0.08;
+    const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.5;
+    const noise = ctx.createBufferSource();
+    const noiseGain = ctx.createGain();
+    noise.buffer = noiseBuf;
+    noiseGain.gain.setValueAtTime(0.25, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+    noise.connect(noiseGain).connect(ctx.destination);
+    noise.start(now);
+  } catch (e) {
+    // Audio not supported, silently fail
+  }
+}
+
+// ============================
+// CONFETTI
+// ============================
+function launchConfetti(accentColor) {
+  const colors = [accentColor, '#ffdd00', '#ff8800', '#44ff44', '#ff44ff', '#44ffff', '#ffffff'];
+  const count = 120;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const size = 6 + Math.random() * 10;
+    const left = Math.random() * 100;
+    const dur = 1.5 + Math.random() * 2;
+    const delay = Math.random() * 0.6;
+    const shape = Math.random() > 0.5 ? '50%' : '0';
+
+    el.style.cssText = `
+      left: ${left}%;
+      top: -${size}px;
+      width: ${size}px;
+      height: ${size * 0.6}px;
+      background: ${color};
+      border-radius: ${shape};
+      animation-duration: ${dur}s;
+      animation-delay: ${delay}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), (dur + delay) * 1000 + 100);
+  }
+}
+</script>
+</body>
+</html>

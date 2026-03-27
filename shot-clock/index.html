@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SHOT CLOCK</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #1a1a1a;
+    --red: #ff2d2d;
+    --yellow: #ffd700;
+    --white: #f0f0f0;
+    --dim: #666;
+    --green: #00cc66;
+  }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Flash overlay */
+  #flash {
+    position: fixed;
+    inset: 0;
+    background: var(--red);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity 0.1s;
+  }
+  #flash.active {
+    animation: flashPulse 0.3s ease-in-out 4;
+  }
+  @keyframes flashPulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.8; }
+  }
+
+  /* Header */
+  .header {
+    width: 100%;
+    padding: 16px 20px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--yellow);
+    text-transform: uppercase;
+  }
+  .header .whistle {
+    font-size: 24px;
+  }
+
+  /* Timer Setup */
+  #setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    width: 100%;
+    padding: 0 20px;
+  }
+  .time-selector {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .time-selector button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 3px solid var(--yellow);
+    background: transparent;
+    color: var(--yellow);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .time-selector button:active {
+    background: var(--yellow);
+    color: var(--bg);
+    transform: scale(0.92);
+  }
+  .time-display {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--white);
+    min-width: 80px;
+    text-align: center;
+  }
+  .time-label {
+    font-size: 12px;
+    color: var(--dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* Main Timer */
+  #timer-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 20px;
+  }
+  .timer-ring {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .timer-ring svg {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .timer-ring .track {
+    fill: none;
+    stroke: var(--surface);
+    stroke-width: 8;
+  }
+  .timer-ring .progress {
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 816;
+    stroke-dashoffset: 0;
+    transition: stroke 0.3s;
+  }
+  .timer-ring .progress.warning { stroke: var(--yellow); }
+  .timer-ring .progress.danger { stroke: var(--red); }
+
+  .timer-countdown {
+    font-size: 96px;
+    font-weight: 900;
+    line-height: 1;
+    z-index: 2;
+    font-variant-numeric: tabular-nums;
+  }
+  .timer-countdown.shake {
+    animation: shake 0.15s linear infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+
+  .timer-status {
+    font-size: 14px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    color: var(--dim);
+    height: 20px;
+  }
+  .timer-status.paused { color: var(--yellow); }
+
+  /* Punishment Display */
+  #punishment {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    gap: 16px;
+  }
+  #punishment .times-up {
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--red);
+    letter-spacing: 6px;
+    text-shadow: 0 0 30px rgba(255, 45, 45, 0.5);
+    animation: pulseText 0.8s ease-in-out infinite alternate;
+  }
+  @keyframes pulseText {
+    from { transform: scale(1); opacity: 0.8; }
+    to { transform: scale(1.05); opacity: 1; }
+  }
+  #punishment .punishment-text {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--yellow);
+    max-width: 340px;
+    line-height: 1.3;
+    margin: 12px 0;
+  }
+  #punishment .punishment-target {
+    font-size: 14px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+    padding: 0 20px 20px;
+    max-width: 400px;
+  }
+  .btn {
+    flex: 1;
+    padding: 18px 12px;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:active { transform: scale(0.95); }
+  .btn-start {
+    background: var(--green);
+    color: var(--bg);
+  }
+  .btn-stop {
+    background: var(--red);
+    color: var(--white);
+  }
+  .btn-reset {
+    background: var(--surface);
+    color: var(--yellow);
+    border: 2px solid var(--yellow);
+  }
+  .btn-new {
+    background: var(--yellow);
+    color: var(--bg);
+  }
+  .btn-assign {
+    background: var(--red);
+    color: var(--white);
+  }
+
+  /* Scoreboard */
+  #scoreboard {
+    width: 100%;
+    max-width: 400px;
+    padding: 0 20px 24px;
+  }
+  .scoreboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .scoreboard-title {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .scoreboard-clear {
+    font-size: 11px;
+    color: var(--dim);
+    background: none;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 1px;
+  }
+  .score-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .score-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+  .score-entry .name {
+    flex: 1;
+    cursor: pointer;
+  }
+  .score-entry .count {
+    font-weight: 900;
+    color: var(--red);
+    font-size: 20px;
+    min-width: 30px;
+    text-align: right;
+  }
+  .score-entry .skull {
+    margin-left: 6px;
+    font-size: 16px;
+  }
+  .no-scores {
+    color: #444;
+    font-size: 13px;
+    text-align: center;
+    padding: 12px;
+  }
+
+  /* Player Input Modal */
+  #player-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #player-modal.active { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border: 2px solid var(--yellow);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+  }
+  .modal-box h3 {
+    color: var(--yellow);
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 6px;
+  }
+  .modal-box .punishment-reminder {
+    font-size: 13px;
+    color: var(--dim);
+    margin-bottom: 16px;
+  }
+  .modal-box input {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #333;
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--white);
+    font-family: inherit;
+    font-size: 18px;
+    text-align: center;
+    outline: none;
+    margin-bottom: 12px;
+  }
+  .modal-box input:focus { border-color: var(--yellow); }
+  .modal-btns {
+    display: flex;
+    gap: 10px;
+  }
+  .modal-btns .btn { font-size: 14px; padding: 14px; }
+
+  /* Motion indicator */
+  .motion-indicator {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    height: 16px;
+  }
+  .motion-indicator.active {
+    color: var(--yellow);
+  }
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+
+<!-- Header -->
+<div class="header">
+  <h1>Shot Clock</h1>
+  <span class="whistle">&#127925;</span>
+</div>
+
+<!-- Setup Screen -->
+<div id="setup">
+  <div class="time-label">Set the clock</div>
+  <div class="time-selector">
+    <button onclick="adjustTime(-5)">-</button>
+    <div class="time-display" id="set-time">15</div>
+    <button onclick="adjustTime(5)">+</button>
+  </div>
+  <div class="time-label">seconds</div>
+</div>
+
+<!-- Timer Area -->
+<div id="timer-area">
+  <div class="timer-ring">
+    <svg viewBox="0 0 280 280">
+      <circle class="track" cx="140" cy="140" r="130"/>
+      <circle class="progress" id="progress-ring" cx="140" cy="140" r="130"/>
+    </svg>
+    <div class="timer-countdown" id="countdown">15</div>
+  </div>
+  <div class="timer-status" id="status"></div>
+  <div class="motion-indicator" id="motion-ind"></div>
+</div>
+
+<!-- Punishment Screen -->
+<div id="punishment">
+  <div class="times-up">TIME'S UP</div>
+  <div class="punishment-text" id="punishment-text"></div>
+</div>
+
+<!-- Buttons -->
+<div class="btn-row" id="btn-setup">
+  <button class="btn btn-start" onclick="startTimer()">Start</button>
+</div>
+<div class="btn-row" id="btn-running" style="display:none">
+  <button class="btn btn-stop" onclick="stopTimer()">Stop</button>
+</div>
+<div class="btn-row" id="btn-done" style="display:none">
+  <button class="btn btn-assign" onclick="showPlayerModal()">Assign</button>
+  <button class="btn btn-new" onclick="newRound()">New Round</button>
+</div>
+
+<!-- Scoreboard -->
+<div id="scoreboard">
+  <div class="scoreboard-header">
+    <div class="scoreboard-title">Wall of Shame</div>
+    <button class="scoreboard-clear" onclick="clearScores()">Clear</button>
+  </div>
+  <div class="score-list" id="score-list">
+    <div class="no-scores">No victims yet</div>
+  </div>
+</div>
+
+<!-- Player Input Modal -->
+<div id="player-modal">
+  <div class="modal-box">
+    <h3>Who pays?</h3>
+    <div class="punishment-reminder" id="modal-punishment"></div>
+    <input type="text" id="player-name" placeholder="Enter name" autocomplete="off" />
+    <div class="modal-btns">
+      <button class="btn btn-reset" onclick="closeModal()">Skip</button>
+      <button class="btn btn-assign" onclick="assignPunishment()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+let setSeconds = 15;
+let remaining = 15;
+let timerInterval = null;
+let tickTimeout = null;
+let isRunning = false;
+let isPaused = false;
+let audioCtx = null;
+let scores = {};
+let currentPunishment = '';
+let motionPaused = false;
+
+// Load scores from localStorage
+try {
+  const saved = localStorage.getItem('shotclock_scores');
+  if (saved) scores = JSON.parse(saved);
+} catch(e) {}
+
+// ===== PUNISHMENTS (45) =====
+const punishments = [
+  "Youngest person drinks",
+  "Oldest person drinks",
+  "Person who suggested this app drinks",
+  "Everyone does 5 pushups",
+  "Tell an embarrassing story",
+  "Do your best celebrity impression",
+  "Drink with your non-dominant hand for 3 rounds",
+  "Let the group post on your Instagram story",
+  "Show your most recent selfie",
+  "Call a random contact and say 'I love you'",
+  "Do 10 jumping jacks right now",
+  "Speak in an accent for the next 2 rounds",
+  "Let someone go through your camera roll for 10 seconds",
+  "Sing the chorus of the last song you listened to",
+  "Everyone points at who they think is the worst dancer - that person drinks",
+  "Two truths and a lie - if they guess wrong, you're safe",
+  "Swap shirts with the person to your left",
+  "Text your crush 'hey' right now",
+  "Do a dramatic reading of your last sent text",
+  "Stand on one foot for the next round",
+  "Waterfall - everyone drinks until the person before them stops",
+  "Show the last 3 photos in your gallery",
+  "Tallest person drinks",
+  "Shortest person drinks",
+  "Person with the longest hair drinks",
+  "Everyone with glasses drinks",
+  "Host drinks double",
+  "Thumb master - last person to put thumb on table drinks",
+  "Make a toast - worst toast drinks again",
+  "Compliment everyone in the room. Miss someone? Drink.",
+  "Hold a plank until the next round ends",
+  "Let the group change your phone wallpaper",
+  "Do your best dance move for 10 seconds",
+  "Share your screen time report",
+  "Whoever laughs first drinks",
+  "Rock paper scissors - loser drinks",
+  "Take a bite of something weird from the fridge",
+  "Speak in only questions for the next 2 rounds",
+  "Person who last checked their phone drinks",
+  "Everyone born in an even month drinks",
+  "Show the last person you stalked on social media",
+  "Rate everyone's outfit 1-10. Lowest score drinks with you.",
+  "Freestyle rap for 15 seconds or drink double",
+  "Person who arrived last drinks",
+  "Give your phone to someone else for 1 minute"
+];
+
+// ===== DOM REFS =====
+const $setup = document.getElementById('setup');
+const $setTime = document.getElementById('set-time');
+const $timerArea = document.getElementById('timer-area');
+const $countdown = document.getElementById('countdown');
+const $progress = document.getElementById('progress-ring');
+const $status = document.getElementById('status');
+const $motionInd = document.getElementById('motion-ind');
+const $punishment = document.getElementById('punishment');
+const $punishmentText = document.getElementById('punishment-text');
+const $flash = document.getElementById('flash');
+const $btnSetup = document.getElementById('btn-setup');
+const $btnRunning = document.getElementById('btn-running');
+const $btnDone = document.getElementById('btn-done');
+const $scoreList = document.getElementById('score-list');
+const $modal = document.getElementById('player-modal');
+const $playerName = document.getElementById('player-name');
+const $modalPunishment = document.getElementById('modal-punishment');
+
+const circumference = 2 * Math.PI * 130; // ~816.8
+$progress.style.strokeDasharray = circumference;
+
+// ===== AUDIO =====
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playTick(urgent) {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = 'square';
+  osc.frequency.value = urgent ? 1200 : 800;
+  gain.gain.value = urgent ? 0.15 : 0.08;
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.08);
+}
+
+function playAirHorn() {
+  const ctx = getAudioCtx();
+  const duration = 1.2;
+
+  // Layer 1: main blast
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(220, ctx.currentTime);
+  osc1.frequency.linearRampToValueAtTime(240, ctx.currentTime + duration);
+  gain1.gain.setValueAtTime(0.35, ctx.currentTime);
+  gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start(ctx.currentTime);
+  osc1.stop(ctx.currentTime + duration);
+
+  // Layer 2: harmonics
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(440, ctx.currentTime);
+  osc2.frequency.linearRampToValueAtTime(460, ctx.currentTime + duration);
+  gain2.gain.setValueAtTime(0.2, ctx.currentTime);
+  gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.start(ctx.currentTime);
+  osc2.stop(ctx.currentTime + duration);
+
+  // Layer 3: high
+  const osc3 = ctx.createOscillator();
+  const gain3 = ctx.createGain();
+  osc3.type = 'square';
+  osc3.frequency.setValueAtTime(660, ctx.currentTime);
+  gain3.gain.setValueAtTime(0.1, ctx.currentTime);
+  gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration * 0.8);
+  osc3.connect(gain3);
+  gain3.connect(ctx.destination);
+  osc3.start(ctx.currentTime);
+  osc3.stop(ctx.currentTime + duration);
+
+  // Noise burst
+  const bufferSize = ctx.sampleRate * 0.3;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+  const noise = ctx.createBufferSource();
+  const noiseGain = ctx.createGain();
+  noise.buffer = buffer;
+  noiseGain.gain.setValueAtTime(0.15, ctx.currentTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+  noise.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start(ctx.currentTime);
+}
+
+// ===== MOTION DETECTION =====
+let lastAccel = { x: 0, y: 0, z: 0 };
+let motionInited = false;
+
+function initMotion() {
+  if (motionInited) return;
+  motionInited = true;
+
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(state => {
+      if (state === 'granted') window.addEventListener('devicemotion', handleMotion);
+    }).catch(() => {});
+  } else if ('DeviceMotionEvent' in window) {
+    window.addEventListener('devicemotion', handleMotion);
+  }
+}
+
+function handleMotion(e) {
+  if (!isRunning || !e.accelerationIncludingGravity) return;
+  const a = e.accelerationIncludingGravity;
+  const dx = Math.abs(a.x - lastAccel.x);
+  const dy = Math.abs(a.y - lastAccel.y);
+  const dz = Math.abs(a.z - lastAccel.z);
+  lastAccel = { x: a.x, y: a.y, z: a.z };
+
+  const magnitude = dx + dy + dz;
+  if (magnitude > 15 && !isPaused) {
+    pauseForMotion();
+  }
+}
+
+function pauseForMotion() {
+  if (!isRunning) return;
+  isPaused = true;
+  motionPaused = true;
+  $status.textContent = 'PAUSED - PHONE PICKED UP';
+  $status.className = 'timer-status paused';
+  $motionInd.textContent = 'Motion detected';
+  $motionInd.className = 'motion-indicator active';
+
+  // Auto-resume after 3 seconds of calm
+  setTimeout(() => {
+    if (isRunning && isPaused && motionPaused) {
+      isPaused = false;
+      motionPaused = false;
+      $status.textContent = 'RUNNING';
+      $status.className = 'timer-status';
+      $motionInd.textContent = '';
+      $motionInd.className = 'motion-indicator';
+    }
+  }, 3000);
+}
+
+// ===== TIMER =====
+function adjustTime(delta) {
+  setSeconds = Math.max(10, Math.min(60, setSeconds + delta));
+  $setTime.textContent = setSeconds;
+  remaining = setSeconds;
+  $countdown.textContent = setSeconds;
+  updateRing(1);
+}
+
+function updateRing(fraction) {
+  const offset = circumference * (1 - fraction);
+  $progress.style.strokeDashoffset = offset;
+
+  if (fraction <= 0) {
+    $progress.classList.remove('warning', 'danger');
+  } else if (fraction <= 0.17) {
+    $progress.classList.add('danger');
+    $progress.classList.remove('warning');
+  } else if (fraction <= 0.33) {
+    $progress.classList.add('warning');
+    $progress.classList.remove('danger');
+  } else {
+    $progress.classList.remove('warning', 'danger');
+  }
+}
+
+function startTimer() {
+  getAudioCtx(); // init on user gesture
+  initMotion();
+  remaining = setSeconds;
+  isRunning = true;
+  isPaused = false;
+
+  $setup.style.display = 'none';
+  $punishment.style.display = 'none';
+  $timerArea.style.display = 'flex';
+  $btnSetup.style.display = 'none';
+  $btnRunning.style.display = 'flex';
+  $btnDone.style.display = 'none';
+  $status.textContent = 'RUNNING';
+  $status.className = 'timer-status';
+  $countdown.classList.remove('shake');
+  $countdown.style.color = '';
+
+  updateDisplay();
+
+  let lastTick = Date.now();
+  timerInterval = setInterval(() => {
+    if (isPaused) return;
+    const now = Date.now();
+    const elapsed = (now - lastTick) / 1000;
+    lastTick = now;
+    remaining -= elapsed;
+
+    if (remaining <= 0) {
+      remaining = 0;
+      timesUp();
+      return;
+    }
+
+    updateDisplay();
+
+    // Ticking sounds in last 5 seconds
+    if (remaining <= 5 && remaining > 0) {
+      const frac = remaining % 1;
+      if (remaining <= 3) {
+        // Fast ticking
+        if (frac > 0.45 && frac < 0.55) playTick(true);
+        if (frac > 0.95 || frac < 0.05) playTick(true);
+      } else {
+        if (frac > 0.95 || frac < 0.05) playTick(false);
+      }
+    }
+  }, 50);
+}
+
+function updateDisplay() {
+  const secs = Math.ceil(remaining);
+  $countdown.textContent = secs;
+
+  const fraction = remaining / setSeconds;
+  updateRing(fraction);
+
+  if (remaining <= 5) {
+    $countdown.style.color = remaining <= 3 ? 'var(--red)' : 'var(--yellow)';
+    if (remaining <= 3) $countdown.classList.add('shake');
+  }
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  isPaused = false;
+  $status.textContent = 'STOPPED';
+  $btnRunning.style.display = 'none';
+  $btnSetup.style.display = 'none';
+  $btnDone.style.display = 'none';
+
+  // Show a simple reset
+  const row = document.createElement('div');
+  row.className = 'btn-row';
+  row.id = 'btn-stopped';
+  row.innerHTML = '<button class="btn btn-new" onclick="newRound()">New Round</button>';
+  $btnDone.parentNode.insertBefore(row, $btnDone.nextSibling);
+}
+
+function timesUp() {
+  clearInterval(timerInterval);
+  isRunning = false;
+
+  // Pick punishment
+  currentPunishment = punishments[Math.floor(Math.random() * punishments.length)];
+
+  // Flash screen
+  $flash.classList.add('active');
+  setTimeout(() => $flash.classList.remove('active'), 1500);
+
+  // Air horn
+  playAirHorn();
+  // Second blast
+  setTimeout(() => playAirHorn(), 800);
+
+  // Show punishment
+  $timerArea.style.display = 'none';
+  $punishment.style.display = 'flex';
+  $punishmentText.textContent = currentPunishment;
+
+  $btnRunning.style.display = 'none';
+  $btnDone.style.display = 'flex';
+
+  $countdown.classList.remove('shake');
+}
+
+function newRound() {
+  clearInterval(timerInterval);
+  isRunning = false;
+  isPaused = false;
+  remaining = setSeconds;
+
+  // Remove any stopped button
+  const stopped = document.getElementById('btn-stopped');
+  if (stopped) stopped.remove();
+
+  $setup.style.display = 'flex';
+  $timerArea.style.display = 'flex';
+  $punishment.style.display = 'none';
+  $btnSetup.style.display = 'flex';
+  $btnRunning.style.display = 'none';
+  $btnDone.style.display = 'none';
+
+  $countdown.textContent = setSeconds;
+  $countdown.style.color = '';
+  $countdown.classList.remove('shake');
+  $status.textContent = '';
+  $motionInd.textContent = '';
+  $motionInd.className = 'motion-indicator';
+  updateRing(1);
+  $progress.classList.remove('warning', 'danger');
+}
+
+// ===== SCOREBOARD =====
+function showPlayerModal() {
+  $modal.classList.add('active');
+  $modalPunishment.textContent = currentPunishment;
+  $playerName.value = '';
+  setTimeout(() => $playerName.focus(), 100);
+}
+
+function closeModal() {
+  $modal.classList.remove('active');
+}
+
+function assignPunishment() {
+  const name = $playerName.value.trim();
+  if (!name) return;
+  scores[name] = (scores[name] || 0) + 1;
+  try { localStorage.setItem('shotclock_scores', JSON.stringify(scores)); } catch(e) {}
+  renderScores();
+  closeModal();
+}
+
+// Enter key in modal
+document.getElementById('player-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') assignPunishment();
+});
+
+function clearScores() {
+  scores = {};
+  try { localStorage.removeItem('shotclock_scores'); } catch(e) {}
+  renderScores();
+}
+
+function renderScores() {
+  const entries = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) {
+    $scoreList.innerHTML = '<div class="no-scores">No victims yet</div>';
+    return;
+  }
+  $scoreList.innerHTML = entries.map(([name, count]) => {
+    const skulls = count >= 5 ? ' &#128128;' : count >= 3 ? ' &#128293;' : '';
+    return `<div class="score-entry">
+      <span class="name">${escapeHtml(name)}</span>
+      <span class="count">${count}</span>
+      <span class="skull">${skulls}</span>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Init
+renderScores();
+updateRing(1);
+</script>
+</body>
+</html>

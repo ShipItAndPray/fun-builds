@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>DJ BATTLE</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #0a0a0f;
+  color: #fff;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.game-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  padding: 8px;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a0f 100%);
+  border-bottom: 2px solid #333;
+  flex-shrink: 0;
+}
+.header h1 {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 6px;
+  background: linear-gradient(90deg, #ff4444, #fff, #4444ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+}
+.timer {
+  font-size: 2.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #0f0;
+  text-shadow: 0 0 20px #0f0, 0 0 40px #0f0;
+  transition: color 0.3s;
+}
+.timer.danger { color: #f00; text-shadow: 0 0 20px #f00, 0 0 40px #f00; }
+
+/* Crowd Meter */
+.crowd-section {
+  padding: 6px 20px;
+  flex-shrink: 0;
+}
+.crowd-label {
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 4px;
+}
+.crowd-bar-bg {
+  width: 100%;
+  height: 28px;
+  background: #1a1a2e;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid #333;
+}
+.crowd-fill {
+  position: absolute;
+  top: 0; left: 0;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #ff2222, #ff4444);
+  border-radius: 14px 0 0 14px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 15px rgba(255, 50, 50, 0.5);
+}
+.crowd-bar-bg::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(270deg, #2222ff, #4444ff);
+  border-radius: 0 14px 14px 0;
+  box-shadow: 0 0 15px rgba(50, 50, 255, 0.5);
+  z-index: 0;
+}
+.crowd-fill { z-index: 1; }
+.crowd-marker {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 4px; height: 100%;
+  background: #fff;
+  z-index: 3;
+  box-shadow: 0 0 6px #fff;
+}
+.crowd-names {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+}
+.crowd-names .p1 { color: #ff4444; }
+.crowd-names .p2 { color: #4488ff; }
+
+/* Players area */
+.players {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.player-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+  justify-content: center;
+}
+.player-panel.p1 {
+  border-right: 1px solid #333;
+  background: radial-gradient(ellipse at 30% 60%, rgba(255,0,0,0.06) 0%, transparent 70%);
+}
+.player-panel.p2 {
+  background: radial-gradient(ellipse at 70% 60%, rgba(0,80,255,0.06) 0%, transparent 70%);
+}
+
+.player-name {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+.p1 .player-name { color: #ff4444; text-shadow: 0 0 10px rgba(255,50,50,0.5); }
+.p2 .player-name { color: #4488ff; text-shadow: 0 0 10px rgba(50,100,255,0.5); }
+
+.score-display {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.p1 .score-display { color: #ff6666; }
+.p2 .score-display { color: #6688ff; }
+
+/* Sliders */
+.slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.slider-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #aaa;
+  display: flex;
+  justify-content: space-between;
+}
+.slider-label span:last-child {
+  font-variant-numeric: tabular-nums;
+  color: #ccc;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 32px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: none;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #1a1a2e;
+  border: 1px solid #333;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  margin-top: -9px;
+  border: 2px solid #fff;
+}
+.p1 input[type="range"]::-webkit-slider-thumb {
+  background: radial-gradient(circle, #ff6666, #cc0000);
+  box-shadow: 0 0 10px rgba(255,50,50,0.7);
+}
+.p2 input[type="range"]::-webkit-slider-thumb {
+  background: radial-gradient(circle, #6688ff, #0033cc);
+  box-shadow: 0 0 10px rgba(50,80,255,0.7);
+}
+
+/* DROP button */
+.drop-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+  text-transform: uppercase;
+  -webkit-tap-highlight-color: transparent;
+}
+.drop-btn:active { transform: scale(0.95); }
+.p1 .drop-btn {
+  background: linear-gradient(135deg, #cc0000, #ff3333);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.p1 .drop-btn:active { box-shadow: 0 0 40px rgba(255,0,0,0.8); }
+.p2 .drop-btn {
+  background: linear-gradient(135deg, #0033cc, #3366ff);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(0,50,255,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.p2 .drop-btn:active { box-shadow: 0 0 40px rgba(0,50,255,0.8); }
+.drop-btn.cooldown {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* Visualizer */
+.viz-bar {
+  height: 6px;
+  border-radius: 3px;
+  transition: width 0.05s;
+}
+.p1 .viz-bar { background: linear-gradient(90deg, #ff2222, #ff8800); }
+.p2 .viz-bar { background: linear-gradient(90deg, #2255ff, #00ccff); }
+
+/* Start / Winner overlay */
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  gap: 20px;
+}
+.overlay.hidden { display: none; }
+.overlay h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  text-align: center;
+}
+.overlay .subtitle {
+  font-size: 1rem;
+  color: #aaa;
+  letter-spacing: 2px;
+}
+.overlay .winner-text {
+  font-size: 3rem;
+  font-weight: 900;
+  animation: pulse 0.5s ease infinite alternate;
+}
+.winner-text.p1-win {
+  color: #ff4444;
+  text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+}
+.winner-text.p2-win {
+  color: #4488ff;
+  text-shadow: 0 0 30px #0044ff, 0 0 60px #0044ff;
+}
+.winner-text.draw {
+  color: #ffcc00;
+  text-shadow: 0 0 30px #ffcc00;
+}
+.start-btn {
+  padding: 16px 48px;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  border: 2px solid #0f0;
+  background: transparent;
+  color: #0f0;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.start-btn:hover {
+  background: #0f0;
+  color: #000;
+  box-shadow: 0 0 30px rgba(0,255,0,0.5);
+}
+.scores-final {
+  display: flex;
+  gap: 40px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.scores-final .p1-score { color: #ff4444; }
+.scores-final .p2-score { color: #4488ff; }
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+
+/* Neon scan line */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,100,0.15), transparent);
+  animation: scanline 3s linear infinite;
+  pointer-events: none;
+  z-index: 50;
+}
+@keyframes scanline {
+  0% { top: 0; }
+  100% { top: 100vh; }
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .header h1 { font-size: 1.2rem; letter-spacing: 3px; }
+  .timer { font-size: 1.8rem; }
+  .player-name { font-size: 0.8rem; }
+  .score-display { font-size: 1.2rem; }
+  .drop-btn { padding: 10px; font-size: 1rem; }
+  .overlay h2 { font-size: 1.8rem; }
+  .overlay .winner-text { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Start Overlay -->
+<div class="overlay" id="startOverlay">
+  <h2>DJ BATTLE</h2>
+  <p class="subtitle">TWO PLAYERS . ONE CROWD . THIRTY SECONDS</p>
+  <button class="start-btn" id="startBtn">START BATTLE</button>
+</div>
+
+<!-- Winner Overlay -->
+<div class="overlay hidden" id="winnerOverlay">
+  <div class="winner-text" id="winnerText"></div>
+  <div class="scores-final">
+    <span class="p1-score" id="finalP1"></span>
+    <span class="p2-score" id="finalP2"></span>
+  </div>
+  <button class="start-btn" id="replayBtn">REMATCH</button>
+</div>
+
+<div class="game-container">
+  <div class="header">
+    <h1>DJ BATTLE</h1>
+    <div class="timer" id="timer">30</div>
+  </div>
+
+  <div class="crowd-section">
+    <div class="crowd-label">CROWD METER</div>
+    <div class="crowd-bar-bg">
+      <div class="crowd-fill" id="crowdFill"></div>
+      <div class="crowd-marker"></div>
+    </div>
+    <div class="crowd-names">
+      <span class="p1">DJ RED</span>
+      <span class="p2">DJ BLUE</span>
+    </div>
+  </div>
+
+  <div class="players">
+    <!-- Player 1 -->
+    <div class="player-panel p1">
+      <div class="player-name">DJ RED</div>
+      <div class="score-display" id="score1">0</div>
+      <div class="viz-bar" id="viz1" style="width: 10%;"></div>
+      <div class="slider-group">
+        <div class="slider-label"><span>PITCH</span><span id="pitchVal1">1.0x</span></div>
+        <input type="range" id="pitch1" min="0.5" max="2" step="0.01" value="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label"><span>SPEED</span><span id="speedVal1">120</span></div>
+        <input type="range" id="speed1" min="60" max="200" step="1" value="120">
+      </div>
+      <button class="drop-btn" id="drop1">DROP</button>
+    </div>
+
+    <!-- Player 2 -->
+    <div class="player-panel p2">
+      <div class="player-name">DJ BLUE</div>
+      <div class="score-display" id="score2">0</div>
+      <div class="viz-bar" id="viz2" style="width: 10%;"></div>
+      <div class="slider-group">
+        <div class="slider-label"><span>PITCH</span><span id="pitchVal2">1.0x</span></div>
+        <input type="range" id="pitch2" min="0.5" max="2" step="0.01" value="1">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label"><span>SPEED</span><span id="speedVal2">120</span></div>
+        <input type="range" id="speed2" min="60" max="200" step="1" value="120">
+      </div>
+      <button class="drop-btn" id="drop2">DROP</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== WEB AUDIO =====
+let ctx;
+function ensureAudio() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+// Sound generators
+function playKick(time, pitchMul) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150 * pitchMul, time);
+  osc.frequency.exponentialRampToValueAtTime(30 * pitchMul, time + 0.12);
+  gain.gain.setValueAtTime(0.7, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(time);
+  osc.stop(time + 0.15);
+}
+
+function playHiHat(time, pitchMul) {
+  const bufferSize = ctx.sampleRate * 0.05;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 8000 * pitchMul;
+  bandpass.Q.value = 1;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.3, time);
+  gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+  src.connect(bandpass).connect(gain).connect(ctx.destination);
+  src.start(time);
+  src.stop(time + 0.06);
+}
+
+function playSnare(time, pitchMul) {
+  // Noise part
+  const bufferSize = ctx.sampleRate * 0.1;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1);
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = buffer;
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'highpass';
+  noiseFilter.frequency.value = 1000 * pitchMul;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.4, time);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+  noiseSrc.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+  noiseSrc.start(time);
+  noiseSrc.stop(time + 0.12);
+  // Sine body
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(200 * pitchMul, time);
+  osc.frequency.exponentialRampToValueAtTime(100 * pitchMul, time + 0.05);
+  const oscGain = ctx.createGain();
+  oscGain.gain.setValueAtTime(0.5, time);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+  osc.connect(oscGain).connect(ctx.destination);
+  osc.start(time);
+  osc.stop(time + 0.1);
+}
+
+function playBassDrop(pitchMul) {
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(120 * pitchMul, now);
+  osc.frequency.exponentialRampToValueAtTime(25 * pitchMul, now + 0.6);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.9, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  // Distortion for fatness
+  const dist = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i / 128) - 1;
+    curve[i] = Math.tanh(x * 3);
+  }
+  dist.curve = curve;
+  osc.connect(dist).connect(gain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.9);
+
+  // Sub rumble
+  const sub = ctx.createOscillator();
+  sub.type = 'sine';
+  sub.frequency.setValueAtTime(40 * pitchMul, now);
+  sub.frequency.exponentialRampToValueAtTime(18, now + 1.0);
+  const subGain = ctx.createGain();
+  subGain.gain.setValueAtTime(0.6, now);
+  subGain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+  sub.connect(subGain).connect(ctx.destination);
+  sub.start(now);
+  sub.stop(now + 1.1);
+}
+
+// ===== BEAT SEQUENCER =====
+// Pattern: K.H.S.H.K.H.S.H (8 steps)
+// K=kick, H=hihat, S=snare
+const pattern = ['K','H','S','H','K','H','S','H'];
+
+let playing = false;
+let beatTimers = [null, null];
+let stepIndex = [0, 0];
+
+function scheduleStep(player) {
+  if (!playing) return;
+  const pitchSlider = document.getElementById('pitch' + (player + 1));
+  const speedSlider = document.getElementById('speed' + (player + 1));
+  const pitchMul = parseFloat(pitchSlider.value);
+  const bpm = parseInt(speedSlider.value);
+  const stepDuration = 60 / bpm / 2; // eighth notes
+
+  const step = pattern[stepIndex[player] % pattern.length];
+  const now = ctx.currentTime;
+
+  if (step === 'K') playKick(now, pitchMul);
+  else if (step === 'H') playHiHat(now, pitchMul);
+  else if (step === 'S') playSnare(now, pitchMul);
+
+  // Visualizer pulse
+  const viz = document.getElementById('viz' + (player + 1));
+  const energy = step === 'K' ? 90 : step === 'S' ? 70 : 40;
+  viz.style.width = energy + '%';
+  setTimeout(() => { if (playing) viz.style.width = '10%'; }, stepDuration * 400);
+
+  stepIndex[player]++;
+  beatTimers[player] = setTimeout(() => scheduleStep(player), stepDuration * 1000);
+}
+
+function startBeats() {
+  stepIndex = [0, 0];
+  scheduleStep(0);
+  // Offset P2 slightly so they don't overlap at start
+  setTimeout(() => scheduleStep(1), 50);
+}
+
+function stopBeats() {
+  playing = false;
+  clearTimeout(beatTimers[0]);
+  clearTimeout(beatTimers[1]);
+}
+
+// ===== SCORING =====
+let scores = [0, 0];
+let lastPitch = [1, 1];
+let lastSpeed = [120, 120];
+let dropCooldown = [false, false];
+
+function updateSliderDisplays() {
+  const p1 = parseFloat(document.getElementById('pitch1').value);
+  const s1 = parseInt(document.getElementById('speed1').value);
+  const p2 = parseFloat(document.getElementById('pitch2').value);
+  const s2 = parseInt(document.getElementById('speed2').value);
+
+  document.getElementById('pitchVal1').textContent = p1.toFixed(2) + 'x';
+  document.getElementById('speedVal1').textContent = s1;
+  document.getElementById('pitchVal2').textContent = p2.toFixed(2) + 'x';
+  document.getElementById('speedVal2').textContent = s2;
+}
+
+function scoreUpdate() {
+  if (!playing) return;
+  for (let p = 0; p < 2; p++) {
+    const pitch = parseFloat(document.getElementById('pitch' + (p + 1)).value);
+    const speed = parseInt(document.getElementById('speed' + (p + 1)).value);
+    const pitchDelta = Math.abs(pitch - lastPitch[p]);
+    const speedDelta = Math.abs(speed - lastSpeed[p]);
+
+    // Score for movement
+    if (pitchDelta > 0.01) scores[p] += Math.floor(pitchDelta * 50);
+    if (speedDelta > 0) scores[p] += Math.floor(speedDelta * 0.5);
+
+    // Score for deviation from default
+    scores[p] += Math.floor(Math.abs(pitch - 1.0) * 2);
+    scores[p] += Math.floor(Math.abs(speed - 120) * 0.05);
+
+    lastPitch[p] = pitch;
+    lastSpeed[p] = speed;
+  }
+
+  document.getElementById('score1').textContent = scores[0];
+  document.getElementById('score2').textContent = scores[1];
+  updateSliderDisplays();
+  updateCrowdMeter();
+}
+
+function updateCrowdMeter() {
+  const total = scores[0] + scores[1];
+  let pct = 50;
+  if (total > 0) pct = (scores[0] / total) * 100;
+  pct = Math.max(10, Math.min(90, pct));
+  document.getElementById('crowdFill').style.width = pct + '%';
+}
+
+// ===== DROP =====
+function handleDrop(player) {
+  if (dropCooldown[player] || !playing) return;
+  const pitch = parseFloat(document.getElementById('pitch' + (player + 1)).value);
+  playBassDrop(pitch);
+  scores[player] += 50;
+  document.getElementById('score' + (player + 1)).textContent = scores[player];
+  updateCrowdMeter();
+
+  // Cooldown
+  dropCooldown[player] = true;
+  const btn = document.getElementById('drop' + (player + 1));
+  btn.classList.add('cooldown');
+  btn.textContent = 'WAIT...';
+  setTimeout(() => {
+    dropCooldown[player] = false;
+    btn.classList.remove('cooldown');
+    btn.textContent = 'DROP';
+  }, 3000);
+
+  // Screen flash
+  const color = player === 0 ? 'rgba(255,0,0,0.15)' : 'rgba(0,50,255,0.15)';
+  document.body.style.backgroundColor = color;
+  setTimeout(() => { document.body.style.backgroundColor = '#0a0a0f'; }, 150);
+}
+
+// ===== GAME FLOW =====
+let timeLeft = 30;
+let gameInterval = null;
+let scoreInterval = null;
+
+function startGame() {
+  ensureAudio();
+  document.getElementById('startOverlay').classList.add('hidden');
+  document.getElementById('winnerOverlay').classList.add('hidden');
+
+  // Reset
+  timeLeft = 30;
+  scores = [0, 0];
+  lastPitch = [1, 1];
+  lastSpeed = [120, 120];
+  dropCooldown = [false, false];
+  document.getElementById('score1').textContent = '0';
+  document.getElementById('score2').textContent = '0';
+  document.getElementById('timer').textContent = '30';
+  document.getElementById('timer').classList.remove('danger');
+  document.getElementById('crowdFill').style.width = '50%';
+  document.getElementById('pitch1').value = 1;
+  document.getElementById('speed1').value = 120;
+  document.getElementById('pitch2').value = 1;
+  document.getElementById('speed2').value = 120;
+  document.getElementById('drop1').classList.remove('cooldown');
+  document.getElementById('drop2').classList.remove('cooldown');
+  document.getElementById('drop1').textContent = 'DROP';
+  document.getElementById('drop2').textContent = 'DROP';
+  updateSliderDisplays();
+
+  playing = true;
+  startBeats();
+
+  scoreInterval = setInterval(scoreUpdate, 100);
+
+  gameInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    if (timeLeft <= 10) document.getElementById('timer').classList.add('danger');
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function endGame() {
+  clearInterval(gameInterval);
+  clearInterval(scoreInterval);
+  stopBeats();
+
+  // Final score update
+  document.getElementById('score1').textContent = scores[0];
+  document.getElementById('score2').textContent = scores[1];
+
+  // Show winner
+  const overlay = document.getElementById('winnerOverlay');
+  const winText = document.getElementById('winnerText');
+  overlay.classList.remove('hidden');
+
+  document.getElementById('finalP1').textContent = 'DJ RED: ' + scores[0];
+  document.getElementById('finalP2').textContent = 'DJ BLUE: ' + scores[1];
+
+  if (scores[0] > scores[1]) {
+    winText.textContent = 'DJ RED WINS!';
+    winText.className = 'winner-text p1-win';
+    playVictorySound(1.0);
+  } else if (scores[1] > scores[0]) {
+    winText.textContent = 'DJ BLUE WINS!';
+    winText.className = 'winner-text p2-win';
+    playVictorySound(1.5);
+  } else {
+    winText.textContent = 'DRAW!';
+    winText.className = 'winner-text draw';
+    playVictorySound(1.0);
+  }
+}
+
+function playVictorySound(pitchMul) {
+  ensureAudio();
+  const now = ctx.currentTime;
+  [0, 0.15, 0.3, 0.5].forEach((offset, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = [330, 415, 495, 660][i] * pitchMul;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now + offset);
+    gain.gain.linearRampToValueAtTime(0.15, now + offset + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + offset);
+    osc.stop(now + offset + 0.25);
+  });
+}
+
+// ===== EVENT LISTENERS =====
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('replayBtn').addEventListener('click', startGame);
+document.getElementById('drop1').addEventListener('click', () => handleDrop(0));
+document.getElementById('drop2').addEventListener('click', () => handleDrop(1));
+
+// Keyboard support: Q=P1 drop, P=P2 drop
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'q' || e.key === 'Q') handleDrop(0);
+  if (e.key === 'p' || e.key === 'P') handleDrop(1);
+});
+
+// Live slider display updates
+['pitch1','speed1','pitch2','speed2'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateSliderDisplays);
+});
+</script>
+</body>
+</html>

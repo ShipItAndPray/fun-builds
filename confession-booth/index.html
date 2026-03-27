@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>The Confession Booth</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --blood: #8b0000;
+    --gold: #c9a84c;
+    --candle: #e8c36a;
+    --parchment: #d4c5a9;
+    --shadow: #0a0a0a;
+    --wood: #1a0e05;
+    --absolved: #2d6a2e;
+    --damned: #a01010;
+  }
+
+  body {
+    font-family: 'Crimson Text', Georgia, serif;
+    background: var(--shadow);
+    color: var(--parchment);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(139,0,0,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 100%, rgba(10,10,10,0.9) 0%, transparent 50%),
+      repeating-linear-gradient(90deg, rgba(26,14,5,0.3) 0px, rgba(26,14,5,0.3) 2px, transparent 2px, transparent 40px),
+      repeating-linear-gradient(0deg, rgba(26,14,5,0.2) 0px, rgba(26,14,5,0.2) 1px, transparent 1px, transparent 60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .reading-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .reading-overlay.active {
+    animation: redPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes redPulse {
+    0%, 100% {
+      background: radial-gradient(ellipse at 50% 30%, rgba(139,0,0,0.3) 0%, transparent 70%);
+      opacity: 0.6;
+    }
+    50% {
+      background: radial-gradient(ellipse at 50% 30%, rgba(200,0,0,0.5) 0%, transparent 70%);
+      opacity: 1;
+    }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 100px;
+  }
+
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  .cross {
+    font-size: 48px;
+    color: var(--gold);
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+    margin-bottom: 8px;
+  }
+
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 28px;
+    color: var(--gold);
+    text-shadow: 0 2px 10px rgba(139,0,0,0.6);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: rgba(212,197,169,0.6);
+    font-size: 14px;
+  }
+
+  .unread-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(139,0,0,0.4), rgba(139,0,0,0.2));
+    border: 1px solid rgba(139,0,0,0.5);
+    border-radius: 20px;
+    padding: 8px 18px;
+    margin: 16px auto;
+    font-size: 15px;
+    color: var(--parchment);
+  }
+
+  .unread-badge .count {
+    background: var(--blood);
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    box-shadow: 0 0 10px rgba(139,0,0,0.5);
+  }
+
+  .reveal-btn {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    margin: 20px 0;
+    background: linear-gradient(180deg, #2a0a0a 0%, #1a0505 100%);
+    border: 2px solid var(--blood);
+    border-radius: 12px;
+    color: var(--candle);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 20px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    text-shadow: 0 0 10px rgba(232,195,106,0.3);
+    box-shadow: 0 4px 20px rgba(139,0,0,0.3), inset 0 1px 0 rgba(201,168,76,0.1);
+  }
+
+  .reveal-btn:hover {
+    border-color: var(--candle);
+    box-shadow: 0 4px 30px rgba(139,0,0,0.5), inset 0 1px 0 rgba(201,168,76,0.2);
+    transform: translateY(-1px);
+  }
+
+  .reveal-btn:active { transform: translateY(1px); }
+
+  .reveal-btn.shaking { animation: shake 0.5s ease-in-out; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    20% { transform: translateX(-8px) rotate(-2deg); }
+    40% { transform: translateX(8px) rotate(2deg); }
+    60% { transform: translateX(-5px) rotate(-1deg); }
+    80% { transform: translateX(5px) rotate(1deg); }
+  }
+
+  .reveal-btn .icon { display: block; font-size: 32px; margin-bottom: 6px; }
+
+  .reveal-btn .hint {
+    font-family: 'Crimson Text', serif;
+    font-size: 12px;
+    color: rgba(212,197,169,0.5);
+    font-style: italic;
+  }
+
+  .confession-display {
+    background: linear-gradient(180deg, rgba(26,14,5,0.8), rgba(10,10,10,0.9));
+    border: 1px solid rgba(139,0,0,0.3);
+    border-radius: 12px;
+    padding: 30px 24px;
+    margin: 20px 0;
+    min-height: 120px;
+    display: none;
+    text-align: center;
+    position: relative;
+  }
+
+  .confession-display.visible {
+    display: block;
+    animation: fadeReveal 0.8s ease-out;
+  }
+
+  @keyframes fadeReveal {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .confession-text {
+    font-size: 22px;
+    line-height: 1.5;
+    font-style: italic;
+    color: var(--parchment);
+    margin-bottom: 24px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+
+  .confession-text::before { content: '\201C'; color: var(--gold); font-size: 32px; }
+  .confession-text::after { content: '\201D'; color: var(--gold); font-size: 32px; }
+
+  .judgment-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .judge-btn {
+    flex: 1;
+    max-width: 160px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    border: 2px solid;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .judge-btn.absolve {
+    background: rgba(45,106,46,0.2);
+    border-color: var(--absolved);
+    color: #6ece6e;
+  }
+
+  .judge-btn.absolve:hover {
+    background: rgba(45,106,46,0.4);
+    box-shadow: 0 0 20px rgba(45,106,46,0.3);
+  }
+
+  .judge-btn.damn {
+    background: rgba(160,16,16,0.2);
+    border-color: var(--damned);
+    color: #e85555;
+  }
+
+  .judge-btn.damn:hover {
+    background: rgba(160,16,16,0.4);
+    box-shadow: 0 0 20px rgba(160,16,16,0.3);
+  }
+
+  .judge-btn .emoji { font-size: 24px; display: block; margin-bottom: 4px; }
+
+  .crowd-reaction {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  .crowd-reaction.show {
+    animation: crowdPop 1.2s ease-out forwards;
+  }
+
+  @keyframes crowdPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+    60% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(1.1); }
+  }
+
+  .write-section { margin-top: 30px; }
+
+  .section-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    color: var(--gold);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .confession-input {
+    width: 100%;
+    min-height: 100px;
+    padding: 16px;
+    background: rgba(26,14,5,0.6);
+    border: 1px solid rgba(139,0,0,0.3);
+    border-radius: 10px;
+    color: var(--parchment);
+    font-family: 'Crimson Text', serif;
+    font-size: 17px;
+    font-style: italic;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .confession-input::placeholder {
+    color: rgba(212,197,169,0.3);
+    font-style: italic;
+  }
+
+  .confession-input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(201,168,76,0.1);
+  }
+
+  .submit-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    background: linear-gradient(180deg, rgba(139,0,0,0.4), rgba(139,0,0,0.2));
+    border: 1px solid var(--blood);
+    border-radius: 8px;
+    color: var(--parchment);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .submit-btn:hover {
+    background: linear-gradient(180deg, rgba(139,0,0,0.6), rgba(139,0,0,0.3));
+    box-shadow: 0 0 15px rgba(139,0,0,0.3);
+  }
+
+  .history-section { margin-top: 30px; }
+
+  .history-toggle {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 8px;
+    color: rgba(212,197,169,0.5);
+    font-family: 'Crimson Text', serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .history-toggle:hover {
+    border-color: rgba(201,168,76,0.4);
+    color: rgba(212,197,169,0.8);
+  }
+
+  .history-list { display: none; margin-top: 12px; }
+  .history-list.visible { display: block; }
+
+  .history-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: rgba(26,14,5,0.4);
+    border-radius: 8px;
+    border-left: 3px solid rgba(139,0,0,0.3);
+    font-size: 14px;
+    line-height: 1.4;
+    position: relative;
+  }
+
+  .history-item.absolved { border-left-color: var(--absolved); }
+  .history-item.damned { border-left-color: var(--damned); }
+
+  .history-item .verdict {
+    display: inline-block;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+
+  .history-item.absolved .verdict {
+    background: rgba(45,106,46,0.2);
+    color: #6ece6e;
+  }
+
+  .history-item.damned .verdict {
+    background: rgba(160,16,16,0.2);
+    color: #e85555;
+  }
+
+  .candles { display: flex; justify-content: center; gap: 60px; margin: 10px 0; }
+
+  .candle {
+    width: 4px;
+    height: 20px;
+    background: linear-gradient(180deg, #f5e6b8, #c9a84c);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .candle::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 14px;
+    background: radial-gradient(ellipse, #ffe4a0, #e8a020, transparent);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    animation: flicker 2s ease-in-out infinite alternate;
+  }
+
+  .candle:nth-child(2)::before { animation-delay: 0.5s; }
+  .candle:nth-child(3)::before { animation-delay: 1s; }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; transform: translateX(-50%) scaleY(1); }
+    25% { opacity: 0.8; transform: translateX(-50%) scaleY(0.9) rotate(2deg); }
+    50% { opacity: 1; transform: translateX(-50%) scaleY(1.05); }
+    75% { opacity: 0.85; transform: translateX(-50%) scaleY(0.95) rotate(-1deg); }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26,14,5,0.95);
+    border: 1px solid var(--gold);
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: var(--candle);
+    font-size: 14px;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; }
+
+  .footer {
+    text-align: center;
+    padding: 20px 0;
+    color: rgba(212,197,169,0.2);
+    font-size: 12px;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="reading-overlay" id="readingOverlay"></div>
+<div class="crowd-reaction" id="crowdReaction"></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <div class="header">
+    <div class="cross">&#10013;</div>
+    <h1>Confession Booth</h1>
+    <p class="subtitle">Unburden your soul. Anonymously.</p>
+    <div class="candles">
+      <div class="candle"></div>
+      <div class="candle"></div>
+      <div class="candle"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center">
+    <div class="unread-badge">
+      <span class="count" id="unreadCount">0</span>
+      <span>unread confessions await judgment</span>
+    </div>
+  </div>
+
+  <button class="reveal-btn" id="revealBtn" onclick="revealConfession()">
+    <span class="icon">&#128064;</span>
+    Reveal a Confession
+    <span class="hint">shake your phone or tap</span>
+  </button>
+
+  <div class="confession-display" id="confessionDisplay">
+    <div class="confession-text" id="confessionText"></div>
+    <div class="judgment-row">
+      <button class="judge-btn absolve" onclick="judge('absolved')">
+        <span class="emoji">&#128591;</span>
+        ABSOLVED
+      </button>
+      <button class="judge-btn damn" onclick="judge('damned')">
+        <span class="emoji">&#128293;</span>
+        DAMNED
+      </button>
+    </div>
+  </div>
+
+  <div class="write-section">
+    <div class="section-title">&#9998; Write a Confession</div>
+    <textarea class="confession-input" id="confessionInput"
+      placeholder="Forgive me, for I have sinned..." maxlength="500"></textarea>
+    <button class="submit-btn" onclick="submitConfession()">
+      &#128220; Submit to the Void
+    </button>
+  </div>
+
+  <div class="history-section">
+    <button class="history-toggle" id="historyToggle" onclick="toggleHistory()">
+      &#128214; View Judged Confessions
+    </button>
+    <div class="history-list" id="historyList"></div>
+  </div>
+
+  <div class="footer">What is spoken in the booth stays in the booth.</div>
+</div>
+
+<script>
+const STARTER_CONFESSIONS = [
+  "I still haven't told my roommate I ate their birthday cake",
+  "I pretend to understand how blockchain works",
+  "I've been using the same secret phrase to log in everywhere since 2012",
+  "I tell people I'm busy when really I'm just rewatching The Office for the 9th time",
+  "I once waved back at someone who wasn't waving at me, then pretended to hail a cab",
+  "I've never actually read the terms and conditions. Not once.",
+  "I google words during Scrabble and pretend I already knew them",
+  "I use 'per my last email' specifically to be passive aggressive",
+  "I ate my coworker's clearly labeled lunch. Twice.",
+  "I tell Alexa 'thank you' after every command because I fear the robot uprising",
+  "I have unread messages from 2019 that I'm never going to open",
+  "I pronounce 'quinoa' wrong on purpose to see if anyone corrects me",
+  "I've lied about finishing a book at every book club meeting for two years",
+  "I double dip chips when nobody is watching. Sometimes when they are.",
+  "I once blamed the dog for a sound that was definitely me",
+  "I still don't know the difference between affect and effect",
+  "I judge people who clap when the plane lands but I secretly want to join them",
+  "I set 14 alarms every morning and snooze all of them",
+  "I pretend my phone died to avoid calling people back",
+  "I've watched the same Netflix show three times because I keep falling asleep"
+];
+
+const STORAGE_KEY = 'confessionBooth';
+
+let state = loadState();
+let currentConfessionId = null;
+let audioCtx = null;
+let isSpeaking = false;
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  const confessions = STARTER_CONFESSIONS.map((text, i) => ({
+    id: 'starter_' + i,
+    text,
+    read: false,
+    verdict: null,
+    timestamp: Date.now() - (STARTER_CONFESSIONS.length - i) * 60000
+  }));
+  return { confessions };
+}
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+function updateUI() {
+  const unread = state.confessions.filter(c => !c.read).length;
+  document.getElementById('unreadCount').textContent = unread;
+  renderHistory();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playOrganChord() {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const freqs = [65.41, 155.56, 196.0, 261.63, 311.13];
+  const now = audioCtx.currentTime;
+
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0, now);
+  masterGain.gain.linearRampToValueAtTime(0.25, now + 0.8);
+  masterGain.gain.linearRampToValueAtTime(0.15, now + 2.5);
+  masterGain.gain.linearRampToValueAtTime(0, now + 4);
+  masterGain.connect(audioCtx.destination);
+
+  freqs.forEach((freq) => {
+    const osc1 = audioCtx.createOscillator();
+    osc1.type = 'sine';
+    osc1.frequency.value = freq;
+
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = freq * 2;
+
+    const osc3 = audioCtx.createOscillator();
+    osc3.type = 'triangle';
+    osc3.frequency.value = freq * 3;
+
+    const g1 = audioCtx.createGain();
+    g1.gain.value = 0.3;
+    const g2 = audioCtx.createGain();
+    g2.gain.value = 0.15;
+    const g3 = audioCtx.createGain();
+    g3.gain.value = 0.05;
+
+    osc1.connect(g1).connect(masterGain);
+    osc2.connect(g2).connect(masterGain);
+    osc3.connect(g3).connect(masterGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc3.start(now);
+    osc1.stop(now + 4.5);
+    osc2.stop(now + 4.5);
+    osc3.stop(now + 4.5);
+  });
+}
+
+function playCrowdSound(type) {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+  const masterGain = audioCtx.createGain();
+  masterGain.gain.setValueAtTime(0.2, now);
+  masterGain.gain.linearRampToValueAtTime(0, now + 1.5);
+  masterGain.connect(audioCtx.destination);
+
+  if (type === 'absolved') {
+    [261.63, 329.63, 392.0, 523.25].forEach(f => {
+      const o = audioCtx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.15;
+      o.connect(g).connect(masterGain);
+      o.start(now);
+      o.stop(now + 2);
+    });
+  } else {
+    [130.81, 155.56, 185.0, 220.0].forEach(f => {
+      const o = audioCtx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.08;
+      o.connect(g).connect(masterGain);
+      o.start(now);
+      o.stop(now + 2);
+    });
+  }
+}
+
+function speakConfession(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.75;
+  utter.pitch = 0.3;
+  utter.volume = 1;
+
+  const voices = window.speechSynthesis.getVoices();
+  const deepVoice = voices.find(v => /male|daniel|james|david|google uk english male/i.test(v.name) && !/female/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en') && !/female/i.test(v.name))
+    || voices[0];
+  if (deepVoice) utter.voice = deepVoice;
+
+  const overlay = document.getElementById('readingOverlay');
+  overlay.classList.add('active');
+  isSpeaking = true;
+
+  utter.onend = () => {
+    overlay.classList.remove('active');
+    isSpeaking = false;
+  };
+  utter.onerror = () => {
+    overlay.classList.remove('active');
+    isSpeaking = false;
+  };
+
+  window.speechSynthesis.speak(utter);
+}
+
+function revealConfession() {
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    document.getElementById('readingOverlay').classList.remove('active');
+    isSpeaking = false;
+    return;
+  }
+
+  const unread = state.confessions.filter(c => !c.read);
+  if (unread.length === 0) {
+    showToast('All confessions have been judged!');
+    return;
+  }
+
+  const btn = document.getElementById('revealBtn');
+  btn.classList.add('shaking');
+  setTimeout(() => btn.classList.remove('shaking'), 500);
+
+  const confession = unread[Math.floor(Math.random() * unread.length)];
+  currentConfessionId = confession.id;
+
+  playOrganChord();
+
+  setTimeout(() => {
+    const display = document.getElementById('confessionDisplay');
+    const textEl = document.getElementById('confessionText');
+    textEl.textContent = confession.text;
+    display.classList.add('visible');
+    display.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    setTimeout(() => speakConfession(confession.text), 600);
+  }, 400);
+}
+
+function judge(verdict) {
+  if (!currentConfessionId) return;
+
+  const confession = state.confessions.find(c => c.id === currentConfessionId);
+  if (!confession) return;
+
+  confession.read = true;
+  confession.verdict = verdict;
+  saveState();
+
+  const reactionEl = document.getElementById('crowdReaction');
+  if (verdict === 'absolved') {
+    reactionEl.textContent = '\u{1F64F}\u{2728}\u{1F54A}';
+  } else {
+    reactionEl.textContent = '\u{1F525}\u{1F608}\u{1F480}';
+  }
+  reactionEl.classList.remove('show');
+  void reactionEl.offsetWidth;
+  reactionEl.classList.add('show');
+  setTimeout(() => reactionEl.classList.remove('show'), 1300);
+
+  playCrowdSound(verdict);
+
+  window.speechSynthesis.cancel();
+  document.getElementById('readingOverlay').classList.remove('active');
+  isSpeaking = false;
+
+  setTimeout(() => {
+    document.getElementById('confessionDisplay').classList.remove('visible');
+    currentConfessionId = null;
+    updateUI();
+  }, 1000);
+
+  showToast(verdict === 'absolved' ? 'The soul has been cleansed.' : 'Cast into eternal judgment.');
+}
+
+function submitConfession() {
+  const input = document.getElementById('confessionInput');
+  const text = input.value.trim();
+  if (!text) {
+    showToast('Even silence carries sin. Write something.');
+    return;
+  }
+  if (text.length < 5) {
+    showToast('Confess more fully, child.');
+    return;
+  }
+
+  state.confessions.push({
+    id: 'user_' + Date.now(),
+    text,
+    read: false,
+    verdict: null,
+    timestamp: Date.now()
+  });
+  saveState();
+  input.value = '';
+  updateUI();
+  showToast('Your confession has been received.');
+}
+
+function toggleHistory() {
+  const list = document.getElementById('historyList');
+  list.classList.toggle('visible');
+  document.getElementById('historyToggle').textContent = list.classList.contains('visible')
+    ? '\u{1F4D6} Hide Judged Confessions'
+    : '\u{1F4D6} View Judged Confessions';
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  const judged = state.confessions.filter(c => c.verdict);
+  if (judged.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:rgba(212,197,169,0.3);padding:20px;font-style:italic;">No souls have been judged yet.</div>';
+    return;
+  }
+  list.innerHTML = judged.slice().reverse().map(c => `
+    <div class="history-item ${c.verdict}">
+      <div>${c.text}</div>
+      <span class="verdict">${c.verdict === 'absolved' ? '\u{1F54A} ABSOLVED' : '\u{1F525} DAMNED'}</span>
+    </div>
+  `).join('');
+}
+
+let lastShake = 0;
+if (window.DeviceMotionEvent) {
+  window.addEventListener('devicemotion', (e) => {
+    const a = e.accelerationIncludingGravity;
+    if (!a) return;
+    const force = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
+    if (force > 25 && Date.now() - lastShake > 2000) {
+      lastShake = Date.now();
+      revealConfession();
+    }
+  });
+}
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+updateUI();
+</script>
+</body>
+</html>

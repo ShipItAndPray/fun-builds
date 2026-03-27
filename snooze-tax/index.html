@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Snooze Tax</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131d;
+    --border: #1e1e2e;
+    --red: #ff3b5c;
+    --green: #00e676;
+    --gold: #ffd600;
+    --text: #e0e0e0;
+    --dim: #666;
+    --cash: #85bb65;
+  }
+  body {
+    font-family: 'Courier New', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1 {
+    font-size: 1.6rem;
+    color: var(--gold);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .subtitle {
+    color: var(--dim);
+    font-size: 0.75rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* --- Setup Panel --- */
+  #setup {
+    width: 100%;
+    max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+  }
+  #setup label {
+    font-size: 0.85rem;
+    color: var(--dim);
+  }
+  #setup input[type="time"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    width: 100%;
+    max-width: 240px;
+  }
+  .btn {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 28px;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    width: 100%;
+    max-width: 300px;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-set {
+    background: var(--gold);
+    color: #000;
+  }
+  .btn-snooze {
+    background: var(--red);
+    color: #fff;
+    font-size: 1.8rem;
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(255,59,92,0.3);
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,59,92,0.3); }
+    50% { box-shadow: 0 0 50px rgba(255,59,92,0.6); }
+  }
+  .btn-awake {
+    background: var(--green);
+    color: #000;
+    font-size: 1.1rem;
+  }
+  .btn-shame {
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--dim);
+    font-size: 0.8rem;
+    padding: 10px 16px;
+  }
+  .btn-clear {
+    background: transparent;
+    border: 1px solid #442;
+    color: #886;
+    font-size: 0.7rem;
+    padding: 8px 12px;
+  }
+
+  /* --- Alarm Panel --- */
+  #alarm {
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  #alarm.active { display: flex; }
+  .debt-display {
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: var(--red);
+    text-shadow: 0 0 20px rgba(255,59,92,0.4);
+  }
+  .debt-label {
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: -10px;
+  }
+  .snooze-count {
+    font-size: 1rem;
+    color: var(--gold);
+  }
+  .time-display {
+    font-size: 1.4rem;
+    color: var(--dim);
+  }
+
+  /* --- Receipt --- */
+  .receipt-area {
+    width: 100%;
+    max-width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .receipt-line {
+    background: var(--card);
+    border-left: 3px solid var(--red);
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    color: var(--text);
+    border-radius: 0 6px 6px 0;
+    animation: slideIn 0.3s ease;
+  }
+  .receipt-line .amount {
+    color: var(--cash);
+    font-weight: bold;
+  }
+  .receipt-line .msg {
+    color: var(--gold);
+    display: block;
+    margin-top: 2px;
+    font-style: italic;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* --- Waiting Panel --- */
+  #waiting {
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  #waiting.active { display: flex; }
+  .waiting-time {
+    font-size: 3rem;
+    color: var(--green);
+  }
+  .waiting-label {
+    color: var(--dim);
+    font-size: 0.85rem;
+  }
+  .countdown {
+    font-size: 1.1rem;
+    color: var(--dim);
+  }
+
+  /* --- Chart --- */
+  #chart-section {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 24px;
+  }
+  .chart-title {
+    font-size: 0.85rem;
+    color: var(--dim);
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .chart-container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+  .chart-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.7rem;
+  }
+  .chart-label {
+    min-width: 70px;
+    color: var(--dim);
+    text-align: right;
+  }
+  .chart-bar {
+    height: 18px;
+    background: linear-gradient(90deg, var(--red), #ff6b81);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    min-width: 2px;
+  }
+  .chart-value {
+    color: var(--cash);
+    min-width: 50px;
+    font-weight: bold;
+  }
+
+  /* --- Shame Report --- */
+  #shame-section {
+    display: none;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 16px;
+  }
+  #shame-section.active { display: block; }
+  .shame-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .shame-card h3 {
+    color: var(--red);
+    font-size: 1rem;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .shame-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.8rem;
+  }
+  .shame-stat:last-child { border-bottom: none; }
+  .shame-stat .label { color: var(--dim); }
+  .shame-stat .value { color: var(--gold); font-weight: bold; }
+  .shame-verdict {
+    margin-top: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--red);
+    font-style: italic;
+  }
+
+  /* --- Footer --- */
+  .footer-btns {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>SNOOZE TAX</h1>
+<p class="subtitle">every snooze costs you $0.25</p>
+
+<!-- Setup -->
+<div id="setup">
+  <label>SET ALARM TIME</label>
+  <input type="time" id="alarm-time" value="07:00">
+  <button class="btn btn-set" onclick="setAlarm()">ARM ALARM</button>
+</div>
+
+<!-- Waiting -->
+<div id="waiting">
+  <div class="waiting-label">ALARM SET FOR</div>
+  <div class="waiting-time" id="waiting-time">07:00</div>
+  <div class="countdown" id="countdown">--</div>
+  <button class="btn btn-set" onclick="cancelAlarm()" style="background:#333;color:var(--dim);">CANCEL</button>
+</div>
+
+<!-- Alarm Active -->
+<div id="alarm">
+  <div class="time-display" id="current-time">--:--</div>
+  <div class="debt-display" id="debt">$0.00</div>
+  <div class="debt-label">SNOOZE DEBT</div>
+  <div class="snooze-count" id="snooze-count">0 snoozes</div>
+  <button class="btn btn-snooze" onclick="hitSnooze()">SNOOZE<br><span style="font-size:0.7em">+$0.25</span></button>
+  <button class="btn btn-awake" onclick="wakeUp()">I'M AWAKE</button>
+  <div class="receipt-area" id="receipts"></div>
+</div>
+
+<!-- Chart -->
+<div id="chart-section">
+  <div class="chart-title">WORST MORNINGS</div>
+  <div class="chart-container" id="chart"></div>
+</div>
+
+<!-- Shame Report -->
+<div id="shame-section">
+  <div class="shame-card" id="shame-card"></div>
+</div>
+
+<div class="footer-btns">
+  <button class="btn btn-shame" onclick="toggleShame()">WEEKLY SHAME REPORT</button>
+  <button class="btn btn-clear" onclick="clearHistory()">CLEAR HISTORY</button>
+</div>
+
+<script>
+const SNOOZE_COST = 0.25;
+const SNOOZE_DURATION = 5 * 60 * 1000; // 5 min
+
+const MESSAGES = [
+  "YOUR BOSS CALLED",
+  "YOUR CAT JUDGED YOU",
+  "THAT'S RENT MONEY IN ANOTHER UNIVERSE",
+  "PRODUCTIVITY LEFT THE CHAT",
+  "YOUR MORNING ROUTINE IS NOW JUST PANTS",
+  "LINKEDIN INFLUENCERS ARE ALREADY ON THEIR 3RD COLD PLUNGE",
+  "YOUR COFFEE IS GETTING COLD. AGAIN.",
+  "THE EARLY BIRD GOT YOUR PROMOTION",
+  "YOUR UBER DRIVER WOULD BE ASHAMED",
+  "THAT GYM MEMBERSHIP ISN'T USING ITSELF",
+  "YOUR PLANT WOKE UP BEFORE YOU",
+  "ELON TWEETED 47 TIMES SINCE YOUR ALARM",
+  "SOMEWHERE, A ROOSTER IS LAUGHING",
+  "YOUR ALARM CLOCK HAS TRUST ISSUES NOW",
+  "YOU'RE PAYING TO BE HORIZONTAL",
+  "YOUR PILLOW IS ENABLING YOUR ADDICTION",
+  "BREAKFAST DOWNGRADED TO LUNCH",
+  "THE SUN DID ITS JOB. DID YOU?",
+  "YOUR FITBIT THINKS YOU'RE DEAD",
+  "CONGRATULATIONS, YOU PLAYED YOURSELF",
+  "EVEN YOUR DREAMS WANT YOU TO LEAVE",
+  "YOUR BED HAS A BETTER WORK ETHIC",
+  "THE SNOOZE BUTTON HAS A RESTRAINING ORDER",
+  "YOUR MOM WOULD NOT APPROVE",
+  "THAT'S ANOTHER AVOCADO TOAST YOU CAN'T AFFORD",
+  "YOUR THERAPIST WILL HEAR ABOUT THIS",
+  "YOUR DOG WALKED ITSELF",
+  "THE MORNING HAS BEEN RECALLED DUE TO LACK OF USE",
+  "YOUR CIRCADIAN RHYTHM FILED FOR DIVORCE",
+  "DISCIPLINE IS JUST A WORD IN YOUR DICTIONARY",
+  "YOUR FUTURE SELF IS WRITING A YELP REVIEW",
+  "SHOWER WATER IS COLDER EVERY MINUTE",
+  "YOUR COMMUTE JUST BECAME A SPRINT",
+  "YOUR COWORKERS STARTED THE MEETING WITHOUT YOU",
+  "THAT'S 5 MORE MINUTES OF REGRET",
+  "YOUR MATTRESS IS NOT YOUR PERSONALITY",
+  "EVEN SLOTHS HAVE A SCHEDULE",
+  "YOUR ALARM IS CONSIDERING UNIONIZING",
+  "THE COFFEE SHOP LINE JUST GOT LONGER",
+  "YOUR TEETH REMAIN UNBRUSHED. CUTE.",
+  "DAYLIGHT SAVINGS CAN'T SAVE YOU",
+  "YOUR AMBITION CALLED IN SICK",
+  "SOMEWHERE A MONK LAUGHED AT YOUR DISCIPLINE",
+  "YOUR PHONE BATTERY HAS MORE ENERGY THAN YOU",
+  "THAT INTERVIEW IS IN 40 MINUTES BTW",
+  "YOUR BREAKFAST CEREAL EXPIRED WAITING",
+  "THE SNOOZE-INDUSTRIAL COMPLEX THANKS YOU",
+  "YOUR UBER SURGE PRICE JUST WENT UP",
+  "SLEEP IS A SCAM AND YOU'RE THE CUSTOMER",
+  "YOUR REFLECTION IS DISAPPOINTED",
+  "ANOTHER MORNING, ANOTHER MORAL FAILING",
+];
+
+let state = {
+  alarmTime: null,
+  alarmTimeout: null,
+  snoozeTimeout: null,
+  countdownInterval: null,
+  clockInterval: null,
+  snoozeCount: 0,
+  debt: 0,
+  audioCtx: null,
+  alarmOsc: null,
+  isRinging: false,
+};
+
+// --- Audio ---
+function getAudioCtx() {
+  if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return state.audioCtx;
+}
+
+function playAlarm() {
+  if (state.isRinging) return;
+  state.isRinging = true;
+  const ctx = getAudioCtx();
+  ctx.resume();
+
+  function beepCycle() {
+    if (!state.isRinging) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.3);
+    osc.frequency.setValueAtTime(660, ctx.currentTime + 0.45);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.6);
+    osc.onended = () => {
+      if (state.isRinging) setTimeout(beepCycle, 400);
+    };
+  }
+  beepCycle();
+}
+
+function stopAlarm() {
+  state.isRinging = false;
+}
+
+function playCashRegister() {
+  const ctx = getAudioCtx();
+  ctx.resume();
+  // cha-ching sound
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc1.type = 'triangle';
+  osc1.frequency.setValueAtTime(1200, ctx.currentTime);
+  osc1.frequency.exponentialRampToValueAtTarget(2400, ctx.currentTime + 0.05);
+
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(3000, ctx.currentTime + 0.05);
+  osc2.frequency.exponentialRampToValueAtTarget(1500, ctx.currentTime + 0.2);
+
+  gain.gain.setValueAtTime(0.25, ctx.currentTime);
+  gain.gain.setValueAtTime(0.3, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTarget(0.001, ctx.currentTime + 0.35);
+
+  osc1.start(ctx.currentTime);
+  osc1.stop(ctx.currentTime + 0.08);
+  osc2.start(ctx.currentTime + 0.05);
+  osc2.stop(ctx.currentTime + 0.35);
+}
+
+// --- Alarm Logic ---
+function setAlarm() {
+  const timeInput = document.getElementById('alarm-time').value;
+  if (!timeInput) return;
+
+  // Touch to init audio context
+  getAudioCtx();
+
+  const [h, m] = timeInput.split(':').map(Number);
+  const now = new Date();
+  let target = new Date();
+  target.setHours(h, m, 0, 0);
+  if (target <= now) target.setDate(target.getDate() + 1);
+
+  state.alarmTime = target;
+  state.snoozeCount = 0;
+  state.debt = 0;
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('waiting').classList.add('active');
+  document.getElementById('waiting-time').textContent = timeInput;
+
+  const ms = target - now;
+  state.alarmTimeout = setTimeout(triggerAlarm, ms);
+
+  state.countdownInterval = setInterval(updateCountdown, 1000);
+  updateCountdown();
+}
+
+function updateCountdown() {
+  const now = new Date();
+  if (!state.alarmTime) return;
+  let diff = state.alarmTime - now;
+  if (diff < 0) diff = 0;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('countdown').textContent =
+    `${h}h ${m}m ${s}s until pain`;
+}
+
+function cancelAlarm() {
+  clearTimeout(state.alarmTimeout);
+  clearTimeout(state.snoozeTimeout);
+  clearInterval(state.countdownInterval);
+  clearInterval(state.clockInterval);
+  stopAlarm();
+  document.getElementById('waiting').classList.remove('active');
+  document.getElementById('alarm').classList.remove('active');
+  document.getElementById('setup').style.display = 'flex';
+}
+
+function triggerAlarm() {
+  clearInterval(state.countdownInterval);
+  document.getElementById('waiting').classList.remove('active');
+  document.getElementById('alarm').classList.add('active');
+  document.getElementById('receipts').innerHTML = '';
+  updateDebtDisplay();
+  playAlarm();
+
+  state.clockInterval = setInterval(() => {
+    const now = new Date();
+    document.getElementById('current-time').textContent =
+      now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }, 1000);
+  // trigger immediately
+  const now = new Date();
+  document.getElementById('current-time').textContent =
+    now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function hitSnooze() {
+  stopAlarm();
+  state.snoozeCount++;
+  state.debt += SNOOZE_COST;
+
+  playCashRegister();
+  updateDebtDisplay();
+  addReceiptLine();
+
+  // Re-trigger after snooze duration
+  clearTimeout(state.snoozeTimeout);
+  state.snoozeTimeout = setTimeout(() => {
+    playAlarm();
+  }, SNOOZE_DURATION);
+}
+
+function updateDebtDisplay() {
+  document.getElementById('debt').textContent = `$${state.debt.toFixed(2)}`;
+  document.getElementById('snooze-count').textContent =
+    `${state.snoozeCount} snooze${state.snoozeCount !== 1 ? 's' : ''}`;
+}
+
+function addReceiptLine() {
+  const area = document.getElementById('receipts');
+  const msg = MESSAGES[Math.floor(Math.random() * MESSAGES.length)];
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const line = document.createElement('div');
+  line.className = 'receipt-line';
+  line.innerHTML = `
+    SNOOZE #${state.snoozeCount} @ ${time} -- <span class="amount">$${state.debt.toFixed(2)}</span>
+    <span class="msg">"${msg}"</span>
+  `;
+  area.prepend(line);
+}
+
+function wakeUp() {
+  stopAlarm();
+  clearTimeout(state.snoozeTimeout);
+  clearInterval(state.clockInterval);
+
+  // Save to history
+  if (state.snoozeCount > 0) {
+    saveSession(state.snoozeCount, state.debt);
+  }
+
+  document.getElementById('alarm').classList.remove('active');
+  document.getElementById('setup').style.display = 'flex';
+  renderChart();
+}
+
+// --- LocalStorage ---
+function getHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('snoozeTaxHistory') || '[]');
+  } catch { return []; }
+}
+
+function saveSession(snoozes, debt) {
+  const history = getHistory();
+  history.push({
+    date: new Date().toISOString(),
+    snoozes,
+    debt,
+  });
+  // Keep last 90 days
+  const cutoff = Date.now() - 90 * 86400000;
+  const trimmed = history.filter(h => new Date(h.date).getTime() > cutoff);
+  localStorage.setItem('snoozeTaxHistory', JSON.stringify(trimmed));
+}
+
+function clearHistory() {
+  if (confirm('Clear all snooze history?')) {
+    localStorage.removeItem('snoozeTaxHistory');
+    renderChart();
+    document.getElementById('shame-section').classList.remove('active');
+  }
+}
+
+// --- Chart ---
+function renderChart() {
+  const history = getHistory();
+  const chart = document.getElementById('chart');
+
+  if (history.length === 0) {
+    chart.innerHTML = '<div style="text-align:center;color:var(--dim);padding:20px;font-size:0.8rem;">No data yet. Set an alarm and snooze to see your shame.</div>';
+    return;
+  }
+
+  // Show last 14 entries, sorted by debt descending
+  const sorted = [...history].sort((a, b) => b.debt - a.debt).slice(0, 14);
+  const maxDebt = Math.max(...sorted.map(s => s.debt), 1);
+
+  chart.innerHTML = sorted.map(s => {
+    const d = new Date(s.date);
+    const label = `${d.getMonth()+1}/${d.getDate()} ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
+    const pct = (s.debt / maxDebt) * 100;
+    return `
+      <div class="chart-bar-row">
+        <span class="chart-label">${label}</span>
+        <div class="chart-bar" style="width:${pct}%"></div>
+        <span class="chart-value">$${s.debt.toFixed(2)} (${s.snoozes}x)</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// --- Shame Report ---
+function toggleShame() {
+  const section = document.getElementById('shame-section');
+  if (section.classList.contains('active')) {
+    section.classList.remove('active');
+    return;
+  }
+
+  const history = getHistory();
+  const card = document.getElementById('shame-card');
+
+  // Last 7 days
+  const weekAgo = Date.now() - 7 * 86400000;
+  const weekly = history.filter(h => new Date(h.date).getTime() > weekAgo);
+
+  if (weekly.length === 0) {
+    card.innerHTML = `
+      <h3>WEEKLY SHAME REPORT</h3>
+      <div style="text-align:center;color:var(--dim);padding:16px;font-size:0.8rem;">
+        No snooze data this week. Either you're disciplined or you haven't set the alarm.
+      </div>
+    `;
+    section.classList.add('active');
+    return;
+  }
+
+  const totalSnoozes = weekly.reduce((s, h) => s + h.snoozes, 0);
+  const totalDebt = weekly.reduce((s, h) => s + h.debt, 0);
+  const avgSnoozes = (totalSnoozes / weekly.length).toFixed(1);
+  const worst = weekly.reduce((a, b) => a.debt > b.debt ? a : b);
+  const worstDate = new Date(worst.date);
+  const totalMinutesLost = totalSnoozes * 5;
+
+  let verdict = '';
+  if (totalSnoozes === 0) verdict = 'Impossible. You cheated.';
+  else if (totalSnoozes <= 3) verdict = 'Acceptable. Barely.';
+  else if (totalSnoozes <= 7) verdict = 'You have a casual snooze habit. It will escalate.';
+  else if (totalSnoozes <= 14) verdict = 'You are a snooze addict. Seek help.';
+  else if (totalSnoozes <= 21) verdict = 'Your bed owns you. You are furniture.';
+  else verdict = 'You have ascended beyond shame. You are one with the mattress.';
+
+  card.innerHTML = `
+    <h3>WEEKLY SHAME REPORT</h3>
+    <div class="shame-stat"><span class="label">Mornings logged</span><span class="value">${weekly.length}</span></div>
+    <div class="shame-stat"><span class="label">Total snoozes</span><span class="value">${totalSnoozes}</span></div>
+    <div class="shame-stat"><span class="label">Total debt</span><span class="value">$${totalDebt.toFixed(2)}</span></div>
+    <div class="shame-stat"><span class="label">Avg snoozes/morning</span><span class="value">${avgSnoozes}</span></div>
+    <div class="shame-stat"><span class="label">Minutes lost to snoozing</span><span class="value">${totalMinutesLost} min</span></div>
+    <div class="shame-stat"><span class="label">Worst morning</span><span class="value">${worstDate.getMonth()+1}/${worstDate.getDate()} -- $${worst.debt.toFixed(2)} (${worst.snoozes}x)</span></div>
+    <div class="shame-verdict">"${verdict}"</div>
+  `;
+  section.classList.add('active');
+}
+
+// --- Init ---
+renderChart();
+</script>
+</body>
+</html>

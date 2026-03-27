@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compliment Cannon</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: linear-gradient(135deg, #1a0a00 0%, #2d1400 30%, #4a2000 60%, #2d1400 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ffd700;
+    overflow-x: hidden;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    text-align: center;
+    margin: 20px 0 10px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 165, 0, 0.3);
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: clamp(0.8rem, 2.5vw, 1rem);
+    color: #c9a24e;
+    margin-bottom: 20px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  .counter {
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    color: #e8b840;
+    margin-bottom: 16px;
+    background: rgba(255, 215, 0, 0.08);
+    padding: 8px 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+  }
+
+  .name-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .name-input-wrap label {
+    font-size: 0.95rem;
+    color: #c9a24e;
+  }
+
+  .name-input-wrap input {
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    width: 180px;
+    transition: border-color 0.3s;
+  }
+
+  .name-input-wrap input::placeholder { color: rgba(255, 215, 0, 0.3); }
+  .name-input-wrap input:focus { border-color: #ffd700; }
+
+  .fire-btn {
+    width: clamp(200px, 60vw, 320px);
+    height: clamp(200px, 60vw, 320px);
+    border-radius: 50%;
+    border: 4px solid #ffd700;
+    background: radial-gradient(circle at 40% 35%, #ff8c00, #cc5500 50%, #8b3a00 100%);
+    color: #fff;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    box-shadow: 0 0 30px rgba(255, 140, 0, 0.4), 0 0 60px rgba(255, 100, 0, 0.2), inset 0 -4px 12px rgba(0,0,0,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    margin-bottom: 24px;
+    line-height: 1.3;
+    letter-spacing: 1px;
+  }
+
+  .fire-btn:hover {
+    transform: scale(1.04);
+    box-shadow: 0 0 50px rgba(255, 140, 0, 0.6), 0 0 80px rgba(255, 100, 0, 0.3), inset 0 -4px 12px rgba(0,0,0,0.3);
+  }
+
+  .fire-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 20px rgba(255, 140, 0, 0.3), inset 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .fire-btn.firing {
+    animation: pulse-fire 0.4s ease-out;
+  }
+
+  @keyframes pulse-fire {
+    0% { transform: scale(0.95); }
+    50% { transform: scale(1.12); box-shadow: 0 0 80px rgba(255, 200, 0, 0.8), 0 0 120px rgba(255, 140, 0, 0.5); }
+    100% { transform: scale(1); }
+  }
+
+  .compliment-display {
+    width: 100%;
+    max-width: 600px;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    margin-bottom: 16px;
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    border-radius: 16px;
+    text-align: center;
+    position: relative;
+  }
+
+  .compliment-text {
+    font-size: clamp(1.1rem, 3.5vw, 1.6rem);
+    line-height: 1.5;
+    color: #ffe066;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+    min-height: 1.5em;
+  }
+
+  .compliment-text .cursor {
+    display: inline-block;
+    width: 3px;
+    height: 1.2em;
+    background: #ffd700;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.6s infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .action-btn {
+    background: rgba(255, 215, 0, 0.1);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #ffd700;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: #ffd700;
+  }
+
+  .action-btn:active { transform: scale(0.95); }
+
+  .action-btn.copied {
+    background: rgba(0, 200, 80, 0.2);
+    border-color: #00c850;
+    color: #00c850;
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: confetti-fall linear forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; }
+  }
+
+  /* Sparkle burst from button center */
+  .sparkle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffd700;
+    pointer-events: none;
+    z-index: 999;
+    animation: sparkle-burst 0.6s ease-out forwards;
+  }
+
+  @keyframes sparkle-burst {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .footer {
+    margin-top: auto;
+    padding: 20px;
+    color: rgba(255, 215, 0, 0.3);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  /* Small screens */
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .compliment-display { padding: 16px; min-height: 100px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>COMPLIMENT CANNON</h1>
+<p class="subtitle">Weaponized kindness. Use responsibly.</p>
+
+<div class="counter">Compliments fired: <span id="count">0</span></div>
+
+<div class="name-input-wrap">
+  <label for="targetName">Aim at:</label>
+  <input type="text" id="targetName" placeholder="Enter a name..." autocomplete="off">
+</div>
+
+<button class="fire-btn" id="fireBtn">FIRE<br>COMPLIMENT</button>
+
+<div class="compliment-display">
+  <div class="compliment-text" id="complimentText">Press the button. You deserve this.</div>
+</div>
+
+<div class="action-buttons">
+  <button class="action-btn" id="shareBtn">Copy to Share</button>
+  <button class="action-btn" id="speakBtn">Read Aloud</button>
+</div>
+
+<div class="footer">Pass the phone. Spread the joy.</div>
+
+<script>
+const compliments = [
+  "You walk like someone who has definitely rescued a dog",
+  "Your energy could power a small European country",
+  "You look like the main character",
+  "NASA called. They want to study your radiance",
+  "You could charm a parking ticket out of existence",
+  "Your vibe is like a warm croissant on a Sunday morning",
+  "People definitely google you after meeting you",
+  "You have the confidence of a golden retriever entering a room",
+  "You smell like you just closed a million-dollar deal",
+  "If kindness were currency, you'd own the Federal Reserve",
+  "Your laugh could cure seasonal depression",
+  "You look like you tip 30% minimum",
+  "Your handshake probably ends wars",
+  "You could narrate a nature documentary and the animals would applaud",
+  "You've never sent an awkward text in your life, have you",
+  "Your smile has its own gravitational field",
+  "You look like the person everyone hopes sits next to them on a flight",
+  "Your aura just set off my smoke detector",
+  "You were definitely voted most likely to brighten a room",
+  "Even your silences are eloquent",
+  "You look like you give directions that actually work",
+  "Your presence just raised everyone's credit score",
+  "You look like you know the chef personally. Everywhere",
+  "Your DNA should be in a museum",
+  "You could convince rain to fall upward",
+  "You look like someone who always remembers birthdays",
+  "Your playlist must be absolutely immaculate",
+  "You have the jaw structure of a Renaissance painting",
+  "You look like you parallel park on the first try. Every time",
+  "Your compliments probably make people cry happy tears",
+  "You look like the person dogs choose at the park",
+  "You could make elevator music sound like a symphony",
+  "Your eyes contain at least three national parks",
+  "You look like you've never been on hold with customer service",
+  "If you were a candle, you'd be the fancy kind that costs $85",
+  "Your immune system probably runs on pure confidence",
+  "You look like the friend who always picks the best restaurant",
+  "Your hair has its own Netflix documentary",
+  "You probably make the sun feel self-conscious",
+  "You walk into rooms like you own a controlling interest",
+  "Your Wi-Fi probably never drops",
+  "You look like you know the exact right amount of garlic to use",
+  "Your blood type is definitely A+",
+  "You could sell ice to a penguin and it would thank you",
+  "You look like your plants actually survive",
+  "If confidence were an Olympic sport, you'd break records",
+  "Your brain cells must have their own LinkedIn profiles",
+  "You probably dream in 4K resolution",
+  "You look like the kind of person who makes strangers smile on the subway",
+  "Your shadow is probably better looking than most people",
+  "You could win a staring contest with the Mona Lisa",
+  "You have the organizational skills of a spreadsheet and the warmth of a fireplace",
+  "Your pockets probably contain at least one motivational quote",
+  "You look like you've never used the wrong your/you're",
+  "Your hugs probably count as therapy",
+  "You could convince a cat to fetch",
+  "You look like someone who's been in a magazine but was too humble to mention it",
+  "Your posture alone just inspired three people to sit up straighter",
+  "You have the energy of someone who actually enjoys Monday mornings",
+  "Even autocorrect wouldn't dare change your words",
+  "You look like your phone battery lasts all day because even it respects you",
+  "Your cooking probably makes Gordon Ramsay nervous",
+  "You could read a terms and conditions agreement and make it riveting",
+  "You have the timing of a perfect high-five every single time",
+  "You look like the kind of person clouds part for",
+  "Your DNA helix probably has a little bow on it",
+  "You've never accidentally liked an old photo while stalking, have you",
+  "Your sense of humor could be prescribed by doctors",
+  "You look like you fold your fitted sheets perfectly",
+  "Your vocabulary makes dictionaries feel insecure",
+  "You could out-charisma a sunset",
+  "Your existence alone is raising the global average for attractiveness",
+  "You look like the person who always finds money in jacket pockets",
+  "Your common sense is so good it should be called rare sense",
+  "You could calm down a tornado by just raising an eyebrow",
+  "You look like you remember people's names at parties. ALL of them",
+  "Your confidence is contagious and the CDC can't stop it",
+  "You probably make traffic lights turn green by sheer will",
+  "You look like your alarm clock wakes up to YOU",
+  "Your potential is so bright it needs sunglasses",
+  "You could make a spreadsheet look exciting",
+  "You look like the human equivalent of finding $20 in your jeans",
+  "Your emotional intelligence is off the charts. Like, the charts quit",
+  "You probably get standing ovations in your dreams",
+  "You walk like someone whose theme song plays wherever they go",
+  "Your texts back are probably always perfectly timed",
+  "You look like you've mastered the art of the genuine compliment",
+  "If charisma were a sound, you'd be a full orchestra",
+  "You could teach a masterclass in being effortlessly cool",
+  "Your kindness has ripple effects in parallel dimensions",
+];
+
+// Personalized variants (NAME gets replaced)
+const personalizedCompliments = [
+  "NAME, you walk like someone who has definitely rescued TWO dogs",
+  "NAME! Even saying your name out loud makes the room warmer",
+  "NAME, you look like the protagonist of a movie I'd watch seven times",
+  "NAME, your energy just cured my existential dread",
+  "NAME, if the world gave out awards for being outstanding, you'd have a warehouse",
+  "Everyone in this room just got 10% better looking by standing near NAME",
+  "NAME, you could walk into Mordor and the orcs would hold the door for you",
+  "NAME, your smile just devalued every sunset I've ever seen",
+  "NAME, scientists have confirmed: you're built different",
+  "I bet NAME's Wi-Fi password is something wholesome",
+  "NAME, you look like someone who makes even airports feel luxurious",
+  "NAME, your voice could convince a GPS to say please and thank you",
+  "NAME, you were obviously designed by committee and the committee was LEGENDS",
+  "NAME, your presence just turned this gathering into an event",
+  "NAME, even your shadow has good posture",
+];
+
+let count = parseInt(localStorage.getItem('complimentCount') || '0');
+let currentCompliment = '';
+let typewriterTimer = null;
+
+const countEl = document.getElementById('count');
+const fireBtn = document.getElementById('fireBtn');
+const complimentText = document.getElementById('complimentText');
+const shareBtn = document.getElementById('shareBtn');
+const speakBtn = document.getElementById('speakBtn');
+const nameInput = document.getElementById('targetName');
+
+countEl.textContent = count;
+
+function getCompliment() {
+  const name = nameInput.value.trim();
+  if (name && Math.random() < 0.45) {
+    const c = personalizedCompliments[Math.floor(Math.random() * personalizedCompliments.length)];
+    return c.replace(/NAME/g, name);
+  }
+  let c = compliments[Math.floor(Math.random() * compliments.length)];
+  if (name && Math.random() < 0.5) {
+    c = name + ", " + c.charAt(0).toLowerCase() + c.slice(1);
+  }
+  return c;
+}
+
+function typewriter(text, el, cb) {
+  if (typewriterTimer) clearInterval(typewriterTimer);
+  let i = 0;
+  el.innerHTML = '<span class="cursor"></span>';
+  typewriterTimer = setInterval(() => {
+    if (i < text.length) {
+      el.innerHTML = text.slice(0, i + 1) + '<span class="cursor"></span>';
+      i++;
+    } else {
+      clearInterval(typewriterTimer);
+      typewriterTimer = null;
+      setTimeout(() => {
+        el.innerHTML = text;
+        if (cb) cb();
+      }, 600);
+    }
+  }, 30);
+}
+
+// Web Audio API fanfare
+function playFanfare() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.12);
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + i * 0.12 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + i * 0.12 + 0.15);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.12 + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.5);
+    });
+    // Triumphant final chord
+    const chordFreqs = [523.25, 659.25, 783.99, 1046.5];
+    chordFreqs.forEach(freq => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + 0.5);
+      gain.gain.linearRampToValueAtTime(0.04, ctx.currentTime + 0.55);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + 0.5);
+      osc.stop(ctx.currentTime + 1.5);
+    });
+    setTimeout(() => ctx.close(), 2000);
+  } catch(e) {}
+}
+
+// CSS confetti explosion
+function spawnConfetti() {
+  const colors = ['#ffd700', '#ff6b00', '#ff4444', '#44ff44', '#4488ff', '#ff44ff', '#ffaa00', '#00ffcc', '#ff8866', '#aaddff'];
+  const shapes = ['circle', 'rect', 'triangle'];
+  const count = 60;
+  const btnRect = fireBtn.getBoundingClientRect();
+  const cx = btnRect.left + btnRect.width / 2;
+  const cy = btnRect.top + btnRect.height / 2;
+
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const size = 6 + Math.random() * 10;
+    el.style.width = size + 'px';
+    el.style.height = size + 'px';
+    el.style.background = color;
+
+    if (shape === 'circle') {
+      el.style.borderRadius = '50%';
+    } else if (shape === 'triangle') {
+      el.style.width = '0';
+      el.style.height = '0';
+      el.style.background = 'transparent';
+      el.style.borderLeft = (size/2) + 'px solid transparent';
+      el.style.borderRight = (size/2) + 'px solid transparent';
+      el.style.borderBottom = size + 'px solid ' + color;
+    } else {
+      el.style.borderRadius = '2px';
+    }
+
+    const angle = Math.random() * Math.PI * 2;
+    const spread = 80 + Math.random() * 200;
+    const startX = cx + Math.cos(angle) * (btnRect.width * 0.3 * Math.random());
+    const startY = cy + Math.sin(angle) * (btnRect.height * 0.3 * Math.random());
+    const endX = startX + Math.cos(angle) * spread;
+
+    el.style.left = startX + 'px';
+    el.style.top = startY + 'px';
+
+    const duration = 1.5 + Math.random() * 2;
+    el.style.animationDuration = duration + 's';
+
+    // Custom motion via CSS custom property and inline style
+    el.style.setProperty('--dx', (endX - startX) + 'px');
+    el.style.animation = `confetti-fall ${duration}s ease-out forwards`;
+    el.style.left = startX + 'px';
+
+    // Drift sideways
+    const drift = (Math.random() - 0.5) * 300;
+    el.animate([
+      { transform: 'translateX(0) translateY(0) rotate(0deg)', opacity: 1 },
+      { transform: `translateX(${drift}px) translateY(${window.innerHeight}px) rotate(${360 + Math.random()*720}deg)`, opacity: 0 }
+    ], { duration: duration * 1000, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', fill: 'forwards' });
+
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), duration * 1000 + 100);
+  }
+
+  // Sparkle burst
+  for (let i = 0; i < 16; i++) {
+    const sp = document.createElement('div');
+    sp.className = 'sparkle';
+    const angle = (Math.PI * 2 * i) / 16;
+    const dist = 60 + Math.random() * 100;
+    sp.style.left = cx + 'px';
+    sp.style.top = cy + 'px';
+    sp.style.background = colors[Math.floor(Math.random() * colors.length)];
+    sp.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
+    ], { duration: 500, easing: 'ease-out', fill: 'forwards' });
+    document.body.appendChild(sp);
+    setTimeout(() => sp.remove(), 600);
+  }
+}
+
+// Speak with enthusiasm
+function speakCompliment(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.1;
+  utter.pitch = 1.3;
+  utter.volume = 1;
+
+  // Try to find an enthusiastic-sounding voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /samantha|karen|daniel|google.*us|english.*us/i.test(v.name));
+  if (preferred) utter.voice = preferred;
+
+  speechSynthesis.speak(utter);
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// Fire!
+function fire() {
+  currentCompliment = getCompliment();
+  count++;
+  localStorage.setItem('complimentCount', count);
+  countEl.textContent = count;
+
+  fireBtn.classList.remove('firing');
+  void fireBtn.offsetWidth;
+  fireBtn.classList.add('firing');
+
+  spawnConfetti();
+  playFanfare();
+  typewriter(currentCompliment, complimentText, () => {
+    speakCompliment(currentCompliment);
+  });
+
+  shareBtn.classList.remove('copied');
+  shareBtn.textContent = 'Copy to Share';
+}
+
+fireBtn.addEventListener('click', fire);
+
+// Share / copy
+shareBtn.addEventListener('click', () => {
+  if (!currentCompliment) return;
+  const text = currentCompliment + ' (via Compliment Cannon)';
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+});
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    shareBtn.textContent = 'Copied!';
+    shareBtn.classList.add('copied');
+    setTimeout(() => {
+      shareBtn.textContent = 'Copy to Share';
+      shareBtn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Final fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    shareBtn.textContent = 'Copied!';
+    shareBtn.classList.add('copied');
+    setTimeout(() => {
+      shareBtn.textContent = 'Copy to Share';
+      shareBtn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Read aloud button
+speakBtn.addEventListener('click', () => {
+  if (currentCompliment) speakCompliment(currentCompliment);
+});
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && e.target === document.body) {
+    e.preventDefault();
+    fire();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Reader - The Card Trick</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0010;
+  color: #e0d0ff;
+  font-family: 'Georgia', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#particles {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 10px;
+  text-align: center;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  background: linear-gradient(135deg, #c084fc, #a855f7, #7c3aed, #c084fc);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s ease infinite;
+  margin-bottom: 5px;
+  text-shadow: 0 0 40px rgba(168, 85, 247, 0.3);
+  letter-spacing: 2px;
+}
+
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #9f7aea;
+  font-style: italic;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+/* Mode selector */
+.mode-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.mode-btn {
+  padding: 8px 16px;
+  border: 1px solid #7c3aed;
+  background: rgba(124, 58, 237, 0.1);
+  color: #c084fc;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8rem;
+  transition: all 0.3s;
+}
+
+.mode-btn:hover {
+  background: rgba(124, 58, 237, 0.3);
+}
+
+.mode-btn.active {
+  background: rgba(124, 58, 237, 0.5);
+  border-color: #a855f7;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.4);
+}
+
+.mode-hint {
+  font-size: 0.75rem;
+  color: #8b6cc0;
+  margin-bottom: 15px;
+  font-style: italic;
+  min-height: 1.2em;
+}
+
+/* Instructions */
+.instructions {
+  background: rgba(124, 58, 237, 0.08);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  border-radius: 12px;
+  padding: 12px 18px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.instructions .step {
+  margin: 4px 0;
+}
+
+.instructions .step-num {
+  color: #a855f7;
+  font-weight: bold;
+}
+
+/* Card spread */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
+  gap: 6px;
+  margin-bottom: 20px;
+  perspective: 1000px;
+}
+
+@media (min-width: 600px) {
+  .card-grid {
+    grid-template-columns: repeat(13, 1fr);
+  }
+}
+
+.card {
+  aspect-ratio: 2.5/3.5;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  font-weight: bold;
+}
+
+.card-back {
+  background: linear-gradient(135deg, #1a0533, #2d1b69);
+  border: 1px solid #4c1d95;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.2);
+}
+
+.card-back::before {
+  content: "\2728";
+  font-size: clamp(1rem, 3vw, 1.5rem);
+}
+
+.card-front {
+  transform: rotateY(180deg);
+  background: #fff;
+  border: 1px solid #ccc;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+}
+
+.card-front .rank {
+  font-size: clamp(0.8rem, 2.5vw, 1.1rem);
+  line-height: 1;
+}
+
+.card-front .suit {
+  font-size: clamp(0.9rem, 3vw, 1.3rem);
+  line-height: 1;
+}
+
+.card.red .card-front {
+  color: #dc2626;
+}
+
+.card.black .card-front {
+  color: #1a1a1a;
+}
+
+.card:hover:not(.flipped) {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  transform: translateY(-3px);
+}
+
+.card.flipped:hover {
+  transform: rotateY(180deg) translateY(-3px);
+}
+
+.card.peeked .card-back {
+  border-color: #a855f7;
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+}
+
+.card.peeked .card-back::before {
+  content: "\1F441";
+}
+
+/* Buttons */
+.btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 30px;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 1px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.6);
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: rgba(124, 58, 237, 0.15);
+  color: #c084fc;
+  border: 1px solid #7c3aed;
+}
+
+.btn-secondary:hover {
+  background: rgba(124, 58, 237, 0.3);
+}
+
+/* Reveal overlay */
+.reveal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.reveal-overlay.active {
+  display: flex;
+}
+
+.reveal-text {
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  color: #c084fc;
+  margin-bottom: 30px;
+  opacity: 0;
+  animation: fadeInUp 1s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.reveal-card {
+  width: min(200px, 50vw);
+  aspect-ratio: 2.5/3.5;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.3) rotateZ(720deg);
+  box-shadow: 0 0 0 rgba(168, 85, 247, 0);
+}
+
+.reveal-card.show {
+  animation: cardReveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes cardReveal {
+  0% { opacity: 0; transform: scale(0.3) rotateZ(720deg); box-shadow: 0 0 0 rgba(168, 85, 247, 0); }
+  60% { opacity: 1; transform: scale(1.1) rotateZ(0deg); }
+  80% { transform: scale(0.95) rotateZ(0deg); }
+  100% { opacity: 1; transform: scale(1) rotateZ(0deg); box-shadow: 0 0 80px rgba(168, 85, 247, 0.6), 0 0 160px rgba(124, 58, 237, 0.3); }
+}
+
+.reveal-card .rank {
+  font-size: clamp(2.5rem, 10vw, 4rem);
+  font-weight: bold;
+  line-height: 1;
+}
+
+.reveal-card .suit {
+  font-size: clamp(3rem, 12vw, 5rem);
+  line-height: 1;
+}
+
+.reveal-card.red { color: #dc2626; }
+.reveal-card.black { color: #1a1a1a; }
+
+.reveal-message {
+  margin-top: 30px;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  color: #9f7aea;
+  font-style: italic;
+  opacity: 0;
+}
+
+.reveal-message.show {
+  animation: fadeInUp 1s ease 2s forwards;
+}
+
+.reveal-close {
+  margin-top: 30px;
+  opacity: 0;
+}
+
+.reveal-close.show {
+  animation: fadeInUp 0.5s ease 3s forwards;
+}
+
+/* Flash effect */
+.flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.flash.bang {
+  animation: flashBang 0.4s ease-out forwards;
+}
+
+@keyframes flashBang {
+  0% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+
+/* Suspense dots */
+.suspense {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 100;
+  justify-content: center;
+}
+
+.suspense.active { display: flex; }
+
+.suspense-text {
+  font-size: clamp(1.2rem, 4vw, 1.8rem);
+  color: #c084fc;
+}
+
+.suspense-dots span {
+  display: inline-block;
+  width: 12px; height: 12px;
+  background: #a855f7;
+  border-radius: 50%;
+  margin: 0 6px;
+  animation: pulse 1.2s infinite;
+}
+
+.suspense-dots span:nth-child(2) { animation-delay: 0.2s; }
+.suspense-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.eye-anim {
+  font-size: 4rem;
+  animation: eyeFloat 2s ease-in-out infinite;
+}
+
+@keyframes eyeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Status bar */
+.status {
+  font-size: 0.8rem;
+  color: #6b5b95;
+  min-height: 1.5em;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+  <h1>Mind Reader</h1>
+  <p class="subtitle">I can see what you're thinking...</p>
+
+  <div class="mode-selector">
+    <button class="mode-btn active" data-mode="classic" onclick="setMode('classic')">Classic Force</button>
+    <button class="mode-btn" data-mode="math" onclick="setMode('math')">Mathematical</button>
+    <button class="mode-btn" data-mode="genuine" onclick="setMode('genuine')">Genuine Read</button>
+  </div>
+  <div class="mode-hint" id="modeHint">The spirits have already chosen your card...</div>
+
+  <div class="instructions">
+    <div class="step"><span class="step-num">1.</span> Tap any card to peek at it (only you can see)</div>
+    <div class="step"><span class="step-num">2.</span> Tap again to flip it back face-down</div>
+    <div class="step"><span class="step-num">3.</span> Press "Read My Mind" when ready</div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="card-grid" id="cardGrid"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="readBtn" onclick="readMind()" disabled>Read My Mind</button>
+    <button class="btn btn-secondary" onclick="resetDeck()">Shuffle &amp; Reset</button>
+  </div>
+</div>
+
+<!-- Suspense overlay -->
+<div class="suspense" id="suspense">
+  <div class="eye-anim">&#x1F441;</div>
+  <div class="suspense-text" id="suspenseText">Reaching into your thoughts...</div>
+  <div class="suspense-dots">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- Reveal overlay -->
+<div class="reveal-overlay" id="revealOverlay">
+  <div class="reveal-text">Your card is...</div>
+  <div class="reveal-card" id="revealCard">
+    <div class="rank" id="revealRank"></div>
+    <div class="suit" id="revealSuit"></div>
+  </div>
+  <div class="reveal-message" id="revealMessage">I told you... I can see everything.</div>
+  <div class="reveal-close" id="revealClose">
+    <button class="btn btn-secondary" onclick="closeReveal()">Try Again</button>
+  </div>
+</div>
+
+<!-- Flash -->
+<div class="flash" id="flash"></div>
+
+<script>
+// ---- Audio via Web Audio API (no external files) ----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+}
+
+function playSuspenseSound() {
+  ensureAudio();
+  // Low rumble + eerie oscillation
+  const osc1 = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+
+  osc1.type = 'sine';
+  osc1.frequency.setValueAtTime(55, audioCtx.currentTime);
+  osc1.frequency.linearRampToValueAtTime(85, audioCtx.currentTime + 3);
+
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(110, audioCtx.currentTime);
+  osc2.frequency.linearRampToValueAtTime(165, audioCtx.currentTime + 3);
+
+  lfo.type = 'sine';
+  lfo.frequency.value = 3;
+  lfoGain.gain.value = 15;
+  lfo.connect(lfoGain);
+  lfoGain.connect(osc2.frequency);
+
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.25, audioCtx.currentTime + 0.5);
+  gain.gain.linearRampToValueAtTime(0.35, audioCtx.currentTime + 2.5);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3.2);
+
+  osc1.connect(gain);
+  osc2.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc1.start();
+  osc2.start();
+  lfo.start();
+  osc1.stop(audioCtx.currentTime + 3.2);
+  osc2.stop(audioCtx.currentTime + 3.2);
+  lfo.stop(audioCtx.currentTime + 3.2);
+}
+
+function playRevealSound() {
+  ensureAudio();
+  // Dramatic reveal chord
+  const freqs = [261.6, 329.6, 392, 523.2];
+  freqs.forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = i === 3 ? 'triangle' : 'sine';
+    osc.frequency.value = f;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.05);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + 0.02 * i);
+    osc.stop(audioCtx.currentTime + 2.5);
+  });
+}
+
+function playFlipSound() {
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.15);
+}
+
+// ---- Deck ----
+const SUITS = ['\u2660', '\u2665', '\u2666', '\u2663']; // spade, heart, diamond, club
+const SUIT_NAMES = ['Spades', 'Hearts', 'Diamonds', 'Clubs'];
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+let deck = [];
+let currentMode = 'classic';
+let peekedCard = null;
+let hoverTimes = {}; // cardIndex -> cumulative ms
+let hoverStart = {};
+let hasInteracted = false;
+
+// Classic force card (7 of Hearts - classic magician pick)
+const FORCE_CARD = { rank: '7', suit: '\u2665', suitIdx: 1 };
+
+function buildDeck() {
+  deck = [];
+  for (let s = 0; s < 4; s++) {
+    for (let r = 0; r < 13; r++) {
+      deck.push({ rank: RANKS[r], suit: SUITS[s], suitIdx: s, index: deck.length });
+    }
+  }
+  // Shuffle
+  for (let i = deck.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
+  }
+}
+
+function isRed(card) {
+  return card.suitIdx === 1 || card.suitIdx === 2;
+}
+
+function renderDeck() {
+  const grid = document.getElementById('cardGrid');
+  grid.innerHTML = '';
+  deck.forEach((card, idx) => {
+    const el = document.createElement('div');
+    el.className = `card ${isRed(card) ? 'red' : 'black'}`;
+    el.dataset.idx = idx;
+    el.innerHTML = `
+      <div class="card-back"></div>
+      <div class="card-front">
+        <span class="rank">${card.rank}</span>
+        <span class="suit">${card.suit}</span>
+      </div>
+    `;
+    el.addEventListener('click', () => toggleCard(idx, el));
+    el.addEventListener('mouseenter', () => startHover(idx));
+    el.addEventListener('mouseleave', () => endHover(idx));
+    el.addEventListener('touchstart', () => startHover(idx), { passive: true });
+    el.addEventListener('touchend', () => endHover(idx), { passive: true });
+    grid.appendChild(el);
+  });
+}
+
+function toggleCard(idx, el) {
+  hasInteracted = true;
+  playFlipSound();
+
+  if (el.classList.contains('flipped')) {
+    // Flip back
+    el.classList.remove('flipped');
+    el.classList.add('peeked');
+    peekedCard = idx;
+    document.getElementById('readBtn').disabled = false;
+    setStatus('You peeked at a card. I felt a disturbance...');
+  } else {
+    // If another card is flipped, flip it back first
+    const flipped = document.querySelector('.card.flipped');
+    if (flipped) {
+      flipped.classList.remove('flipped');
+      flipped.classList.add('peeked');
+    }
+    el.classList.add('flipped');
+    peekedCard = idx;
+    document.getElementById('readBtn').disabled = false;
+    setStatus('Concentrate on your card... then flip it back.');
+  }
+}
+
+function startHover(idx) {
+  hoverStart[idx] = Date.now();
+}
+
+function endHover(idx) {
+  if (hoverStart[idx]) {
+    const elapsed = Date.now() - hoverStart[idx];
+    hoverTimes[idx] = (hoverTimes[idx] || 0) + elapsed;
+    delete hoverStart[idx];
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  const hints = {
+    classic: 'The spirits have already chosen your card...',
+    math: 'The position of cards reveals all secrets...',
+    genuine: 'I watch your every hesitation...'
+  };
+  document.getElementById('modeHint').textContent = hints[mode];
+}
+
+function getForceGuess() {
+  // Classic force: always guess 7 of Hearts, regardless of what user picked.
+  // But we disguise it with theatrical presentation.
+  return FORCE_CARD;
+}
+
+function getMathGuess() {
+  // Mathematical force: uses the card position. We "predict" based on the
+  // position of the peeked card in the shuffled deck.
+  // The trick: the card at the peeked position IS the card. We just know it.
+  if (peekedCard !== null) {
+    return deck[peekedCard];
+  }
+  // Fallback: position-based formula
+  const pos = Object.keys(hoverTimes).length > 0
+    ? parseInt(Object.keys(hoverTimes).reduce((a, b) => hoverTimes[a] > hoverTimes[b] ? a : b))
+    : Math.floor(Math.random() * 52);
+  return deck[pos];
+}
+
+function getGenuineGuess() {
+  // Genuine mode: watches hover/tap duration to guess which card attracted attention.
+  // Flush any active hovers
+  Object.keys(hoverStart).forEach(idx => endHover(parseInt(idx)));
+
+  // If user peeked at a card, that's our best signal
+  if (peekedCard !== null) {
+    return deck[peekedCard];
+  }
+
+  // Otherwise find the card with most hover time
+  const entries = Object.entries(hoverTimes);
+  if (entries.length === 0) {
+    return deck[Math.floor(Math.random() * 52)];
+  }
+  const bestIdx = entries.reduce((a, b) => parseFloat(a[1]) > parseFloat(b[1]) ? a : b)[0];
+  return deck[parseInt(bestIdx)];
+}
+
+function getGuess() {
+  switch (currentMode) {
+    case 'classic': return getForceGuess();
+    case 'math': return getMathGuess();
+    case 'genuine': return getGenuineGuess();
+    default: return getMathGuess();
+  }
+}
+
+const suspenseMessages = [
+  "Reaching into your thoughts...",
+  "I sense a pattern forming...",
+  "The card is becoming clearer...",
+  "I can feel its color...",
+  "Yes... I see it now..."
+];
+
+async function readMind() {
+  // Flip back any face-up card first
+  const flipped = document.querySelector('.card.flipped');
+  if (flipped) {
+    flipped.classList.remove('flipped');
+    flipped.classList.add('peeked');
+  }
+
+  const guess = getGuess();
+
+  playSuspenseSound();
+
+  // Suspense phase
+  const suspense = document.getElementById('suspense');
+  const suspenseText = document.getElementById('suspenseText');
+  suspense.classList.add('active');
+
+  for (let i = 0; i < suspenseMessages.length; i++) {
+    suspenseText.textContent = suspenseMessages[i];
+    await sleep(600);
+  }
+
+  await sleep(400);
+  suspense.classList.remove('active');
+
+  // Flash
+  const flash = document.getElementById('flash');
+  flash.classList.add('bang');
+  playRevealSound();
+
+  setTimeout(() => flash.classList.remove('bang'), 500);
+
+  // Reveal
+  const overlay = document.getElementById('revealOverlay');
+  const revealCard = document.getElementById('revealCard');
+  const revealRank = document.getElementById('revealRank');
+  const revealSuit = document.getElementById('revealSuit');
+  const revealMsg = document.getElementById('revealMessage');
+  const revealClose = document.getElementById('revealClose');
+
+  revealCard.className = `reveal-card ${isRed(guess) ? 'red' : 'black'}`;
+  revealRank.textContent = guess.rank;
+  revealSuit.textContent = guess.suit;
+
+  const messages = [
+    "I told you... I can see everything.",
+    "The mind is an open book.",
+    "Was I right? I always am.",
+    "Your thoughts betray you.",
+    "The spirits never lie.",
+    "Impressed? You should be."
+  ];
+  revealMsg.textContent = messages[Math.floor(Math.random() * messages.length)];
+
+  overlay.classList.add('active');
+
+  // Trigger animations with a small delay
+  await sleep(50);
+  revealCard.classList.add('show');
+  revealMsg.classList.add('show');
+  revealClose.classList.add('show');
+}
+
+function closeReveal() {
+  const overlay = document.getElementById('revealOverlay');
+  const revealCard = document.getElementById('revealCard');
+  const revealMsg = document.getElementById('revealMessage');
+  const revealClose = document.getElementById('revealClose');
+
+  overlay.classList.remove('active');
+  revealCard.classList.remove('show');
+  revealMsg.classList.remove('show');
+  revealClose.classList.remove('show');
+}
+
+function resetDeck() {
+  closeReveal();
+  peekedCard = null;
+  hoverTimes = {};
+  hoverStart = {};
+  hasInteracted = false;
+  document.getElementById('readBtn').disabled = true;
+  setStatus('');
+  buildDeck();
+  renderDeck();
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ---- Particle system ----
+function initParticles() {
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let particles = [];
+  const COUNT = 60;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = -Math.random() * 0.5 - 0.1;
+      this.size = Math.random() * 2.5 + 0.5;
+      this.alpha = Math.random() * 0.5 + 0.1;
+      this.hue = 260 + Math.random() * 40;
+      this.life = Math.random() * 300 + 100;
+      this.maxLife = this.life;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life--;
+      this.alpha = (this.life / this.maxLife) * 0.5;
+      if (this.life <= 0 || this.y < -10 || this.x < -10 || this.x > canvas.width + 10) {
+        this.reset();
+        this.y = canvas.height + 10;
+      }
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${this.hue}, 80%, 65%, ${this.alpha})`;
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < COUNT; i++) particles.push(new Particle());
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => { p.update(); p.draw(); });
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// ---- Init ----
+buildDeck();
+renderDeck();
+initParticles();
+</script>
+</body>
+</html>

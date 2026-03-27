@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Wingman - Social Panic Button</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #1a1a1f;
+    --surface2: #222228;
+    --pink: #e84393;
+    --purple: #a855f7;
+    --gradient: linear-gradient(135deg, #e84393, #a855f7);
+    --text: #e8e8ec;
+    --text-dim: #888;
+    --radius: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 16px;
+  }
+  .logo {
+    font-size: 20px;
+    font-weight: 700;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .counter {
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--surface);
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+  .counter span { color: var(--pink); font-weight: 600; }
+
+  /* Category Tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #333;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .tab.active {
+    background: var(--gradient);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  /* Situation Picker */
+  .situation-bar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    scrollbar-width: none;
+  }
+  .situation-bar::-webkit-scrollbar { display: none; }
+  .sit-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    border-radius: 16px;
+    border: 1px solid #2a2a30;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .sit-btn.active {
+    border-color: var(--purple);
+    color: var(--purple);
+    background: rgba(168, 85, 247, 0.1);
+  }
+
+  /* Main content area */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 0;
+  }
+
+  /* The Line Display */
+  .line-card {
+    width: 100%;
+    min-height: 140px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    position: relative;
+    border: 1px solid #2a2a30;
+  }
+  .line-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .line-card .category-badge {
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--pink);
+    font-weight: 600;
+  }
+  .line-card .situation-badge {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 10px;
+    color: var(--purple);
+    font-weight: 500;
+  }
+  .line-text {
+    font-size: 18px;
+    line-height: 1.5;
+    font-weight: 500;
+    max-width: 100%;
+  }
+  .line-card .placeholder {
+    color: var(--text-dim);
+    font-size: 15px;
+    font-style: italic;
+  }
+
+  /* Panic Button */
+  .panic-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .panic-ring {
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 2px solid rgba(232, 67, 147, 0.15);
+    animation: pulse-ring 2s ease-out infinite;
+  }
+  .panic-ring:nth-child(2) { animation-delay: 0.6s; }
+  .panic-ring:nth-child(3) { animation-delay: 1.2s; }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.6); opacity: 0; }
+  }
+
+  .panic-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: none;
+    background: var(--gradient);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 30px rgba(232, 67, 147, 0.3);
+    font-family: inherit;
+    line-height: 1.2;
+  }
+  .panic-btn:active {
+    transform: scale(0.93);
+    box-shadow: 0 2px 15px rgba(232, 67, 147, 0.4);
+  }
+
+  /* Action Row */
+  .actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: var(--radius);
+    border: 1px solid #2a2a30;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .action-btn:active {
+    background: var(--surface2);
+    border-color: var(--purple);
+    color: var(--text);
+  }
+  .action-btn svg { width: 16px; height: 16px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--surface2);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    border: 1px solid #333;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Whisper indicator */
+  .whisper-indicator {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--purple);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .whisper-indicator.active { opacity: 1; animation: whisper-pulse 1s ease infinite; }
+  @keyframes whisper-pulse { 50% { opacity: 0.4; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo">Wingman</div>
+    <div class="counter">Lines Used: <span id="count">0</span></div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="situation-bar" id="situations"></div>
+
+  <div class="main">
+    <div class="line-card" id="lineCard">
+      <span class="category-badge" id="catBadge"></span>
+      <span class="situation-badge" id="sitBadge"></span>
+      <div class="line-text" id="lineText">
+        <span class="placeholder">Press the button. We got you.</span>
+      </div>
+    </div>
+
+    <div class="panic-wrap">
+      <div class="panic-ring"></div>
+      <div class="panic-ring"></div>
+      <div class="panic-ring"></div>
+      <button class="panic-btn" id="panicBtn">HELP<br>ME</button>
+    </div>
+
+    <div class="actions">
+      <button class="action-btn" id="whisperBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+        Whisper
+      </button>
+      <button class="action-btn" id="shareBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share
+      </button>
+      <button class="action-btn" id="favoriteBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="whisper-indicator" id="whisperDot"></div>
+
+<script>
+const LINES = {
+  funny: [
+    "Is your name WiFi? Because I'm feeling a connection.",
+    "Are you a magician? Because every time I look at you, everyone else disappears.",
+    "Do you have a map? I keep getting lost in your eyes.",
+    "Are you a parking ticket? Because you've got 'fine' written all over you.",
+    "I'm not a photographer, but I can picture us together.",
+    "Do you believe in love at first sight, or should I walk by again?",
+    "If you were a vegetable, you'd be a cute-cumber.",
+    "Are you a campfire? Because you're hot and I want s'more.",
+    "Is your dad a boxer? Because you're a knockout.",
+    "I must be a snowflake, because I've fallen for you.",
+    "Do you have a Band-Aid? Because I just scraped my knee falling for you.",
+    "Are you a bank loan? Because you've got my interest.",
+    "If beauty were time, you'd be an eternity.",
+    "Is there an airport nearby, or is that just my heart taking off?",
+    "You must be tired, because you've been running through my mind all day."
+  ],
+  clever: [
+    "What's the most spontaneous thing you've done this year?",
+    "If you could master any skill overnight, what would you choose?",
+    "What's something you're irrationally passionate about?",
+    "If your life had a soundtrack, what genre would it be right now?",
+    "What's the best piece of advice you've ever ignored?",
+    "If you could have any superpower but only for one hour a day, what would it be?",
+    "What's the most interesting rabbit hole you've gone down recently?",
+    "If you could live in any fictional universe for a week, which one?",
+    "What's something you changed your mind about recently?",
+    "What's the most underrated thing in your city?",
+    "If you had to teach a class on anything, what would it be?",
+    "What's a hill you're willing to die on?",
+    "What's the weirdest compliment you've ever received?",
+    "If your personality were a cocktail, what would be in it?",
+    "What's something most people do wrong that drives you crazy?"
+  ],
+  deep: [
+    "If you could have dinner with anyone, dead or alive, who would it be?",
+    "What's something you believe that most people disagree with?",
+    "What moment in your life would you relive if you could?",
+    "What's the biggest risk you've taken that actually paid off?",
+    "If you could send a message to your younger self, what would it say?",
+    "What does your ideal Tuesday look like?",
+    "What's something that made you see the world differently?",
+    "If you had unlimited money but couldn't spend it on yourself, what would you do?",
+    "What's the most important lesson you learned the hard way?",
+    "What do you think people misunderstand about you most?",
+    "If you could solve one problem in the world, what would it be?",
+    "What's something you want to be remembered for?",
+    "What experience shaped who you are more than anything else?",
+    "What's a question you wish people asked you more?",
+    "If you could know the absolute truth to one question, what would you ask?"
+  ],
+  absurd: [
+    "If you were a vegetable, you'd be a cute-cumber.",
+    "On a scale of 1 to America, how free are you tonight?",
+    "Are you a time traveler? Because I can see you in my future.",
+    "If you were a triangle, you'd be acute one.",
+    "Do you like raisins? How about a date?",
+    "I'm writing a phone book. Can I have your number?",
+    "Are you a 90-degree angle? Because you're looking right.",
+    "If you were a fruit, you'd be a fineapple.",
+    "I'm no organ donor, but I'd give you my heart.",
+    "Are you related to Jean-Claude Van Damme? Because you're Van Damme fine.",
+    "Excuse me, do you have the time? I just want to remember the exact moment I met you.",
+    "Is your name Google? Because you have everything I've been searching for.",
+    "I'd say God bless you, but it looks like he already did.",
+    "Are you a volcano? Because I lava you.",
+    "If nothing lasts forever, will you be my nothing?"
+  ]
+};
+
+const SITUATIONAL = {
+  bar: [
+    "That drink looks interesting - what is it?",
+    "This place has great energy tonight. You come here often?",
+    "I'm trying to branch out from my usual order. Any recommendations?",
+    "My friends dared me to come talk to the most interesting person here. So, hi.",
+    "What's the story behind your drink choice tonight?",
+    "I have a theory that what someone orders says a lot about them. Care to prove me right?",
+    "This song is either really good or really bad. I need a second opinion.",
+    "I was going to use a pickup line but you seem too smart for that. So... hi, I'm genuine."
+  ],
+  "coffee shop": [
+    "Is this seat taken, or is it waiting for someone with great taste in coffee?",
+    "What are you reading/working on? You look really focused.",
+    "I'm convinced this place has the best [latte/pastry]. Am I wrong?",
+    "Do you come here to actually work, or to look like you're working? Because same.",
+    "Your laptop stickers tell me we'd probably get along. Am I right?",
+    "I need a coffee recommendation from someone who looks like they know what they're doing.",
+    "Sorry to interrupt, but that looks delicious. What did you order?",
+    "This is my first time here. What's the move?"
+  ],
+  gym: [
+    "Hey, could you spot me? And also maybe grab coffee later?",
+    "I'm trying to figure out this machine. You seem like you know what you're doing.",
+    "Solid form. How long have you been training?",
+    "I've seen you here before. What's your routine like?",
+    "This playlist they're playing is either motivating or a war crime. Thoughts?",
+    "Do you have any tips for [exercise]? I feel like I'm doing it wrong.",
+    "You make that look way too easy. What's your secret?",
+    "I promise I'm not staring - I'm just impressed by your workout."
+  ],
+  work: [
+    "Have we met? I feel like I'd remember someone from [their department].",
+    "This meeting could've been an email, right? Want to grab coffee instead?",
+    "I don't think we've been formally introduced. I'm the one who always brings snacks.",
+    "So... what's your take on the office coffee situation?",
+    "You seem like someone who actually enjoys their job. What's your secret?",
+    "I've been told I make excellent small talk. Want to test that theory?",
+    "Is it just me, or does Friday feel like it's three days away?",
+    "What's the best thing about working here? I'm collecting data."
+  ],
+  party: [
+    "I know literally no one here. Want to be my first friend of the night?",
+    "You look like you're having the most fun here. What's your secret?",
+    "I'm on a quest to find the best conversation at this party. Am I in the right place?",
+    "How do you know the host? Or are you crashing too?",
+    "The DJ is either a genius or losing their mind. I need someone to discuss this with.",
+    "This is either the best or worst party I've been to this month. Help me decide.",
+    "I was going to dance, but I thought making a new friend was a better move.",
+    "What's your party survival strategy? I'm still developing mine."
+  ]
+};
+
+const CATEGORIES = ['all', 'funny', 'clever', 'deep', 'absurd', 'situational'];
+const SITUATIONS = ['bar', 'coffee shop', 'gym', 'work', 'party'];
+
+let activeCategory = 'all';
+let activeSituation = null;
+let usedCount = parseInt(localStorage.getItem('wingman_count') || '0');
+let currentLine = '';
+let savedLines = JSON.parse(localStorage.getItem('wingman_saved') || '[]');
+
+// Audio context for ding sound
+let audioCtx = null;
+function playDing() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.frequency.value = 880;
+  osc.type = 'sine';
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + 0.3);
+}
+
+// Render tabs
+const tabsEl = document.getElementById('tabs');
+CATEGORIES.forEach(cat => {
+  const btn = document.createElement('button');
+  btn.className = 'tab' + (cat === activeCategory ? ' active' : '');
+  btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+  btn.addEventListener('click', () => {
+    activeCategory = cat;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('situations').style.display = cat === 'situational' ? 'flex' : 'none';
+  });
+  tabsEl.appendChild(btn);
+});
+
+// Render situation buttons
+const sitEl = document.getElementById('situations');
+sitEl.style.display = 'none';
+SITUATIONS.forEach(sit => {
+  const btn = document.createElement('button');
+  btn.className = 'sit-btn';
+  btn.textContent = sit.charAt(0).toUpperCase() + sit.slice(1);
+  btn.addEventListener('click', () => {
+    if (activeSituation === sit) {
+      activeSituation = null;
+      btn.classList.remove('active');
+    } else {
+      activeSituation = sit;
+      document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+  });
+  sitEl.appendChild(btn);
+});
+
+// Counter
+const countEl = document.getElementById('count');
+countEl.textContent = usedCount;
+
+// Get random line
+function getRandomLine() {
+  let pool = [];
+  let category = activeCategory;
+
+  if (category === 'situational') {
+    if (activeSituation && SITUATIONAL[activeSituation]) {
+      pool = SITUATIONAL[activeSituation];
+      category = activeSituation;
+    } else {
+      // Random from all situations
+      const allSit = Object.values(SITUATIONAL).flat();
+      pool = allSit;
+    }
+  } else if (category === 'all') {
+    pool = Object.values(LINES).flat();
+  } else {
+    pool = LINES[category] || [];
+  }
+
+  // Avoid repeating the same line
+  let line;
+  let attempts = 0;
+  do {
+    line = pool[Math.floor(Math.random() * pool.length)];
+    attempts++;
+  } while (line === currentLine && pool.length > 1 && attempts < 10);
+
+  return { text: line, category };
+}
+
+// Panic button
+const panicBtn = document.getElementById('panicBtn');
+const lineCard = document.getElementById('lineCard');
+const lineText = document.getElementById('lineText');
+const catBadge = document.getElementById('catBadge');
+const sitBadge = document.getElementById('sitBadge');
+
+panicBtn.addEventListener('click', () => {
+  const { text, category } = getRandomLine();
+  currentLine = text;
+
+  // Animate out
+  lineCard.classList.remove('visible');
+
+  setTimeout(() => {
+    lineText.innerHTML = text;
+    catBadge.textContent = activeCategory === 'all' ? '' : activeCategory.toUpperCase();
+    sitBadge.textContent = (activeCategory === 'situational' && activeSituation) ? activeSituation : '';
+    lineCard.classList.add('visible');
+
+    // Play ding
+    playDing();
+
+    // Update counter
+    usedCount++;
+    countEl.textContent = usedCount;
+    localStorage.setItem('wingman_count', usedCount);
+  }, 150);
+});
+
+// Whisper (SpeechSynthesis)
+const whisperBtn = document.getElementById('whisperBtn');
+const whisperDot = document.getElementById('whisperDot');
+
+whisperBtn.addEventListener('click', () => {
+  if (!currentLine) { showToast('Hit the button first!'); return; }
+  if (!('speechSynthesis' in window)) { showToast('Speech not supported'); return; }
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(currentLine);
+  utterance.volume = 0.2;
+  utterance.rate = 0.85;
+  utterance.pitch = 0.9;
+
+  whisperDot.classList.add('active');
+  utterance.onend = () => whisperDot.classList.remove('active');
+  utterance.onerror = () => whisperDot.classList.remove('active');
+
+  window.speechSynthesis.speak(utterance);
+});
+
+// Share
+const shareBtn = document.getElementById('shareBtn');
+shareBtn.addEventListener('click', async () => {
+  if (!currentLine) { showToast('Hit the button first!'); return; }
+  const shareText = currentLine + '\n\n- via Wingman';
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ text: shareText });
+    } catch (e) { /* user cancelled */ }
+  } else {
+    await navigator.clipboard.writeText(shareText);
+    showToast('Copied to clipboard!');
+  }
+});
+
+// Save / Favorite
+const favoriteBtn = document.getElementById('favoriteBtn');
+favoriteBtn.addEventListener('click', () => {
+  if (!currentLine) { showToast('Hit the button first!'); return; }
+  if (savedLines.includes(currentLine)) {
+    showToast('Already saved!');
+    return;
+  }
+  savedLines.push(currentLine);
+  localStorage.setItem('wingman_saved', JSON.stringify(savedLines));
+  showToast('Saved! (' + savedLines.length + ' total)');
+});
+
+// Toast
+const toastEl = document.getElementById('toast');
+let toastTimeout;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>

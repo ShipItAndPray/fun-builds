@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Scream Sentinel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #c8c8c8;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .screen { display: none; width: 100%; height: 100vh; position: absolute; top: 0; left: 0; }
+  .screen.active { display: flex; align-items: center; justify-content: center; flex-direction: column; }
+
+  /* WARNING SCREEN */
+  #warning-screen {
+    background: radial-gradient(ellipse at center, #1a0000 0%, #0a0a0a 70%);
+  }
+  #warning-screen .warning-box {
+    border: 2px solid #8b0000;
+    padding: 40px;
+    max-width: 400px;
+    text-align: center;
+    animation: pulse-border 2s infinite;
+  }
+  #warning-screen h1 {
+    color: #ff0000;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255,0,0,0.5);
+  }
+  #warning-screen p {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    font-size: 14px;
+    color: #999;
+  }
+  #warning-screen .warning-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+  }
+  .btn {
+    background: #8b0000;
+    color: #fff;
+    border: none;
+    padding: 15px 40px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+  }
+  .btn:hover { background: #b00000; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+  .btn:active { transform: scale(0.95); }
+
+  /* BAIT SCREEN */
+  #bait-screen {
+    background: #0a0a0a;
+    cursor: default;
+  }
+  .bait-content {
+    text-align: center;
+    padding: 20px;
+  }
+  .bait-content .tiny-text {
+    font-size: 7px;
+    color: #333;
+    margin-top: 40px;
+    line-height: 1.8;
+    max-width: 300px;
+    animation: shrink-text 8s ease-in forwards;
+  }
+  .bait-content .lure {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 30px;
+    animation: flicker 3s infinite;
+  }
+  .bait-content .arrow-down {
+    font-size: 24px;
+    color: #333;
+    animation: bob 1.5s infinite;
+  }
+  .countdown-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: #1a1a1a;
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* SCARE SCREEN */
+  #scare-screen {
+    background: #fff;
+    z-index: 100;
+  }
+  .scare-face {
+    font-size: min(60vw, 60vh);
+    animation: scare-shake 0.1s infinite;
+    user-select: none;
+  }
+  #scare-screen.red-phase {
+    background: #0a0a0a;
+    animation: red-flash 0.15s infinite;
+  }
+
+  /* RESULT SCREEN */
+  #result-screen {
+    background: radial-gradient(ellipse at center, #1a0000 0%, #0a0a0a 70%);
+    gap: 20px;
+    padding: 20px;
+  }
+  .result-title {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+  .scream-db {
+    font-size: 64px;
+    color: #ff0000;
+    font-weight: bold;
+    text-shadow: 0 0 40px rgba(255,0,0,0.5);
+  }
+  .scream-db .unit { font-size: 20px; color: #666; }
+  .scream-rating {
+    font-size: 22px;
+    color: #ff4444;
+    margin: 10px 0;
+  }
+  .rating-icon { font-size: 48px; margin-bottom: 10px; }
+  .listening-indicator {
+    color: #ff0000;
+    font-size: 12px;
+    animation: pulse-text 0.5s infinite;
+  }
+
+  /* LEADERBOARD */
+  .leaderboard {
+    width: 100%;
+    max-width: 350px;
+    margin-top: 10px;
+  }
+  .leaderboard h3 {
+    color: #666;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .lb-entry {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 13px;
+  }
+  .lb-entry .lb-rank { color: #ff0000; width: 30px; }
+  .lb-entry .lb-rating { color: #888; flex: 1; }
+  .lb-entry .lb-db { color: #ff4444; text-align: right; }
+  .lb-entry.highlight { background: rgba(255,0,0,0.1); border: 1px solid #330000; }
+
+  .btn-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; justify-content: center; }
+  .btn-small { padding: 10px 20px; font-size: 12px; }
+
+  /* ANIMATIONS */
+  @keyframes pulse-border {
+    0%, 100% { border-color: #8b0000; }
+    50% { border-color: #ff0000; }
+  }
+  @keyframes flicker {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.3; }
+    92% { opacity: 0.6; }
+    93% { opacity: 0.1; }
+    94% { opacity: 0.6; }
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+  @keyframes shrink-text {
+    0% { font-size: 12px; color: #555; }
+    100% { font-size: 6px; color: #222; }
+  }
+  @keyframes scare-shake {
+    0% { transform: translate(2px, 1px) rotate(0deg) scale(1); }
+    25% { transform: translate(-3px, 2px) rotate(-1deg) scale(1.02); }
+    50% { transform: translate(1px, -2px) rotate(1deg) scale(0.98); }
+    75% { transform: translate(-2px, 1px) rotate(-1deg) scale(1.01); }
+    100% { transform: translate(2px, -1px) rotate(0deg) scale(1); }
+  }
+  @keyframes red-flash {
+    0% { background: #0a0a0a; }
+    50% { background: #3a0000; }
+    100% { background: #0a0a0a; }
+  }
+  @keyframes pulse-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+
+<!-- WARNING SCREEN -->
+<div id="warning-screen" class="screen active">
+  <div class="warning-box">
+    <div class="warning-icon">&#9888;</div>
+    <h1>WARNING</h1>
+    <p>This app <strong style="color:#ff0000">WILL</strong> scare you.</p>
+    <p>It uses your microphone to measure how loud you scream. Headphone users: lower your volume.</p>
+    <p style="font-size:11px; color:#555;">By continuing, you accept full responsibility for any screams, dropped phones, or startled pets.</p>
+    <button class="btn" onclick="startApp()">I'm Not Afraid</button>
+  </div>
+</div>
+
+<!-- BAIT SCREEN -->
+<div id="bait-screen" class="screen">
+  <div class="bait-content">
+    <div class="lure">Come closer to read this...</div>
+    <div class="arrow-down">&#8595;</div>
+    <div class="tiny-text">
+      There's something written here but you'll need to look very carefully.
+      Bring your face closer to the screen. Can you read this? Keep looking...
+      The secret message is hidden in the smallest text. Almost there...
+      Just a little closer... Focus your eyes right here on this spot...
+      Don't look away. Stay perfectly still. Keep reading...
+    </div>
+  </div>
+  <div class="countdown-bar" id="countdown-bar"></div>
+</div>
+
+<!-- SCARE SCREEN -->
+<div id="scare-screen" class="screen">
+  <div class="scare-face" id="scare-face"></div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen" class="screen">
+  <div class="result-title">Scream Score</div>
+  <div class="rating-icon" id="rating-icon"></div>
+  <div class="scream-db"><span id="db-value">0</span><span class="unit"> dB</span></div>
+  <div class="scream-rating" id="scream-rating"></div>
+  <div class="listening-indicator" id="listening-status"></div>
+  <div class="leaderboard" id="leaderboard"></div>
+  <div class="btn-group">
+    <button class="btn btn-small" onclick="resetApp()">Scare Someone Else</button>
+  </div>
+</div>
+
+<script>
+const SCARY_FACES = ['\u{1F631}', '\u{1F47B}', '\u{1F480}', '\u{1F479}', '\u{1F47A}'];
+const RATINGS = [
+  { min: 0,  label: 'Mouse',              icon: '\u{1F42D}' },
+  { min: 40, label: 'Startled Cat',        icon: '\u{1F640}' },
+  { min: 60, label: 'Horror Movie Extra',  icon: '\u{1F3AC}' },
+  { min: 80, label: 'Banshee',             icon: '\u{1F47B}' },
+];
+
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let scareTimer = null;
+let listenTimer = null;
+let peakDb = 0;
+let isListening = false;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+async function startApp() {
+  // Request mic access early so the scare can start listening immediately
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    alert('Microphone access is required to measure your scream!');
+    return;
+  }
+
+  showScreen('bait-screen');
+
+  // Start the countdown - scare triggers after ~5 seconds
+  const bar = document.getElementById('countdown-bar');
+  let elapsed = 0;
+  const duration = 5000;
+  const interval = 50;
+
+  scareTimer = setInterval(() => {
+    elapsed += interval;
+    bar.style.width = (elapsed / duration * 100) + '%';
+    if (elapsed >= duration) {
+      clearInterval(scareTimer);
+      triggerScare();
+    }
+  }, interval);
+}
+
+function triggerScare() {
+  const scareScreen = document.getElementById('scare-screen');
+  const scareFace = document.getElementById('scare-face');
+
+  // Pick random scary face
+  scareFace.textContent = SCARY_FACES[Math.floor(Math.random() * SCARY_FACES.length)];
+  showScreen('scare-screen');
+
+  // Play horrifying sound
+  playScareSound();
+
+  // White flash then red phase
+  scareScreen.classList.remove('red-phase');
+  setTimeout(() => {
+    scareScreen.classList.add('red-phase');
+  }, 300);
+
+  // Vibrate if available
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 300]);
+
+  // Start listening to mic immediately
+  startListening();
+
+  // After 4 seconds, show results
+  setTimeout(() => {
+    stopListening();
+    showResults();
+  }, 4000);
+}
+
+function playScareSound() {
+  if (!audioCtx) return;
+
+  // Resume context if suspended (autoplay policy)
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  const now = audioCtx.currentTime;
+
+  // SUDDEN LOUD BURST - white noise
+  const bufferSize = audioCtx.sampleRate * 0.3;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.15));
+  }
+  const noiseSource = audioCtx.createBufferSource();
+  noiseSource.buffer = noiseBuffer;
+  const noiseGain = audioCtx.createGain();
+  noiseGain.gain.setValueAtTime(0.7, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+  noiseSource.connect(noiseGain).connect(audioCtx.destination);
+  noiseSource.start(now);
+
+  // DESCENDING SCREAM TONE
+  const osc1 = audioCtx.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(1800, now);
+  osc1.frequency.exponentialRampToValueAtTime(200, now + 1.5);
+  const oscGain1 = audioCtx.createGain();
+  oscGain1.gain.setValueAtTime(0.4, now);
+  oscGain1.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+  osc1.connect(oscGain1).connect(audioCtx.destination);
+  osc1.start(now);
+  osc1.stop(now + 1.5);
+
+  // HIGH PITCHED STAB
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = 'square';
+  osc2.frequency.setValueAtTime(3000, now);
+  osc2.frequency.exponentialRampToValueAtTime(800, now + 0.5);
+  const oscGain2 = audioCtx.createGain();
+  oscGain2.gain.setValueAtTime(0.3, now);
+  oscGain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+  osc2.connect(oscGain2).connect(audioCtx.destination);
+  osc2.start(now);
+  osc2.stop(now + 0.5);
+
+  // SECOND BURST at 0.4s for double-scare effect
+  const osc3 = audioCtx.createOscillator();
+  osc3.type = 'sawtooth';
+  osc3.frequency.setValueAtTime(2200, now + 0.4);
+  osc3.frequency.exponentialRampToValueAtTime(300, now + 1.2);
+  const oscGain3 = audioCtx.createGain();
+  oscGain3.gain.setValueAtTime(0.001, now);
+  oscGain3.gain.setValueAtTime(0.35, now + 0.4);
+  oscGain3.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+  osc3.connect(oscGain3).connect(audioCtx.destination);
+  osc3.start(now);
+  osc3.stop(now + 1.2);
+}
+
+function startListening() {
+  if (!audioCtx || !micStream) return;
+
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  analyser.smoothingTimeConstant = 0.3;
+
+  const source = audioCtx.createMediaStreamSource(micStream);
+  source.connect(analyser);
+
+  const dataArray = new Float32Array(analyser.fftSize);
+  peakDb = 0;
+  isListening = true;
+
+  function measure() {
+    if (!isListening) return;
+    analyser.getFloatTimeDomainData(dataArray);
+
+    // Calculate RMS
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+      sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / dataArray.length);
+
+    // Convert to approximate dB (calibrated for typical phone mics)
+    // Reference: typical mic clips at ~0dBFS, quiet room ~30-40dB
+    let db = 20 * Math.log10(rms + 0.0001);
+    // Map from dBFS (-90 to 0) to approximate SPL (30 to 110)
+    db = Math.max(0, Math.min(110, db + 110));
+
+    if (db > peakDb) peakDb = db;
+
+    requestAnimationFrame(measure);
+  }
+  measure();
+}
+
+function stopListening() {
+  isListening = false;
+  if (micStream) {
+    micStream.getTracks().forEach(t => t.stop());
+    micStream = null;
+  }
+}
+
+function getRating(db) {
+  let rating = RATINGS[0];
+  for (const r of RATINGS) {
+    if (db >= r.min) rating = r;
+  }
+  return rating;
+}
+
+function showResults() {
+  const db = Math.round(peakDb);
+  const rating = getRating(db);
+
+  document.getElementById('db-value').textContent = db;
+  document.getElementById('scream-rating').textContent = rating.label;
+  document.getElementById('rating-icon').textContent = rating.icon;
+  document.getElementById('listening-status').textContent = '';
+
+  // Save to leaderboard
+  saveScore(db, rating.label);
+  renderLeaderboard(db);
+
+  showScreen('result-screen');
+
+  // Animate the dB counter
+  animateCounter(db);
+}
+
+function animateCounter(target) {
+  const el = document.getElementById('db-value');
+  let current = 0;
+  const step = Math.max(1, Math.floor(target / 30));
+  const interval = setInterval(() => {
+    current += step;
+    if (current >= target) {
+      current = target;
+      clearInterval(interval);
+    }
+    el.textContent = current;
+  }, 30);
+}
+
+function saveScore(db, label) {
+  const scores = JSON.parse(localStorage.getItem('scream-sentinel-scores') || '[]');
+  scores.push({
+    db,
+    label,
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString()
+  });
+  // Keep top 10
+  scores.sort((a, b) => b.db - a.db);
+  scores.splice(10);
+  localStorage.setItem('scream-sentinel-scores', JSON.stringify(scores));
+}
+
+function renderLeaderboard(currentDb) {
+  const scores = JSON.parse(localStorage.getItem('scream-sentinel-scores') || '[]');
+  if (scores.length === 0) return;
+
+  const lb = document.getElementById('leaderboard');
+  let html = '<h3>Hall of Screams</h3>';
+  scores.forEach((s, i) => {
+    const highlight = s.db === currentDb ? ' highlight' : '';
+    const rating = getRating(s.db);
+    html += `<div class="lb-entry${highlight}">
+      <span class="lb-rank">#${i + 1}</span>
+      <span class="lb-rating">${rating.icon} ${s.label}</span>
+      <span class="lb-db">${s.db} dB</span>
+    </div>`;
+  });
+  lb.innerHTML = html;
+}
+
+function resetApp() {
+  peakDb = 0;
+  if (scareTimer) clearInterval(scareTimer);
+  document.getElementById('countdown-bar').style.width = '0%';
+  document.getElementById('scare-screen').classList.remove('red-phase');
+  showScreen('warning-screen');
+}
+</script>
+</body>
+</html>

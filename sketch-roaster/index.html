@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sketch Roaster - Art Critic from Hell</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #e8e0d4;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .gallery-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(120, 80, 40, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(80, 60, 120, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(40, 80, 60, 0.05) 0%, transparent 50%);
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 900px; margin: 0 auto; padding: 20px;
+  }
+
+  header {
+    text-align: center; padding: 30px 0 20px;
+    border-bottom: 1px solid rgba(200, 180, 140, 0.15);
+    margin-bottom: 30px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    color: #c8b48a;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    font-size: 0.85rem; color: #7a7060;
+    font-style: italic; font-family: 'Playfair Display', serif;
+  }
+
+  .canvas-frame {
+    background: #1a1a24;
+    border: 3px solid #2a2520;
+    box-shadow:
+      inset 0 0 30px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(200,180,140,0.1),
+      0 8px 32px rgba(0,0,0,0.4);
+    border-radius: 4px;
+    padding: 12px;
+    position: relative;
+  }
+
+  .frame-label {
+    position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+    background: #151520; border: 1px solid #2a2520; border-radius: 3px;
+    padding: 3px 16px; font-size: 0.65rem; color: #5a5040;
+    font-family: 'Playfair Display', serif; font-style: italic;
+    white-space: nowrap;
+  }
+
+  canvas {
+    display: block; width: 100%; border-radius: 2px;
+    cursor: crosshair; touch-action: none;
+    background: #f5f0e8;
+  }
+
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+    margin: 40px 0 20px; padding: 16px;
+    background: rgba(26, 26, 36, 0.8);
+    border: 1px solid rgba(200, 180, 140, 0.1);
+    border-radius: 6px;
+  }
+
+  .tool-group {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .tool-group label {
+    font-size: 0.7rem; color: #7a7060; text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  input[type="color"] {
+    width: 36px; height: 36px; border: 2px solid #2a2520;
+    border-radius: 50%; cursor: pointer; background: none;
+    padding: 2px;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+  input[type="range"] {
+    width: 100px; accent-color: #c8b48a; cursor: pointer;
+  }
+
+  .brush-preview {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid #3a3530; display: flex; align-items: center;
+    justify-content: center;
+  }
+
+  .brush-dot {
+    border-radius: 50%; background: #000;
+  }
+
+  .btn {
+    font-family: 'Playfair Display', serif;
+    padding: 10px 24px; border: none; border-radius: 4px;
+    cursor: pointer; font-size: 0.95rem; transition: all 0.2s;
+  }
+
+  .btn-judge {
+    background: linear-gradient(135deg, #8b6914, #c8a030);
+    color: #1a1a24; font-weight: 700; letter-spacing: 0.03em;
+    box-shadow: 0 2px 12px rgba(200, 160, 48, 0.3);
+    margin-left: auto;
+  }
+  .btn-judge:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200, 160, 48, 0.4); }
+  .btn-judge:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .btn-clear {
+    background: transparent; border: 1px solid #3a3530;
+    color: #7a7060; font-size: 0.8rem;
+  }
+  .btn-clear:hover { border-color: #8a4040; color: #c06060; }
+
+  .btn-eraser {
+    background: transparent; border: 1px solid #3a3530;
+    color: #7a7060; font-size: 0.8rem; padding: 8px 14px;
+  }
+  .btn-eraser:hover, .btn-eraser.active {
+    border-color: #c8b48a; color: #c8b48a;
+  }
+
+  /* Analysis overlay */
+  .analysis-overlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(5, 5, 10, 0.92);
+    justify-content: center; align-items: center;
+  }
+  .analysis-overlay.active { display: flex; }
+
+  .analysis-box {
+    text-align: center; max-width: 500px; padding: 40px;
+  }
+
+  .scan-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; color: #c8b48a;
+    font-style: italic;
+  }
+
+  .scan-dots::after {
+    content: ''; animation: dots 1.5s infinite;
+  }
+
+  @keyframes dots {
+    0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
+  }
+
+  .scan-bar {
+    width: 300px; height: 3px; background: #1a1a24;
+    border-radius: 2px; margin: 20px auto 0; overflow: hidden;
+  }
+  .scan-bar-fill {
+    height: 100%; width: 0; background: linear-gradient(90deg, #8b6914, #c8a030);
+    border-radius: 2px; transition: width 0.3s;
+  }
+
+  /* Result */
+  .result-panel {
+    display: none; margin: 30px 0;
+    background: rgba(26, 26, 36, 0.9);
+    border: 1px solid rgba(200, 180, 140, 0.15);
+    border-radius: 8px; overflow: hidden;
+  }
+  .result-panel.active { display: block; animation: fadeUp 0.6s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    background: rgba(139, 105, 20, 0.15);
+    padding: 20px 24px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid rgba(200,180,140,0.1);
+  }
+
+  .result-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem; color: #c8b48a;
+  }
+
+  .score-badge {
+    display: flex; flex-direction: column; align-items: center;
+  }
+
+  .score-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem; font-weight: 700;
+    line-height: 1;
+  }
+
+  .score-label {
+    font-size: 0.6rem; text-transform: uppercase;
+    letter-spacing: 0.15em; color: #7a7060; margin-top: 2px;
+  }
+
+  .score-low { color: #c04040; }
+  .score-mid { color: #c08040; }
+
+  .result-body { padding: 24px; }
+
+  .roast-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; line-height: 1.7;
+    color: #d4c8b0; font-style: italic;
+    border-left: 3px solid #8b6914;
+    padding-left: 20px; margin-bottom: 16px;
+  }
+
+  .critic-name {
+    font-size: 0.75rem; color: #5a5040;
+    text-align: right; margin-top: 8px;
+  }
+
+  .btn-speak {
+    background: transparent; border: 1px solid #3a3530;
+    color: #7a7060; font-size: 0.8rem; padding: 8px 16px;
+    cursor: pointer; border-radius: 4px; margin-top: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-speak:hover { border-color: #c8b48a; color: #c8b48a; }
+
+  .btn-save-shame {
+    background: linear-gradient(135deg, #4a2020, #6a3030);
+    color: #e0c0c0; border: none; padding: 10px 20px;
+    border-radius: 4px; cursor: pointer; font-family: 'Playfair Display', serif;
+    margin-top: 16px; font-size: 0.9rem;
+  }
+  .btn-save-shame:hover { background: linear-gradient(135deg, #5a2828, #7a3838); }
+
+  /* Gallery of Shame */
+  .gallery-section {
+    margin-top: 50px; padding-top: 30px;
+    border-top: 1px solid rgba(200,180,140,0.1);
+  }
+
+  .gallery-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem; color: #c8b48a;
+    text-align: center; margin-bottom: 6px;
+  }
+
+  .gallery-subtitle {
+    text-align: center; font-size: 0.75rem; color: #5a5040;
+    font-style: italic; font-family: 'Playfair Display', serif;
+    margin-bottom: 24px;
+  }
+
+  .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .gallery-item {
+    background: #1a1a24; border: 2px solid #2a2520;
+    border-radius: 4px; padding: 8px; position: relative;
+    transition: transform 0.2s;
+  }
+  .gallery-item:hover { transform: translateY(-3px); }
+
+  .gallery-item img {
+    width: 100%; aspect-ratio: 1; object-fit: contain;
+    background: #f5f0e8; border-radius: 2px;
+  }
+
+  .gallery-item-info {
+    padding: 8px 4px 4px;
+  }
+
+  .gallery-item-score {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700; font-size: 1.1rem;
+  }
+
+  .gallery-item-roast {
+    font-size: 0.7rem; color: #7a7060; font-style: italic;
+    margin-top: 4px; line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  .gallery-item-delete {
+    position: absolute; top: 4px; right: 4px;
+    background: rgba(0,0,0,0.6); border: none; color: #7a7060;
+    width: 22px; height: 22px; border-radius: 50%;
+    cursor: pointer; font-size: 0.7rem; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .gallery-item-delete:hover { color: #c04040; }
+
+  .gallery-empty {
+    text-align: center; padding: 40px;
+    color: #3a3530; font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .btn-clear-gallery {
+    display: block; margin: 16px auto 0;
+    background: transparent; border: 1px solid #2a2520;
+    color: #5a5040; padding: 6px 16px; border-radius: 4px;
+    cursor: pointer; font-size: 0.75rem;
+  }
+  .btn-clear-gallery:hover { border-color: #8a4040; color: #c06060; }
+
+  footer {
+    text-align: center; padding: 40px 0 20px;
+    font-size: 0.65rem; color: #3a3530;
+  }
+
+  @media (max-width: 600px) {
+    .toolbar { gap: 8px; padding: 12px; }
+    input[type="range"] { width: 70px; }
+    .btn-judge { padding: 10px 16px; font-size: 0.85rem; }
+    .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="gallery-bg"></div>
+
+<div class="container">
+  <header>
+    <h1>The Sketch Roaster</h1>
+    <p>"Where dreams go to be professionally dismantled"</p>
+  </header>
+
+  <div class="canvas-frame">
+    <canvas id="canvas" width="860" height="500"></canvas>
+    <div class="frame-label">Untitled Masterpiece, 2026 &mdash; Mixed Delusion on Digital Canvas</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="tool-group">
+      <label>Color</label>
+      <input type="color" id="colorPicker" value="#000000">
+    </div>
+    <div class="tool-group">
+      <label>Brush</label>
+      <input type="range" id="brushSize" min="1" max="50" value="4">
+      <div class="brush-preview">
+        <div class="brush-dot" id="brushDot"></div>
+      </div>
+    </div>
+    <div class="tool-group">
+      <button class="btn btn-eraser" id="eraserBtn">Eraser</button>
+      <button class="btn btn-clear" id="clearBtn">Clear</button>
+    </div>
+    <button class="btn btn-judge" id="judgeBtn">Judge My Art</button>
+  </div>
+
+  <div class="analysis-overlay" id="analysisOverlay">
+    <div class="analysis-box">
+      <p class="scan-text" id="scanText">Scanning for talent<span class="scan-dots"></span></p>
+      <div class="scan-bar"><div class="scan-bar-fill" id="scanBar"></div></div>
+    </div>
+  </div>
+
+  <div class="result-panel" id="resultPanel">
+    <div class="result-header">
+      <h2>The Verdict</h2>
+      <div class="score-badge">
+        <span class="score-num" id="scoreNum">--</span>
+        <span class="score-label">Gallery Score</span>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="roast-text" id="roastText"></div>
+      <div class="critic-name">-- Prof. Reginald Von Brushstroke III, Art Critic</div>
+      <button class="btn-speak" id="speakBtn">&#128264; Hear the Verdict</button>
+      <br>
+      <button class="btn-save-shame" id="saveShameBtn">&#128248; Add to Gallery of Shame</button>
+    </div>
+  </div>
+
+  <div class="gallery-section" id="gallerySection">
+    <h2>Gallery of Shame</h2>
+    <p class="gallery-subtitle">A curated collection of artistic catastrophes</p>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <button class="btn-clear-gallery" id="clearGalleryBtn" style="display:none">Burn the Gallery</button>
+  </div>
+
+  <footer>The Sketch Roaster &mdash; No refunds on crushed dreams.</footer>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const colorPicker = document.getElementById('colorPicker');
+const brushSize = document.getElementById('brushSize');
+const brushDot = document.getElementById('brushDot');
+const eraserBtn = document.getElementById('eraserBtn');
+const clearBtn = document.getElementById('clearBtn');
+const judgeBtn = document.getElementById('judgeBtn');
+const analysisOverlay = document.getElementById('analysisOverlay');
+const scanText = document.getElementById('scanText');
+const scanBar = document.getElementById('scanBar');
+const resultPanel = document.getElementById('resultPanel');
+const scoreNum = document.getElementById('scoreNum');
+const roastText = document.getElementById('roastText');
+const speakBtn = document.getElementById('speakBtn');
+const saveShameBtn = document.getElementById('saveShameBtn');
+const galleryGrid = document.getElementById('galleryGrid');
+const clearGalleryBtn = document.getElementById('clearGalleryBtn');
+
+let drawing = false;
+let erasing = false;
+let lastX = 0, lastY = 0;
+let strokeHistory = []; // track colors used
+let strokeCount = 0;
+let currentRoast = '';
+let currentScore = 0;
+
+// Hi-DPI
+function setupCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = rect.height + 'px';
+  ctx.fillStyle = '#f5f0e8';
+  ctx.fillRect(0, 0, rect.width, rect.height);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+}
+
+setupCanvas();
+
+function updateBrushPreview() {
+  const size = Math.min(parseInt(brushSize.value), 30);
+  brushDot.style.width = size + 'px';
+  brushDot.style.height = size + 'px';
+  brushDot.style.background = erasing ? '#f5f0e8' : colorPicker.value;
+}
+updateBrushPreview();
+brushSize.addEventListener('input', updateBrushPreview);
+colorPicker.addEventListener('input', updateBrushPreview);
+
+eraserBtn.addEventListener('click', () => {
+  erasing = !erasing;
+  eraserBtn.classList.toggle('active', erasing);
+  updateBrushPreview();
+});
+
+function getPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches ? e.touches[0] : e;
+  return { x: touch.clientX - rect.left, y: touch.clientY - rect.top };
+}
+
+function startDraw(e) {
+  e.preventDefault();
+  drawing = true;
+  const p = getPos(e);
+  lastX = p.x; lastY = p.y;
+}
+
+function draw(e) {
+  if (!drawing) return;
+  e.preventDefault();
+  const p = getPos(e);
+  ctx.strokeStyle = erasing ? '#f5f0e8' : colorPicker.value;
+  ctx.lineWidth = parseInt(brushSize.value);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(p.x, p.y);
+  ctx.stroke();
+  if (!erasing) {
+    strokeHistory.push(colorPicker.value);
+    strokeCount++;
+  }
+  lastX = p.x; lastY = p.y;
+}
+
+function stopDraw() { drawing = false; }
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDraw);
+canvas.addEventListener('mouseleave', stopDraw);
+canvas.addEventListener('touchstart', startDraw, { passive: false });
+canvas.addEventListener('touchmove', draw, { passive: false });
+canvas.addEventListener('touchend', stopDraw);
+
+clearBtn.addEventListener('click', () => {
+  const rect = canvas.getBoundingClientRect();
+  ctx.fillStyle = '#f5f0e8';
+  ctx.fillRect(0, 0, rect.width, rect.height);
+  strokeHistory = [];
+  strokeCount = 0;
+  resultPanel.classList.remove('active');
+});
+
+// --- Analysis ---
+function analyzeDrawing() {
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  const dpr = window.devicePixelRatio || 1;
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+  let nonBgPixels = 0;
+  let totalPixels = canvas.width * canvas.height;
+  let colorCounts = {};
+  let minX = canvas.width, maxX = 0, minY = canvas.height, maxY = 0;
+  const bgR = 245, bgG = 240, bgB = 232;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i], g = data[i+1], b = data[i+2];
+    if (Math.abs(r - bgR) > 15 || Math.abs(g - bgG) > 15 || Math.abs(b - bgB) > 15) {
+      nonBgPixels++;
+      const px = (i / 4) % canvas.width;
+      const py = Math.floor((i / 4) / canvas.width);
+      if (px < minX) minX = px;
+      if (px > maxX) maxX = px;
+      if (py < minY) minY = py;
+      if (py > maxY) maxY = py;
+      const key = `${Math.round(r/30)},${Math.round(g/30)},${Math.round(b/30)}`;
+      colorCounts[key] = (colorCounts[key] || 0) + 1;
+    }
+  }
+
+  const coverage = nonBgPixels / totalPixels;
+  const isEmpty = coverage < 0.001;
+  const isSmall = coverage < 0.02;
+  const isHuge = coverage > 0.5;
+  const drawWidth = (maxX - minX) / canvas.width;
+  const drawHeight = (maxY - minY) / canvas.height;
+  const isTiny = drawWidth < 0.15 && drawHeight < 0.15 && !isEmpty;
+  const isCorner = !isEmpty && (
+    (minX < canvas.width * 0.3 && maxX < canvas.width * 0.3) ||
+    (minX > canvas.width * 0.7) ||
+    (minY > canvas.height * 0.7)
+  );
+
+  const uniqueColors = Object.keys(colorCounts).length;
+  const isMonochrome = uniqueColors <= 2 && !isEmpty;
+  const isRainbow = uniqueColors > 15;
+  const isScribble = strokeCount > 200 && coverage < 0.15;
+  const isChaos = strokeCount > 500;
+  const isMedium = coverage > 0.05 && coverage < 0.3 && uniqueColors >= 3 && uniqueColors <= 10;
+
+  // Find dominant color
+  let dominantKey = '';
+  let dominantCount = 0;
+  for (const [k, v] of Object.entries(colorCounts)) {
+    if (v > dominantCount) { dominantKey = k; dominantCount = v; }
+  }
+  const dominantRatio = dominantCount / Math.max(nonBgPixels, 1);
+
+  let dominantColorName = 'that color';
+  if (dominantKey) {
+    const [rr, gg, bb] = dominantKey.split(',').map(Number);
+    if (rr < 2 && gg < 2 && bb < 2) dominantColorName = 'black';
+    else if (rr > 6 && gg < 3 && bb < 3) dominantColorName = 'red';
+    else if (rr < 3 && gg < 3 && bb > 6) dominantColorName = 'blue';
+    else if (rr < 3 && gg > 6 && bb < 3) dominantColorName = 'green';
+    else if (rr > 6 && gg > 6 && bb < 3) dominantColorName = 'yellow';
+    else if (rr > 5 && gg > 3 && bb < 3) dominantColorName = 'orange';
+    else if (rr > 5 && gg < 3 && bb > 5) dominantColorName = 'purple';
+    else if (rr > 5 && gg > 5 && bb > 5) dominantColorName = 'white';
+    else dominantColorName = 'that shade';
+  }
+
+  return {
+    isEmpty, isSmall, isTiny, isHuge, isCorner, isMonochrome,
+    isRainbow, isScribble, isChaos, isMedium,
+    coverage, uniqueColors, strokeCount, dominantColorName, dominantRatio
+  };
+}
+
+// --- Roast Templates ---
+const roasts = {
+  empty: [
+    "Ah, minimalism. Or as I prefer to call it: laziness with a philosophy degree.",
+    "A blank canvas. Bold. Brave. Completely void of effort, talent, or purpose.",
+    "I see you've submitted nothing. Honestly? It might be your strongest work.",
+    "The empty canvas speaks volumes. Mostly it says 'I gave up before I started.'",
+    "Marcel Duchamp submitted a urinal. You couldn't even manage that.",
+    "White space is a design principle. This is just... space.",
+    "You've captured the void perfectly. Was that intentional? No? Didn't think so.",
+    "I've seen more artistic expression on a parking ticket."
+  ],
+  tiny: [
+    "Did an ant paint this? Because the scale suggests a very tiny artist with very tiny ambitions.",
+    "I need a microscope. And a drink. Mostly a drink.",
+    "You had the ENTIRE canvas and chose to use approximately 3% of it. Commitment issues?",
+    "Ah, the art of wasting space. You've mastered the 'afraid to commit' school of painting.",
+    "This is so small I thought there was a bug on my screen. The bug would've been more interesting.",
+    "Were you charged by the pixel? This level of restraint is almost impressive. Almost.",
+    "The canvas is a gift. You've used it like someone who wraps presents with newspaper.",
+    "I've seen bolder statements from fortune cookies."
+  ],
+  small: [
+    "A timid offering. Like someone whispering at a concert. Nobody asked, and nobody cares.",
+    "You've barely touched the canvas. It's like you're afraid of it. The canvas isn't afraid of YOU, I assure you.",
+    "This has the energy of someone who writes 'nothing much' in their diary. Every day.",
+    "Were you saving the rest of the canvas for someone with talent?",
+    "I've seen more coverage from a bad sunburn.",
+    "The restraint here is remarkable. Most people at least TRY before giving up."
+  ],
+  huge: [
+    "You've filled the entire canvas. Overcompensating for something, are we?",
+    "More is not more. In your case, more is significantly less.",
+    "You painted with the subtlety of someone pressure-washing a sidewalk.",
+    "The canvas begged for mercy. You showed none.",
+    "Abstract expressionism requires expression. You've just expressed... volume.",
+    "Jackson Pollock at least had rhythm. This has the rhythm of a washing machine on spin cycle."
+  ],
+  monochrome: [
+    `You discovered the color {color}. Congratulations. Most people learn this in preschool.`,
+    `One color. ONE. The crayon box has 64, and you chose to peak at one. In {color}.`,
+    `Monochromatism can be sophisticated. This is not that. This is just {color}.`,
+    `A study in {color}. And a study in how little effort a person can exert.`,
+    `Picasso had his Blue Period. You have your '{color} period.' It is significantly less valuable.`,
+    `Using only {color} is a choice. A bad one, but a choice nonetheless.`
+  ],
+  rainbow: [
+    "You used every color. It looks like a unicorn sneezed on the screen.",
+    "This is what happens when a rainbow has a nervous breakdown.",
+    "I admire the commitment to using every color. I do NOT admire the result.",
+    "Roy G. Biv called. He wants a restraining order.",
+    "This has more colors than a clown car. And about the same artistic value.",
+    "Did you fall on the color palette? That would actually explain a lot."
+  ],
+  scribble: [
+    "Jackson Pollock called, he wants his technique back. Actually, he called to say this is an insult to chaos.",
+    "This looks like a seismograph during an earthquake. An earthquake of bad taste.",
+    "Were you drawing or having a medical episode? Genuinely asking.",
+    "I've seen better line work from a caffeinated squirrel.",
+    "Abstract? More like 'frantically abstract.' Take a breath next time.",
+    "This has the energy of someone scribbling out a mistake. The mistake being this drawing."
+  ],
+  chaos: [
+    "This is what happens when you give a toddler espresso and a pen.",
+    "You didn't draw. You ATTACKED the canvas. It didn't deserve this.",
+    "I count approximately 500 strokes and zero thoughts.",
+    "Frenetic, manic, unhinged. And those are the NICE things I have to say.",
+    "The sheer volume of marks suggests either passion or a broken mouse. I'm going with the mouse.",
+    "You know you don't get paid by the stroke, right?"
+  ],
+  corner: [
+    "You huddled your art into the corner like a shy child at a party. Own the space!",
+    "The corner of the canvas. Bold placement. And by bold I mean baffling.",
+    "Were you hiding your art from the rest of the canvas? Smart, actually.",
+    "Centering exists. Composition exists. Both have been thoroughly ignored here.",
+    "You painted in the corner. Even the canvas looks embarrassed."
+  ],
+  medium: [
+    "I see you've created... something. Art? Debatable. Evidence? Absolutely.",
+    "The proportions suggest you tried. The execution suggests you shouldn't have.",
+    "Interesting use of space. By 'interesting' I mean 'questionable at best.'",
+    "This has all the hallmarks of someone who peaked at finger painting.",
+    "If mediocrity were an art form, you'd be a grandmaster.",
+    "Your color choices tell a story. A very boring story.",
+    "I've seen more emotional depth in a screensaver.",
+    "This reminds me of early cave paintings. Except those had more technical skill.",
+    "You've created something that exists. That's about all I can say positively.",
+    "The ancient masters would weep. Not from beauty. From solidarity.",
+    "A triumphant failure. You've managed to miss the mark while being fully committed.",
+    "This is what happens when confidence exceeds ability by a factor of ten thousand.",
+    "Hang this in a gallery and the walls would file a complaint.",
+    "I'd say this is avant-garde, but that would require it to be ahead of SOMETHING.",
+    "Your technique is reminiscent of a cat walking across an iPad.",
+    "If I squint and tilt my head and close my eyes... no, still terrible.",
+    "I've seen more coherent compositions from a dropped plate of spaghetti.",
+    "The colors say 'I tried.' The composition says 'I lied.'",
+    "Somewhere between 'abstract' and 'abstract failure,' you've found your niche.",
+    "Bold strokes. Unfortunately, they're all the wrong ones.",
+    "This drawing has big 'my printer ran out of ink halfway through' energy.",
+    "I consulted three other critics. We unanimously agree: no.",
+    "Your use of negative space is interesting. Mainly because the negative space is better than the positive space.",
+    "If this were a meal, it would be unseasoned boiled chicken. On a paper plate.",
+    "The Renaissance this is not. The Regrettable, however? Absolutely."
+  ]
+};
+
+function getRoast(analysis) {
+  let pool;
+  if (analysis.isEmpty) pool = roasts.empty;
+  else if (analysis.isTiny) pool = roasts.tiny;
+  else if (analysis.isSmall) pool = roasts.small;
+  else if (analysis.isChaos) pool = roasts.chaos;
+  else if (analysis.isScribble) pool = roasts.scribble;
+  else if (analysis.isHuge) pool = roasts.huge;
+  else if (analysis.isMonochrome) pool = roasts.monochrome;
+  else if (analysis.isRainbow) pool = roasts.rainbow;
+  else if (analysis.isCorner) pool = roasts.corner;
+  else pool = roasts.medium;
+
+  let text = pool[Math.floor(Math.random() * pool.length)];
+  text = text.replace(/\{color\}/g, analysis.dominantColorName);
+  return text;
+}
+
+function getScore(analysis) {
+  if (analysis.isEmpty) return Math.floor(Math.random() * 3);
+  let base = Math.floor(Math.random() * 15) + 5;
+  if (analysis.isTiny) base = Math.floor(Math.random() * 10) + 3;
+  else if (analysis.isSmall) base = Math.floor(Math.random() * 12) + 5;
+  else if (analysis.isChaos) base = Math.floor(Math.random() * 8) + 2;
+  else if (analysis.isScribble) base = Math.floor(Math.random() * 10) + 4;
+  else if (analysis.isRainbow) base = Math.floor(Math.random() * 15) + 8;
+  else if (analysis.isMonochrome) base = Math.floor(Math.random() * 12) + 6;
+  else if (analysis.isHuge) base = Math.floor(Math.random() * 15) + 5;
+  else if (analysis.isMedium) base = Math.floor(Math.random() * 20) + 8;
+  // Never above 35
+  return Math.min(base, 35);
+}
+
+// --- Scan Animation ---
+const scanPhrases = [
+  "Scanning for talent",
+  "Searching for artistic merit",
+  "Consulting the old masters",
+  "Cross-referencing with kindergarten archives",
+  "Checking if this qualifies as art",
+  "Analyzing color theory violations",
+  "Measuring disappointment levels",
+  "Computing cringe factor",
+  "Consulting the gallery rejection database",
+  "Running talent detection algorithm",
+  "None detected so far",
+  "Preparing devastating critique"
+];
+
+async function runAnalysis() {
+  judgeBtn.disabled = true;
+  analysisOverlay.classList.add('active');
+  scanBar.style.width = '0%';
+
+  const analysis = analyzeDrawing();
+
+  for (let i = 0; i < 5; i++) {
+    const phrase = scanPhrases[Math.floor(Math.random() * scanPhrases.length)];
+    scanText.innerHTML = phrase + '<span class="scan-dots"></span>';
+    scanBar.style.width = ((i + 1) * 20) + '%';
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+  }
+
+  scanText.innerHTML = 'Verdict rendered.';
+  scanBar.style.width = '100%';
+  await new Promise(r => setTimeout(r, 500));
+
+  analysisOverlay.classList.remove('active');
+
+  currentRoast = getRoast(analysis);
+  currentScore = getScore(analysis);
+
+  scoreNum.textContent = currentScore + '/100';
+  scoreNum.className = 'score-num ' + (currentScore < 15 ? 'score-low' : 'score-mid');
+  roastText.textContent = '"' + currentRoast + '"';
+  resultPanel.classList.add('active');
+  resultPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  judgeBtn.disabled = false;
+}
+
+judgeBtn.addEventListener('click', runAnalysis);
+
+// --- Speech ---
+speakBtn.addEventListener('click', () => {
+  if (!currentRoast) return;
+  const utter = new SpeechSynthesisUtterance(currentRoast);
+  const voices = speechSynthesis.getVoices();
+  // Try to find a British or deep voice
+  const preferred = voices.find(v =>
+    v.lang.startsWith('en') && (v.name.includes('Daniel') || v.name.includes('British') || v.name.includes('UK'))
+  ) || voices.find(v => v.lang.startsWith('en-GB'))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utter.voice = preferred;
+  utter.rate = 0.85;
+  utter.pitch = 0.8;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+});
+
+// Pre-load voices
+speechSynthesis.getVoices();
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+
+// --- Gallery of Shame ---
+let gallery = JSON.parse(localStorage.getItem('sketchRoasterGallery') || '[]');
+
+function renderGallery() {
+  if (gallery.length === 0) {
+    galleryGrid.innerHTML = '<div class="gallery-empty">No submissions yet. Your shame awaits.</div>';
+    clearGalleryBtn.style.display = 'none';
+    return;
+  }
+  clearGalleryBtn.style.display = 'block';
+  galleryGrid.innerHTML = gallery.map((item, i) => `
+    <div class="gallery-item">
+      <button class="gallery-item-delete" onclick="deleteFromGallery(${i})">&times;</button>
+      <img src="${item.image}" alt="Shameful art #${i+1}">
+      <div class="gallery-item-info">
+        <span class="gallery-item-score ${item.score < 15 ? 'score-low' : 'score-mid'}">${item.score}/100</span>
+        <div class="gallery-item-roast">${item.roast}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function saveToGallery() {
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  const tempCtx = tempCanvas.getContext('2d');
+  tempCtx.drawImage(canvas, 0, 0);
+  const image = tempCanvas.toDataURL('image/png', 0.6);
+
+  gallery.unshift({ image, score: currentScore, roast: currentRoast, date: Date.now() });
+  if (gallery.length > 20) gallery.pop(); // cap at 20
+  try {
+    localStorage.setItem('sketchRoasterGallery', JSON.stringify(gallery));
+  } catch(e) {
+    // Storage full, remove oldest
+    gallery.pop();
+    try { localStorage.setItem('sketchRoasterGallery', JSON.stringify(gallery)); } catch(e2) {}
+  }
+  renderGallery();
+  document.getElementById('gallerySection').scrollIntoView({ behavior: 'smooth' });
+}
+
+window.deleteFromGallery = function(i) {
+  gallery.splice(i, 1);
+  localStorage.setItem('sketchRoasterGallery', JSON.stringify(gallery));
+  renderGallery();
+};
+
+saveShameBtn.addEventListener('click', saveToGallery);
+
+clearGalleryBtn.addEventListener('click', () => {
+  if (confirm('Burn the entire Gallery of Shame? This cannot be undone.')) {
+    gallery = [];
+    localStorage.removeItem('sketchRoasterGallery');
+    renderGallery();
+  }
+});
+
+renderGallery();
+
+// Handle resize
+window.addEventListener('resize', () => {
+  // Save current drawing
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = canvas.width;
+  tempCanvas.height = canvas.height;
+  tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+  setupCanvas();
+  const rect = canvas.getBoundingClientRect();
+  ctx.drawImage(tempCanvas, 0, 0, rect.width, rect.height);
+});
+</script>
+</body>
+</html>
