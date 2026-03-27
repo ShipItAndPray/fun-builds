@@ -4,1378 +4,359 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RAGE QUIT DETECTOR</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0a0a0f">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  :root {
-    --neon-cyan: #00f0ff;
-    --neon-pink: #ff006e;
-    --neon-green: #39ff14;
-    --neon-yellow: #ffe600;
-    --neon-orange: #ff6a00;
-    --neon-red: #ff0040;
-    --bg-dark: #0a0a0f;
-    --bg-card: #12121a;
-    --bg-card2: #1a1a2e;
-    --text: #e0e0e0;
-  }
-
   body {
-    background: var(--bg-dark);
-    color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    overflow: hidden;
+    background: #111;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     height: 100vh;
-    width: 100vw;
-  }
-
-  /* Screen shake */
-  @keyframes shake {
-    0%, 100% { transform: translate(0); }
-    10% { transform: translate(-5px, -3px); }
-    20% { transform: translate(5px, 3px); }
-    30% { transform: translate(-3px, 5px); }
-    40% { transform: translate(3px, -5px); }
-    50% { transform: translate(-5px, 3px); }
-    60% { transform: translate(5px, -3px); }
-    70% { transform: translate(-3px, -5px); }
-    80% { transform: translate(3px, 5px); }
-    90% { transform: translate(-5px, -3px); }
-  }
-
-  body.shaking { animation: shake 0.3s ease-in-out; }
-
-  /* Screen flash overlay */
-  #flash-overlay {
-    position: fixed; inset: 0;
-    background: rgba(255, 0, 64, 0);
-    pointer-events: none;
-    z-index: 1000;
-    transition: background 0.1s;
-  }
-  #flash-overlay.flash { background: rgba(255, 0, 64, 0.4); }
-
-  /* Border glow */
-  #border-glow {
-    position: fixed; inset: 0;
-    border: 4px solid transparent;
-    pointer-events: none;
-    z-index: 999;
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  #border-glow.warning {
-    border-color: var(--neon-yellow);
-    box-shadow: inset 0 0 30px rgba(255, 230, 0, 0.15);
-  }
-  #border-glow.danger {
-    border-color: var(--neon-orange);
-    box-shadow: inset 0 0 50px rgba(255, 106, 0, 0.2);
-    animation: pulse-border 1s ease-in-out infinite;
-  }
-  #border-glow.critical {
-    border-color: var(--neon-red);
-    box-shadow: inset 0 0 80px rgba(255, 0, 64, 0.3);
-    animation: pulse-border 0.4s ease-in-out infinite;
-  }
-  #border-glow.zen {
-    border-color: var(--neon-cyan);
-    box-shadow: inset 0 0 40px rgba(0, 240, 255, 0.15);
-  }
-
-  @keyframes pulse-border {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  /* Main layout */
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 80px;
-    grid-template-rows: 60px 1fr 120px;
-    height: 100vh;
-    gap: 0;
-  }
-
-  /* Header */
-  #header {
-    grid-column: 1 / -1;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    background: linear-gradient(180deg, rgba(18,18,26,0.95), rgba(10,10,15,0.8));
-    border-bottom: 2px solid var(--neon-cyan);
-    z-index: 10;
+    justify-content: center;
+    overflow: hidden;
   }
 
-  #header h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: 22px;
-    font-weight: 900;
-    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
-    letter-spacing: 3px;
-  }
-
-  .header-stats {
-    display: flex;
-    gap: 24px;
-    font-family: 'Orbitron', monospace;
-    font-size: 12px;
-  }
-
-  .header-stat {
+  /* START SCREEN */
+  #start-screen {
     text-align: center;
   }
-  .header-stat .label {
-    color: #666;
-    font-size: 9px;
-    letter-spacing: 2px;
+  #start-screen h1 {
+    font-size: 28px;
+    margin-bottom: 12px;
+    color: #ccc;
   }
-  .header-stat .value {
-    color: var(--neon-cyan);
-    font-size: 16px;
+  #start-btn {
+    font-size: 24px;
+    padding: 20px 50px;
+    border: none;
+    border-radius: 16px;
+    background: #2a2;
+    color: white;
+    cursor: pointer;
     font-weight: 700;
+    margin-top: 20px;
   }
+  #start-btn:hover { background: #3b3; }
 
-  /* Video area */
-  #video-area {
-    position: relative;
-    overflow: hidden;
-    background: #000;
-  }
-
-  #webcam {
+  /* DETECTION SCREEN */
+  #detect-screen {
+    display: none;
     width: 100%;
     height: 100%;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  /* Webcam */
+  #webcam {
+    width: 280px;
+    height: 210px;
+    border-radius: 16px;
     object-fit: cover;
     transform: scaleX(-1);
+    margin-top: 20px;
+    border: 3px solid #333;
   }
 
-  #video-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 15px;
-    pointer-events: none;
+  /* Big emoji */
+  #emoji {
+    font-size: 80px;
+    margin: 10px 0 0 0;
+    transition: transform 0.2s;
   }
 
-  /* HUD elements on video */
-  .hud-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-
-  .rage-badge {
-    font-family: 'Orbitron', monospace;
-    font-size: 48px;
+  /* Big rage number */
+  #rage-number {
+    font-size: 120px;
     font-weight: 900;
-    color: var(--neon-green);
-    text-shadow: 0 0 20px currentColor;
+    line-height: 1;
     transition: color 0.3s;
   }
-  .rage-badge.warning { color: var(--neon-yellow); }
-  .rage-badge.danger { color: var(--neon-orange); }
-  .rage-badge.critical { color: var(--neon-red); animation: pulse-text 0.5s ease-in-out infinite; }
-
-  @keyframes pulse-text {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.7; transform: scale(1.05); }
-  }
-
-  .status-text {
-    font-family: 'Orbitron', monospace;
-    font-size: 14px;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 10px currentColor;
-    text-align: right;
-    max-width: 300px;
-  }
-
-  .emoji-reaction {
-    position: absolute;
-    font-size: 60px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    transition: opacity 0.3s;
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
-  }
-  .emoji-reaction.visible { opacity: 1; animation: emoji-pop 0.5s ease-out; }
-
-  @keyframes emoji-pop {
-    0% { transform: translate(-50%, -50%) scale(0); }
-    50% { transform: translate(-50%, -50%) scale(1.3); }
-    100% { transform: translate(-50%, -50%) scale(1); }
-  }
-
-  .hud-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-  }
-
-  .indicator-row {
-    display: flex;
-    gap: 12px;
-  }
-
-  .indicator {
-    background: rgba(0,0,0,0.7);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 600;
-  }
-  .indicator .ind-label { color: #888; font-size: 9px; }
-  .indicator .ind-value { color: var(--neon-cyan); }
-  .indicator.active { border-color: var(--neon-orange); }
-  .indicator.active .ind-value { color: var(--neon-orange); }
-
-  /* Rage meter (vertical bar) */
-  #rage-meter {
-    background: var(--bg-card);
-    border-left: 2px solid #222;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 10px 0;
-    position: relative;
-  }
-
-  .meter-track {
-    width: 30px;
-    height: calc(100% - 30px);
-    background: #1a1a1a;
-    border-radius: 15px;
-    position: relative;
-    overflow: hidden;
-    border: 1px solid #333;
-  }
-
-  .meter-fill {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    border-radius: 15px;
-    background: linear-gradient(to top, var(--neon-green), var(--neon-yellow), var(--neon-orange), var(--neon-red));
-    transition: height 0.3s ease-out;
-  }
-
-  .meter-label {
-    font-family: 'Orbitron', monospace;
-    font-size: 8px;
-    color: #666;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    letter-spacing: 2px;
-    margin-top: 8px;
-  }
-
-  /* Bottom panel */
-  #bottom-panel {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: 1fr 200px 1fr 160px;
-    gap: 2px;
-    background: var(--bg-dark);
-    border-top: 2px solid #222;
-  }
-
-  .panel-card {
-    background: var(--bg-card);
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .panel-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 9px;
-    color: #555;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-  }
-
-  /* Sparkline chart */
-  #sparkline-container {
-    flex: 1;
-    position: relative;
-  }
-
-  #sparkline {
-    width: 100%;
-    height: 100%;
-  }
-
-  /* Session stats */
-  .stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    flex: 1;
-  }
-
-  .stat-item {
-    text-align: center;
-  }
-  .stat-item .stat-label {
-    font-size: 9px;
-    color: #555;
-    letter-spacing: 1px;
-    font-family: 'Orbitron', monospace;
-  }
-  .stat-item .stat-value {
-    font-family: 'Orbitron', monospace;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--neon-cyan);
-  }
-  .stat-item .stat-value.red { color: var(--neon-red); }
-
-  /* Achievements */
-  .achievements {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-content: flex-start;
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .achievement {
-    background: rgba(0,0,0,0.4);
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 3px 8px;
-    font-size: 11px;
-    opacity: 0.3;
-    transition: all 0.5s;
-    white-space: nowrap;
-  }
-  .achievement.unlocked {
-    opacity: 1;
-    border-color: var(--neon-yellow);
-    background: rgba(255, 230, 0, 0.1);
-    animation: achievement-glow 2s ease-out;
-  }
-
-  @keyframes achievement-glow {
-    0% { box-shadow: 0 0 20px var(--neon-yellow); transform: scale(1.1); }
-    100% { box-shadow: none; transform: scale(1); }
-  }
-
-  /* Calm button + Rage quit counter */
-  .action-area {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-  }
-
-  #calm-btn {
-    pointer-events: all;
-    font-family: 'Orbitron', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 10px 20px;
-    border: 2px solid var(--neon-cyan);
-    background: rgba(0, 240, 255, 0.1);
-    color: var(--neon-cyan);
-    border-radius: 8px;
-    cursor: pointer;
-    letter-spacing: 2px;
-    transition: all 0.2s;
-    text-transform: uppercase;
-  }
-  #calm-btn:hover {
-    background: rgba(0, 240, 255, 0.25);
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-  }
-  #calm-btn:active { transform: scale(0.95); }
-
-  .rage-quit-counter {
-    font-family: 'Orbitron', monospace;
-    text-align: center;
-  }
-  .rage-quit-counter .rqc-label { font-size: 8px; color: #555; letter-spacing: 2px; }
-  .rage-quit-counter .rqc-value { font-size: 28px; font-weight: 900; color: var(--neon-red); text-shadow: 0 0 15px var(--neon-red); }
-
-  /* RAGE DETECTED overlay */
-  #rage-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(10, 0, 0, 0.85);
-    z-index: 500;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  #rage-overlay.active { opacity: 1; pointer-events: all; }
-
-  .rage-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 64px;
-    font-weight: 900;
-    color: var(--neon-red);
-    text-shadow: 0 0 40px var(--neon-red), 0 0 80px var(--neon-red);
-    animation: rage-pulse 0.5s ease-in-out infinite;
-    letter-spacing: 8px;
-  }
-
-  @keyframes rage-pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.05); opacity: 0.8; }
-  }
-
-  .rage-subtitle {
-    font-family: 'Rajdhani', sans-serif;
+  #rage-label {
     font-size: 20px;
-    color: #ff6666;
-    margin-top: 10px;
-    letter-spacing: 4px;
+    color: #888;
+    margin-top: -8px;
   }
 
-  /* INTERVENTION MODE overlay */
-  #intervention-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 10, 20, 0.92);
-    z-index: 600;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s;
-    gap: 20px;
+  /* Spike counter */
+  #spike-counter {
+    font-size: 22px;
+    color: #aaa;
+    margin-top: 12px;
   }
-  #intervention-overlay.active { opacity: 1; pointer-events: all; }
-
-  .intervention-title {
-    font-family: 'Orbitron', monospace;
-    font-size: 36px;
-    font-weight: 900;
-    color: var(--neon-cyan);
-    text-shadow: 0 0 30px var(--neon-cyan);
-    letter-spacing: 6px;
-  }
-
-  .animal-fact {
-    background: rgba(0, 240, 255, 0.08);
-    border: 1px solid rgba(0, 240, 255, 0.3);
-    border-radius: 12px;
-    padding: 20px 30px;
-    max-width: 500px;
-    text-align: center;
-    font-size: 18px;
-    color: #aaddee;
-    line-height: 1.5;
-  }
-  .animal-fact .fact-emoji { font-size: 48px; display: block; margin-bottom: 10px; }
-
-  .breathing-guide {
-    font-family: 'Orbitron', monospace;
-    font-size: 24px;
-    color: var(--neon-green);
-    animation: breathe 4s ease-in-out infinite;
-  }
-
-  @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.15); opacity: 1; }
-  }
-
-  /* Start screen */
-  #start-screen {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-dark);
-    z-index: 2000;
-    gap: 20px;
-  }
-  #start-screen.hidden { display: none; }
-
-  #start-screen h1 {
-    font-family: 'Orbitron', monospace;
-    font-size: 42px;
-    font-weight: 900;
-    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-cyan));
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient-shift 3s ease-in-out infinite;
-    letter-spacing: 5px;
-  }
-
-  @keyframes gradient-shift {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-  }
-
-  #start-screen p {
-    color: #666;
-    font-size: 16px;
-    max-width: 400px;
-    text-align: center;
-    line-height: 1.6;
-  }
-
-  #start-btn {
-    font-family: 'Orbitron', monospace;
-    font-size: 18px;
+  #spike-counter span {
+    color: #f44;
     font-weight: 700;
-    padding: 16px 40px;
-    border: 2px solid var(--neon-cyan);
-    background: rgba(0, 240, 255, 0.1);
-    color: var(--neon-cyan);
-    border-radius: 12px;
+  }
+
+  /* Calm button */
+  #calm-btn {
+    display: none;
+    font-size: 28px;
+    padding: 16px 48px;
+    border: none;
+    border-radius: 16px;
+    background: #07f;
+    color: white;
     cursor: pointer;
-    letter-spacing: 4px;
-    margin-top: 20px;
-    transition: all 0.3s;
+    font-weight: 700;
+    margin-top: 16px;
+    animation: pulse 1s ease-in-out infinite;
   }
-  #start-btn:hover {
-    background: rgba(0, 240, 255, 0.25);
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-    transform: scale(1.05);
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
   }
 
-  .scanline {
+  /* Red flash overlay */
+  #flash {
     position: fixed;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: rgba(0, 240, 255, 0.15);
-    z-index: 998;
+    inset: 0;
+    background: rgba(255, 0, 0, 0.5);
     pointer-events: none;
-    animation: scanline 4s linear infinite;
+    z-index: 100;
+    display: none;
+    animation: flash-anim 0.3s ease-in-out infinite;
   }
-
-  @keyframes scanline {
-    0% { top: 0; }
-    100% { top: 100%; }
+  @keyframes flash-anim {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
   }
-
-  /* Achievement toast */
-  .toast {
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    background: rgba(18, 18, 26, 0.95);
-    border: 2px solid var(--neon-yellow);
-    border-radius: 10px;
-    padding: 12px 20px;
-    z-index: 800;
-    font-family: 'Orbitron', monospace;
-    transform: translateX(120%);
-    transition: transform 0.4s ease-out;
-    box-shadow: 0 0 20px rgba(255, 230, 0, 0.3);
-  }
-  .toast.show { transform: translateX(0); }
-  .toast .toast-title { font-size: 10px; color: var(--neon-yellow); letter-spacing: 2px; }
-  .toast .toast-body { font-size: 14px; color: #fff; margin-top: 4px; }
 </style>
 </head>
 <body>
 
-<div id="flash-overlay"></div>
-<div id="border-glow"></div>
-<div class="scanline"></div>
-
-<!-- Start Screen -->
+<!-- SCREEN 1: Start -->
 <div id="start-screen">
-  <h1>RAGE QUIT DETECTOR</h1>
-  <p>Uses your webcam and AI face tracking to detect gaming rage in real-time. When you get mad, it gets dramatic.</p>
-  <p style="color:#444; font-size:12px;">Powered by MediaPipe Face Mesh</p>
-  <button id="start-btn" onclick="startApp()">ACTIVATE</button>
+  <h1>Allow your camera to start</h1>
+  <button id="start-btn">Start Rage Detection</button>
 </div>
 
-<!-- RAGE DETECTED overlay -->
-<div id="rage-overlay">
-  <div class="rage-title">RAGE DETECTED</div>
-  <div class="rage-subtitle">CONTROLLER SAFETY MODE ENGAGED</div>
+<!-- SCREEN 2: Detection -->
+<div id="detect-screen">
+  <video id="webcam" autoplay playsinline></video>
+  <div id="emoji">😊</div>
+  <div id="rage-number" style="color: #2a2;">0%</div>
+  <div id="rage-label">RAGE LEVEL</div>
+  <div id="spike-counter">Rage spikes: <span id="spike-count">0</span></div>
+  <button id="calm-btn">I'M CALM</button>
 </div>
 
-<!-- INTERVENTION overlay -->
-<div id="intervention-overlay">
-  <div class="intervention-title">INTERVENTION MODE</div>
-  <div class="breathing-guide" id="breathing-text">Breathe in...</div>
-  <div class="animal-fact" id="animal-fact">
-    <span class="fact-emoji">🦦</span>
-    Sea otters hold hands while sleeping so they don't drift apart.
-  </div>
-  <button id="calm-btn-intervention" onclick="resetRage()" style="font-family:'Orbitron',monospace;font-size:14px;font-weight:700;padding:12px 30px;border:2px solid var(--neon-cyan);background:rgba(0,240,255,0.1);color:var(--neon-cyan);border-radius:8px;cursor:pointer;letter-spacing:2px;margin-top:10px;">I'M CALM NOW</button>
-</div>
+<!-- Red flash overlay -->
+<div id="flash"></div>
 
-<!-- Achievement toast -->
-<div class="toast" id="toast">
-  <div class="toast-title">ACHIEVEMENT UNLOCKED</div>
-  <div class="toast-body" id="toast-body"></div>
-</div>
-
-<!-- Main App -->
-<div id="app">
-  <div id="header">
-    <h1>RAGE QUIT DETECTOR</h1>
-    <div class="header-stats">
-      <div class="header-stat">
-        <div class="label">SESSION</div>
-        <div class="value" id="session-time">00:00</div>
-      </div>
-      <div class="header-stat">
-        <div class="label">STATUS</div>
-        <div class="value" id="status-indicator">LOADING</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="video-area">
-    <video id="webcam" autoplay playsinline></video>
-    <div id="video-overlay">
-      <div class="hud-top">
-        <div class="rage-badge" id="rage-percent">0%</div>
-        <div class="status-text" id="status-message">Initializing face tracking...</div>
-      </div>
-      <div class="emoji-reaction" id="emoji-reaction"></div>
-      <div class="hud-bottom">
-        <div class="indicator-row">
-          <div class="indicator" id="ind-brow">
-            <div class="ind-label">BROW</div>
-            <div class="ind-value">--</div>
-          </div>
-          <div class="indicator" id="ind-jaw">
-            <div class="ind-label">JAW</div>
-            <div class="ind-value">--</div>
-          </div>
-          <div class="indicator" id="ind-eyes">
-            <div class="ind-label">EYES</div>
-            <div class="ind-value">--</div>
-          </div>
-          <div class="indicator" id="ind-mouth">
-            <div class="ind-label">MOUTH</div>
-            <div class="ind-value">--</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="rage-meter">
-    <div class="meter-track">
-      <div class="meter-fill" id="meter-fill" style="height:0%"></div>
-    </div>
-    <div class="meter-label">RAGE</div>
-  </div>
-
-  <div id="bottom-panel">
-    <div class="panel-card">
-      <div class="panel-title">Rage History</div>
-      <div id="sparkline-container">
-        <canvas id="sparkline"></canvas>
-      </div>
-    </div>
-
-    <div class="panel-card">
-      <div class="panel-title">Session Stats</div>
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div class="stat-label">PEAK</div>
-          <div class="stat-value red" id="stat-peak">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">AVG</div>
-          <div class="stat-value" id="stat-avg">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">SPIKES</div>
-          <div class="stat-value red" id="stat-spikes">0</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-label">CALM</div>
-          <div class="stat-value" id="stat-calm" style="color:var(--neon-green)">100%</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel-card">
-      <div class="panel-title">Achievements</div>
-      <div class="achievements">
-        <div class="achievement" id="ach-first-rage">&#x1F525; First Rage</div>
-        <div class="achievement" id="ach-rage-streak">&#x1F4A2; 5 Rage Streak</div>
-        <div class="achievement" id="ach-zen-master">&#x1F9D8; Zen Master</div>
-        <div class="achievement" id="ach-rage-quit">&#x1F3AE; Rage Quitter</div>
-        <div class="achievement" id="ach-comeback">&#x1F4AA; Comeback Kid</div>
-        <div class="achievement" id="ach-chill">&#x2744;&#xFE0F; Ice Cold</div>
-      </div>
-    </div>
-
-    <div class="panel-card action-area">
-      <button id="calm-btn" onclick="resetRage()">I'M CALM</button>
-      <div class="rage-quit-counter">
-        <div class="rqc-label">RAGE QUITS</div>
-        <div class="rqc-value" id="rage-quit-count">0</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- MediaPipe -->
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js"></script>
+<!-- MediaPipe Face Mesh -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 
 <script>
-// ===== STATE =====
-const state = {
-  rageLevel: 0,
-  targetRage: 0,
-  peakRage: 0,
-  totalRage: 0,
-  samples: 0,
-  spikes: 0,
-  rageQuits: 0,
-  rageHistory: [],
-  sessionStart: null,
-  lastSpikeTime: 0,
-  consecutiveSpikes: 0,
-  calmStartTime: null,
-  inRageOverlay: false,
-  inIntervention: false,
-  currentTier: 0, // 0=calm, 1=warning, 2=danger, 3=critical, 4=intervention
-  achievements: {},
-  audioCtx: null,
-  faceMeshReady: false,
-  baselineBrow: null,
-  baselineJaw: null,
-  baselineEyes: null,
-  baselineMouth: null,
-  calibrationFrames: 0,
-  calibrationBrow: [],
-  calibrationJaw: [],
-  calibrationEyes: [],
-  calibrationMouth: [],
-};
+// --- STATE ---
+let rageLevel = 0;
+let spikeCount = 0;
+let isRaging = false;
+let alarmPlaying = false;
+let audioCtx = null;
+let alarmOsc = null;
+let alarmGain = null;
+let baselineMouthOpen = null;
+let baselineBrowDist = null;
+let samples = 0;
 
-const animalFacts = [
-  { emoji: "🦦", fact: "Sea otters hold hands while sleeping so they don't drift apart." },
-  { emoji: "🐱", fact: "Cats spend 70% of their lives sleeping. Maybe you should too." },
-  { emoji: "🐕", fact: "Dogs can understand up to 250 words and gestures. Say 'calm down' to yourself." },
-  { emoji: "🦥", fact: "Sloths only poop once a week. Some things aren't worth rushing." },
-  { emoji: "🐧", fact: "Penguins propose to their mates with a pebble. No rage needed." },
-  { emoji: "🦊", fact: "Arctic foxes can survive -58F. You can survive this game." },
-  { emoji: "🐙", fact: "Octopuses have three hearts. Use at least one of yours right now." },
-  { emoji: "🦋", fact: "Butterflies taste with their feet. Step back from the keyboard." },
-  { emoji: "🐨", fact: "Koalas sleep 22 hours a day. Consider their wisdom." },
-  { emoji: "🐬", fact: "Dolphins sleep with one eye open. Be vigilant, but calm." },
-];
+// --- DOM ---
+const startScreen = document.getElementById('start-screen');
+const detectScreen = document.getElementById('detect-screen');
+const startBtn = document.getElementById('start-btn');
+const webcam = document.getElementById('webcam');
+const emojiEl = document.getElementById('emoji');
+const rageNumber = document.getElementById('rage-number');
+const spikeCountEl = document.getElementById('spike-count');
+const calmBtn = document.getElementById('calm-btn');
+const flashEl = document.getElementById('flash');
 
-// ===== AUDIO ENGINE =====
+// --- START ---
+startBtn.addEventListener('click', async () => {
+  startScreen.style.display = 'none';
+  detectScreen.style.display = 'flex';
+  initAudio();
+  startCamera();
+});
+
+// --- AUDIO (Web Audio API) ---
 function initAudio() {
-  if (state.audioCtx) return;
-  state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
-function playChime() {
-  initAudio();
-  const ctx = state.audioCtx;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-  osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1); // E5
-  osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2); // G5
-  gain.gain.setValueAtTime(0.15, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.8);
+function startAlarm() {
+  if (alarmPlaying) return;
+  alarmPlaying = true;
+
+  alarmOsc = audioCtx.createOscillator();
+  alarmGain = audioCtx.createGain();
+  alarmOsc.type = 'sawtooth';
+  alarmOsc.frequency.value = 440;
+  alarmGain.gain.value = 0.3;
+  alarmOsc.connect(alarmGain);
+  alarmGain.connect(audioCtx.destination);
+  alarmOsc.start();
+
+  // Siren effect
+  const siren = () => {
+    if (!alarmPlaying) return;
+    alarmOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+    alarmOsc.frequency.linearRampToValueAtTime(880, audioCtx.currentTime + 0.5);
+    alarmOsc.frequency.linearRampToValueAtTime(440, audioCtx.currentTime + 1.0);
+    setTimeout(siren, 1000);
+  };
+  siren();
 }
 
-function playAlarm() {
-  initAudio();
-  const ctx = state.audioCtx;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(220, ctx.currentTime);
-  osc.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.15);
-  osc.frequency.linearRampToValueAtTime(220, ctx.currentTime + 0.3);
-  osc.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.45);
-  gain.gain.setValueAtTime(0.12, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-  osc.connect(gain).connect(ctx.destination);
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.6);
-}
-
-let calmingNodes = null;
-function playCalmingSounds() {
-  initAudio();
-  if (calmingNodes) return;
-  const ctx = state.audioCtx;
-
-  // Low hum
-  const hum = ctx.createOscillator();
-  const humGain = ctx.createGain();
-  hum.type = 'sine';
-  hum.frequency.value = 110;
-  humGain.gain.value = 0.06;
-  hum.connect(humGain).connect(ctx.destination);
-  hum.start();
-
-  // Shaped noise (ocean-like)
-  const bufferSize = ctx.sampleRate * 4;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * (0.3 + 0.7 * Math.sin(i / ctx.sampleRate * 0.3 * Math.PI));
-  }
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
-  noise.loop = true;
-
-  const noiseFilter = ctx.createBiquadFilter();
-  noiseFilter.type = 'lowpass';
-  noiseFilter.frequency.value = 400;
-
-  const noiseGain = ctx.createGain();
-  noiseGain.gain.value = 0.08;
-
-  // LFO for wave-like volume
-  const lfo = ctx.createOscillator();
-  const lfoGain = ctx.createGain();
-  lfo.type = 'sine';
-  lfo.frequency.value = 0.15;
-  lfoGain.gain.value = 0.04;
-  lfo.connect(lfoGain).connect(noiseGain.gain);
-  lfo.start();
-
-  noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
-  noise.start();
-
-  calmingNodes = { hum, humGain, noise, noiseGain, noiseFilter, lfo, lfoGain };
-}
-
-function stopCalmingSounds() {
-  if (!calmingNodes) return;
-  try {
-    calmingNodes.hum.stop();
-    calmingNodes.noise.stop();
-    calmingNodes.lfo.stop();
-  } catch(e) {}
-  calmingNodes = null;
-}
-
-// ===== FACE ANALYSIS =====
-// Key MediaPipe Face Mesh landmark indices:
-// Eyebrows: 66 (left inner), 296 (right inner), 105 (left mid), 334 (right mid)
-// Eyes: upper 159, lower 145 (left); upper 386, lower 374 (right)
-// Mouth: 13 (top lip), 14 (bottom lip), 61 (left corner), 291 (right corner), 0 (top of upper lip ref)
-// Nose: 1 (tip), 4 (bridge)
-// Forehead ref: 10
-
-function analyzeFace(landmarks) {
-  // All y values: lower = higher on screen (flipped)
-  const lm = landmarks;
-
-  // Brow furrow: distance between eyebrow and eye
-  // Left brow (105) to left eye top (159), right brow (334) to right eye top (386)
-  const leftBrowDist = lm[105].y - lm[159].y;
-  const rightBrowDist = lm[334].y - lm[386].y;
-  const browMetric = (leftBrowDist + rightBrowDist) / 2;
-
-  // Jaw clench: vertical mouth opening (13 top lip to 14 bottom lip) relative to face height
-  const faceHeight = lm[152].y - lm[10].y; // chin to forehead
-  const mouthOpen = lm[14].y - lm[13].y;
-  const jawMetric = mouthOpen / Math.abs(faceHeight);
-
-  // Eye wideness: left eye (159 top, 145 bottom), right eye (386 top, 374 bottom)
-  const leftEyeOpen = lm[145].y - lm[159].y;
-  const rightEyeOpen = lm[374].y - lm[386].y;
-  const eyeMetric = (leftEyeOpen + rightEyeOpen) / 2 / Math.abs(faceHeight);
-
-  // Frown: mouth corners relative to mouth center
-  const mouthCenterY = (lm[13].y + lm[14].y) / 2;
-  const leftCornerDrop = lm[61].y - mouthCenterY;
-  const rightCornerDrop = lm[291].y - mouthCenterY;
-  const mouthMetric = (leftCornerDrop + rightCornerDrop) / 2;
-
-  return { browMetric, jawMetric, eyeMetric, mouthMetric };
-}
-
-function calibrate(metrics) {
-  state.calibrationBrow.push(metrics.browMetric);
-  state.calibrationJaw.push(metrics.jawMetric);
-  state.calibrationEyes.push(metrics.eyeMetric);
-  state.calibrationMouth.push(metrics.mouthMetric);
-  state.calibrationFrames++;
-
-  if (state.calibrationFrames >= 30) {
-    const avg = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
-    state.baselineBrow = avg(state.calibrationBrow);
-    state.baselineJaw = avg(state.calibrationJaw);
-    state.baselineEyes = avg(state.calibrationEyes);
-    state.baselineMouth = avg(state.calibrationMouth);
-    document.getElementById('status-message').textContent = 'Face tracking active';
-    document.getElementById('status-indicator').textContent = 'ACTIVE';
-    document.getElementById('status-indicator').style.color = 'var(--neon-green)';
+function stopAlarm() {
+  if (!alarmPlaying) return;
+  alarmPlaying = false;
+  if (alarmOsc) {
+    alarmOsc.stop();
+    alarmOsc.disconnect();
+    alarmOsc = null;
   }
 }
 
-function computeRage(metrics) {
-  if (state.baselineBrow === null) return 0;
-
-  // Brow score: negative deviation means brow moved DOWN (furrowed)
-  const browDeviation = state.baselineBrow - metrics.browMetric;
-  const browScore = Math.max(0, Math.min(1, browDeviation * 80));
-
-  // Jaw score: LESS opening = clenched (lower jawMetric)
-  const jawDeviation = state.baselineJaw - metrics.jawMetric;
-  const jawScore = Math.max(0, Math.min(1, jawDeviation * 25));
-
-  // Eye score: MORE opening = wider eyes (higher eyeMetric)
-  const eyeDeviation = metrics.eyeMetric - state.baselineEyes;
-  const eyeScore = Math.max(0, Math.min(1, eyeDeviation * 40));
-
-  // Mouth score: corners DOWN = frown (higher mouthMetric = more drop)
-  const mouthDeviation = metrics.mouthMetric - state.baselineMouth;
-  const mouthScore = Math.max(0, Math.min(1, mouthDeviation * 60));
-
-  // Update indicators
-  updateIndicator('ind-brow', browScore);
-  updateIndicator('ind-jaw', jawScore);
-  updateIndicator('ind-eyes', eyeScore);
-  updateIndicator('ind-mouth', mouthScore);
-
-  // Weighted combination
-  const rawRage = (browScore * 0.35 + jawScore * 0.25 + eyeScore * 0.2 + mouthScore * 0.2) * 100;
-  return Math.max(0, Math.min(100, rawRage));
-}
-
-function updateIndicator(id, score) {
-  const el = document.getElementById(id);
-  const val = el.querySelector('.ind-value');
-  const pct = Math.round(score * 100);
-  val.textContent = pct + '%';
-  if (score > 0.4) {
-    el.classList.add('active');
-  } else {
-    el.classList.remove('active');
-  }
-}
-
-// ===== UI UPDATES =====
-function updateRageUI(level) {
-  const pct = Math.round(level);
-
-  // Rage badge
-  const badge = document.getElementById('rage-percent');
-  badge.textContent = pct + '%';
-  badge.className = 'rage-badge';
-  if (pct >= 80) badge.classList.add('critical');
-  else if (pct >= 60) badge.classList.add('danger');
-  else if (pct >= 30) badge.classList.add('warning');
-
-  // Meter fill
-  document.getElementById('meter-fill').style.height = pct + '%';
-
-  // Border glow
-  const glow = document.getElementById('border-glow');
-  glow.className = '';
-  if (state.inIntervention) glow.classList.add('zen');
-  else if (pct >= 80) glow.classList.add('critical');
-  else if (pct >= 60) glow.classList.add('danger');
-  else if (pct >= 30) glow.classList.add('warning');
-
-  // Status message
-  const msg = document.getElementById('status-message');
-  if (state.baselineBrow === null) {
-    msg.textContent = `Calibrating... ${state.calibrationFrames}/30`;
-  } else if (pct >= 95) {
-    msg.textContent = 'INTERVENTION ACTIVATED';
-    msg.style.color = 'var(--neon-cyan)';
-  } else if (pct >= 80) {
-    msg.textContent = 'RED ALERT - RAGE DETECTED';
-    msg.style.color = 'var(--neon-red)';
-  } else if (pct >= 60) {
-    msg.textContent = 'Elevated frustration detected...';
-    msg.style.color = 'var(--neon-orange)';
-  } else if (pct >= 30) {
-    msg.textContent = 'Take a breath...';
-    msg.style.color = 'var(--neon-yellow)';
-  } else {
-    msg.textContent = 'Calm and collected';
-    msg.style.color = 'var(--neon-green)';
-  }
-
-  // Stats
-  state.samples++;
-  state.totalRage += level;
-  if (level > state.peakRage) state.peakRage = level;
-  const calmPct = state.samples > 0 ? Math.round(((state.samples - state.spikes) / state.samples) * 100) : 100;
-
-  document.getElementById('stat-peak').textContent = Math.round(state.peakRage);
-  document.getElementById('stat-avg').textContent = Math.round(state.totalRage / state.samples);
-  document.getElementById('stat-spikes').textContent = state.spikes;
-  document.getElementById('stat-calm').textContent = calmPct + '%';
-
-  // Rage history for sparkline
-  state.rageHistory.push(pct);
-  if (state.rageHistory.length > 120) state.rageHistory.shift();
-  drawSparkline();
-
-  // Emoji reactions
-  showEmoji(pct);
-}
-
-function showEmoji(pct) {
-  const el = document.getElementById('emoji-reaction');
-  if (pct >= 90) { el.textContent = '\uD83E\uDD2C'; el.classList.add('visible'); }
-  else if (pct >= 75) { el.textContent = '\uD83D\uDE21'; el.classList.add('visible'); }
-  else if (pct >= 50) { el.textContent = '\uD83D\uDE24'; el.classList.add('visible'); }
-  else if (pct >= 30) { el.textContent = '\uD83D\uDE10'; el.classList.add('visible'); }
-  else if (pct < 10) { el.textContent = '\uD83D\uDE0C'; el.classList.add('visible'); }
-  else { el.classList.remove('visible'); }
-
-  clearTimeout(el._timeout);
-  el._timeout = setTimeout(() => el.classList.remove('visible'), 2000);
-}
-
-function drawSparkline() {
-  const canvas = document.getElementById('sparkline');
-  const container = document.getElementById('sparkline-container');
-  canvas.width = container.clientWidth * 2;
-  canvas.height = container.clientHeight * 2;
-  canvas.style.width = container.clientWidth + 'px';
-  canvas.style.height = container.clientHeight + 'px';
-
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  const data = state.rageHistory;
-  if (data.length < 2) return;
-
-  const w = canvas.width;
-  const h = canvas.height;
-  const step = w / (data.length - 1);
-
-  // Fill gradient
-  const grad = ctx.createLinearGradient(0, 0, 0, h);
-  grad.addColorStop(0, 'rgba(255, 0, 64, 0.3)');
-  grad.addColorStop(0.5, 'rgba(255, 106, 0, 0.15)');
-  grad.addColorStop(1, 'rgba(0, 240, 255, 0.05)');
-
-  ctx.beginPath();
-  ctx.moveTo(0, h);
-  for (let i = 0; i < data.length; i++) {
-    ctx.lineTo(i * step, h - (data[i] / 100) * h);
-  }
-  ctx.lineTo((data.length - 1) * step, h);
-  ctx.closePath();
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  // Line
-  ctx.beginPath();
-  for (let i = 0; i < data.length; i++) {
-    const x = i * step;
-    const y = h - (data[i] / 100) * h;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.strokeStyle = '#00f0ff';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Threshold lines
-  [30, 60, 80].forEach((thresh, idx) => {
-    const y = h - (thresh / 100) * h;
-    ctx.beginPath();
-    ctx.setLineDash([4, 4]);
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.strokeStyle = ['rgba(255,230,0,0.3)', 'rgba(255,106,0,0.3)', 'rgba(255,0,64,0.3)'][idx];
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.setLineDash([]);
-  });
-}
-
-// ===== TIER TRANSITIONS =====
-let flashInterval = null;
-let chimeTimeout = null;
-
-function handleTierChange(level) {
-  const prevTier = state.currentTier;
-  let newTier = 0;
-  if (level >= 95) newTier = 4;
-  else if (level >= 80) newTier = 3;
-  else if (level >= 60) newTier = 2;
-  else if (level >= 30) newTier = 1;
-
-  if (newTier === prevTier) return;
-  state.currentTier = newTier;
-
-  // Clean up previous tier effects
-  clearInterval(flashInterval);
-  flashInterval = null;
-  document.getElementById('flash-overlay').classList.remove('flash');
-  document.getElementById('rage-overlay').classList.remove('active');
-
-  if (newTier < 4 && state.inIntervention) {
-    state.inIntervention = false;
-    document.getElementById('intervention-overlay').classList.remove('active');
-    stopCalmingSounds();
-  }
-
-  if (newTier >= 3 && prevTier < 3) {
-    // Entering critical / rage
-    const now = Date.now();
-    state.spikes++;
-    state.rageQuits++;
-    document.getElementById('rage-quit-count').textContent = state.rageQuits;
-
-    if (now - state.lastSpikeTime < 30000) {
-      state.consecutiveSpikes++;
-    } else {
-      state.consecutiveSpikes = 1;
-    }
-    state.lastSpikeTime = now;
-    state.calmStartTime = null;
-
-    // Check achievements
-    checkAchievement('first-rage', 'ach-first-rage', '\uD83D\uDD25 First Rage');
-    if (state.consecutiveSpikes >= 5) checkAchievement('rage-streak', 'ach-rage-streak', '\uD83D\uDCA2 5 Rage Streak');
-    if (state.rageQuits >= 3) checkAchievement('rage-quit', 'ach-rage-quit', '\uD83C\uDFAE Rage Quitter');
-  }
-
-  // Tier-specific effects
-  if (newTier === 2 && prevTier < 2) {
-    playChime();
-  }
-
-  if (newTier === 3) {
-    state.inRageOverlay = true;
-    document.getElementById('rage-overlay').classList.add('active');
-    playAlarm();
-    document.body.classList.add('shaking');
-    setTimeout(() => document.body.classList.remove('shaking'), 600);
-
-    // Flash effect
-    flashInterval = setInterval(() => {
-      document.getElementById('flash-overlay').classList.add('flash');
-      setTimeout(() => document.getElementById('flash-overlay').classList.remove('flash'), 150);
-    }, 400);
-
-    // Auto-dismiss rage overlay after 3s
-    setTimeout(() => {
-      if (state.currentTier === 3) {
-        document.getElementById('rage-overlay').classList.remove('active');
-        state.inRageOverlay = false;
-      }
-    }, 3000);
-  }
-
-  if (newTier === 4) {
-    state.inIntervention = true;
-    state.inRageOverlay = false;
-    document.getElementById('rage-overlay').classList.remove('active');
-    clearInterval(flashInterval);
-    document.getElementById('flash-overlay').classList.remove('flash');
-
-    // Show intervention
-    document.getElementById('intervention-overlay').classList.add('active');
-    showRandomAnimalFact();
-    startBreathingGuide();
-    playCalmingSounds();
-  }
-
-  // Track calm time
-  if (newTier === 0 && prevTier > 0) {
-    state.calmStartTime = Date.now();
-    if (prevTier >= 3) checkAchievement('comeback', 'ach-comeback', '\uD83D\uDCAA Comeback Kid');
-  }
-}
-
-function showRandomAnimalFact() {
-  const fact = animalFacts[Math.floor(Math.random() * animalFacts.length)];
-  document.getElementById('animal-fact').innerHTML =
-    `<span class="fact-emoji">${fact.emoji}</span>${fact.fact}`;
-}
-
-let breatheInterval = null;
-function startBreathingGuide() {
-  clearInterval(breatheInterval);
-  const el = document.getElementById('breathing-text');
-  const phases = ['Breathe in...', 'Hold...', 'Breathe out...', 'Hold...'];
-  let phase = 0;
-  el.textContent = phases[0];
-  breatheInterval = setInterval(() => {
-    phase = (phase + 1) % phases.length;
-    el.textContent = phases[phase];
-  }, 2000);
-}
-
-// ===== ACHIEVEMENTS =====
-function checkAchievement(key, elemId, label) {
-  if (state.achievements[key]) return;
-  state.achievements[key] = true;
-  document.getElementById(elemId).classList.add('unlocked');
-  showToast(label);
-}
-
-function showToast(text) {
-  const toast = document.getElementById('toast');
-  document.getElementById('toast-body').textContent = text;
-  toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-// ===== RESET =====
-function resetRage() {
-  state.targetRage = 0;
-  state.rageLevel = 0;
-  state.currentTier = 0;
-  state.inRageOverlay = false;
-  state.inIntervention = false;
-  state.calmStartTime = Date.now();
-
-  clearInterval(flashInterval);
-  clearInterval(breatheInterval);
-  flashInterval = null;
-
-  document.getElementById('flash-overlay').classList.remove('flash');
-  document.getElementById('rage-overlay').classList.remove('active');
-  document.getElementById('intervention-overlay').classList.remove('active');
-  document.getElementById('border-glow').className = '';
-  stopCalmingSounds();
-
-  updateRageUI(0);
-}
-
-// ===== SESSION TIMER =====
-function updateSessionTime() {
-  if (!state.sessionStart) return;
-  const elapsed = Math.floor((Date.now() - state.sessionStart) / 1000);
-  const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const sec = String(elapsed % 60).padStart(2, '0');
-  document.getElementById('session-time').textContent = `${min}:${sec}`;
-
-  // Zen master: calm for 5 min
-  if (state.calmStartTime && (Date.now() - state.calmStartTime) > 300000) {
-    checkAchievement('zen-master', 'ach-zen-master', '\uD83E\uDDD8 Zen Master');
-  }
-
-  // Ice cold: never above 20 for 3 min
-  if (state.calmStartTime && state.rageLevel < 20 && (Date.now() - state.calmStartTime) > 180000) {
-    checkAchievement('chill', 'ach-chill', '\u2744\uFE0F Ice Cold');
-  }
-}
-setInterval(updateSessionTime, 1000);
-
-// ===== SMOOTH RAGE UPDATES =====
-function smoothUpdate() {
-  // Smoothly interpolate toward target
-  const diff = state.targetRage - state.rageLevel;
-  state.rageLevel += diff * 0.15;
-
-  // Decay toward 0 when no face input
-  if (Math.abs(diff) < 0.5) {
-    state.rageLevel *= 0.995;
-  }
-
-  state.rageLevel = Math.max(0, Math.min(100, state.rageLevel));
-
-  updateRageUI(state.rageLevel);
-  handleTierChange(state.rageLevel);
-  requestAnimationFrame(smoothUpdate);
-}
-
-// ===== MEDIAPIPE SETUP =====
-let faceMesh;
-
-function onResults(results) {
-  if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
-    return;
-  }
-
-  const landmarks = results.multiFaceLandmarks[0];
-  const metrics = analyzeFace(landmarks);
-
-  if (state.calibrationFrames < 30) {
-    calibrate(metrics);
-    return;
-  }
-
-  const rage = computeRage(metrics);
-  state.targetRage = rage;
-}
-
-async function startApp() {
-  document.getElementById('start-screen').classList.add('hidden');
-  state.sessionStart = Date.now();
-  state.calmStartTime = Date.now();
-
-  initAudio();
-
-  const video = document.getElementById('webcam');
-
-  faceMesh = new FaceMesh({
-    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`
+// --- CAMERA + FACE MESH ---
+function startCamera() {
+  const faceMesh = new FaceMesh({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
   });
 
   faceMesh.setOptions({
     maxNumFaces: 1,
     refineLandmarks: true,
     minDetectionConfidence: 0.5,
-    minTrackingConfidence: 0.5,
+    minTrackingConfidence: 0.5
   });
 
-  faceMesh.onResults(onResults);
+  faceMesh.onResults(onFaceResults);
 
-  const camera = new Camera(video, {
+  const camera = new Camera(webcam, {
     onFrame: async () => {
-      await faceMesh.send({ image: video });
+      await faceMesh.send({ image: webcam });
     },
     width: 640,
-    height: 480,
+    height: 480
   });
-
   camera.start();
-
-  document.getElementById('status-message').textContent = 'Calibrating... keep a neutral face';
-  document.getElementById('status-indicator').textContent = 'CALIBRATING';
-  document.getElementById('status-indicator').style.color = 'var(--neon-yellow)';
-
-  requestAnimationFrame(smoothUpdate);
 }
 
-// Handle resize for sparkline
-window.addEventListener('resize', drawSparkline);
+// --- FACE ANALYSIS ---
+function onFaceResults(results) {
+  if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
+  const lm = results.multiFaceLandmarks[0];
+
+  // Mouth openness (top lip to bottom lip)
+  const upperLip = lm[13];
+  const lowerLip = lm[14];
+  const mouthOpen = Math.abs(upperLip.y - lowerLip.y);
+
+  // Brow distance (brow to eye — furrowed = smaller distance)
+  const leftBrow = lm[105];
+  const leftEye = lm[159];
+  const rightBrow = lm[334];
+  const rightEye = lm[386];
+  const browDist = ((leftBrow.y - leftEye.y) + (rightBrow.y - rightEye.y)) / 2;
+
+  // Eye wideness (how wide eyes are open)
+  const leftEyeTop = lm[159];
+  const leftEyeBot = lm[145];
+  const rightEyeTop = lm[386];
+  const rightEyeBot = lm[374];
+  const eyeOpen = ((Math.abs(leftEyeTop.y - leftEyeBot.y)) + (Math.abs(rightEyeTop.y - rightEyeBot.y))) / 2;
+
+  // Jaw clench detection (jaw width relative to face height)
+  const jawLeft = lm[234];
+  const jawRight = lm[454];
+  const jawWidth = Math.abs(jawLeft.x - jawRight.x);
+  const faceTop = lm[10];
+  const chin = lm[152];
+  const faceHeight = Math.abs(faceTop.y - chin.y);
+  const jawRatio = jawWidth / Math.max(faceHeight, 0.001);
+
+  // Calibrate baseline from first 30 frames
+  samples++;
+  if (samples <= 30) {
+    if (baselineMouthOpen === null) {
+      baselineMouthOpen = mouthOpen;
+      baselineBrowDist = browDist;
+    } else {
+      baselineMouthOpen = baselineMouthOpen * 0.9 + mouthOpen * 0.1;
+      baselineBrowDist = baselineBrowDist * 0.9 + browDist * 0.1;
+    }
+    return;
+  }
+
+  // Rage signals (0-1 each)
+  const mouthSignal = Math.min(1, Math.max(0, (mouthOpen - baselineMouthOpen * 1.5) / (baselineMouthOpen * 2)));
+  const browSignal = Math.min(1, Math.max(0, (baselineBrowDist - browDist) / (Math.abs(baselineBrowDist) * 0.5 + 0.001)));
+  const eyeSignal = Math.min(1, Math.max(0, (eyeOpen - 0.015) / 0.02));
+
+  // Combined rage score
+  const rawRage = (mouthSignal * 0.4 + browSignal * 0.35 + eyeSignal * 0.25) * 100;
+
+  // Smooth it
+  rageLevel = rageLevel * 0.7 + rawRage * 0.3;
+  rageLevel = Math.min(100, Math.max(0, rageLevel));
+
+  updateUI();
+}
+
+// --- UPDATE UI ---
+function updateUI() {
+  const pct = Math.round(rageLevel);
+  rageNumber.textContent = pct + '%';
+
+  // Color: green -> yellow -> red
+  let r, g;
+  if (pct < 50) {
+    r = Math.round((pct / 50) * 255);
+    g = 255;
+  } else {
+    r = 255;
+    g = Math.round((1 - (pct - 50) / 50) * 255);
+  }
+  rageNumber.style.color = `rgb(${r}, ${g}, 0)`;
+
+  // Emoji
+  if (pct < 25) emojiEl.textContent = '😊';
+  else if (pct < 50) emojiEl.textContent = '😐';
+  else if (pct < 80) emojiEl.textContent = '😤';
+  else emojiEl.textContent = '🤬';
+
+  // Rage spike at 80%
+  if (pct >= 80 && !isRaging) {
+    isRaging = true;
+    spikeCount++;
+    spikeCountEl.textContent = spikeCount;
+    flashEl.style.display = 'block';
+    calmBtn.style.display = 'block';
+    startAlarm();
+  }
+
+  if (pct < 80 && isRaging && !alarmPlaying) {
+    // Auto-clear flash if rage drops and alarm already stopped
+    isRaging = false;
+    flashEl.style.display = 'none';
+  }
+}
+
+// --- CALM BUTTON ---
+calmBtn.addEventListener('click', () => {
+  rageLevel = 0;
+  isRaging = false;
+  flashEl.style.display = 'none';
+  calmBtn.style.display = 'none';
+  stopAlarm();
+  updateUI();
+});
 </script>
 </body>
 </html>

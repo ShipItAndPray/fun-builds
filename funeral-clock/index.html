@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funeral Clock</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #c8b8a0;
+    font-family: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Fog / particle canvas */
+  #fog {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Vignette overlay */
+  .vignette {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Main content */
+  .container {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 2rem;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .title {
+    font-size: 1rem;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: #5a4e3e;
+    margin-bottom: 3rem;
+    font-weight: 400;
+  }
+
+  .person-block {
+    transition: opacity 1.2s ease;
+    opacity: 1;
+  }
+  .person-block.fading { opacity: 0; }
+
+  .person-name {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    color: #e8d8c0;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  .person-info {
+    font-size: clamp(0.85rem, 2vw, 1.1rem);
+    color: #6a5e4e;
+    font-style: italic;
+    margin-bottom: 2rem;
+  }
+
+  .dead-text {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: #9a8a70;
+    line-height: 1.8;
+    font-weight: 400;
+  }
+
+  .dead-text .has-been {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .time-value {
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    color: #d4c4a8;
+    font-weight: 600;
+  }
+
+  .time-label {
+    font-size: clamp(0.8rem, 1.8vw, 1rem);
+    color: #6a5e4e;
+  }
+
+  .time-row {
+    display: flex;
+    justify-content: center;
+    gap: clamp(1rem, 4vw, 3rem);
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .time-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+  }
+
+  .seconds .time-value {
+    color: #c8a878;
+    text-shadow: 0 0 20px rgba(200, 168, 120, 0.3);
+  }
+
+  /* Corner clock */
+  .corner-clock {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    font-size: 0.85rem;
+    color: #3a3428;
+    z-index: 3;
+    letter-spacing: 0.1em;
+  }
+
+  /* Random button */
+  .random-btn {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 3;
+    background: transparent;
+    border: 1px solid #3a3428;
+    color: #5a4e3e;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.85rem;
+    padding: 0.5rem 1.2rem;
+    cursor: pointer;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    transition: all 0.4s ease;
+  }
+  .random-btn:hover {
+    border-color: #7a6e5e;
+    color: #9a8a70;
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* Progress bar */
+  .progress-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #3a2e1e, #6a5840);
+    z-index: 3;
+    transition: width 0.1s linear;
+  }
+
+  /* Separator */
+  .separator {
+    width: 60px;
+    height: 1px;
+    background: #3a3428;
+    margin: 1.5rem auto;
+  }
+
+  /* Sound toggle */
+  .sound-toggle {
+    position: fixed;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 3;
+    background: transparent;
+    border: 1px solid #3a3428;
+    color: #5a4e3e;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.4s ease;
+  }
+  .sound-toggle:hover {
+    border-color: #7a6e5e;
+    color: #9a8a70;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="fog"></canvas>
+<div class="vignette"></div>
+
+<div class="container">
+  <div class="title">Funeral Clock</div>
+  <div class="person-block" id="personBlock">
+    <div class="person-name" id="personName"></div>
+    <div class="person-info" id="personInfo"></div>
+    <div class="separator"></div>
+    <div class="dead-text">
+      <span class="has-been">has been dead for</span>
+      <div class="time-row" id="timeRow">
+        <div class="time-unit"><span class="time-value" id="tYears">0</span><span class="time-label">years</span></div>
+        <div class="time-unit"><span class="time-value" id="tDays">0</span><span class="time-label">days</span></div>
+        <div class="time-unit"><span class="time-value" id="tHours">0</span><span class="time-label">hours</span></div>
+        <div class="time-unit"><span class="time-value" id="tMinutes">0</span><span class="time-label">minutes</span></div>
+        <div class="time-unit seconds"><span class="time-value" id="tSeconds">0</span><span class="time-label">seconds</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="corner-clock" id="cornerClock"></div>
+<button class="random-btn" id="randomBtn">Random</button>
+<button class="sound-toggle" id="soundToggle">Sound: Off</button>
+<div class="progress-bar" id="progressBar"></div>
+
+<script>
+const people = [
+  { name: "Wolfgang Amadeus Mozart", death: "1791-12-05", birth: 1756, known: "Composer of over 600 works" },
+  { name: "Albert Einstein", death: "1955-04-18", birth: 1879, known: "Theory of Relativity" },
+  { name: "Cleopatra VII", deathMs: -62100048000000, birth: -69, birthLabel: "69 BC", deathLabel: "30 BC", known: "Last pharaoh of Egypt" },
+  { name: "William Shakespeare", death: "1616-04-23", birth: 1564, known: "Playwright, poet, the Bard of Avon" },
+  { name: "Napoleon Bonaparte", death: "1821-05-05", birth: 1769, known: "Emperor of France" },
+  { name: "Steve Jobs", death: "2011-10-05", birth: 1955, known: "Co-founder of Apple" },
+  { name: "Princess Diana", death: "1997-08-31", birth: 1961, known: "Princess of Wales" },
+  { name: "Elvis Presley", death: "1977-08-16", birth: 1935, known: "The King of Rock and Roll" },
+  { name: "John F. Kennedy", death: "1963-11-22", birth: 1917, known: "35th President of the United States" },
+  { name: "Nikola Tesla", death: "1943-01-07", birth: 1856, known: "Pioneer of alternating current" },
+  { name: "Leonardo da Vinci", death: "1519-05-02", birth: 1452, known: "Painter, inventor, polymath" },
+  { name: "Marie Curie", death: "1934-07-04", birth: 1867, known: "Discoverer of radium and polonium" },
+  { name: "Ludwig van Beethoven", death: "1827-03-26", birth: 1770, known: "Composer who transcended deafness" },
+  { name: "Frida Kahlo", death: "1954-07-13", birth: 1907, known: "Surrealist painter of raw self-portraits" },
+  { name: "Martin Luther King Jr.", death: "1968-04-04", birth: 1929, known: "Civil rights leader" },
+  { name: "Queen Elizabeth II", death: "2022-09-08", birth: 1926, known: "Longest-reigning British monarch" },
+  { name: "Kobe Bryant", death: "2020-01-26", birth: 1978, known: "Basketball legend, the Black Mamba" },
+  { name: "Robin Williams", death: "2014-08-11", birth: 1951, known: "Actor and comedian of boundless energy" },
+  { name: "David Bowie", death: "2016-01-10", birth: 1947, known: "Shape-shifting rock icon" },
+  { name: "Bob Ross", death: "1995-07-04", birth: 1942, known: "Painter of happy little trees" },
+  { name: "Fred Rogers", death: "2003-02-27", birth: 1928, known: "America's kindest neighbor" },
+  { name: "Abraham Lincoln", death: "1865-04-15", birth: 1809, known: "16th President, ended slavery" },
+  { name: "Mahatma Gandhi", death: "1948-01-30", birth: 1869, known: "Father of nonviolent resistance" },
+  { name: "Genghis Khan", death: "1227-08-18", birth: 1162, known: "Founder of the Mongol Empire" },
+  { name: "Julius Caesar", deathMs: -63493574400000, birth: -100, birthLabel: "100 BC", deathLabel: "44 BC", known: "Roman dictator who reshaped the Republic" },
+  { name: "Socrates", deathMs: -74830636800000, birth: -470, birthLabel: "470 BC", deathLabel: "399 BC", known: "Father of Western philosophy" },
+  { name: "Alexander the Great", deathMs: -72177100800000, birth: -356, birthLabel: "356 BC", deathLabel: "323 BC", known: "Conqueror of the known world by age 30" },
+  { name: "Isaac Newton", death: "1727-03-31", birth: 1643, known: "Discoverer of gravity and calculus" },
+  { name: "Charles Darwin", death: "1882-04-19", birth: 1809, known: "Theory of evolution by natural selection" },
+  { name: "Vincent van Gogh", death: "1890-07-29", birth: 1853, known: "Post-Impressionist who sold one painting in life" },
+  { name: "Galileo Galilei", death: "1642-01-08", birth: 1564, known: "Father of modern observational astronomy" },
+  { name: "Joan of Arc", death: "1431-05-30", birth: 1412, known: "Warrior saint of France" },
+  { name: "Tutankhamun", deathMs: -105139699200000, birth: -1341, birthLabel: "1341 BC", deathLabel: "1323 BC", known: "Boy pharaoh of ancient Egypt" },
+  { name: "Marco Polo", death: "1324-01-08", birth: 1254, known: "Venetian explorer of the Silk Road" },
+  { name: "Michelangelo", death: "1564-02-18", birth: 1475, known: "Sculptor of David, painter of the Sistine Chapel" },
+  { name: "Rembrandt", death: "1669-10-04", birth: 1606, known: "Master of light and shadow" },
+  { name: "Benjamin Franklin", death: "1790-04-17", birth: 1706, known: "Founding Father, inventor, diplomat" },
+  { name: "George Washington", death: "1799-12-14", birth: 1732, known: "First President of the United States" },
+  { name: "Thomas Edison", death: "1931-10-18", birth: 1847, known: "Inventor of the light bulb and phonograph" },
+  { name: "Mark Twain", death: "1910-04-21", birth: 1835, known: "Author of Huckleberry Finn" },
+  { name: "Oscar Wilde", death: "1900-11-30", birth: 1854, known: "Playwright and master of wit" },
+  { name: "Edgar Allan Poe", death: "1849-10-07", birth: 1809, known: "Father of the detective story and gothic horror" },
+  { name: "Harriet Tubman", death: "1913-03-10", birth: 1822, known: "Conductor of the Underground Railroad" },
+  { name: "Frederick Douglass", death: "1895-02-20", birth: 1818, known: "Abolitionist, orator, and author" },
+  { name: "Amelia Earhart", death: "1937-07-02", birth: 1897, known: "Aviation pioneer, lost over the Pacific" },
+  { name: "Marilyn Monroe", death: "1962-08-04", birth: 1926, known: "Hollywood icon" },
+  { name: "Bruce Lee", death: "1973-07-20", birth: 1940, known: "Martial arts legend and philosopher" },
+  { name: "John Lennon", death: "1980-12-08", birth: 1940, known: "Beatle who imagined peace" },
+  { name: "Freddie Mercury", death: "1991-11-24", birth: 1946, known: "Voice of Queen, born to rock" },
+  { name: "Kurt Cobain", death: "1994-04-05", birth: 1967, known: "Voice of a generation, Nirvana" },
+  { name: "Alan Turing", death: "1954-06-07", birth: 1912, known: "Father of computer science" },
+  { name: "Stephen Hawking", death: "2018-03-14", birth: 1942, known: "Explored black holes from a wheelchair" },
+  { name: "Nelson Mandela", death: "2013-12-05", birth: 1918, known: "Anti-apartheid revolutionary, President of South Africa" },
+  { name: "Mother Teresa", death: "1997-09-05", birth: 1910, known: "Saint of the gutters of Calcutta" },
+  { name: "Confucius", deathMs: -78364310400000, birth: -551, birthLabel: "551 BC", deathLabel: "479 BC", known: "Philosopher of order and virtue" },
+];
+
+let currentIndex = 0;
+let cycleTimer = null;
+let progressStart = 0;
+let soundEnabled = false;
+let audioCtx = null;
+
+function getDeathTimestamp(person) {
+  if (person.deathMs !== undefined) return person.deathMs;
+  return new Date(person.death + "T12:00:00Z").getTime();
+}
+
+function formatNumber(n) {
+  return n.toLocaleString();
+}
+
+function computeTimeSinceDeath(person) {
+  const now = Date.now();
+  const deathMs = getDeathTimestamp(person);
+  const diffMs = now - deathMs;
+  const diffSec = Math.floor(diffMs / 1000);
+
+  const years = Math.floor(diffMs / (365.25 * 24 * 3600 * 1000));
+  const remainAfterYears = diffMs - years * 365.25 * 24 * 3600 * 1000;
+  const days = Math.floor(remainAfterYears / (24 * 3600 * 1000));
+  const hours = Math.floor((remainAfterYears % (24 * 3600 * 1000)) / (3600 * 1000));
+  const minutes = Math.floor((remainAfterYears % (3600 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((remainAfterYears % (60 * 1000)) / 1000);
+
+  return { years, days, hours, minutes, seconds };
+}
+
+function getInfoText(person) {
+  const birthLabel = person.birthLabel || person.birth;
+  const deathLabel = person.deathLabel || person.death.substring(0, 4);
+  return `${birthLabel} - ${deathLabel}  ·  ${person.known}`;
+}
+
+function updateDisplay() {
+  const person = people[currentIndex];
+  const t = computeTimeSinceDeath(person);
+  document.getElementById("tYears").textContent = formatNumber(t.years);
+  document.getElementById("tDays").textContent = t.days;
+  document.getElementById("tHours").textContent = t.hours;
+  document.getElementById("tMinutes").textContent = t.minutes;
+  document.getElementById("tSeconds").textContent = t.seconds;
+}
+
+function showPerson(index) {
+  currentIndex = index;
+  const block = document.getElementById("personBlock");
+  block.classList.add("fading");
+
+  setTimeout(() => {
+    const person = people[currentIndex];
+    document.getElementById("personName").textContent = person.name;
+    document.getElementById("personInfo").textContent = getInfoText(person);
+    updateDisplay();
+    block.classList.remove("fading");
+    if (soundEnabled) playBell();
+  }, 1200);
+}
+
+function nextPerson() {
+  const next = (currentIndex + 1) % people.length;
+  showPerson(next);
+  progressStart = Date.now();
+}
+
+function randomPerson() {
+  let next;
+  do { next = Math.floor(Math.random() * people.length); } while (next === currentIndex && people.length > 1);
+  showPerson(next);
+  progressStart = Date.now();
+  resetCycleTimer();
+}
+
+function resetCycleTimer() {
+  clearInterval(cycleTimer);
+  progressStart = Date.now();
+  cycleTimer = setInterval(nextPerson, 10000);
+}
+
+// Corner clock
+function updateCornerClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById("cornerClock").textContent = `${h}:${m}:${s}`;
+}
+
+// Progress bar
+function updateProgress() {
+  const elapsed = Date.now() - progressStart;
+  const pct = Math.min((elapsed / 10000) * 100, 100);
+  document.getElementById("progressBar").style.width = pct + "%";
+}
+
+// Web Audio API bell
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playBell() {
+  if (!audioCtx) initAudio();
+  const now = audioCtx.currentTime;
+
+  // Fundamental bell tone
+  const osc1 = audioCtx.createOscillator();
+  const gain1 = audioCtx.createGain();
+  osc1.type = "sine";
+  osc1.frequency.setValueAtTime(180, now);
+  osc1.frequency.exponentialRampToValueAtTime(160, now + 3);
+  gain1.gain.setValueAtTime(0.3, now);
+  gain1.gain.exponentialRampToValueAtTime(0.001, now + 3.5);
+  osc1.connect(gain1);
+  gain1.connect(audioCtx.destination);
+  osc1.start(now);
+  osc1.stop(now + 3.5);
+
+  // Overtone
+  const osc2 = audioCtx.createOscillator();
+  const gain2 = audioCtx.createGain();
+  osc2.type = "sine";
+  osc2.frequency.setValueAtTime(380, now);
+  osc2.frequency.exponentialRampToValueAtTime(340, now + 2);
+  gain2.gain.setValueAtTime(0.12, now);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 2);
+  osc2.connect(gain2);
+  gain2.connect(audioCtx.destination);
+  osc2.start(now);
+  osc2.stop(now + 2);
+
+  // High partial
+  const osc3 = audioCtx.createOscillator();
+  const gain3 = audioCtx.createGain();
+  osc3.type = "sine";
+  osc3.frequency.setValueAtTime(540, now);
+  gain3.gain.setValueAtTime(0.06, now);
+  gain3.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+  osc3.connect(gain3);
+  gain3.connect(audioCtx.destination);
+  osc3.start(now);
+  osc3.stop(now + 1.2);
+}
+
+// Fog canvas
+function initFog() {
+  const canvas = document.getElementById("fog");
+  const ctx = canvas.getContext("2d");
+  let w, h;
+  const particles = [];
+  const count = 60;
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * w,
+      y: Math.random() * h,
+      r: Math.random() * 120 + 40,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.15,
+      alpha: Math.random() * 0.08 + 0.02,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.x < -p.r) p.x = w + p.r;
+      if (p.x > w + p.r) p.x = -p.r;
+      if (p.y < -p.r) p.y = h + p.r;
+      if (p.y > h + p.r) p.y = -p.r;
+
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r);
+      grad.addColorStop(0, `rgba(180, 160, 130, ${p.alpha})`);
+      grad.addColorStop(1, "rgba(180, 160, 130, 0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// Sound toggle
+document.getElementById("soundToggle").addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  document.getElementById("soundToggle").textContent = soundEnabled ? "Sound: On" : "Sound: Off";
+  if (soundEnabled && !audioCtx) initAudio();
+  if (soundEnabled) playBell();
+});
+
+// Random button
+document.getElementById("randomBtn").addEventListener("click", randomPerson);
+
+// Init
+function init() {
+  // Shuffle the array on load
+  for (let i = people.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [people[i], people[j]] = [people[j], people[i]];
+  }
+
+  const person = people[0];
+  document.getElementById("personName").textContent = person.name;
+  document.getElementById("personInfo").textContent = getInfoText(person);
+  updateDisplay();
+
+  // Tick every second
+  setInterval(() => {
+    updateDisplay();
+    updateCornerClock();
+    updateProgress();
+  }, 1000);
+
+  // Also update progress more smoothly
+  setInterval(updateProgress, 50);
+
+  updateCornerClock();
+  progressStart = Date.now();
+  cycleTimer = setInterval(nextPerson, 10000);
+
+  initFog();
+}
+
+init();
+</script>
+</body>
+</html>

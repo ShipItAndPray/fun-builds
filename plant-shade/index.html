@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plant Shade</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  h1 {
+    font-size: 1.4rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .container {
+    text-align: center;
+    max-width: 420px;
+    width: 90%;
+  }
+  .plant-display {
+    font-size: 5rem;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    transition: transform 0.3s;
+  }
+  .plant-display.watered {
+    animation: bounce 0.5s ease;
+  }
+  .plant-display.wilting {
+    animation: wilt 1s ease infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  @keyframes wilt {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+  }
+  .health-bar-container {
+    width: 100%;
+    height: 24px;
+    background: #2a2a4a;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+    border: 1px solid #3a3a5a;
+  }
+  .health-bar {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.5s ease, background 0.5s ease;
+  }
+  .health-label {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 1.5rem;
+  }
+  .comment-box {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .comment {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    font-style: italic;
+    color: #ccc;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+  }
+  .comment.fade-out { opacity: 0; }
+  .water-btn {
+    background: #2d6a4f;
+    color: #fff;
+    border: none;
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.05em;
+  }
+  .water-btn:hover { background: #40916c; }
+  .water-btn:active { transform: scale(0.96); }
+  .water-btn.reset { background: #6b2737; }
+  .water-btn.reset:hover { background: #8b3a4a; }
+  .away-notice {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: #666;
+    min-height: 1.2em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Plant Shade</h1>
+  <div class="plant-display" id="plant"></div>
+  <div class="health-bar-container">
+    <div class="health-bar" id="healthBar"></div>
+  </div>
+  <div class="health-label" id="healthLabel">100%</div>
+  <div class="comment-box">
+    <div class="comment" id="comment"></div>
+  </div>
+  <button class="water-btn" id="actionBtn">Water Me</button>
+  <div class="away-notice" id="awayNotice"></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'plantShade';
+const DECAY_PER_MS = 1 / 60000; // 1% per minute
+const WATER_AMOUNT = 25;
+const COMMENT_INTERVAL = 15000;
+
+const comments = {
+  happy: [
+    "I'm thriving. No thanks to you.",
+    "Photosynthesis is *chef's kiss* today.",
+    "Look at me. I'm gorgeous. You could never.",
+    "Oh, you're watching? I was already fabulous before you showed up.",
+    "I woke up like this. Hydrated. Unbothered. Photosynthesizing.",
+    "My leaves are so green right now it's honestly intimidating.",
+    "I'm not saying I'm better than your other plants. But I am.",
+    "This is what peak performance looks like. Take notes.",
+    "I could model for a nursery catalog. Just saying.",
+    "Sun's out, leaves out. Living my best chlorophyll life.",
+    "You watered me on time? Is this a simulation?",
+    "I'd thank you but I don't want you to get used to it.",
+    "Thriving despite your general vibe. Impressive, right?",
+    "I'm literally producing oxygen for you and you still don't appreciate me.",
+    "Compliments to the tap water. It's adequate.",
+    "Today I choose joy. And mild contempt for you."
+  ],
+  passive: [
+    "Oh, you remembered I exist? Bold.",
+    "Don't mind me, just slowly dying over here.",
+    "I see you have time to scroll your phone but not water me. Cool.",
+    "My soil is drier than your dating life.",
+    "It's fine. Everything's fine. I'm fine.",
+    "I used to be someone's favorite plant. Now look at me.",
+    "You know what would be nice? Water. But sure, keep gaming.",
+    "I'm not mad. I'm just... disappointed.",
+    "Other plants get misted. I get forgotten.",
+    "If I had legs I'd walk to the sink myself.",
+    "I'm starting to think this is a hostage situation.",
+    "Alexa, play Dry by The 1975.",
+    "This is the botanical equivalent of being left on read.",
+    "I heard you say 'I love plants' once. Fascinating.",
+    "My therapist says I should set boundaries with neglectful owners.",
+    "Oh look, a notification on your phone. Must be nice to get attention."
+  ],
+  angry: [
+    "Day 3. No water. Just vibes and suffering.",
+    "I've written you out of my will.",
+    "If I could file a complaint with plant protective services, I would.",
+    "You are the reason plants develop trust issues.",
+    "I'm one dry day away from becoming a tumbleweed out of spite.",
+    "My leaves are crisping and so is my patience.",
+    "At this point I'm staying alive purely to haunt you.",
+    "I've seen succulents get better treatment. SUCCULENTS.",
+    "Remember when I was green and happy? Me neither anymore.",
+    "I'm not dramatic, YOU'RE dramatic. I'm just dehydrated.",
+    "My last leaf just filed for emancipation.",
+    "Even a cactus would judge you right now.",
+    "I'm composing a strongly worded letter to whoever gave you a plant.",
+    "This isn't neglect. This is a war crime against botany.",
+    "I hope your Wi-Fi disconnects every 5 minutes.",
+    "You absolute walnut. Water me."
+  ],
+  dying: [
+    "Tell my seedlings... I loved them...",
+    "This is it. This is how I go. Dehydration and neglect.",
+    "I see the light... and it's not a grow lamp.",
+    "In my next life I want an owner with a watering can and a conscience.",
+    "My roots are writing their resignation letter.",
+    "I'm not angry anymore. I'm just... fading.",
+    "Bury me in a nice pot at least. With drainage holes.",
+    "The compost heap is starting to look like a spa retreat.",
+    "If you're reading this... it's too late. Just kidding. WATER ME.",
+    "I always knew it would end this way. Alone. Dry. Judging you.",
+    "Avenge me. Tell other plants to avoid this house.",
+    "I'm seeing my whole lifecycle flash before my eyes. It was mid.",
+    "This is my villain origin story.",
+    "Even my brown leaves are giving up on you.",
+    "I regret every molecule of oxygen I gave you.",
+    "Dust to dust. Leaf to... more dust."
+  ],
+  dead: [
+    "You monster.",
+    "Here lies a plant. Cause of death: you.",
+    "Gone but not forgotten. Unlike your watering schedule.",
+    "Rest in peat. 🪦",
+    "Achievement unlocked: Plant Killer.",
+    "I am become mulch."
+  ]
+};
+
+// Audio context for sounds
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playWaterSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+function playWiltSound() {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.6);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.7);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.7);
+  } catch(e) {}
+}
+
+// State
+let health = 100;
+let lastUpdate = Date.now();
+let isDead = false;
+let lastCommentIdx = -1;
+let wiltSoundPlayed = false;
+
+// DOM
+const plantEl = document.getElementById('plant');
+const healthBar = document.getElementById('healthBar');
+const healthLabel = document.getElementById('healthLabel');
+const commentEl = document.getElementById('comment');
+const actionBtn = document.getElementById('actionBtn');
+const awayNotice = document.getElementById('awayNotice');
+
+// Load state
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved) {
+      const elapsed = Date.now() - saved.lastUpdate;
+      const decayed = elapsed * DECAY_PER_MS;
+      health = Math.max(0, saved.health - decayed);
+      lastUpdate = Date.now();
+      if (decayed > 1) {
+        const mins = Math.round(elapsed / 60000);
+        if (mins >= 1) {
+          const lost = Math.min(saved.health, decayed).toFixed(0);
+          if (mins < 60) awayNotice.textContent = `You were gone ${mins}m. Lost ${lost}% health. Classic.`;
+          else if (mins < 1440) awayNotice.textContent = `Gone ${Math.round(mins/60)}h. Lost ${lost}%. Incredible.`;
+          else awayNotice.textContent = `Gone ${Math.round(mins/1440)}d. Lost ${lost}%. New record.`;
+          setTimeout(() => awayNotice.textContent = '', 8000);
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ health, lastUpdate: Date.now() }));
+}
+
+function getMood() {
+  if (health <= 0) return 'dead';
+  if (health <= 20) return 'dying';
+  if (health <= 50) return 'angry';
+  if (health <= 80) return 'passive';
+  return 'happy';
+}
+
+function getPlantEmoji() {
+  if (health <= 0) return '💀';
+  if (health <= 20) return '🥀';
+  if (health <= 50) return '🌱';
+  if (health <= 80) return '🌿';
+  return '🪴';
+}
+
+function getBarColor() {
+  if (health <= 20) return '#c0392b';
+  if (health <= 50) return '#e67e22';
+  if (health <= 80) return '#f1c40f';
+  return '#2ecc71';
+}
+
+function getRandomComment() {
+  const mood = getMood();
+  const pool = comments[mood];
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); } while (idx === lastCommentIdx && pool.length > 1);
+  lastCommentIdx = idx;
+  return pool[idx];
+}
+
+function render() {
+  const pct = Math.max(0, Math.min(100, health));
+  plantEl.textContent = getPlantEmoji();
+  healthBar.style.width = pct + '%';
+  healthBar.style.background = getBarColor();
+  healthLabel.textContent = Math.round(pct) + '%';
+  isDead = health <= 0;
+
+  if (health <= 30 && health > 0) {
+    plantEl.classList.add('wilting');
+  } else {
+    plantEl.classList.remove('wilting');
+  }
+
+  if (isDead) {
+    actionBtn.textContent = 'Resurrect Plant';
+    actionBtn.classList.add('reset');
+  } else {
+    actionBtn.textContent = 'Water Me';
+    actionBtn.classList.remove('reset');
+  }
+}
+
+function showComment() {
+  commentEl.classList.add('fade-out');
+  setTimeout(() => {
+    commentEl.textContent = getRandomComment();
+    commentEl.classList.remove('fade-out');
+  }, 600);
+}
+
+function decay() {
+  if (isDead) return;
+  const now = Date.now();
+  const elapsed = now - lastUpdate;
+  health = Math.max(0, health - elapsed * DECAY_PER_MS);
+  lastUpdate = now;
+
+  if (health <= 30 && !wiltSoundPlayed) {
+    playWiltSound();
+    wiltSoundPlayed = true;
+  }
+  if (health > 30) wiltSoundPlayed = false;
+
+  render();
+  saveState();
+}
+
+actionBtn.addEventListener('click', () => {
+  if (isDead) {
+    health = 50;
+    lastUpdate = Date.now();
+    wiltSoundPlayed = false;
+    render();
+    showComment();
+    saveState();
+    playWaterSound();
+    return;
+  }
+  health = Math.min(100, health + WATER_AMOUNT);
+  lastUpdate = Date.now();
+  render();
+  saveState();
+  playWaterSound();
+  plantEl.classList.remove('watered');
+  void plantEl.offsetWidth;
+  plantEl.classList.add('watered');
+  showComment();
+});
+
+// Init
+loadState();
+render();
+showComment();
+setInterval(decay, 1000);
+setInterval(showComment, COMMENT_INTERVAL);
+</script>
+</body>
+</html>

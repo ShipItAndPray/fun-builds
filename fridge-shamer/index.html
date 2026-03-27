@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fridge Shamer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--surface:#141414;--red:#e63946;--red-dark:#9b1b24;--gold:#f4a261;--text:#eee;--muted:#777}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;overflow-x:hidden}
+header{text-align:center;padding:24px 16px 8px;width:100%;max-width:480px}
+header h1{font-size:2.2rem;font-weight:900;text-transform:uppercase;letter-spacing:2px;background:linear-gradient(135deg,var(--red),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+header p{color:var(--muted);font-size:.85rem;margin-top:4px;font-style:italic}
+.raid-counter{display:inline-block;background:var(--surface);border:1px solid #333;border-radius:8px;padding:6px 14px;margin-top:10px;font-size:.8rem;color:var(--gold)}
+.raid-counter span{font-weight:700;font-size:1.1rem;color:var(--red)}
+main{width:100%;max-width:480px;padding:0 16px 32px;flex:1;display:flex;flex-direction:column;align-items:center;gap:16px}
+/* Camera */
+#camera-section{width:100%;text-align:center}
+#video-container{position:relative;width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden;display:none;border:2px solid #222}
+#video-container video{width:100%;height:100%;object-fit:cover}
+#photo-preview{width:100%;aspect-ratio:4/3;background:#000;border-radius:12px;overflow:hidden;display:none;border:2px solid var(--red)}
+#photo-preview img{width:100%;height:100%;object-fit:cover}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:16px 32px;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:1px}
+.btn-primary{background:var(--red);color:#fff;width:100%;font-size:1.2rem;padding:20px}
+.btn-primary:hover{background:#ff4757;transform:scale(1.02)}
+.btn-primary:active{transform:scale(.98)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid #333;padding:12px 20px}
+.btn-secondary:hover{border-color:var(--red)}
+.btn-row{display:flex;gap:10px;width:100%;justify-content:center}
+.btn-icon{font-size:1.3rem}
+/* Analysis */
+#analysis-section{display:none;width:100%;text-align:center;padding:20px 0}
+.scan-text{font-size:1rem;color:var(--gold);font-style:italic;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+.scan-bar{width:100%;height:4px;background:#222;border-radius:2px;margin-top:12px;overflow:hidden}
+.scan-bar-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));width:0%;border-radius:2px;transition:width .1s linear}
+/* Result */
+#result-section{display:none;width:100%;animation:slideUp .5s ease-out}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.roast-card{background:var(--surface);border:2px solid var(--red-dark);border-radius:16px;padding:24px;text-align:center}
+.roast-card .quote-mark{font-size:3rem;color:var(--red);line-height:1;opacity:.6}
+.roast-card .roast-text{font-size:1.15rem;line-height:1.6;margin:8px 0 16px;font-style:italic;color:#f0f0f0}
+.roast-card .chef{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+.shame-score{margin-top:16px;text-align:center}
+.shame-score .label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.shame-score .score{font-size:4rem;font-weight:900;color:var(--red);line-height:1}
+.shame-score .verdict{font-size:.9rem;color:var(--gold);margin-top:4px;font-weight:600}
+.shame-meter{width:100%;height:8px;background:#222;border-radius:4px;margin-top:8px;overflow:hidden}
+.shame-meter-fill{height:100%;border-radius:4px;transition:width 1.5s cubic-bezier(.4,0,.2,1);width:0%}
+#share-btn{margin-top:16px}
+canvas{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fridge Shamer</h1>
+  <p>"It's raw! Your dignity, mostly."</p>
+  <div class="raid-counter">Midnight Raids: <span id="raid-count">0</span></div>
+</header>
+
+<main>
+  <div id="camera-section">
+    <div id="video-container">
+      <video id="camera" autoplay playsinline muted></video>
+    </div>
+    <div id="photo-preview"><img id="photo-img" alt="Your shame"></div>
+
+    <div style="margin-top:12px">
+      <button id="open-btn" class="btn btn-primary" onclick="openCamera()">
+        <span class="btn-icon">&#128247;</span> Open Camera
+      </button>
+      <button id="snap-btn" class="btn btn-primary" style="display:none" onclick="takePhoto()">
+        <span class="btn-icon">&#128248;</span> Capture Evidence
+      </button>
+      <div id="post-snap-btns" class="btn-row" style="display:none">
+        <button class="btn btn-secondary" onclick="retake()">&#128260; Retake</button>
+        <button class="btn btn-primary" style="padding:12px 28px" onclick="analyzeFood()">&#128293; Roast Me</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="analysis-section">
+    <p class="scan-text" id="scan-msg">Scanning nutritional disappointment...</p>
+    <div class="scan-bar"><div class="scan-bar-fill" id="scan-fill"></div></div>
+  </div>
+
+  <div id="result-section">
+    <div class="roast-card">
+      <div class="quote-mark">"</div>
+      <div class="roast-text" id="roast-text"></div>
+      <div class="chef">-- Chef Ramsay (probably)</div>
+    </div>
+    <div class="shame-score">
+      <div class="label">Shame Score</div>
+      <div class="score" id="shame-number">0</div>
+      <div class="shame-meter"><div class="shame-meter-fill" id="shame-fill"></div></div>
+      <div class="verdict" id="shame-verdict"></div>
+    </div>
+    <div class="btn-row">
+      <button id="share-btn" class="btn btn-secondary" onclick="shareRoast()">&#128203; Copy Roast</button>
+      <button class="btn btn-primary" style="padding:12px 28px" onclick="goAgain()">&#128293; Again</button>
+    </div>
+  </div>
+</main>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const ROASTS = [
+  "It's 1am. You have salad in the fridge. And yet here we are. Disgusting.",
+  "That looks like something I'd serve to my enemies. And I don't have enemies because I cook PROPERLY.",
+  "Is that leftover pizza? From WHEN? The Renaissance?",
+  "My nan could plate a better meal. And she's been dead for twenty years.",
+  "I've seen better presentation in a prison cafeteria. At least they TRY.",
+  "If that meal were on MasterChef, I'd eliminate you AND the cameraman for filming it.",
+  "That's not a meal. That's a cry for help on a plate.",
+  "You call that cooking? My dishwasher produces better output.",
+  "This looks like something that fell out of a bin and crawled back.",
+  "Even a microwave would be embarrassed to heat that up.",
+  "I wouldn't feed that to a stray dog. The dog has standards.",
+  "Congratulations. You've managed to make food look sad. FOOD. The thing that's supposed to bring JOY.",
+  "That cheese has seen better days. Those days were the 1990s.",
+  "Did you cook this or just threaten it with a lighter?",
+  "My five-year-old could make a better snack. And she's IMAGINARY.",
+  "That sandwich looks like two slices of bread having a funeral for flavour.",
+  "You opened the fridge at THIS hour? Your ancestors are WATCHING.",
+  "The nutritional value of that meal is somewhere between cardboard and despair.",
+  "I've cooked in war zones with better ingredients than whatever THAT is.",
+  "If disappointment were a dish, you just plated it perfectly.",
+  "That looks like it was cooked by someone who hates both food AND themselves.",
+  "You microwaved it, didn't you? Don't lie to me. I can SMELL the laziness.",
+  "That's not dinner. That's what dinner looks like after it gives up on life.",
+  "The only thing well-done here is the level of shame you should be feeling.",
+  "I've seen more effort in a gas station bathroom than in that meal.",
+  "Are those leftovers? Leftovers of WHAT? A crime scene?",
+  "That meal has the complexity of a wet paper towel.",
+  "If I served that in my restaurant, I'd have to close the restaurant. And then demolish the building.",
+  "Your fridge called. It wants a restraining order.",
+  "That's not comfort food. That's existential crisis food.",
+  "Did a raccoon plate this? Because I've seen raccoons with more culinary ambition.",
+  "The audacity of eating that and expecting your body to just BE OKAY with it.",
+  "You heated that up and thought 'yes, this is fine'? Nothing about this is fine.",
+  "That meal violates at least three Geneva Conventions.",
+  "I'd rather lick the floor of a New York subway than eat whatever that is.",
+  "You've combined ingredients that should never meet. Like a food war crime.",
+  "This is what happens when someone with no taste buds has a kitchen.",
+  "That's not a midnight snack. That's a midnight MISTAKE.",
+  "Somewhere, an Italian grandmother just felt a disturbance in the force.",
+  "That looks like it was prepared by someone who learned cooking from a horror movie.",
+  "If you put that on Instagram, your followers would stage an intervention.",
+  "Even Gordon Ramsay can't fix this. And I fix EVERYTHING.",
+  "That meal is so bland, it makes water look exciting.",
+  "You eating AGAIN? Your fridge must think it's under siege.",
+  "I've thrown away better meals than that. Into the BIN. Where they BELONGED.",
+  "That plate is a masterclass in giving up.",
+  "You know there are starving people who would STILL pass on this.",
+  "The saddest part isn't the food. It's that you're going to eat it anyway.",
+  "That snack has the nutritional profile of a parking ticket.",
+  "Looking at this, I can hear your arteries filing a formal complaint.",
+  "You opened the fridge door like you had a plan. YOU HAD NO PLAN.",
+  "That looks like something you'd find behind a sofa cushion. Last year.",
+  "If regret were a recipe, you just nailed it.",
+  "Your meal prep is just... opening a packet. That's not prep. That's SURRENDER.",
+  "Even the mould in your fridge is judging you right now.",
+  "That combo tells me you've given up on love, happiness, and basic seasoning.",
+  "A Michelin star? This wouldn't get a Michelin TYRE.",
+  "I wouldn't serve this at a buffet for people I actively dislike.",
+  "That's the saddest cheese I've ever seen. It looks like it's been through a divorce.",
+  "You just created a dish that would make a vending machine feel sophisticated."
+];
+
+const SCAN_MSGS = [
+  "Scanning nutritional disappointment...",
+  "Analyzing caloric catastrophe...",
+  "Detecting traces of regret...",
+  "Cross-referencing with known food crimes...",
+  "Measuring sadness levels...",
+  "Consulting Chef Ramsay's ghost...",
+  "Calculating shame coefficient...",
+  "Processing culinary disaster...",
+  "Evaluating life choices..."
+];
+
+const VERDICTS = [
+  [0,  "Actually... not terrible. Barely."],
+  [20, "Your mother would be mildly concerned."],
+  [35, "A nutritionist just felt a chill."],
+  [50, "Peak mediocrity. Impressively unimpressive."],
+  [65, "Your fridge filed a restraining order."],
+  [75, "This is a public health incident."],
+  [85, "Gordon Ramsay just shed a single tear."],
+  [95, "Call an ambulance. Not for you -- for the FOOD."]
+];
+
+let stream = null;
+let lastRoast = "";
+let lastScore = 0;
+
+// Raid counter
+let raids = parseInt(localStorage.getItem("fridgeShamerRaids") || "0");
+document.getElementById("raid-count").textContent = raids;
+
+function openCamera() {
+  const constraints = { video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 960 } } };
+  navigator.mediaDevices.getUserMedia(constraints).then(s => {
+    stream = s;
+    const video = document.getElementById("camera");
+    video.srcObject = s;
+    document.getElementById("video-container").style.display = "block";
+    document.getElementById("open-btn").style.display = "none";
+    document.getElementById("snap-btn").style.display = "inline-flex";
+    document.getElementById("photo-preview").style.display = "none";
+    document.getElementById("post-snap-btns").style.display = "none";
+  }).catch(() => {
+    alert("Camera access denied. Gordon is disappointed.");
+  });
+}
+
+function takePhoto() {
+  const video = document.getElementById("camera");
+  const canvas = document.getElementById("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+  document.getElementById("photo-img").src = dataUrl;
+  document.getElementById("video-container").style.display = "none";
+  document.getElementById("photo-preview").style.display = "block";
+  document.getElementById("snap-btn").style.display = "none";
+  document.getElementById("post-snap-btns").style.display = "flex";
+  // Stop camera
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+function retake() {
+  document.getElementById("photo-preview").style.display = "none";
+  document.getElementById("post-snap-btns").style.display = "none";
+  document.getElementById("result-section").style.display = "none";
+  openCamera();
+}
+
+function analyzeFood() {
+  document.getElementById("post-snap-btns").style.display = "none";
+  document.getElementById("analysis-section").style.display = "block";
+  document.getElementById("result-section").style.display = "none";
+
+  const fill = document.getElementById("scan-fill");
+  const msgEl = document.getElementById("scan-msg");
+  fill.style.width = "0%";
+  let progress = 0;
+  let msgIdx = 0;
+
+  const interval = setInterval(() => {
+    progress += Math.random() * 12 + 3;
+    if (progress > 100) progress = 100;
+    fill.style.width = progress + "%";
+    if (Math.random() < 0.35) {
+      msgIdx = (msgIdx + 1) % SCAN_MSGS.length;
+      msgEl.textContent = SCAN_MSGS[msgIdx];
+    }
+    if (progress >= 100) {
+      clearInterval(interval);
+      setTimeout(showResult, 400);
+    }
+  }, 200);
+}
+
+function showResult() {
+  document.getElementById("analysis-section").style.display = "none";
+
+  // Pick roast (avoid repeat)
+  let roast;
+  do { roast = ROASTS[Math.floor(Math.random() * ROASTS.length)]; } while (roast === lastRoast && ROASTS.length > 1);
+  lastRoast = roast;
+
+  // Score
+  const score = Math.floor(Math.random() * 71) + 30; // 30-100
+  lastScore = score;
+
+  // Verdict
+  let verdict = VERDICTS[0][1];
+  for (const [threshold, text] of VERDICTS) {
+    if (score >= threshold) verdict = text;
+  }
+
+  // Increment raids
+  raids++;
+  localStorage.setItem("fridgeShamerRaids", raids);
+  document.getElementById("raid-count").textContent = raids;
+
+  // Display
+  document.getElementById("roast-text").textContent = roast;
+  document.getElementById("shame-number").textContent = score;
+  document.getElementById("shame-verdict").textContent = verdict;
+
+  const shameFill = document.getElementById("shame-fill");
+  shameFill.style.width = "0%";
+  shameFill.style.background = score < 50 ? "var(--gold)" : score < 80 ? "linear-gradient(90deg,var(--gold),var(--red))" : "var(--red)";
+
+  document.getElementById("result-section").style.display = "block";
+
+  // Animate score
+  requestAnimationFrame(() => {
+    shameFill.style.width = score + "%";
+  });
+
+  // Animate number
+  let current = 0;
+  const step = Math.ceil(score / 30);
+  const numEl = document.getElementById("shame-number");
+  const numInterval = setInterval(() => {
+    current += step;
+    if (current >= score) { current = score; clearInterval(numInterval); }
+    numEl.textContent = current;
+  }, 40);
+
+  // Kitchen bell sound
+  playDing();
+}
+
+function playDing() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Bell strike
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.8);
+    // Harmonic
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(2400, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(1600, ctx.currentTime + 0.1);
+    gain2.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime);
+    osc2.stop(ctx.currentTime + 0.5);
+    // Clean up
+    setTimeout(() => ctx.close(), 1500);
+  } catch(e) {}
+}
+
+function shareRoast() {
+  const text = `"${lastRoast}"\n\nShame Score: ${lastScore}/100\n\n-- Fridge Shamer (by Chef Ramsay's ghost)`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById("share-btn");
+      btn.innerHTML = "&#10003; Copied!";
+      setTimeout(() => { btn.innerHTML = "&#128203; Copy Roast"; }, 2000);
+    });
+  } else {
+    // Fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    const btn = document.getElementById("share-btn");
+    btn.innerHTML = "&#10003; Copied!";
+    setTimeout(() => { btn.innerHTML = "&#128203; Copy Roast"; }, 2000);
+  }
+}
+
+function goAgain() {
+  document.getElementById("result-section").style.display = "none";
+  document.getElementById("photo-preview").style.display = "none";
+  document.getElementById("open-btn").style.display = "inline-flex";
+  openCamera();
+}
+</script>
+</body>
+</html>

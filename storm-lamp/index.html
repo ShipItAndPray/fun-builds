@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Storm Lamp</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @font-face {
+    font-family: 'System';
+    src: local('-apple-system'), local('BlinkMacSystemFont'), local('Segoe UI'), local('Helvetica Neue');
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    transition: background 2s ease;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ---------- lamp background ---------- */
+  #lamp {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    transition: background 2s ease;
+  }
+
+  /* ---------- input overlay ---------- */
+  #input-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a14 100%);
+    transition: opacity 0.8s ease;
+  }
+  #input-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #input-overlay h1 {
+    font-size: 2.4rem;
+    font-weight: 300;
+    color: #e0d6c8;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.3em;
+  }
+  #input-overlay p.sub {
+    color: #776e62;
+    font-size: 0.95rem;
+    margin-bottom: 2em;
+    letter-spacing: 0.05em;
+  }
+  #input-row {
+    display: flex;
+    gap: 0.5em;
+  }
+  #city-input {
+    padding: 0.7em 1.2em;
+    font-size: 1.1rem;
+    border: 1px solid #333;
+    border-radius: 2em;
+    background: rgba(255,255,255,0.06);
+    color: #e0d6c8;
+    outline: none;
+    width: 260px;
+    transition: border-color 0.3s;
+  }
+  #city-input::placeholder { color: #555; }
+  #city-input:focus { border-color: #776e62; }
+  #go-btn {
+    padding: 0.7em 1.6em;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 2em;
+    background: #e0d6c8;
+    color: #1a1a2e;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.3s;
+  }
+  #go-btn:hover { background: #fff; }
+  #error-msg {
+    color: #c44;
+    margin-top: 1em;
+    font-size: 0.85rem;
+    min-height: 1.2em;
+  }
+
+  /* ---------- info display ---------- */
+  #info {
+    position: fixed;
+    bottom: 2.5em;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 1s ease;
+    pointer-events: none;
+  }
+  #info.visible { opacity: 1; }
+  #info .temp {
+    font-size: 2.6rem;
+    font-weight: 200;
+    display: block;
+    margin-bottom: 0.1em;
+    color: rgba(255,255,255,0.85);
+  }
+  #info .condition {
+    font-size: 1rem;
+    text-transform: lowercase;
+    margin-bottom: 0.15em;
+    color: rgba(255,255,255,0.65);
+  }
+  #info .city-name {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+  }
+
+  /* ---------- controls ---------- */
+  #controls {
+    position: fixed;
+    top: 1.2em;
+    right: 1.5em;
+    z-index: 60;
+    display: flex;
+    gap: 0.8em;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #controls.visible { opacity: 1; }
+  .ctrl-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(0,0,0,0.25);
+    color: rgba(255,255,255,0.6);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.3s, color 0.3s;
+  }
+  .ctrl-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .ctrl-btn.muted { color: rgba(255,255,255,0.2); }
+
+  /* ---------- weather layers ---------- */
+  #effects {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* --- rain --- */
+  .raindrop {
+    position: absolute;
+    width: 2px;
+    background: linear-gradient(to bottom, rgba(150,180,255,0), rgba(150,180,255,0.5));
+    border-radius: 0 0 2px 2px;
+    animation: rain-fall linear infinite;
+  }
+  @keyframes rain-fall {
+    0% { transform: translateY(-10vh); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(110vh); opacity: 0; }
+  }
+
+  /* --- snow --- */
+  .snowflake {
+    position: absolute;
+    width: 6px; height: 6px;
+    background: rgba(255,255,255,0.8);
+    border-radius: 50%;
+    filter: blur(1px);
+    animation: snow-fall linear infinite;
+  }
+  @keyframes snow-fall {
+    0% { transform: translateY(-5vh) translateX(0); opacity: 0; }
+    10% { opacity: 1; }
+    50% { transform: translateY(50vh) translateX(30px); }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(110vh) translateX(-10px); opacity: 0; }
+  }
+
+  /* --- lightning flash --- */
+  #flash-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.05s;
+  }
+
+  /* --- fog layers --- */
+  .fog-layer {
+    position: absolute;
+    width: 200%;
+    height: 100%;
+    top: 0;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(180,180,180,0.12) 20%,
+      rgba(200,200,200,0.18) 40%,
+      rgba(180,180,180,0.10) 60%,
+      transparent 80%
+    );
+    animation: fog-drift linear infinite;
+  }
+  @keyframes fog-drift {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0%); }
+  }
+
+  /* --- stars --- */
+  .star {
+    position: absolute;
+    width: 2px; height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* --- sunny pulse --- */
+  #sun-glow {
+    position: absolute;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120vmax;
+    height: 120vmax;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,120,0.25) 0%, rgba(255,180,60,0.08) 40%, transparent 70%);
+    animation: sun-pulse 6s ease-in-out infinite alternate;
+    display: none;
+  }
+  @keyframes sun-pulse {
+    0% { transform: translateX(-50%) scale(0.9); opacity: 0.7; }
+    100% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+  }
+
+  /* --- cloudy drift --- */
+  .cloud-blob {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(160,160,170,0.08);
+    filter: blur(60px);
+    animation: cloud-drift linear infinite;
+  }
+  @keyframes cloud-drift {
+    0% { transform: translateX(-30vw); }
+    100% { transform: translateX(130vw); }
+  }
+
+  /* --- rain ripple on bottom --- */
+  .ripple {
+    position: absolute;
+    bottom: 0;
+    width: 8px; height: 8px;
+    border: 1px solid rgba(150,180,255,0.3);
+    border-radius: 50%;
+    animation: ripple-expand 1.5s ease-out infinite;
+  }
+  @keyframes ripple-expand {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(6); opacity: 0; }
+  }
+
+  /* --- gentle wind lines for snow --- */
+  .wind-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    animation: wind-sweep linear infinite;
+  }
+  @keyframes wind-sweep {
+    0% { transform: translateX(-100%); opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateX(100vw); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div id="lamp"></div>
+<div id="effects"></div>
+<div id="flash-layer"></div>
+
+<div id="input-overlay">
+  <h1>Storm Lamp</h1>
+  <p class="sub">your weather, as light and sound</p>
+  <div id="input-row">
+    <input id="city-input" type="text" placeholder="Enter your city" autocomplete="off" />
+    <button id="go-btn">Go</button>
+  </div>
+  <div id="error-msg"></div>
+</div>
+
+<div id="info">
+  <span class="temp" id="temp-display"></span>
+  <div class="condition" id="cond-display"></div>
+  <div class="city-name" id="city-display"></div>
+</div>
+
+<div id="controls">
+  <button class="ctrl-btn" id="sound-btn" title="Toggle sound">&#9835;</button>
+  <button class="ctrl-btn" id="change-btn" title="Change city">&#9998;</button>
+</div>
+
+<script>
+(function() {
+  // ---------- state ----------
+  let lat, lon, cityName;
+  let currentWeather = null;
+  let soundOn = true;
+  let audioCtx = null;
+  let activeNodes = [];
+  let refreshTimer = null;
+  let flashTimer = null;
+  let currentMode = null; // sunny, cloudy, rain, thunder, snow, fog, night
+
+  // ---------- DOM ----------
+  const lamp = document.getElementById('lamp');
+  const effects = document.getElementById('effects');
+  const flashLayer = document.getElementById('flash-layer');
+  const overlay = document.getElementById('input-overlay');
+  const cityInput = document.getElementById('city-input');
+  const goBtn = document.getElementById('go-btn');
+  const errorMsg = document.getElementById('error-msg');
+  const info = document.getElementById('info');
+  const controls = document.getElementById('controls');
+  const tempDisplay = document.getElementById('temp-display');
+  const condDisplay = document.getElementById('cond-display');
+  const cityDisplay = document.getElementById('city-display');
+  const soundBtn = document.getElementById('sound-btn');
+  const changeBtn = document.getElementById('change-btn');
+
+  // ---------- init audio ----------
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  // ---------- geocode ----------
+  async function geocode(query) {
+    const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (!data.results || data.results.length === 0) throw new Error('City not found');
+    const loc = data.results[0];
+    return { lat: loc.latitude, lon: loc.longitude, name: loc.name + (loc.admin1 ? ', ' + loc.admin1 : '') };
+  }
+
+  // ---------- weather ----------
+  async function fetchWeather() {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+    const r = await fetch(url);
+    const data = await r.json();
+    return data.current_weather;
+  }
+
+  // WMO weather code -> mode
+  function weatherMode(code, isDay) {
+    // 0 clear, 1-3 cloud, 45/48 fog, 51-55 drizzle, 56-57 freezing drizzle,
+    // 61-65 rain, 66-67 freezing rain, 71-77 snow, 80-82 rain showers,
+    // 85-86 snow showers, 95 thunderstorm, 96/99 thunderstorm+hail
+    if (code >= 95) return 'thunder';
+    if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82) || (code >= 51 && code <= 57)) return 'rain';
+    if ((code >= 71 && code <= 77) || (code >= 85 && code <= 86)) return 'snow';
+    if (code === 45 || code === 48) return 'fog';
+    if (code >= 2 && code <= 3) return 'cloudy';
+    if (code === 0 || code === 1) {
+      return isDay ? 'sunny' : 'night';
+    }
+    return isDay ? 'cloudy' : 'night';
+  }
+
+  function conditionText(code) {
+    const map = {
+      0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+      45: 'Foggy', 48: 'Depositing rime fog',
+      51: 'Light drizzle', 53: 'Drizzle', 55: 'Dense drizzle',
+      56: 'Freezing drizzle', 57: 'Dense freezing drizzle',
+      61: 'Light rain', 63: 'Rain', 65: 'Heavy rain',
+      66: 'Freezing rain', 67: 'Heavy freezing rain',
+      71: 'Light snow', 73: 'Snow', 75: 'Heavy snow',
+      77: 'Snow grains', 80: 'Rain showers', 81: 'Moderate showers', 82: 'Violent showers',
+      85: 'Snow showers', 86: 'Heavy snow showers',
+      95: 'Thunderstorm', 96: 'Thunderstorm with hail', 99: 'Severe thunderstorm'
+    };
+    return map[code] || 'Unknown';
+  }
+
+  // ---------- apply weather ----------
+  function applyWeather(w) {
+    currentWeather = w;
+    const isDay = w.is_day === 1;
+    const mode = weatherMode(w.weathercode, isDay);
+
+    tempDisplay.textContent = Math.round(w.temperature) + '\u00B0';
+    condDisplay.textContent = conditionText(w.weathercode);
+    cityDisplay.textContent = cityName;
+    info.classList.add('visible');
+    controls.classList.add('visible');
+
+    if (mode !== currentMode) {
+      currentMode = mode;
+      setScene(mode);
+    }
+  }
+
+  // ---------- set scene ----------
+  function setScene(mode) {
+    // clear previous
+    effects.innerHTML = '';
+    if (flashTimer) { clearInterval(flashTimer); flashTimer = null; }
+    flashLayer.style.opacity = 0;
+    stopAllSound();
+
+    const sunGlow = document.createElement('div');
+    sunGlow.id = 'sun-glow';
+
+    switch (mode) {
+      case 'sunny':
+        lamp.style.background = 'linear-gradient(180deg, #f5c842 0%, #e8943a 40%, #d46a28 100%)';
+        sunGlow.style.display = 'block';
+        effects.appendChild(sunGlow);
+        if (soundOn) playSunnyAmbience();
+        break;
+
+      case 'cloudy':
+        lamp.style.background = 'linear-gradient(180deg, #8a8d93 0%, #6b6e74 40%, #4a4d52 100%)';
+        createClouds();
+        if (soundOn) playWindAmbience(0.06);
+        break;
+
+      case 'rain':
+        lamp.style.background = 'linear-gradient(180deg, #1a2a4a 0%, #0f1c33 50%, #0a1225 100%)';
+        createRain(100);
+        createRipples(15);
+        if (soundOn) playRainSound();
+        break;
+
+      case 'thunder':
+        lamp.style.background = 'linear-gradient(180deg, #0d0d1a 0%, #1a0f2e 40%, #0a0a14 100%)';
+        createRain(140);
+        createRipples(20);
+        startLightning();
+        if (soundOn) { playRainSound(); }
+        break;
+
+      case 'snow':
+        lamp.style.background = 'linear-gradient(180deg, #c8cdd3 0%, #9aa0a8 40%, #6a7078 100%)';
+        createSnow(80);
+        createWindLines();
+        if (soundOn) playWindAmbience(0.04);
+        break;
+
+      case 'fog':
+        lamp.style.background = 'linear-gradient(180deg, #9a9a9a 0%, #787878 50%, #5a5a5a 100%)';
+        createFogLayers();
+        if (soundOn) playWindAmbience(0.025);
+        break;
+
+      case 'night':
+        lamp.style.background = 'linear-gradient(180deg, #0a0e1a 0%, #0f1628 40%, #070a12 100%)';
+        createStars(120);
+        if (soundOn) playCrickets();
+        break;
+    }
+  }
+
+  // ---------- particle creators ----------
+  function createRain(count) {
+    for (let i = 0; i < count; i++) {
+      const drop = document.createElement('div');
+      drop.className = 'raindrop';
+      drop.style.left = Math.random() * 100 + '%';
+      drop.style.height = (15 + Math.random() * 25) + 'px';
+      drop.style.animationDuration = (0.4 + Math.random() * 0.5) + 's';
+      drop.style.animationDelay = (Math.random() * 2) + 's';
+      drop.style.opacity = 0.3 + Math.random() * 0.5;
+      effects.appendChild(drop);
+    }
+  }
+
+  function createRipples(count) {
+    for (let i = 0; i < count; i++) {
+      const r = document.createElement('div');
+      r.className = 'ripple';
+      r.style.left = Math.random() * 100 + '%';
+      r.style.animationDelay = (Math.random() * 3) + 's';
+      effects.appendChild(r);
+    }
+  }
+
+  function createSnow(count) {
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'snowflake';
+      s.style.left = Math.random() * 100 + '%';
+      const size = 3 + Math.random() * 5;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.animationDuration = (4 + Math.random() * 6) + 's';
+      s.style.animationDelay = (Math.random() * 8) + 's';
+      s.style.opacity = 0.4 + Math.random() * 0.5;
+      effects.appendChild(s);
+    }
+  }
+
+  function createStars(count) {
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.left = Math.random() * 100 + '%';
+      s.style.top = Math.random() * 80 + '%';
+      const size = 1 + Math.random() * 2;
+      s.style.width = size + 'px';
+      s.style.height = size + 'px';
+      s.style.animationDuration = (1.5 + Math.random() * 3) + 's';
+      s.style.animationDelay = (Math.random() * 3) + 's';
+      effects.appendChild(s);
+    }
+  }
+
+  function createClouds() {
+    for (let i = 0; i < 6; i++) {
+      const c = document.createElement('div');
+      c.className = 'cloud-blob';
+      c.style.top = (10 + Math.random() * 60) + '%';
+      const size = 200 + Math.random() * 300;
+      c.style.width = size + 'px';
+      c.style.height = (size * 0.5) + 'px';
+      c.style.animationDuration = (30 + Math.random() * 40) + 's';
+      c.style.animationDelay = (-Math.random() * 40) + 's';
+      effects.appendChild(c);
+    }
+  }
+
+  function createFogLayers() {
+    for (let i = 0; i < 4; i++) {
+      const f = document.createElement('div');
+      f.className = 'fog-layer';
+      f.style.top = (i * 25) + '%';
+      f.style.opacity = 0.4 + Math.random() * 0.3;
+      f.style.animationDuration = (25 + i * 10) + 's';
+      f.style.animationDelay = (-i * 8) + 's';
+      effects.appendChild(f);
+    }
+  }
+
+  function createWindLines() {
+    for (let i = 0; i < 8; i++) {
+      const w = document.createElement('div');
+      w.className = 'wind-line';
+      w.style.top = (10 + Math.random() * 80) + '%';
+      w.style.width = (100 + Math.random() * 200) + 'px';
+      w.style.animationDuration = (4 + Math.random() * 6) + 's';
+      w.style.animationDelay = (Math.random() * 5) + 's';
+      effects.appendChild(w);
+    }
+  }
+
+  // ---------- lightning ----------
+  function startLightning() {
+    function doFlash() {
+      flashLayer.style.transition = 'opacity 0.05s';
+      flashLayer.style.opacity = 0.7 + Math.random() * 0.3;
+      setTimeout(() => {
+        flashLayer.style.opacity = 0;
+      }, 60 + Math.random() * 80);
+      // sometimes double flash
+      if (Math.random() > 0.5) {
+        setTimeout(() => {
+          flashLayer.style.opacity = 0.5;
+          setTimeout(() => { flashLayer.style.opacity = 0; }, 40);
+        }, 150 + Math.random() * 100);
+      }
+      if (soundOn) playThunder();
+    }
+    doFlash();
+    flashTimer = setInterval(() => {
+      if (Math.random() > 0.4) doFlash();
+    }, 3000 + Math.random() * 5000);
+  }
+
+  // ---------- Web Audio sounds ----------
+  function stopAllSound() {
+    activeNodes.forEach(n => {
+      try { n.stop ? n.stop() : n.disconnect(); } catch(e) {}
+    });
+    activeNodes = [];
+  }
+
+  function createNoiseBuffer(seconds) {
+    ensureAudio();
+    const sr = audioCtx.sampleRate;
+    const buf = audioCtx.createBuffer(1, sr * seconds, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    return buf;
+  }
+
+  function playRainSound() {
+    ensureAudio();
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = createNoiseBuffer(4);
+    noise.loop = true;
+
+    const bp = audioCtx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 800;
+    bp.Q.value = 0.5;
+
+    const hp = audioCtx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 300;
+
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.12;
+
+    noise.connect(bp).connect(hp).connect(gain).connect(audioCtx.destination);
+    noise.start();
+    activeNodes.push(noise);
+
+    // occasional drip accents
+    const dripInterval = setInterval(() => {
+      if (!soundOn || currentMode !== 'rain' && currentMode !== 'thunder') {
+        clearInterval(dripInterval);
+        return;
+      }
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 2000 + Math.random() * 2000;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.02;
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.1);
+    }, 200 + Math.random() * 400);
+  }
+
+  function playThunder() {
+    ensureAudio();
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = createNoiseBuffer(3);
+
+    const lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 150;
+
+    const gain = audioCtx.createGain();
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+
+    noise.connect(lp).connect(gain).connect(audioCtx.destination);
+    noise.start();
+    noise.stop(now + 3);
+  }
+
+  function playWindAmbience(vol) {
+    ensureAudio();
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = createNoiseBuffer(6);
+    noise.loop = true;
+
+    const lp = audioCtx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 400;
+
+    // slow LFO for wind gusts
+    const lfo = audioCtx.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.15;
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 200;
+    lfo.connect(lfoGain).connect(lp.frequency);
+    lfo.start();
+
+    const gain = audioCtx.createGain();
+    gain.gain.value = vol || 0.05;
+
+    noise.connect(lp).connect(gain).connect(audioCtx.destination);
+    noise.start();
+    activeNodes.push(noise, lfo);
+  }
+
+  function playSunnyAmbience() {
+    ensureAudio();
+    // warm low drone
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 120;
+
+    const osc2 = audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.value = 180;
+
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.025;
+
+    const gain2 = audioCtx.createGain();
+    gain2.gain.value = 0.015;
+
+    osc.connect(gain).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(audioCtx.destination);
+    osc.start();
+    osc2.start();
+    activeNodes.push(osc, osc2);
+  }
+
+  function playCrickets() {
+    ensureAudio();
+    // soft high-pitched chirps
+    function chirp() {
+      if (!soundOn || currentMode !== 'night') return;
+      const osc = audioCtx.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = 4000 + Math.random() * 1000;
+      const g = audioCtx.createGain();
+      const now = audioCtx.currentTime;
+      g.gain.setValueAtTime(0.015, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start();
+      osc.stop(now + 0.08);
+      setTimeout(chirp, 300 + Math.random() * 2000);
+    }
+    chirp();
+
+    // also gentle wind
+    playWindAmbience(0.02);
+  }
+
+  // ---------- event handlers ----------
+  async function handleGo() {
+    const query = cityInput.value.trim();
+    if (!query) { errorMsg.textContent = 'Please enter a city name'; return; }
+    errorMsg.textContent = '';
+    goBtn.textContent = '...';
+    goBtn.disabled = true;
+
+    try {
+      const geo = await geocode(query);
+      lat = geo.lat;
+      lon = geo.lon;
+      cityName = geo.name;
+
+      const weather = await fetchWeather();
+      overlay.classList.add('hidden');
+      applyWeather(weather);
+
+      // auto-refresh every 5 min
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(async () => {
+        try {
+          const w = await fetchWeather();
+          applyWeather(w);
+        } catch(e) {}
+      }, 5 * 60 * 1000);
+    } catch (e) {
+      errorMsg.textContent = e.message || 'Something went wrong';
+    } finally {
+      goBtn.textContent = 'Go';
+      goBtn.disabled = false;
+    }
+  }
+
+  goBtn.addEventListener('click', handleGo);
+  cityInput.addEventListener('keydown', e => { if (e.key === 'Enter') handleGo(); });
+
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.classList.toggle('muted', !soundOn);
+    if (!soundOn) {
+      stopAllSound();
+    } else if (currentMode) {
+      // restart sound for current mode
+      setScene(currentMode);
+    }
+  });
+
+  changeBtn.addEventListener('click', () => {
+    overlay.classList.remove('hidden');
+    cityInput.value = '';
+    cityInput.focus();
+    stopAllSound();
+    if (flashTimer) { clearInterval(flashTimer); flashTimer = null; }
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    info.classList.remove('visible');
+    controls.classList.remove('visible');
+    currentMode = null;
+    effects.innerHTML = '';
+    flashLayer.style.opacity = 0;
+    lamp.style.background = '';
+  });
+
+  // resume AudioContext on first interaction
+  document.addEventListener('click', () => { ensureAudio(); }, { once: true });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dog Lawyer - Bark to File a Complaint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --gold: #d4a843;
+    --gold-dim: #a07830;
+    --cream: #f0e6d3;
+    --red: #c0392b;
+    --green: #27ae60;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'EB Garamond', 'Georgia', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+
+  .paw-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    opacity: 0.03;
+    font-size: 60px;
+    line-height: 80px;
+    word-wrap: break-word;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 700px;
+    width: 100%;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 3px double var(--gold);
+    padding-bottom: 20px;
+  }
+
+  header .emblem {
+    font-size: 64px;
+    margin-bottom: 5px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8em;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: var(--gold-dim);
+    font-size: 1.1em;
+    margin-top: 5px;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 15px 0;
+    font-size: 0.95em;
+    color: var(--gold-dim);
+  }
+
+  .stats-bar span { display: flex; align-items: center; gap: 6px; }
+
+  .listen-btn {
+    display: block;
+    margin: 25px auto;
+    padding: 18px 50px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(212,168,67,0.3);
+  }
+
+  .listen-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(212,168,67,0.4); }
+  .listen-btn.active { background: linear-gradient(135deg, var(--green), #1e8449); color: white; }
+  .listen-btn.active::after { content: ''; display: inline-block; width: 10px; height: 10px; background: #ff4444; border-radius: 50%; margin-left: 12px; animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .volume-bar {
+    width: 100%;
+    height: 8px;
+    background: #0f0f23;
+    border-radius: 4px;
+    margin: 15px 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .volume-bar.visible { opacity: 1; }
+
+  .volume-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
+    border-radius: 4px;
+    transition: width 0.05s;
+  }
+
+  .threshold-label {
+    text-align: center;
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .threshold-label.visible { opacity: 1; }
+
+  .filing-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .filing-overlay.show { display: flex; }
+
+  .filing-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5em;
+    color: var(--gold);
+    animation: filingPulse 0.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes filingPulse { from { opacity: 0.4; transform: scale(0.95); } to { opacity: 1; transform: scale(1.05); } }
+
+  .gavel-emoji { font-size: 80px; margin-bottom: 20px; animation: gavelSlam 0.4s ease-in-out infinite alternate; }
+  @keyframes gavelSlam { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
+
+  .complaint-card {
+    background: var(--card);
+    border: 2px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 30px;
+    margin: 20px 0;
+    position: relative;
+    min-height: 60px;
+  }
+
+  .complaint-card::before {
+    content: 'OFFICIAL COMPLAINT';
+    display: block;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1em;
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 4px;
+    border-bottom: 2px solid var(--gold-dim);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+  }
+
+  .complaint-card .case-number {
+    text-align: center;
+    font-size: 0.85em;
+    color: var(--gold-dim);
+    margin-bottom: 15px;
+    font-style: italic;
+  }
+
+  .complaint-text {
+    font-size: 1.15em;
+    line-height: 1.7;
+    min-height: 40px;
+    color: var(--cream);
+  }
+
+  .complaint-text .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: var(--gold);
+    margin-left: 2px;
+    animation: blink 0.7s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .complaint-card .seal {
+    text-align: right;
+    margin-top: 20px;
+    font-size: 2em;
+  }
+
+  .complaint-card .signature {
+    text-align: right;
+    font-style: italic;
+    color: var(--gold-dim);
+    margin-top: 10px;
+    font-size: 0.95em;
+  }
+
+  .history {
+    margin-top: 30px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+  }
+
+  .history h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    margin-bottom: 15px;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+
+  .history-item {
+    background: rgba(22,33,62,0.5);
+    border-left: 3px solid var(--gold-dim);
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    line-height: 1.5;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .history-item .meta {
+    font-size: 0.8em;
+    color: #666;
+    margin-bottom: 5px;
+  }
+
+  .instructions {
+    text-align: center;
+    color: #666;
+    font-size: 0.9em;
+    margin: 10px 0;
+    font-style: italic;
+  }
+
+  .speaking-indicator {
+    display: none;
+    text-align: center;
+    padding: 10px;
+    color: var(--gold);
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+  }
+
+  .speaking-indicator.show { display: block; }
+
+  footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.8em;
+    color: #444;
+    padding: 20px;
+    border-top: 1px solid #222;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2em; }
+    .listen-btn { padding: 15px 35px; font-size: 1.2em; }
+    .complaint-card { padding: 20px; }
+    header .emblem { font-size: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="paw-bg" id="pawBg"></div>
+
+<div class="container">
+  <header>
+    <div class="emblem">&#x1F43E;</div>
+    <h1>Dog Lawyer</h1>
+    <div class="subtitle">Barristers at Paw &mdash; Est. 2026</div>
+    <div class="subtitle">"We bark. You listen."</div>
+  </header>
+
+  <div class="stats-bar">
+    <span>&#x1F4DC; Complaints Filed: <strong id="complaintCount">0</strong></span>
+    <span>&#x2696;&#xFE0F; Justice Served: <strong id="justiceCount">0</strong></span>
+  </div>
+
+  <button class="listen-btn" id="listenBtn">&#x1F3A4; Start Listening</button>
+
+  <div class="volume-bar" id="volumeBar">
+    <div class="volume-fill" id="volumeFill"></div>
+  </div>
+  <div class="threshold-label" id="thresholdLabel">Bark, yell, or clap to file a complaint!</div>
+
+  <div class="instructions" id="instructions">Press the button and make some noise to summon your Dog Lawyer.</div>
+
+  <div class="speaking-indicator" id="speakingIndicator">&#x1F4E2; Your lawyer is addressing the court...</div>
+
+  <div class="complaint-card" id="complaintCard" style="display:none;">
+    <div class="case-number" id="caseNumber"></div>
+    <div class="complaint-text" id="complaintText"></div>
+    <div class="seal">&#x1F43E; &#x2696;&#xFE0F; &#x1F43E;</div>
+    <div class="signature">&#x2014; Sir Barkington III, Esq., J.D., LL.B., Good Boy</div>
+  </div>
+
+  <div class="history" id="historySection" style="display:none;">
+    <h3>&#x1F4DA; Prior Complaints on Record</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <footer>
+    &#x1F43E; Dog Lawyer &mdash; No treats were harmed in the making of this application. &#x1F43E;<br>
+    Disclaimer: Not actual legal advice. Plaintiff is a very good boy.
+  </footer>
+</div>
+
+<div class="filing-overlay" id="filingOverlay">
+  <div class="gavel-emoji">&#x1F528;</div>
+  <div class="filing-text">FILING COMPLAINT...</div>
+</div>
+
+<script>
+const complaints = [
+  "My client formally objects to the unlawful trespass of this so-called 'postal agent' within olfactory range of the domicile. The defendant approached the front door with RECKLESS ABANDON, deposited suspicious parcels, and fled the scene before my client could conduct a proper investigation. Damages sought: one (1) treat and a formal written apology, delivered by hand, to be sniffed thoroughly.",
+
+  "WHEREAS the defendant did willfully and with malice aforethought consume an entire dinner\u2014including the particularly aromatic chicken portion\u2014without offering the plaintiff so much as a morsel, a crumb, or even a performative gesture of sharing. This constitutes a GRIEVOUS violation of the Unspoken Dinner Compact of the household. The plaintiff demands retroactive compensation in the form of no fewer than three (3) belly rubs and one (1) slice of cheese.",
+
+  "The court is hereby notified that the squeaky toy, hereafter referred to as 'Mr. Squeaks,' was STOLEN from the plaintiff's possession and placed upon a high shelf, far beyond the reach of justice. The plaintiff has suffered immeasurable emotional distress, including but not limited to: sad eyes, a single whimper, and lying dramatically on the floor. Immediate restitution is demanded.",
+
+  "COMES NOW the plaintiff, a distinguished canine of impeccable character, to file this EMERGENCY MOTION regarding the unconscionable act of bath administration. The defendant did, without prior notice, consent, or treaty negotiation, subject the plaintiff to a FULL BODY IMMERSION in warm, soapy water. The plaintiff's dignity has been irreparably damaged. We seek an injunction against all future bathing attempts and damages in the amount of seven (7) treats.",
+
+  "Let the record show that on the date in question, the defendant did operate a vacuum cleaner\u2014a device of TERRIFYING aspect and DEAFENING volume\u2014within the sovereign territory of the plaintiff's living room. This constitutes an act of acoustic warfare under the Geneva Conventions of Good Boy Law. The plaintiff demands the immediate and permanent destruction of said vacuum cleaner.",
+
+  "The plaintiff respectfully submits this complaint regarding the FRAUDULENT representation of a veterinary visit as a 'car ride.' The defendant employed deception, stating\u2014and I quote\u2014'Wanna go for a ride?' with full knowledge that the destination was, in fact, the veterinarian's office. This breach of trust has caused lasting psychological harm. The plaintiff seeks a minimum of twelve (12) actual car rides as compensatory damages.",
+
+  "NOTICE OF GRIEVANCE: The defendant's cat has, for the fourteenth consecutive day, occupied the plaintiff's preferred sunbeam. Despite repeated attempts at negotiation\u2014including staring, circling, and one (1) gentle nudge\u2014the feline defendant has refused to vacate. The plaintiff moves for an emergency injunction and exclusive sunbeam rights in perpetuity.",
+
+  "This FORMAL OBJECTION concerns the defendant's practice of pretending to throw the ball without actually releasing it. This fraudulent act, known in legal parlance as the 'Fake Throw,' constitutes a clear violation of the plaintiff's trust and emotional wellbeing. Each false throw shall incur a penalty of two (2) real throws, to be delivered immediately and with adequate enthusiasm.",
+
+  "The plaintiff brings this action regarding the SCANDALOUS duration of the defendant's absence from the domicile. The defendant departed at approximately 8:47 AM and did not return until 5:23 PM\u2014a period of EIGHT HOURS AND THIRTY-SIX MINUTES, which in dog time constitutes roughly four hundred and seventy-two emotional lifetimes. Damages sought: unlimited lap time upon return.",
+
+  "EMERGENCY PETITION: The plaintiff has discovered that the neighbor's dog, one 'Biscuit,' has been receiving PREMIUM treats of the bacon-flavored variety, while the plaintiff continues to receive standard-issue kibble. This constitutes a violation of the Equal Treat Provision. The plaintiff demands treat parity immediately and retroactive snack compensation.",
+
+  "Let the record reflect that the defendant did, with full premeditation, close the bedroom door, thereby DENYING the plaintiff access to the bed. The plaintiff was forced to sleep on the couch like some manner of COMMON ANIMAL. This is a direct violation of the Bed Sharing Accord, ratified by three consecutive nights of shared sleeping. The plaintiff demands the door remain open in perpetuity.",
+
+  "WHEREAS the plaintiff did discover a perfectly aged, exquisitely aromatic morsel beneath the park bench\u2014a culinary treasure of the highest order\u2014and WHEREAS the defendant did forcibly remove said morsel from the plaintiff's mouth using the phrase 'DROP IT,' the plaintiff hereby files this complaint for unlawful seizure of property. The morsel's estimated value: priceless.",
+
+  "The plaintiff submits this WRIT OF INDIGNATION regarding the defendant's new significant other, who has been receiving an UNCONSCIONABLE quantity of the defendant's affection, including head scratches, sweet talk, and couch proximity that rightfully belongs to the plaintiff. The plaintiff demands a formal custody arrangement with no fewer than 70% of all available affection units.",
+
+  "FORMAL NOTICE: The defendant did willfully and repeatedly engage in the activity known as 'working from home' while failing to provide adequate belly rubs during business hours. The plaintiff sat beside the desk for FOUR CONSECUTIVE HOURS, presenting belly at regular intervals, to no avail. This constitutes workplace negligence of the highest order.",
+
+  "This complaint arises from the EGREGIOUS act of nail trimming perpetrated upon the plaintiff's person. Despite clear and unambiguous resistance\u2014including but not limited to paw retraction, dramatic yelping, and the deployment of 'whale eyes'\u2014the defendant persisted. Each nail trimmed without consent constitutes a separate count. Total counts: twenty (20).",
+
+  "The plaintiff OBJECTS in the strongest possible terms to the installation of a so-called 'baby gate' across the kitchen threshold. This barrier constitutes an unlawful restriction of movement and a denial of the plaintiff's constitutional right to monitor all food preparation activities. We demand the gate's immediate removal and a formal apology.",
+
+  "COMES NOW the plaintiff to report the THEFT of a perfectly good stick\u2014approximately 47 centimeters in length, with an excellent chew profile and superior bark texture\u2014which was confiscated by the defendant under the absurd pretense that it was 'too big to bring inside.' The plaintiff's property rights are absolute and not subject to size-based discrimination.",
+
+  "The court's attention is drawn to the matter of the THUNDERSTORM that occurred on the evening in question. The plaintiff maintains that the defendant's failure to make the thunder stop constitutes negligence. Furthermore, the defendant's suggestion to 'just relax' was wholly inadequate as a legal remedy. The plaintiff demands a thunder-proof blanket fort, effective immediately.",
+
+  "PETITION FOR REDRESS: The plaintiff has been subjected to the humiliation of wearing a 'Halloween costume'\u2014specifically, a hot dog outfit\u2014against their will and without due process. Photographic evidence was then distributed via social media without the plaintiff's written consent. Damages sought: the destruction of all photographs and one (1) apology treat per share/like received.",
+
+  "The plaintiff respectfully informs the court that the defendant has adopted a SECOND DOG. This act of betrayal has caused the plaintiff severe emotional distress, jealousy, and an acute sense of inadequacy. The plaintiff demands confirmation that they remain the 'favorite' and seeks compensatory treats equal to or exceeding those given to the interloper.",
+
+  "URGENT MOTION: The plaintiff's water bowl has been observed to be at FIFTY PERCENT CAPACITY. While technically containing water, this half-empty state represents a callous disregard for the plaintiff's hydration needs. The plaintiff demands an immediate top-up and the installation of a fountain-style bowl befitting their station.",
+
+  "This complaint concerns the defendant's CAR, which the plaintiff has been denied entry to on no fewer than seven (7) occasions this month, despite the plaintiff's clearly expressed desire to accompany the defendant on ALL journeys, regardless of destination, duration, or the defendant's protestations about 'dog hair on the seats.'",
+
+  "WHEREAS a squirrel did, on the afternoon in question, brazenly enter the plaintiff's yard and ascend the oak tree with CLEAR provocative intent, and WHEREAS the defendant did restrain the plaintiff from pursuing said squirrel via the leash\u2014thereby obstructing justice\u2014the plaintiff files this complaint for interference with lawful squirrel prosecution.",
+
+  "The plaintiff brings this ACTION regarding the defendant's television viewing habits. Specifically, the defendant has been watching a program featuring OTHER DOGS on screen, causing the plaintiff great confusion and territorial anxiety. The plaintiff demands that all future programming feature only cats, which the plaintiff finds far less threatening and moderately amusing.",
+
+  "NOTICE OF INTENT TO SUE: The plaintiff was promised\u2014via enthusiastic voice and jingling of car keys\u2014that they were going to the PARK. Instead, the defendant drove to the hardware store, where the plaintiff was forced to sit in the car for ELEVEN MINUTES. This constitutes park fraud, a Class A misdemeanor under Good Boy Statute \u00A7 42.7.",
+
+  "The plaintiff hereby OBJECTS to the existence of fireworks. That is the entirety of the complaint. The plaintiff will accept no compromise, no explanation, and no 'it's just one night a year.' Fireworks are an abomination. Damages: unlimited. Duration of complaint: forever.",
+
+  "FORMAL GRIEVANCE concerning the defendant's refusal to allow the plaintiff to greet every single human encountered during walks. The plaintiff's right to sniff, lick, and receive pets from strangers is FUNDAMENTAL and shall not be abridged. Each 'come on, let's go' constitutes a separate violation. Total violations this week: thirty-four (34).",
+
+  "The court is advised that the plaintiff's FAVORITE SPOT on the couch\u2014the left cushion, specifically the indent created by three years of loyal sitting\u2014has been occupied by a GUEST. This is an outrage of the highest magnitude. The plaintiff demands eviction of the guest and a restraining order preventing future cushion theft.",
+
+  "EMERGENCY FILING: The defendant has returned home smelling of ANOTHER DOG. The plaintiff conducted a thorough 47-minute olfactory investigation and has confirmed the presence of foreign canine scent on the defendant's trousers, shoes, and\u2014most damningly\u2014hands. This constitutes emotional infidelity. The plaintiff demands an explanation and no fewer than fifty (50) consecutive pets.",
+
+  "The plaintiff submits this MOTION TO COMPEL regarding dinner service times. Dinner has been served at 6:00 PM consistently for two years. On the date in question, dinner was served at 6:14 PM\u2014a delay of FOURTEEN MINUTES. The plaintiff suffered acute hunger, existential dread, and was forced to stare pointedly at the food bowl for the entire duration. This must never happen again.",
+
+  "WHEREAS the defendant did take the plaintiff to a 'dog-friendly' restaurant patio, and WHEREAS the adjacent table did order a cheeseburger of MAGNIFICENT aroma, and WHEREAS the defendant did NOT order a cheeseburger for the plaintiff, this court must recognize the profound injustice visited upon a loyal and deserving canine citizen. Relief sought: one (1) cheeseburger, hold the pickles.",
+
+  "This WRIT OF HABEAS BISCUIT is filed on behalf of the plaintiff, who has been reliably informed\u2014via nose\u2014that there exist additional treats in the upper kitchen cabinet. The defendant's claim that the plaintiff has 'had enough treats today' is LEGALLY INSUFFICIENT and morally reprehensible. The plaintiff demands immediate production of all concealed biscuits.",
+
+  "The plaintiff files this complaint regarding the LEASH, an instrument of oppression that restricts the plaintiff's God-given right to run at full speed toward anything that moves. The plaintiff is a grown dog of sound judgment and does NOT need to be 'controlled.' The plaintiff demands off-leash privileges effective immediately, notwithstanding that one incident with the geese.",
+
+  "FORMAL OBJECTION to the defendant's alarm clock, which emits a sound at 6:30 AM that is deeply offensive to the plaintiff's refined auditory sensibilities. The plaintiff was engaged in CRITICAL sleeping activities and was rudely awakened. Worse still, the defendant then had the audacity to hit 'snooze' repeatedly, subjecting the plaintiff to MULTIPLE violations. Damages: breakfast served 30 minutes early."
+];
+
+const lawyerNames = [
+  "Sir Barkington III, Esq.",
+  "The Honourable Woofsworth Q.C.",
+  "Lady Pawsworth of Treatshire",
+  "Baron von Sniffington, LL.B.",
+  "Justice Goodboy McWiggles",
+  "Counselor Wagmore Fetchington",
+  "Dame Biscuit Tailchaser, K.C.",
+  "Professor Rufus J. Howlington"
+];
+
+let audioCtx, analyser, micStream, dataArray, isListening = false;
+let complaintCount = 0, justiceCount = 0;
+let isFiling = false, isSpeaking = false;
+let usedComplaints = [];
+let animFrameId;
+
+// Fill paw background
+const pawBg = document.getElementById('pawBg');
+let paws = '';
+for (let i = 0; i < 500; i++) paws += '\uD83D\uDC3E ';
+pawBg.textContent = paws;
+
+const listenBtn = document.getElementById('listenBtn');
+const volumeBar = document.getElementById('volumeBar');
+const volumeFill = document.getElementById('volumeFill');
+const thresholdLabel = document.getElementById('thresholdLabel');
+const filingOverlay = document.getElementById('filingOverlay');
+const complaintCard = document.getElementById('complaintCard');
+const complaintText = document.getElementById('complaintText');
+const caseNumber = document.getElementById('caseNumber');
+const instructions = document.getElementById('instructions');
+const speakingIndicator = document.getElementById('speakingIndicator');
+const historySection = document.getElementById('historySection');
+const historyList = document.getElementById('historyList');
+
+listenBtn.addEventListener('click', toggleListening);
+
+async function toggleListening() {
+  if (isListening) {
+    stopListening();
+  } else {
+    await startListening();
+  }
+}
+
+async function startListening() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.3;
+    source.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+    isListening = true;
+    listenBtn.textContent = '\uD83D\uDD34 Listening...';
+    listenBtn.classList.add('active');
+    volumeBar.classList.add('visible');
+    thresholdLabel.classList.add('visible');
+    instructions.textContent = 'Mic is live. Bark, yell, or clap to summon your lawyer!';
+    monitorVolume();
+  } catch (e) {
+    alert('Microphone access is required for Dog Lawyer to hear your complaints. Please allow mic access and try again.');
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  listenBtn.textContent = '\uD83C\uDFA4 Start Listening';
+  listenBtn.classList.remove('active');
+  volumeBar.classList.remove('visible');
+  thresholdLabel.classList.remove('visible');
+  instructions.textContent = 'Press the button and make some noise to summon your Dog Lawyer.';
+}
+
+function monitorVolume() {
+  if (!isListening) return;
+  analyser.getByteFrequencyData(dataArray);
+
+  let sum = 0;
+  for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+  const avg = sum / dataArray.length;
+  const pct = Math.min(100, (avg / 128) * 100);
+
+  volumeFill.style.width = pct + '%';
+
+  // Threshold ~40% of max
+  if (avg > 50 && !isFiling && !isSpeaking) {
+    triggerComplaint();
+  }
+
+  animFrameId = requestAnimationFrame(monitorVolume);
+}
+
+function getRandomComplaint() {
+  if (usedComplaints.length >= complaints.length) usedComplaints = [];
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * complaints.length);
+  } while (usedComplaints.includes(idx));
+  usedComplaints.push(idx);
+  return complaints[idx];
+}
+
+function generateCaseNumber() {
+  const y = new Date().getFullYear();
+  const num = String(Math.floor(Math.random() * 9000) + 1000);
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const suffix = letters[Math.floor(Math.random()*26)] + letters[Math.floor(Math.random()*26)];
+  return `Case No. BARK-${y}-${num}-${suffix}`;
+}
+
+function playGavelSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Impact sound
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(150, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(50, ctx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.6, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.3);
+
+  // Crack
+  const bufferSize = ctx.sampleRate * 0.1;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.05));
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.8, ctx.currentTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+  noise.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start(ctx.currentTime);
+
+  // Second tap
+  setTimeout(() => {
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(130, ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.12);
+    gain2.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(ctx.currentTime);
+    osc2.stop(ctx.currentTime + 0.25);
+  }, 200);
+
+  // Third tap
+  setTimeout(() => {
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = 'square';
+    osc3.frequency.setValueAtTime(170, ctx.currentTime);
+    osc3.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.2);
+    gain3.gain.setValueAtTime(0.7, ctx.currentTime);
+    gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc3.connect(gain3);
+    gain3.connect(ctx.destination);
+    osc3.start(ctx.currentTime);
+    osc3.stop(ctx.currentTime + 0.35);
+  }, 400);
+}
+
+async function triggerComplaint() {
+  isFiling = true;
+
+  // Show filing overlay
+  filingOverlay.classList.add('show');
+  playGavelSound();
+
+  const text = getRandomComplaint();
+  const caseNo = generateCaseNumber();
+
+  // Show overlay for 2 seconds
+  await new Promise(r => setTimeout(r, 2000));
+  filingOverlay.classList.remove('show');
+
+  // Setup complaint card
+  complaintCard.style.display = 'block';
+  caseNumber.textContent = caseNo;
+  complaintText.innerHTML = '<span class="cursor"></span>';
+
+  complaintCount++;
+  document.getElementById('complaintCount').textContent = complaintCount;
+
+  // Typewriter effect
+  await typeWriter(text);
+
+  // Speak it
+  speakingIndicator.classList.add('show');
+  isSpeaking = true;
+  await speakComplaint(text);
+  isSpeaking = false;
+  speakingIndicator.classList.remove('show');
+
+  justiceCount++;
+  document.getElementById('justiceCount').textContent = justiceCount;
+
+  // Add to history
+  addToHistory(caseNo, text);
+
+  isFiling = false;
+}
+
+function typeWriter(text) {
+  return new Promise(resolve => {
+    let i = 0;
+    const speed = 18;
+    function type() {
+      if (i < text.length) {
+        const current = text.substring(0, i + 1);
+        complaintText.innerHTML = current + '<span class="cursor"></span>';
+        i++;
+        setTimeout(type, speed);
+      } else {
+        complaintText.innerHTML = text;
+        resolve();
+      }
+    }
+    type();
+  });
+}
+
+function speakComplaint(text) {
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+
+    // Cancel any ongoing speech
+    speechSynthesis.cancel();
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.8;
+    utter.pitch = 0.7;
+    utter.volume = 1;
+
+    // Try to find a British or deep voice
+    const voices = speechSynthesis.getVoices();
+    const british = voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('male'));
+    const anyBritish = voices.find(v => v.lang === 'en-GB');
+    const daniel = voices.find(v => v.name.toLowerCase().includes('daniel'));
+    const deep = voices.find(v => v.name.toLowerCase().includes('deep') || v.name.toLowerCase().includes('bass'));
+
+    utter.voice = daniel || british || anyBritish || deep || voices[0] || null;
+
+    utter.onend = resolve;
+    utter.onerror = resolve;
+
+    speechSynthesis.speak(utter);
+  });
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+function addToHistory(caseNo, text) {
+  historySection.style.display = 'block';
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  const time = new Date().toLocaleTimeString();
+  item.innerHTML = `<div class="meta">\uD83D\uDC3E ${caseNo} &mdash; ${time}</div>${text.substring(0, 120)}...`;
+  historyList.insertBefore(item, historyList.firstChild);
+
+  // Keep max 10
+  while (historyList.children.length > 10) {
+    historyList.removeChild(historyList.lastChild);
+  }
+}
+</script>
+</body>
+</html>

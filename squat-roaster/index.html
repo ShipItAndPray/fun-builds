@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Squat Roaster</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  #start-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 24px;
+    z-index: 10;
+    position: relative;
+  }
+
+  #start-screen h1 {
+    font-size: 4rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #39ff14, #ff3131);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+  }
+
+  #start-screen p {
+    color: #888;
+    font-size: 1.1rem;
+    max-width: 500px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  #start-btn {
+    font-size: 1.4rem;
+    font-weight: 700;
+    padding: 18px 48px;
+    border: none;
+    border-radius: 12px;
+    background: #39ff14;
+    color: #0a0a0a;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+
+  #start-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 40px rgba(57, 255, 20, 0.4);
+  }
+
+  #workout-screen {
+    display: none;
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  #video-container {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+  }
+
+  video, canvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+  }
+
+  video { transform: scaleX(-1); }
+  #pose-canvas { transform: scaleX(-1); z-index: 1; }
+
+  #color-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    transition: background 0.5s;
+    background: rgba(57, 255, 20, 0.0);
+  }
+
+  #hud {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+  }
+
+  #top-bar {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 10px;
+  }
+
+  .stat-box {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(57, 255, 20, 0.3);
+    border-radius: 10px;
+    padding: 10px 18px;
+    text-align: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #39ff14;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  #center-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  #squat-count {
+    font-size: 10rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(57, 255, 20, 0.5), 0 4px 20px rgba(0,0,0,0.8);
+    transition: color 0.3s;
+    color: #39ff14;
+  }
+
+  #squat-label {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  #bottom-area {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #roast-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    max-width: 700px;
+    padding: 16px 28px;
+    background: rgba(0,0,0,0.75);
+    border-radius: 14px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.1);
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s;
+  }
+
+  #rest-timer {
+    font-size: 0.9rem;
+    color: #888;
+    letter-spacing: 1px;
+  }
+
+  #rest-timer.warning { color: #ff6b35; }
+  #rest-timer.danger { color: #ff3131; }
+
+  .squat-flash {
+    animation: flashGreen 0.3s ease-out;
+  }
+
+  @keyframes flashGreen {
+    0% { text-shadow: 0 0 120px rgba(57, 255, 20, 1), 0 0 60px rgba(57, 255, 20, 0.8); transform: scale(1.1); }
+    100% { text-shadow: 0 0 60px rgba(57, 255, 20, 0.5), 0 4px 20px rgba(0,0,0,0.8); transform: scale(1); }
+  }
+
+  #debug-angle {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 4;
+    background: rgba(0,0,0,0.6);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    color: #888;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div id="start-screen">
+  <h1>Squat Roaster</h1>
+  <p>AI-powered squat counter that roasts you when you slack off. The longer you rest, the meaner it gets. You've been warned.</p>
+  <button id="start-btn">Start Workout</button>
+</div>
+
+<div id="workout-screen">
+  <div id="video-container">
+    <video id="webcam" playsinline></video>
+    <canvas id="pose-canvas"></canvas>
+  </div>
+  <div id="color-overlay"></div>
+  <div id="debug-angle"></div>
+  <div id="hud">
+    <div id="top-bar">
+      <div class="stat-box">
+        <div class="stat-label">Streak</div>
+        <div class="stat-value" id="streak-val">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Best Streak</div>
+        <div class="stat-value" id="best-streak-val">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Total Rest</div>
+        <div class="stat-value" id="total-rest-val">0s</div>
+      </div>
+    </div>
+    <div id="center-area">
+      <div id="squat-count">0</div>
+      <div id="squat-label">Squats</div>
+    </div>
+    <div id="bottom-area">
+      <div id="roast-text">Get in position and start squatting!</div>
+      <div id="rest-timer"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<script>
+// ============ ROAST BANK ============
+const ROASTS = {
+  good: [
+    "Nice rep! Keep that energy!",
+    "Clean! Your glutes thank you.",
+    "Boom! That's how it's done.",
+    "Beautiful depth. Chef's kiss.",
+    "ATG baby! Another one!",
+    "You're a machine! Don't stop!",
+    "Crushed it! Next rep, let's go!",
+    "That form is textbook. Respect.",
+    "Feel that burn? That's growth.",
+    "Absolute unit. Keep stacking!"
+  ],
+  mild: [  // 5-10 sec
+    "Taking a breather? Weak.",
+    "Oh, we're resting now? Cool cool cool.",
+    "That's a suspiciously long pause.",
+    "Your muscles aren't going to build themselves... well, they literally won't.",
+    "5 seconds of rest is generous. You've had yours.",
+    "I see you standing there. Thinking about squatting. That's not the same.",
+    "Resting already? We barely started.",
+    "The squat rack doesn't judge. But I do."
+  ],
+  medium: [  // 10-20 sec
+    "My grandma moves faster. She's 94.",
+    "I've seen shopping carts with better leg drive.",
+    "At this pace you'll finish your set by next Tuesday.",
+    "Your legs called. They said they don't even know you anymore.",
+    "This isn't a rest period, this is a lifestyle.",
+    "Somewhere, a couch is missing its potato.",
+    "Even your shadow is disappointed.",
+    "Are you loading a save file? Because you've been paused forever.",
+    "If squatting burned zero calories, you'd still be in a deficit of effort."
+  ],
+  harsh: [  // 20-30 sec
+    "At this point you're just standing. That's called 'existing.'",
+    "You have the intensity of a screensaver.",
+    "I've seen more leg activity from a flamingo. One-legged. Asleep.",
+    "Your rest-to-work ratio is legally a nap.",
+    "Congratulations, you've invented the anti-workout.",
+    "If this were a movie, the audience would've left.",
+    "You're not resting between sets. You're resting between thoughts about sets.",
+    "Plot twist: the squat was inside you all along. It's still in there. Unused."
+  ],
+  savage: [  // 30-60 sec
+    "I've seen statues work out harder than this.",
+    "You're one yawn away from this being a sleep study.",
+    "Your gym membership is committing fraud by association.",
+    "Even gravity is doing more reps than you right now.",
+    "The floor is getting a better workout from holding your weight.",
+    "Breaking news: local person stands motionlessly, calls it exercise.",
+    "You have the work ethic of a government website at 5:01 PM.",
+    "Your legs have filed for unemployment."
+  ],
+  nuclear: [  // 60+ sec
+    "You quit, didn't you. I knew it.",
+    "Hello? Is anyone home? The lights are on but nobody's squatting.",
+    "I'm going to start counting backwards at this rate.",
+    "Rigor mortis has better range of motion than whatever this is.",
+    "You know the camera can see you just standing there, right?",
+    "I've written your obituary. Cause of death: terminal laziness.",
+    "At this point I'm the one getting a workout. From carrying this conversation.",
+    "The only thing you've burned today is my patience.",
+    "Should I call someone? Blink twice if you've forgotten how knees work."
+  ]
+};
+
+// ============ STATE ============
+let squatCount = 0;
+let currentStreak = 0;
+let bestStreak = 0;
+let totalRestTime = 0;
+let lastSquatTime = 0;
+let restStartTime = 0;
+let isSquatting = false;
+let wasSquatting = false;
+let lastRoastTier = '';
+let lastRoastTime = 0;
+let lastSpokenRoast = '';
+let poseDetected = false;
+let speechQueue = [];
+let isSpeaking = false;
+
+const STANDING_ANGLE = 155;
+const SQUATTING_ANGLE = 110;
+
+// ============ DOM ============
+const startScreen = document.getElementById('start-screen');
+const workoutScreen = document.getElementById('workout-screen');
+const startBtn = document.getElementById('start-btn');
+const videoEl = document.getElementById('webcam');
+const canvasEl = document.getElementById('pose-canvas');
+const ctx = canvasEl.getContext('2d');
+const squatCountEl = document.getElementById('squat-count');
+const roastTextEl = document.getElementById('roast-text');
+const restTimerEl = document.getElementById('rest-timer');
+const streakEl = document.getElementById('streak-val');
+const bestStreakEl = document.getElementById('best-streak-val');
+const totalRestEl = document.getElementById('total-rest-val');
+const colorOverlay = document.getElementById('color-overlay');
+const debugAngle = document.getElementById('debug-angle');
+
+// ============ HELPERS ============
+function getAngle(a, b, c) {
+  const radians = Math.atan2(c.y - b.y, c.x - b.x) - Math.atan2(a.y - b.y, a.x - b.x);
+  let angle = Math.abs(radians * 180 / Math.PI);
+  if (angle > 180) angle = 360 - angle;
+  return angle;
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  // Don't repeat the same roast
+  if (text === lastSpokenRoast) return;
+  lastSpokenRoast = text;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.05;
+  utterance.pitch = 0.9;
+  utterance.volume = 0.9;
+  window.speechSynthesis.speak(utterance);
+}
+
+function getRoastTier(restSeconds) {
+  if (restSeconds >= 60) return 'nuclear';
+  if (restSeconds >= 30) return 'savage';
+  if (restSeconds >= 20) return 'harsh';
+  if (restSeconds >= 10) return 'medium';
+  if (restSeconds >= 5) return 'mild';
+  return 'none';
+}
+
+function updateRoast(restSeconds) {
+  const now = Date.now();
+  const tier = getRoastTier(restSeconds);
+
+  if (tier === 'none') return;
+
+  // Roast every few seconds, more frequently as rest gets longer
+  const interval = tier === 'nuclear' ? 8000 : tier === 'savage' ? 7000 : tier === 'harsh' ? 6000 : tier === 'medium' ? 6000 : 5000;
+
+  if (now - lastRoastTime < interval && lastRoastTier === tier) return;
+
+  const roast = pickRandom(ROASTS[tier]);
+  roastTextEl.textContent = roast;
+  lastRoastTier = tier;
+  lastRoastTime = now;
+
+  // Color the roast text border by tier
+  const colors = { mild: '#ff6b35', medium: '#ff4444', harsh: '#ff2222', savage: '#ff0000', nuclear: '#ff0055' };
+  roastTextEl.style.borderColor = colors[tier] || 'rgba(255,255,255,0.1)';
+
+  speak(roast);
+}
+
+function updateOverlay(restSeconds) {
+  if (isSquatting) {
+    colorOverlay.style.background = 'rgba(57, 255, 20, 0.12)';
+    return;
+  }
+  // Fade from nothing to red as rest increases
+  const intensity = Math.min(restSeconds / 40, 1) * 0.25;
+  colorOverlay.style.background = `rgba(255, 49, 49, ${intensity})`;
+}
+
+function updateRestTimer(restSeconds) {
+  if (restSeconds < 1) {
+    restTimerEl.textContent = '';
+    restTimerEl.className = '';
+    return;
+  }
+  restTimerEl.textContent = `Rest: ${Math.floor(restSeconds)}s`;
+  if (restSeconds >= 20) restTimerEl.className = 'danger';
+  else if (restSeconds >= 10) restTimerEl.className = 'warning';
+  else restTimerEl.className = '';
+}
+
+function onSquatCompleted() {
+  squatCount++;
+  currentStreak++;
+  if (currentStreak > bestStreak) {
+    bestStreak = currentStreak;
+    bestStreakEl.textContent = bestStreak;
+  }
+
+  squatCountEl.textContent = squatCount;
+  streakEl.textContent = currentStreak;
+
+  // Flash animation
+  squatCountEl.classList.remove('squat-flash');
+  void squatCountEl.offsetWidth;
+  squatCountEl.classList.add('squat-flash');
+
+  // Positive roast
+  const praise = pickRandom(ROASTS.good);
+  roastTextEl.textContent = praise;
+  roastTextEl.style.borderColor = 'rgba(57, 255, 20, 0.5)';
+  lastRoastTime = Date.now();
+  lastRoastTier = '';
+
+  // Only speak praise every few squats to avoid constant chatter
+  if (squatCount % 3 === 0 || squatCount <= 2) {
+    speak(praise);
+  }
+
+  lastSquatTime = Date.now();
+  restStartTime = 0;
+  totalRestTime = 0; // reset rest accumulator for this break
+}
+
+function formatTime(seconds) {
+  if (seconds < 60) return Math.floor(seconds) + 's';
+  return Math.floor(seconds / 60) + 'm ' + (Math.floor(seconds) % 60) + 's';
+}
+
+// ============ POSE PROCESSING ============
+function drawLandmarks(landmarks) {
+  ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+
+  // Draw skeleton connections
+  const connections = [
+    [11, 13], [13, 15], // left arm
+    [12, 14], [14, 16], // right arm
+    [11, 12], // shoulders
+    [11, 23], [12, 24], // torso
+    [23, 24], // hips
+    [23, 25], [25, 27], // left leg
+    [24, 26], [26, 28], // right leg
+  ];
+
+  ctx.strokeStyle = isSquatting ? '#39ff14' : '#ffffff';
+  ctx.lineWidth = 3;
+  ctx.globalAlpha = 0.7;
+
+  for (const [i, j] of connections) {
+    const a = landmarks[i];
+    const b = landmarks[j];
+    if (a.visibility > 0.5 && b.visibility > 0.5) {
+      ctx.beginPath();
+      ctx.moveTo(a.x * canvasEl.width, a.y * canvasEl.height);
+      ctx.lineTo(b.x * canvasEl.width, b.y * canvasEl.height);
+      ctx.stroke();
+    }
+  }
+
+  // Draw key joints
+  const keyJoints = [11, 12, 23, 24, 25, 26, 27, 28];
+  ctx.globalAlpha = 1;
+  for (const i of keyJoints) {
+    const lm = landmarks[i];
+    if (lm.visibility > 0.5) {
+      ctx.beginPath();
+      ctx.arc(lm.x * canvasEl.width, lm.y * canvasEl.height, 6, 0, 2 * Math.PI);
+      ctx.fillStyle = isSquatting ? '#39ff14' : '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+
+function processResults(results) {
+  if (!results.poseLandmarks) {
+    poseDetected = false;
+    return;
+  }
+  poseDetected = true;
+  const lm = results.poseLandmarks;
+  drawLandmarks(lm);
+
+  // Calculate knee angles (both sides)
+  const leftHip = lm[23], leftKnee = lm[25], leftAnkle = lm[27];
+  const rightHip = lm[24], rightKnee = lm[26], rightAnkle = lm[28];
+
+  const leftAngle = getAngle(leftHip, leftKnee, leftAnkle);
+  const rightAngle = getAngle(rightHip, rightKnee, rightAnkle);
+
+  // Use the average of both knees, or whichever is more visible
+  const leftVis = Math.min(leftHip.visibility, leftKnee.visibility, leftAnkle.visibility);
+  const rightVis = Math.min(rightHip.visibility, rightKnee.visibility, rightAnkle.visibility);
+
+  let angle;
+  if (leftVis > 0.5 && rightVis > 0.5) {
+    angle = (leftAngle + rightAngle) / 2;
+  } else if (leftVis > rightVis) {
+    angle = leftAngle;
+  } else {
+    angle = rightAngle;
+  }
+
+  // Debug
+  // debugAngle.style.display = 'block';
+  // debugAngle.textContent = `Angle: ${angle.toFixed(1)}° | L: ${leftAngle.toFixed(1)}° R: ${rightAngle.toFixed(1)}°`;
+
+  // Squat detection with hysteresis
+  const wasSquattingBefore = isSquatting;
+
+  if (!isSquatting && angle < SQUATTING_ANGLE) {
+    isSquatting = true;
+  } else if (isSquatting && angle > STANDING_ANGLE) {
+    isSquatting = false;
+    // A full squat: went down and came back up
+    onSquatCompleted();
+  }
+
+  // Rest tracking
+  const now = Date.now();
+  if (!isSquatting && squatCount > 0) {
+    if (restStartTime === 0) {
+      restStartTime = now;
+    }
+    const restSeconds = (now - restStartTime) / 1000;
+
+    // Break streak if resting too long
+    if (restSeconds > 30 && currentStreak > 0) {
+      currentStreak = 0;
+      streakEl.textContent = 0;
+    }
+
+    updateRestTimer(restSeconds);
+    updateRoast(restSeconds);
+    updateOverlay(restSeconds);
+
+    // Accumulate total rest
+    totalRestEl.textContent = formatTime((now - lastSquatTime) / 1000);
+  } else {
+    restStartTime = 0;
+    updateRestTimer(0);
+    updateOverlay(0);
+  }
+}
+
+// ============ INIT ============
+startBtn.addEventListener('click', async () => {
+  startScreen.style.display = 'none';
+  workoutScreen.style.display = 'block';
+
+  // Size canvas to match video container
+  const resizeCanvas = () => {
+    canvasEl.width = window.innerWidth;
+    canvasEl.height = window.innerHeight;
+  };
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  // Init MediaPipe Pose
+  const pose = new Pose({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+  });
+
+  pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+  });
+
+  pose.onResults(processResults);
+
+  // Start camera
+  const camera = new Camera(videoEl, {
+    onFrame: async () => {
+      await pose.send({ image: videoEl });
+    },
+    width: 1280,
+    height: 720,
+    facingMode: 'user'
+  });
+
+  camera.start();
+});
+</script>
+
+</body>
+</html>

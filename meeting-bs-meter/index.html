@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Meeting BS Meter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #c0c0c0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #bingo-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(200, 0, 0, 0.85);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    animation: bingoFlash 0.3s infinite alternate;
+  }
+  #bingo-overlay.active { display: flex; }
+  #bingo-overlay h1 {
+    font-size: min(18vw, 120px);
+    color: #fff;
+    text-shadow: 0 0 40px #ff0, 0 0 80px #f00;
+    animation: bingoShake 0.1s infinite alternate;
+  }
+  #bingo-overlay p { font-size: min(5vw, 28px); color: #ffd; margin-top: 20px; }
+  #bingo-overlay button {
+    margin-top: 30px; padding: 15px 40px;
+    font-size: 20px; background: #fff; color: #900;
+    border: none; border-radius: 8px; cursor: pointer;
+    font-family: inherit; font-weight: bold;
+  }
+
+  @keyframes bingoFlash {
+    from { background: rgba(200, 0, 0, 0.85); }
+    to { background: rgba(255, 50, 0, 0.95); }
+  }
+  @keyframes bingoShake {
+    from { transform: rotate(-2deg) scale(1); }
+    to { transform: rotate(2deg) scale(1.05); }
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 0 10px;
+    border-bottom: 1px solid #333;
+    margin-bottom: 20px;
+  }
+  header h1 {
+    font-size: min(8vw, 36px);
+    color: #ff4444;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  header p {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Start button */
+  #start-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    font-size: min(5vw, 22px);
+    font-family: inherit;
+    font-weight: bold;
+    background: #1a1a1a;
+    color: #0f0;
+    border: 2px solid #0f0;
+    border-radius: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+  }
+  #start-btn:hover { background: #0f0; color: #000; }
+  #start-btn.listening {
+    background: #300;
+    color: #f44;
+    border-color: #f44;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(255, 68, 68, 0); }
+  }
+
+  /* BS Counter */
+  .counter-section {
+    text-align: center;
+    margin: 24px 0 16px;
+  }
+  .counter-section .count {
+    font-size: min(20vw, 100px);
+    color: #ff4444;
+    font-weight: bold;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(255, 68, 68, 0.5);
+  }
+  .counter-section .label {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+
+  /* BS Meter gauge */
+  .meter-section { margin: 16px 0; }
+  .meter-section .meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .meter-bar {
+    width: 100%;
+    height: 28px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #0a0, #ff0, #f40, #f00);
+    border-radius: 14px;
+    transition: width 0.4s ease;
+  }
+  .meter-pct {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 4px #000;
+  }
+
+  /* Flash word */
+  #flash-word {
+    text-align: center;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+  }
+  #flash-word span {
+    font-size: min(8vw, 40px);
+    font-weight: bold;
+    color: #f00;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px #f00, 0 0 40px #900;
+    animation: flashIn 0.6s ease-out;
+  }
+  @keyframes flashIn {
+    0% { transform: scale(2); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Worst offender */
+  .worst-offender {
+    text-align: center;
+    padding: 12px;
+    background: #1a0a0a;
+    border: 1px solid #442222;
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  .worst-offender .wo-label {
+    font-size: 11px;
+    color: #966;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .worst-offender .wo-value {
+    font-size: min(5vw, 22px);
+    color: #f88;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+
+  /* Live transcript */
+  .transcript-section {
+    margin: 16px 0 8px;
+  }
+  .transcript-section h3 {
+    font-size: 12px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  #transcript {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    color: #888;
+    max-height: 60px;
+    overflow-y: auto;
+    word-wrap: break-word;
+  }
+
+  /* BS Feed */
+  .feed-section {
+    margin: 16px 0;
+  }
+  .feed-section h3 {
+    font-size: 12px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  #bs-feed {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .feed-item {
+    padding: 6px 8px;
+    border-bottom: 1px solid #1a1a1a;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideIn 0.3s ease;
+  }
+  .feed-item:last-child { border-bottom: none; }
+  .feed-item .fi-word {
+    color: #f66;
+    font-weight: bold;
+    font-size: 14px;
+    text-transform: uppercase;
+  }
+  .feed-item .fi-time {
+    color: #555;
+    font-size: 11px;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  #bs-feed .empty-msg {
+    color: #444;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    font-size: 13px;
+  }
+
+  /* Reset button */
+  #reset-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    background: transparent;
+    color: #555;
+    border: 1px solid #333;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 16px;
+    transition: all 0.2s;
+  }
+  #reset-btn:hover { color: #f44; border-color: #f44; }
+
+  .not-supported {
+    text-align: center;
+    padding: 40px 20px;
+    color: #f44;
+    font-size: 16px;
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    z-index: 1001;
+    pointer-events: none;
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px 0;
+    color: #333;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Meeting BS Meter</h1>
+    <p>"Per my last email, let's circle back on this"</p>
+  </header>
+
+  <div id="app">
+    <button id="start-btn">Start Listening</button>
+
+    <div class="counter-section">
+      <div class="label">BS Detected</div>
+      <div class="count" id="bs-count">0</div>
+    </div>
+
+    <div class="meter-section">
+      <div class="meter-label">
+        <span>Tolerable</span>
+        <span>BINGO</span>
+      </div>
+      <div class="meter-bar">
+        <div class="meter-fill" id="meter-fill"></div>
+        <div class="meter-pct" id="meter-pct">0%</div>
+      </div>
+    </div>
+
+    <div id="flash-word"></div>
+
+    <div class="worst-offender">
+      <div class="wo-label">Worst Offender</div>
+      <div class="wo-value" id="worst-offender">---</div>
+    </div>
+
+    <div class="transcript-section">
+      <h3>Live Transcript</h3>
+      <div id="transcript">Waiting for mic...</div>
+    </div>
+
+    <div class="feed-section">
+      <h3>BS Feed</h3>
+      <div id="bs-feed">
+        <div class="empty-msg">No BS detected yet. Give it a minute.</div>
+      </div>
+    </div>
+
+    <button id="reset-btn">Reset Meeting</button>
+  </div>
+
+  <footer>Hold phone under table for best results. Chrome/Edge required.</footer>
+</div>
+
+<div id="bingo-overlay">
+  <h1>BINGO!</h1>
+  <p id="bingo-msg">Corporate BS overload detected</p>
+  <button id="bingo-dismiss">I'll Do Better</button>
+</div>
+
+<script>
+(function() {
+  // --- Check support ---
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    document.getElementById('app').innerHTML =
+      '<div class="not-supported">Speech Recognition not supported.<br>Use Chrome or Edge on desktop/Android.</div>';
+    return;
+  }
+
+  // --- Buzzwords ---
+  const BUZZWORDS = [
+    "synergy", "circle back", "move the needle", "low-hanging fruit", "bandwidth",
+    "deep dive", "pivot", "leverage", "align", "touch base", "take offline",
+    "unpack", "double-click on that", "action items", "stakeholders", "deliverables",
+    "scalable", "paradigm shift", "value-add", "ecosystem", "holistic", "proactive",
+    "best practice", "game changer", "thought leader", "drill down", "onboard",
+    "pain point", "reach out", "at the end of the day", "going forward", "net-net",
+    "boil the ocean", "move the goalposts", "table this", "loop in", "ping",
+    "take this offline", "open the kimono", "run it up the flagpole",
+    "core competency", "value proposition", "circle the wagons", "bleeding edge",
+    "move fast and break things", "lean in", "disrupt", "incentivize",
+    "take it to the next level", "blue sky thinking", "put a pin in it"
+  ];
+
+  // --- State ---
+  let listening = false;
+  let bsCount = 0;
+  let bsCounts = {};        // word -> count
+  let recognition = null;
+  let audioCtx = null;
+  const BINGO_THRESHOLD = 10;
+  let bingoTriggeredAt = 0; // last bingo threshold
+
+  // --- DOM refs ---
+  const startBtn = document.getElementById('start-btn');
+  const bsCountEl = document.getElementById('bs-count');
+  const meterFill = document.getElementById('meter-fill');
+  const meterPct = document.getElementById('meter-pct');
+  const flashWord = document.getElementById('flash-word');
+  const woEl = document.getElementById('worst-offender');
+  const feedEl = document.getElementById('bs-feed');
+  const transcriptEl = document.getElementById('transcript');
+  const bingoOverlay = document.getElementById('bingo-overlay');
+  const bingoMsg = document.getElementById('bingo-msg');
+  const bingoDismiss = document.getElementById('bingo-dismiss');
+  const resetBtn = document.getElementById('reset-btn');
+
+  // --- Audio ---
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playDing() {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.4, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  }
+
+  function playAirHorn() {
+    const ctx = getAudioCtx();
+    const duration = 1.2;
+    // Layer multiple oscillators for that air horn sound
+    [280, 350, 470, 560].forEach(function(freq, i) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      osc.frequency.setValueAtTime(freq * 1.02, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration);
+    });
+  }
+
+  // --- Confetti ---
+  function launchConfetti() {
+    const colors = ['#f44', '#ff0', '#0f0', '#0af', '#f0f', '#fa0'];
+    for (let i = 0; i < 80; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      el.style.left = Math.random() * 100 + 'vw';
+      el.style.top = '-10px';
+      el.style.background = colors[Math.floor(Math.random() * colors.length)];
+      el.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+      el.style.width = (6 + Math.random() * 8) + 'px';
+      el.style.height = (6 + Math.random() * 8) + 'px';
+      document.body.appendChild(el);
+
+      const xDrift = (Math.random() - 0.5) * 200;
+      const duration = 1500 + Math.random() * 2000;
+      const delay = Math.random() * 500;
+      el.animate([
+        { transform: 'translateY(0) translateX(0) rotate(0deg)', opacity: 1 },
+        { transform: 'translateY(100vh) translateX(' + xDrift + 'px) rotate(' + (360 + Math.random()*720) + 'deg)', opacity: 0 }
+      ], { duration: duration, delay: delay, easing: 'ease-in' });
+
+      setTimeout(function() { el.remove(); }, duration + delay + 100);
+    }
+  }
+
+  // --- Core logic ---
+  function detectBuzzwords(text) {
+    const lower = text.toLowerCase();
+    const found = [];
+    BUZZWORDS.forEach(function(bw) {
+      // Check if the buzzword appears in the text
+      // Use word boundary-ish check for single words, substring for phrases
+      if (bw.indexOf(' ') === -1) {
+        // Single word: check with rough boundary
+        const re = new RegExp('\\b' + bw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i');
+        if (re.test(lower)) found.push(bw);
+      } else {
+        if (lower.indexOf(bw) !== -1) found.push(bw);
+      }
+    });
+    return found;
+  }
+
+  function onBuzzword(word) {
+    bsCount++;
+    bsCounts[word] = (bsCounts[word] || 0) + 1;
+
+    // Update counter
+    bsCountEl.textContent = bsCount;
+
+    // Update meter (10 buzzwords = 100%)
+    const pct = Math.min(100, Math.round((bsCount % BINGO_THRESHOLD) / BINGO_THRESHOLD * 100));
+    const displayPct = bsCount >= BINGO_THRESHOLD && pct === 0 ? 100 : pct;
+    meterFill.style.width = displayPct + '%';
+    meterPct.textContent = displayPct + '%';
+
+    // Flash word
+    flashWord.innerHTML = '<span>' + word + '</span>';
+    clearTimeout(flashWord._timer);
+    flashWord._timer = setTimeout(function() { flashWord.innerHTML = ''; }, 2500);
+
+    // Ding
+    playDing();
+
+    // Add to feed
+    const emptyMsg = feedEl.querySelector('.empty-msg');
+    if (emptyMsg) emptyMsg.remove();
+
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    const now = new Date();
+    const ts = now.getHours().toString().padStart(2,'0') + ':' +
+               now.getMinutes().toString().padStart(2,'0') + ':' +
+               now.getSeconds().toString().padStart(2,'0');
+    item.innerHTML = '<span class="fi-word">' + word + '</span><span class="fi-time">' + ts + '</span>';
+    feedEl.insertBefore(item, feedEl.firstChild);
+
+    // Update worst offender
+    let worst = null, worstCount = 0;
+    for (var w in bsCounts) {
+      if (bsCounts[w] > worstCount) { worst = w; worstCount = bsCounts[w]; }
+    }
+    if (worst) woEl.textContent = '"' + worst + '" (' + worstCount + 'x)';
+
+    // Bingo check: every BINGO_THRESHOLD buzzwords
+    if (bsCount > 0 && bsCount % BINGO_THRESHOLD === 0 && bsCount > bingoTriggeredAt) {
+      bingoTriggeredAt = bsCount;
+      triggerBingo();
+    }
+  }
+
+  function triggerBingo() {
+    const msgs = [
+      "Corporate BS overload detected",
+      "This meeting could have been an email",
+      "Synergy levels critical",
+      "Thought leadership has peaked",
+      "Paradigm fully shifted",
+      "All needles moved. None in the right direction.",
+      "Low-hanging fruit has been picked clean"
+    ];
+    bingoMsg.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    bingoOverlay.classList.add('active');
+    playAirHorn();
+    launchConfetti();
+  }
+
+  bingoDismiss.addEventListener('click', function() {
+    bingoOverlay.classList.remove('active');
+    // Reset meter visual for next round
+    meterFill.style.width = '0%';
+    meterPct.textContent = '0%';
+  });
+
+  // --- Speech Recognition ---
+  function setupRecognition() {
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let lastProcessed = '';
+
+    recognition.onresult = function(event) {
+      let interim = '';
+      let finalText = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalText += t;
+        } else {
+          interim += t;
+        }
+      }
+
+      // Show transcript
+      transcriptEl.textContent = (finalText || interim) || '...';
+
+      // Only scan final results to avoid double counting
+      if (finalText && finalText !== lastProcessed) {
+        lastProcessed = finalText;
+        const found = detectBuzzwords(finalText);
+        found.forEach(onBuzzword);
+      }
+    };
+
+    recognition.onerror = function(event) {
+      if (event.error === 'not-allowed') {
+        startBtn.textContent = 'Mic Blocked';
+        startBtn.classList.remove('listening');
+        listening = false;
+      }
+      // 'no-speech' and 'aborted' are common and harmless — just restart
+    };
+
+    recognition.onend = function() {
+      // Auto-restart if we're supposed to be listening
+      if (listening) {
+        try { recognition.start(); } catch(e) {}
+      }
+    };
+  }
+
+  // --- Button handlers ---
+  startBtn.addEventListener('click', function() {
+    // Resume audio context on user gesture (required by browsers)
+    getAudioCtx().resume();
+
+    if (!listening) {
+      if (!recognition) setupRecognition();
+      recognition.start();
+      listening = true;
+      startBtn.textContent = 'Listening...';
+      startBtn.classList.add('listening');
+      transcriptEl.textContent = 'Listening...';
+    } else {
+      listening = false;
+      recognition.stop();
+      startBtn.textContent = 'Start Listening';
+      startBtn.classList.remove('listening');
+      transcriptEl.textContent = 'Paused.';
+    }
+  });
+
+  resetBtn.addEventListener('click', function() {
+    bsCount = 0;
+    bsCounts = {};
+    bingoTriggeredAt = 0;
+    bsCountEl.textContent = '0';
+    meterFill.style.width = '0%';
+    meterPct.textContent = '0%';
+    flashWord.innerHTML = '';
+    woEl.textContent = '---';
+    feedEl.innerHTML = '<div class="empty-msg">No BS detected yet. Give it a minute.</div>';
+    transcriptEl.textContent = listening ? 'Listening...' : 'Waiting for mic...';
+    bingoOverlay.classList.remove('active');
+  });
+
+})();
+</script>
+</body>
+</html>
