@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEAD DROP MESSENGER</title>
+<meta name="description" content="Encrypted self-destructing messages. No server. No trace.">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiRGVhZCBEcm9wIE1lc3NlbmdlciIsInNob3J0X25hbWUiOiJEZWFkIERyb3AiLCJzdGFydF91cmwiOiIuIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBhMGEwYSIsInRoZW1lX2NvbG9yIjoiIzBhMGEwYSIsImljb25zIjpbXX0=">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #00ff41;
+  --green-dim: #00aa2a;
+  --green-dark: #003d10;
+  --red: #ff0033;
+  --red-dim: #aa0022;
+  --bg: #0a0a0a;
+  --bg-light: #111;
+  --bg-panel: #0d0d0d;
+  --border: #1a3a1a;
+  --text: #00ff41;
+  --text-dim: #00aa2a;
+  --mono: 'Courier New', 'Lucida Console', Monaco, monospace;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  overflow-x: hidden;
+}
+
+/* Matrix rain background */
+.matrix-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.06;
+  pointer-events: none;
+}
+
+.matrix-col {
+  position: absolute;
+  top: -100%;
+  font-size: 14px;
+  line-height: 1.2;
+  color: var(--green);
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  animation: matrix-fall linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes matrix-fall {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(calc(100vh + 100%)); }
+}
+
+/* Scanline overlay */
+.scanlines {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 65, 0.015) 2px,
+    rgba(0, 255, 65, 0.015) 4px
+  );
+}
+
+/* Main container */
+.container {
+  position: relative;
+  z-index: 2;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.header h1 {
+  font-size: 2rem;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px var(--green), 0 0 40px var(--green-dark);
+  margin-bottom: 5px;
+}
+
+.header .subtitle {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  letter-spacing: 4px;
+}
+
+.header .status-line {
+  font-size: 0.65rem;
+  color: var(--green-dark);
+  margin-top: 8px;
+  letter-spacing: 2px;
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Panels */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  padding: 25px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--green-dark), transparent);
+}
+
+.panel-title {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title .dot {
+  width: 6px; height: 6px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  min-height: 150px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  padding: 15px;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.3s;
+  line-height: 1.6;
+}
+
+textarea:focus {
+  border-color: var(--green-dim);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+textarea::placeholder {
+  color: var(--green-dark);
+}
+
+/* Input fields */
+input[type="text"], input[type="password"] {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 10px 15px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+input:focus {
+  border-color: var(--green-dim);
+  box-shadow: 0 0 10px rgba(0, 255, 65, 0.1);
+}
+
+input::placeholder {
+  color: var(--green-dark);
+}
+
+/* Buttons */
+.btn {
+  background: transparent;
+  border: 1px solid var(--green-dim);
+  color: var(--green);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  padding: 12px 25px;
+  cursor: pointer;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover {
+  background: rgba(0, 255, 65, 0.1);
+  box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+  text-shadow: 0 0 8px var(--green);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: rgba(0, 255, 65, 0.08);
+  border-width: 2px;
+}
+
+.btn-danger {
+  border-color: var(--red-dim);
+  color: var(--red);
+}
+
+.btn-danger:hover {
+  background: rgba(255, 0, 51, 0.1);
+  box-shadow: 0 0 15px rgba(255, 0, 51, 0.2);
+}
+
+/* Meta info row */
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.security-level {
+  padding: 2px 8px;
+  border: 1px solid;
+  font-size: 0.65rem;
+}
+
+.security-level.low { border-color: var(--red-dim); color: var(--red); }
+.security-level.medium { border-color: #aa8800; color: #ffcc00; }
+.security-level.high { border-color: var(--green-dim); color: var(--green); }
+
+/* Passphrase section */
+.passphrase-section {
+  margin-top: 15px;
+}
+
+.passphrase-toggle {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 1px;
+  user-select: none;
+}
+
+.passphrase-toggle:hover {
+  color: var(--text);
+}
+
+.passphrase-input {
+  margin-top: 10px;
+  display: none;
+}
+
+.passphrase-input.visible {
+  display: block;
+}
+
+/* Link output */
+.link-output {
+  display: none;
+  margin-top: 20px;
+}
+
+.link-output.visible {
+  display: block;
+}
+
+.link-box {
+  background: var(--bg);
+  border: 1px solid var(--green-dark);
+  padding: 12px;
+  word-break: break-all;
+  font-size: 0.75rem;
+  color: var(--green-dim);
+  max-height: 100px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.copy-confirm {
+  font-size: 0.7rem;
+  color: var(--green);
+  margin-left: 10px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.copy-confirm.show {
+  opacity: 1;
+}
+
+/* READ MODE */
+.read-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Classified stamp */
+.classified-stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-15deg);
+  font-size: 4rem;
+  font-weight: bold;
+  color: rgba(255, 0, 51, 0.06);
+  letter-spacing: 10px;
+  pointer-events: none;
+  white-space: nowrap;
+  text-transform: uppercase;
+  z-index: 0;
+}
+
+/* Countdown */
+.countdown-container {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.countdown-label {
+  font-size: 0.65rem;
+  letter-spacing: 3px;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.countdown-timer {
+  font-size: 4rem;
+  font-weight: bold;
+  text-shadow: 0 0 30px var(--green);
+  transition: color 0.5s, text-shadow 0.5s;
+}
+
+.countdown-timer.warning {
+  color: #ffcc00;
+  text-shadow: 0 0 30px #aa8800;
+}
+
+.countdown-timer.critical {
+  color: var(--red);
+  text-shadow: 0 0 30px var(--red);
+  animation: pulse-critical 0.5s ease-in-out infinite;
+}
+
+@keyframes pulse-critical {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.countdown-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--bg);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.countdown-bar-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 1s linear, background 0.5s;
+  width: 100%;
+}
+
+/* Message display */
+.message-display {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 20px;
+  min-height: 120px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  position: relative;
+  flex: 1;
+}
+
+.message-display .cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.1em;
+  background: var(--green);
+  vertical-align: text-bottom;
+  animation: blink 0.7s step-end infinite;
+}
+
+/* Pulsing red border when time is low */
+.panel.pulse-red {
+  animation: pulse-border 1s ease-in-out infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: var(--border); box-shadow: none; }
+  50% { border-color: var(--red); box-shadow: 0 0 20px rgba(255, 0, 51, 0.3); }
+}
+
+/* Destroyed state */
+.destroyed-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--bg);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.destroyed-overlay.active {
+  display: flex;
+}
+
+.destroyed-text {
+  font-size: 2rem;
+  letter-spacing: 8px;
+  color: var(--red);
+  text-shadow: 0 0 30px var(--red);
+  text-align: center;
+}
+
+.destroyed-sub {
+  font-size: 0.7rem;
+  letter-spacing: 3px;
+  color: var(--red-dim);
+  margin-top: 15px;
+}
+
+/* Glitch animation */
+@keyframes glitch {
+  0% { transform: translate(0); filter: none; }
+  10% { transform: translate(-5px, 3px); filter: hue-rotate(90deg); }
+  20% { transform: translate(3px, -5px); filter: hue-rotate(180deg) brightness(1.5); }
+  30% { transform: translate(-3px, 2px); clip-path: inset(20% 0 40% 0); }
+  40% { transform: translate(5px, -3px); clip-path: inset(60% 0 10% 0); }
+  50% { transform: translate(-2px, 5px); filter: saturate(3) hue-rotate(270deg); }
+  60% { transform: translate(4px, -2px); clip-path: inset(10% 0 70% 0); }
+  70% { transform: translate(-4px, 3px); filter: invert(1); }
+  80% { transform: translate(2px, -4px); clip-path: inset(50% 0 20% 0); }
+  90% { transform: translate(-3px, 1px); filter: brightness(2) hue-rotate(90deg); }
+  100% { transform: translate(0); filter: none; }
+}
+
+.glitching {
+  animation: glitch 0.15s ease-in-out infinite;
+}
+
+/* Passphrase prompt for read mode */
+.passphrase-prompt {
+  display: none;
+  text-align: center;
+}
+
+.passphrase-prompt.active {
+  display: block;
+}
+
+.passphrase-prompt input {
+  max-width: 300px;
+  margin: 15px auto;
+  display: block;
+  text-align: center;
+}
+
+.passphrase-prompt .btn {
+  margin-top: 10px;
+}
+
+.error-msg {
+  color: var(--red);
+  font-size: 0.75rem;
+  margin-top: 8px;
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .header h1 { font-size: 1.3rem; letter-spacing: 4px; }
+  .countdown-timer { font-size: 3rem; }
+  .classified-stamp { font-size: 2.5rem; }
+  .container { padding: 15px 10px; }
+}
+
+/* Hide sections */
+.hidden { display: none !important; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 0.6rem;
+  color: var(--green-dark);
+  letter-spacing: 2px;
+  margin-top: auto;
+  padding-top: 30px;
+}
+</style>
+</head>
+<body>
+
+<!-- Matrix rain background -->
+<div class="matrix-bg" id="matrixBg"></div>
+
+<!-- Scanlines -->
+<div class="scanlines"></div>
+
+<!-- Destroyed overlay -->
+<div class="destroyed-overlay" id="destroyedOverlay">
+  <div class="destroyed-text">MESSAGE DESTROYED</div>
+  <div class="destroyed-sub">NO TRACE REMAINS</div>
+</div>
+
+<!-- Main content -->
+<div class="container" id="mainContainer">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>DEAD DROP</h1>
+    <div class="subtitle">ENCRYPTED SELF-DESTRUCTING MESSAGES</div>
+    <div class="status-line">PROTOCOL ACTIVE <span class="blink">_</span></div>
+  </div>
+
+  <!-- WRITE MODE -->
+  <div id="writeMode">
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span> COMPOSE MESSAGE</div>
+      <textarea id="messageInput" placeholder="Type your classified message here..." maxlength="4000"></textarea>
+      <div class="meta-row">
+        <span id="charCount">0 / 4000 chars</span>
+        <span id="securityLevel" class="security-level low">CLEARANCE: LOW</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title"><span class="dot"></span> SECURITY OPTIONS</div>
+      <div class="passphrase-section">
+        <label class="passphrase-toggle" id="passphraseToggle">[ + ] ADD PASSPHRASE LOCK</label>
+        <div class="passphrase-input" id="passphraseSection">
+          <input type="password" id="passphraseInput" placeholder="Enter passphrase (recipient must know this)">
+          <div style="font-size: 0.65rem; color: var(--green-dark); margin-top: 6px; letter-spacing: 1px;">
+            Recipient will be prompted for this passphrase before decryption.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align: center;">
+      <button class="btn btn-primary" id="createBtn">CREATE DEAD DROP</button>
+    </div>
+
+    <div class="link-output" id="linkOutput">
+      <div class="panel">
+        <div class="panel-title"><span class="dot"></span> DEAD DROP LINK GENERATED</div>
+        <div class="link-box" id="linkBox"></div>
+        <div class="btn-row">
+          <button class="btn" id="copyBtn">COPY LINK</button>
+          <button class="btn" id="newBtn">NEW MESSAGE</button>
+          <span class="copy-confirm" id="copyConfirm">COPIED TO CLIPBOARD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- READ MODE -->
+  <div id="readMode" class="hidden read-panel">
+
+    <!-- Passphrase prompt -->
+    <div class="passphrase-prompt" id="passphrasePrompt">
+      <div class="panel" style="text-align: center;">
+        <div class="panel-title" style="justify-content: center;"><span class="dot"></span> AUTHENTICATION REQUIRED</div>
+        <div style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px;">
+          THIS MESSAGE IS PASSPHRASE-PROTECTED
+        </div>
+        <input type="password" id="readPassphrase" placeholder="Enter passphrase">
+        <div class="error-msg" id="passphraseError">DECRYPTION FAILED. INCORRECT PASSPHRASE.</div>
+        <button class="btn btn-primary" id="decryptBtn" style="margin-top: 15px;">DECRYPT</button>
+      </div>
+    </div>
+
+    <!-- Message view -->
+    <div id="messageView" class="hidden">
+      <div class="countdown-container">
+        <div class="countdown-label">SELF-DESTRUCT IN</div>
+        <div class="countdown-timer" id="countdownTimer">30</div>
+        <div class="countdown-bar"><div class="countdown-bar-fill" id="countdownBar"></div></div>
+      </div>
+
+      <div class="panel" id="messagePanel" style="position: relative; flex: 1;">
+        <div class="classified-stamp">CLASSIFIED</div>
+        <div class="panel-title"><span class="dot"></span> INTERCEPTED TRANSMISSION</div>
+        <div class="message-display" id="messageDisplay"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    DEAD DROP v1.0 // NO SERVER // NO LOGS // NO TRACE
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ---- Matrix rain ----
+  const matrixBg = document.getElementById('matrixBg');
+  const matrixChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*(){}[]|;:<>?/~';
+  const colCount = Math.floor(window.innerWidth / 20);
+  for (let i = 0; i < colCount; i++) {
+    const col = document.createElement('div');
+    col.className = 'matrix-col';
+    col.style.left = (i * 20) + 'px';
+    col.style.animationDuration = (5 + Math.random() * 15) + 's';
+    col.style.animationDelay = (-Math.random() * 20) + 's';
+    let text = '';
+    const len = 10 + Math.floor(Math.random() * 30);
+    for (let j = 0; j < len; j++) {
+      text += matrixChars[Math.floor(Math.random() * matrixChars.length)];
+    }
+    col.textContent = text;
+    matrixBg.appendChild(col);
+  }
+
+  // ---- XOR cipher ----
+  function xorCipher(text, key) {
+    if (!key) return text;
+    let result = '';
+    for (let i = 0; i < text.length; i++) {
+      result += String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return result;
+  }
+
+  // ---- Encode / decode ----
+  function encodeMessage(message, passphrase) {
+    const hasPass = passphrase && passphrase.length > 0;
+    const cipher = hasPass ? xorCipher(message, passphrase) : message;
+    // Prefix: 1 = has passphrase, 0 = no passphrase
+    const prefix = hasPass ? '1' : '0';
+    const payload = prefix + cipher;
+    // Use btoa with UTF-8 encoding
+    const encoded = btoa(unescape(encodeURIComponent(payload)));
+    return encoded;
+  }
+
+  function decodeMessage(hash, passphrase) {
+    try {
+      const decoded = decodeURIComponent(escape(atob(hash)));
+      const hasPass = decoded[0] === '1';
+      const payload = decoded.slice(1);
+      if (hasPass) {
+        if (!passphrase) return { needsPassphrase: true };
+        return { message: xorCipher(payload, passphrase) };
+      }
+      return { message: payload };
+    } catch (e) {
+      return { error: 'CORRUPTED TRANSMISSION' };
+    }
+  }
+
+  // ---- Web Audio: static/interference noise ----
+  function playDestructSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const duration = 1.5;
+      const sampleRate = ctx.sampleRate;
+      const buffer = ctx.createBuffer(1, sampleRate * duration, sampleRate);
+      const data = buffer.getChannelData(0);
+      // White noise with fade envelope
+      for (let i = 0; i < data.length; i++) {
+        const t = i / data.length;
+        const envelope = t < 0.1 ? t / 0.1 : (1 - t) * 1.1;
+        data[i] = (Math.random() * 2 - 1) * envelope * 0.4;
+        // Add some tonal interference
+        data[i] += Math.sin(i * 0.05) * 0.1 * envelope;
+        data[i] += Math.sin(i * 0.002) * 0.15 * envelope;
+      }
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      // Lowpass for more rumble feel
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 3000;
+      source.connect(filter);
+      filter.connect(ctx.destination);
+      source.start();
+      setTimeout(() => ctx.close(), 2000);
+    } catch (e) {
+      // Audio not available, fail silently
+    }
+  }
+
+  // ---- DOM refs ----
+  const writeMode = document.getElementById('writeMode');
+  const readMode = document.getElementById('readMode');
+  const messageInput = document.getElementById('messageInput');
+  const charCount = document.getElementById('charCount');
+  const securityLevel = document.getElementById('securityLevel');
+  const passphraseToggle = document.getElementById('passphraseToggle');
+  const passphraseSection = document.getElementById('passphraseSection');
+  const passphraseInput = document.getElementById('passphraseInput');
+  const createBtn = document.getElementById('createBtn');
+  const linkOutput = document.getElementById('linkOutput');
+  const linkBox = document.getElementById('linkBox');
+  const copyBtn = document.getElementById('copyBtn');
+  const copyConfirm = document.getElementById('copyConfirm');
+  const newBtn = document.getElementById('newBtn');
+  const passphrasePrompt = document.getElementById('passphrasePrompt');
+  const readPassphrase = document.getElementById('readPassphrase');
+  const passphraseError = document.getElementById('passphraseError');
+  const decryptBtn = document.getElementById('decryptBtn');
+  const messageView = document.getElementById('messageView');
+  const messageDisplay = document.getElementById('messageDisplay');
+  const messagePanel = document.getElementById('messagePanel');
+  const countdownTimer = document.getElementById('countdownTimer');
+  const countdownBar = document.getElementById('countdownBar');
+  const destroyedOverlay = document.getElementById('destroyedOverlay');
+  const mainContainer = document.getElementById('mainContainer');
+
+  // ---- WRITE MODE logic ----
+  let passphraseVisible = false;
+
+  messageInput.addEventListener('input', function() {
+    const len = this.value.length;
+    charCount.textContent = len + ' / 4000 chars';
+    // Security level
+    securityLevel.className = 'security-level';
+    if (len === 0) {
+      securityLevel.textContent = 'CLEARANCE: NONE';
+      securityLevel.classList.add('low');
+    } else if (len < 50) {
+      securityLevel.textContent = 'CLEARANCE: LOW';
+      securityLevel.classList.add('low');
+    } else if (len < 200) {
+      securityLevel.textContent = 'CLEARANCE: MEDIUM';
+      securityLevel.classList.add('medium');
+    } else {
+      securityLevel.textContent = 'CLEARANCE: HIGH';
+      securityLevel.classList.add('high');
+    }
+  });
+
+  passphraseToggle.addEventListener('click', function() {
+    passphraseVisible = !passphraseVisible;
+    passphraseSection.classList.toggle('visible', passphraseVisible);
+    this.textContent = passphraseVisible ? '[ - ] REMOVE PASSPHRASE LOCK' : '[ + ] ADD PASSPHRASE LOCK';
+  });
+
+  createBtn.addEventListener('click', function() {
+    const msg = messageInput.value.trim();
+    if (!msg) {
+      messageInput.style.borderColor = 'var(--red)';
+      setTimeout(() => messageInput.style.borderColor = '', 1000);
+      return;
+    }
+    const pass = passphraseVisible ? passphraseInput.value : '';
+    const encoded = encodeMessage(msg, pass);
+    const url = window.location.origin + window.location.pathname + '#' + encoded;
+    linkBox.textContent = url;
+    linkOutput.classList.add('visible');
+    createBtn.style.display = 'none';
+  });
+
+  copyBtn.addEventListener('click', function() {
+    const url = linkBox.textContent;
+    navigator.clipboard.writeText(url).then(() => {
+      copyConfirm.classList.add('show');
+      setTimeout(() => copyConfirm.classList.remove('show'), 2000);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyConfirm.classList.add('show');
+      setTimeout(() => copyConfirm.classList.remove('show'), 2000);
+    });
+  });
+
+  newBtn.addEventListener('click', function() {
+    messageInput.value = '';
+    passphraseInput.value = '';
+    linkOutput.classList.remove('visible');
+    createBtn.style.display = '';
+    charCount.textContent = '0 / 4000 chars';
+    securityLevel.textContent = 'CLEARANCE: NONE';
+    securityLevel.className = 'security-level low';
+    // Clear hash
+    history.replaceState(null, '', window.location.pathname);
+  });
+
+  // ---- READ MODE logic ----
+  let currentHash = window.location.hash.slice(1);
+  let countdownInterval = null;
+  let timeLeft = 30;
+
+  function startReadMode() {
+    writeMode.classList.add('hidden');
+    readMode.classList.remove('hidden');
+
+    // Try decoding
+    const result = decodeMessage(currentHash);
+    if (result.error) {
+      messageDisplay.textContent = result.error;
+      messageView.classList.remove('hidden');
+      return;
+    }
+    if (result.needsPassphrase) {
+      passphrasePrompt.classList.add('active');
+      readPassphrase.focus();
+      return;
+    }
+    showMessage(result.message);
+  }
+
+  decryptBtn.addEventListener('click', attemptDecrypt);
+  readPassphrase.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') attemptDecrypt();
+  });
+
+  function attemptDecrypt() {
+    const pass = readPassphrase.value;
+    if (!pass) return;
+    const result = decodeMessage(currentHash, pass);
+    if (result.error) {
+      passphraseError.style.display = 'block';
+      return;
+    }
+    // With XOR, we can't truly verify correctness without a checksum.
+    // We'll show the result and trust the user entered the right passphrase.
+    passphrasePrompt.classList.remove('active');
+    showMessage(result.message);
+  }
+
+  function showMessage(msg) {
+    messageView.classList.remove('hidden');
+    // Clear the hash immediately so refreshing won't show it again
+    history.replaceState(null, '', window.location.pathname);
+
+    // Typewriter effect
+    typewriterReveal(msg);
+
+    // Start countdown
+    startCountdown();
+  }
+
+  function typewriterReveal(msg) {
+    messageDisplay.innerHTML = '';
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    messageDisplay.appendChild(cursor);
+
+    const speed = Math.max(10, Math.min(40, 1500 / msg.length));
+    const interval = setInterval(() => {
+      if (i < msg.length) {
+        const char = msg[i] === '\n' ? '\n' : msg[i];
+        cursor.insertAdjacentText('beforebegin', char);
+        i++;
+      } else {
+        clearInterval(interval);
+        // Keep cursor blinking at end
+      }
+    }, speed);
+  }
+
+  function startCountdown() {
+    timeLeft = 30;
+    countdownTimer.textContent = timeLeft;
+    countdownBar.style.width = '100%';
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      countdownTimer.textContent = timeLeft;
+      countdownBar.style.width = ((timeLeft / 30) * 100) + '%';
+
+      // Warning at 15s
+      if (timeLeft <= 15 && timeLeft > 5) {
+        countdownTimer.className = 'countdown-timer warning';
+        countdownBar.style.background = '#ffcc00';
+      }
+
+      // Critical at 5s
+      if (timeLeft <= 5) {
+        countdownTimer.className = 'countdown-timer critical';
+        countdownBar.style.background = 'var(--red)';
+        messagePanel.classList.add('pulse-red');
+      }
+
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        selfDestruct();
+      }
+    }, 1000);
+  }
+
+  function selfDestruct() {
+    // Play sound
+    playDestructSound();
+
+    // Glitch the container
+    mainContainer.classList.add('glitching');
+
+    // Scramble text character by character
+    const displayText = messageDisplay.textContent;
+    const scrambleChars = '!@#$%^&*()_+-=[]{}|;:,.<>?/~`0123456789ABCDEF';
+    let scrambleIndex = 0;
+
+    const scrambleInterval = setInterval(() => {
+      if (scrambleIndex >= displayText.length) {
+        clearInterval(scrambleInterval);
+        // Final wipe
+        setTimeout(() => {
+          mainContainer.classList.remove('glitching');
+          mainContainer.classList.add('hidden');
+          destroyedOverlay.classList.add('active');
+        }, 300);
+        return;
+      }
+
+      // Replace characters progressively
+      let scrambled = '';
+      for (let i = 0; i < displayText.length; i++) {
+        if (i < scrambleIndex) {
+          scrambled += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+        } else if (i === scrambleIndex) {
+          scrambled += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+        } else {
+          scrambled += displayText[i];
+        }
+      }
+      messageDisplay.textContent = scrambled;
+      scrambleIndex += Math.max(1, Math.floor(displayText.length / 30));
+    }, 50);
+  }
+
+  // ---- Route: check hash on load ----
+  if (currentHash && currentHash.length > 0) {
+    startReadMode();
+  }
+
+})();
+</script>
+
+</body>
+</html>

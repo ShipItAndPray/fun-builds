@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vibe Check Mirror</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 0 12px;
+  }
+
+  header h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #a78bfa, #f472b6, #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.5px;
+  }
+
+  header p {
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+
+  /* Mirror container */
+  .mirror-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 16px auto;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px rgba(167,139,250,0.2),
+      0 0 60px rgba(167,139,250,0.08),
+      0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .mirror-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.06);
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  #webcam {
+    width: 100%;
+    display: block;
+    transform: scaleX(-1);
+    border-radius: 20px;
+    background: #111;
+  }
+
+  /* Canvas overlay for face mesh debug (hidden but used for screenshot) */
+  #overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    transform: scaleX(-1);
+    z-index: 2;
+  }
+
+  /* HUD overlay */
+  .hud {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px;
+  }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .mood-badge {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .mood-emoji {
+    font-size: 2rem;
+    transition: all 0.4s ease;
+  }
+
+  .mood-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mood-label {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    transition: all 0.3s ease;
+  }
+
+  .mood-sublabel {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+  }
+
+  .vibe-score-wrap {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 10px 16px;
+    text-align: center;
+    min-width: 90px;
+  }
+
+  .vibe-number {
+    font-size: 1.6rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #a78bfa, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: all 0.3s ease;
+  }
+
+  .vibe-label {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .hud-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .roast-banner {
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    color: #ddd;
+    line-height: 1.4;
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+
+  .roast-banner.fade-out {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
+  }
+
+  .btn {
+    flex: 1;
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover { background: rgba(255,255,255,0.14); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, rgba(167,139,250,0.3), rgba(244,114,182,0.3));
+    border-color: rgba(167,139,250,0.3);
+  }
+
+  /* Loading / permission screen */
+  .loading-screen {
+    position: absolute;
+    inset: 0;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 20px;
+    gap: 16px;
+    transition: opacity 0.5s ease;
+  }
+
+  .loading-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid rgba(167,139,250,0.2);
+    border-top-color: #a78bfa;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text {
+    color: #888;
+    font-size: 0.85rem;
+  }
+
+  /* Vibe History */
+  .history-section {
+    margin-top: 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .history-section h2 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .history-chart {
+    width: 100%;
+    height: 100px;
+    position: relative;
+  }
+
+  .history-chart canvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .history-moods {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .history-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    color: #aaa;
+    animation: pillIn 0.3s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  @keyframes pillIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .no-face-msg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .no-face-msg.visible {
+    opacity: 1;
+  }
+
+  .no-face-msg span {
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #888;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  /* Screenshot flash */
+  .flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 20px;
+  }
+
+  .flash.active {
+    animation: flashAnim 0.3s ease-out;
+  }
+
+  @keyframes flashAnim {
+    0% { opacity: 0.8; }
+    100% { opacity: 0; }
+  }
+
+  /* Mobile adjustments */
+  @media (max-width: 600px) {
+    .app { padding: 10px; }
+    header h1 { font-size: 1.4rem; }
+    .mood-emoji { font-size: 1.5rem; }
+    .mood-label { font-size: 0.82rem; }
+    .vibe-number { font-size: 1.3rem; }
+    .roast-banner { font-size: 0.78rem; padding: 10px 12px; }
+    .hud { padding: 10px; }
+  }
+
+  /* Vibe bar */
+  .vibe-bar-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    margin-top: 6px;
+    overflow: hidden;
+  }
+
+  .vibe-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #a78bfa, #f472b6);
+    transition: width 0.5s cubic-bezier(0.16,1,0.3,1);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Vibe Check Mirror</h1>
+    <p>your face, roasted in real-time</p>
+  </header>
+
+  <div class="mirror-wrap" id="mirrorWrap">
+    <video id="webcam" autoplay playsinline></video>
+    <canvas id="overlay"></canvas>
+
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Warming up the mirror...</div>
+    </div>
+
+    <div class="no-face-msg" id="noFaceMsg">
+      <span>No face detected - show yourself!</span>
+    </div>
+
+    <div class="flash" id="flash"></div>
+
+    <div class="hud" id="hud">
+      <div class="hud-top">
+        <div class="mood-badge" id="moodBadge">
+          <span class="mood-emoji" id="moodEmoji">--</span>
+          <div class="mood-info">
+            <span class="mood-label" id="moodLabel">Waiting...</span>
+            <span class="mood-sublabel" id="moodSublabel">point camera at face</span>
+          </div>
+        </div>
+        <div class="vibe-score-wrap">
+          <div class="vibe-number" id="vibeNumber">--</div>
+          <div class="vibe-label">Vibe Score</div>
+          <div class="vibe-bar-track">
+            <div class="vibe-bar-fill" id="vibeBar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="hud-bottom">
+        <div class="roast-banner" id="roastBanner">Initializing roast engine...</div>
+        <div class="controls-row">
+          <button class="btn btn-primary" id="screenshotBtn" onclick="takeScreenshot()">Screenshot</button>
+          <button class="btn" id="toggleMeshBtn" onclick="toggleMesh()">Show Mesh</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-section">
+    <h2>Vibe History</h2>
+    <div class="history-chart">
+      <canvas id="historyCanvas"></canvas>
+    </div>
+    <div class="history-moods" id="historyMoods"></div>
+  </div>
+</div>
+
+<script type="module">
+import { FaceMesh } from 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh';
+import { Camera } from 'https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils';
+
+// ===== ROAST BANK =====
+const ROASTS = {
+  'Dead Inside': [
+    "Your face says 'I've been in this meeting for 3 hours'",
+    "You look like your soul left your body and forgot to come back",
+    "That's the face of someone who just opened their email inbox",
+    "Are you alive or is this a very convincing screensaver?",
+    "Your vibe is 'read receipt but no reply'",
+    "You're giving main character energy... of a loading screen",
+    "Even your pixels look tired",
+    "This is the face of someone who microwaved their coffee for the 4th time",
+    "You look like you just remembered it's only Tuesday",
+    "The lights are on but nobody's home, huh?",
+    "Your expression has the energy of an unread notification",
+    "You're serving 'forgot to unmute on Zoom' realness"
+  ],
+  'Frustrated': [
+    "That's the face of someone whose code just threw a TypeError",
+    "Did someone just say 'let's circle back' in a meeting?",
+    "You look like your Wi-Fi just dropped during a save",
+    "That expression screams 'per my last email'",
+    "Who hurt you? Was it JavaScript?",
+    "You're giving 'merge conflict at 5pm on Friday' energy",
+    "That's the look of someone who just found a bug in production",
+    "Calm down, it's probably just a missing semicolon",
+    "You look like you're about to mass delete your apps",
+    "Your face is writing an angry email your brain won't send",
+    "That's the look of someone who just got another calendar invite"
+  ],
+  'Confused': [
+    "Your face says 'wait... what?'",
+    "You look like someone just explained blockchain to you",
+    "That's the face of someone reading their own code from 6 months ago",
+    "Are you thinking or just buffering?",
+    "Your expression is giving 'terms and conditions' energy",
+    "You look like you clicked a link and don't know where you are now",
+    "That's the look of someone trying to understand a git rebase",
+    "Your face is stuck on 'loading thought...'",
+    "You look like you just got a calendar invite with no context",
+    "That's the expression of someone who said 'sure' without listening",
+    "Your face is the human equivalent of a 404 page"
+  ],
+  'Smug': [
+    "You definitely just mass-deleted 100 emails without reading them",
+    "That's the face of someone who just said 'I told you so' internally",
+    "You look like you just found a $20 bill in your old jacket",
+    "That expression says 'my code worked on the first try'",
+    "You're giving 'left on read on purpose' energy",
+    "That's the smirk of someone who just closed all their browser tabs",
+    "You look like you just remembered you're off tomorrow",
+    "That face says 'I know something you don't know'",
+    "You're serving 'skip the tutorial' confidence",
+    "That's the look of someone who just parallel parked in one try",
+    "Your face screams 'I brought my own lunch today'"
+  ],
+  'Vibing': [
+    "Okay you're actually having a good time, suspicious",
+    "That's the face of someone whose playlist just hit different",
+    "You look like you just got an unexpected compliment",
+    "Your vibe is immaculate right now, don't ruin it",
+    "That's the glow of someone who finished their to-do list",
+    "You look like your code compiled and passed all tests",
+    "This is what inner peace looks like (or ignorance, hard to tell)",
+    "You're giving main character energy and honestly? Deserved",
+    "That face says 'I chose the right line at the grocery store'",
+    "Your serotonin levels appear to be functioning correctly",
+    "You look like someone who just found out the meeting was canceled"
+  ],
+  'On Fire': [
+    "OKAY you are RADIATING right now",
+    "Your energy could power a small city",
+    "That face could sell toothpaste",
+    "You look like you just got accepted into everything",
+    "The mirror can barely contain your vibe",
+    "Careful, you might set off the smoke detector with that glow",
+    "That's the face of someone who just shipped a feature at 2am and it WORKED",
+    "You're giving 'just got promoted' energy",
+    "Your face is so bright I need sunglasses",
+    "That's the expression of someone living their literal best life",
+    "You look like you just beat everyone's expectations including your own"
+  ],
+  'NPC Mode': [
+    "You're giving 'press X to continue' energy",
+    "Your face is in standby mode",
+    "That's the default expression. Did you forget to load a personality?",
+    "You look like you're waiting for someone to give you a quest",
+    "Hello? Is there a human behind those eyes?",
+    "You're serving 'background character in someone else's story'",
+    "That face says 'I have no opinions and I'm fine with that'",
+    "Your expression is the human equivalent of elevator music",
+    "You look like you're on autopilot and the destination is nowhere",
+    "That's the face of someone who picks 'maybe' on every event invite",
+    "Your personality appears to be in power save mode",
+    "Are you vibing or just... existing?"
+  ]
+};
+
+const MOOD_CONFIG = {
+  'Dead Inside':  { emoji: '\u{1F634}', color: '#6b7280', score: 15 },
+  'Frustrated':   { emoji: '\u{1F624}', color: '#ef4444', score: 25 },
+  'Confused':     { emoji: '\u{1F914}', color: '#f59e0b', score: 35 },
+  'NPC Mode':     { emoji: '\u{1F610}', color: '#9ca3af', score: 40 },
+  'Smug':         { emoji: '\u{1F60F}', color: '#8b5cf6', score: 65 },
+  'Vibing':       { emoji: '\u{1F60A}', color: '#10b981', score: 80 },
+  'On Fire':      { emoji: '\u{1F929}', color: '#f472b6', score: 97 }
+};
+
+// ===== STATE =====
+let currentMood = null;
+let currentScore = 0;
+let targetScore = 0;
+let showMesh = false;
+let faceDetected = false;
+let lastRoastTime = 0;
+let currentRoastIdx = {};
+let moodHistory = []; // { time, mood, score }
+let scoreHistory = []; // raw score values for chart
+
+const videoEl = document.getElementById('webcam');
+const overlayCanvas = document.getElementById('overlay');
+const overlayCtx = overlayCanvas.getContext('2d');
+
+// ===== FACE MESH SETUP =====
+const faceMesh = new FaceMesh({
+  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+});
+
+faceMesh.setOptions({
+  maxNumFaces: 1,
+  refineLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+
+faceMesh.onResults(onResults);
+
+// ===== CAMERA =====
+const camera = new Camera(videoEl, {
+  onFrame: async () => {
+    await faceMesh.send({ image: videoEl });
+  },
+  width: 640,
+  height: 480,
+  facingMode: 'user'
+});
+
+camera.start().then(() => {
+  setTimeout(() => {
+    document.getElementById('loadingScreen').classList.add('hidden');
+  }, 1500);
+});
+
+// ===== LANDMARK ANALYSIS =====
+function dist(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2 + (a.z - b.z) ** 2);
+}
+
+function dist2d(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+}
+
+function analyzeFace(landmarks) {
+  const lm = landmarks;
+
+  // Mouth openness: distance between upper and lower lip center
+  const mouthOpen = dist(lm[13], lm[14]); // upper/lower lip inner
+  const mouthWidth = dist(lm[61], lm[291]); // mouth corners
+  const mouthOpenRatio = mouthOpen / mouthWidth;
+
+  // Smile: lip corners vs mouth center vertical
+  const mouthCenter = (lm[13].y + lm[14].y) / 2;
+  const leftCorner = lm[61].y;
+  const rightCorner = lm[291].y;
+  const avgCornerY = (leftCorner + rightCorner) / 2;
+  // Negative = corners are above center = smile (in normalized coords, lower y = higher)
+  const smileScore = (mouthCenter - avgCornerY) / mouthWidth;
+
+  // Eye openness
+  const leftEyeOpen = dist(lm[159], lm[145]) / dist(lm[33], lm[133]);
+  const rightEyeOpen = dist(lm[386], lm[374]) / dist(lm[362], lm[263]);
+  const avgEyeOpen = (leftEyeOpen + rightEyeOpen) / 2;
+
+  // Eyebrow height relative to eye
+  const leftBrowHeight = (lm[33].y - lm[70].y) / dist(lm[33], lm[133]);
+  const rightBrowHeight = (lm[263].y - lm[300].y) / dist(lm[362], lm[263]);
+  const avgBrowHeight = (leftBrowHeight + rightBrowHeight) / 2;
+
+  // Head tilt (roll) - difference in y of left and right eye corners
+  const headTilt = Math.abs(lm[33].y - lm[263].y);
+
+  // Brow furrow - distance between inner brow points
+  const browFurrow = dist2d(lm[55], lm[285]);
+
+  return {
+    mouthOpenRatio,
+    smileScore,
+    avgEyeOpen,
+    avgBrowHeight,
+    headTilt,
+    browFurrow,
+    mouthWidth
+  };
+}
+
+function classifyMood(features) {
+  const { mouthOpenRatio, smileScore, avgEyeOpen, avgBrowHeight, headTilt, browFurrow } = features;
+
+  // On Fire: big smile + eyes wide + brows up
+  if (smileScore > 0.15 && avgEyeOpen > 0.28 && avgBrowHeight > 0.55) {
+    return 'On Fire';
+  }
+
+  // Vibing: genuine smile
+  if (smileScore > 0.08 && avgEyeOpen > 0.2) {
+    return 'Vibing';
+  }
+
+  // Smug: slight smile, normal/squinted eyes
+  if (smileScore > 0.03 && smileScore <= 0.12 && avgEyeOpen < 0.3) {
+    return 'Smug';
+  }
+
+  // Frustrated: furrowed brows, mouth tight or open
+  if (avgBrowHeight < 0.35 && browFurrow < 0.12) {
+    return 'Frustrated';
+  }
+
+  // Confused: raised brows, slightly open mouth, head tilt
+  if (avgBrowHeight > 0.55 && mouthOpenRatio > 0.1 || headTilt > 0.04) {
+    return 'Confused';
+  }
+
+  // Dead Inside: droopy eyes, no smile, low energy
+  if (avgEyeOpen < 0.2 && smileScore < 0.03) {
+    return 'Dead Inside';
+  }
+
+  // Default: NPC Mode
+  return 'NPC Mode';
+}
+
+// ===== SMOOTHING =====
+let moodBuffer = [];
+const MOOD_BUFFER_SIZE = 8;
+
+function getStableMood(rawMood) {
+  moodBuffer.push(rawMood);
+  if (moodBuffer.length > MOOD_BUFFER_SIZE) moodBuffer.shift();
+
+  const counts = {};
+  moodBuffer.forEach(m => counts[m] = (counts[m] || 0) + 1);
+  let best = rawMood, bestCount = 0;
+  for (const [mood, count] of Object.entries(counts)) {
+    if (count > bestCount) { best = mood; bestCount = count; }
+  }
+  return best;
+}
+
+// ===== RENDER =====
+function onResults(results) {
+  overlayCanvas.width = videoEl.videoWidth || 640;
+  overlayCanvas.height = videoEl.videoHeight || 480;
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+  if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
+    faceDetected = false;
+    document.getElementById('noFaceMsg').classList.add('visible');
+    return;
+  }
+
+  faceDetected = true;
+  document.getElementById('noFaceMsg').classList.remove('visible');
+
+  const landmarks = results.multiFaceLandmarks[0];
+
+  // Draw mesh if enabled
+  if (showMesh) {
+    overlayCtx.strokeStyle = 'rgba(167,139,250,0.3)';
+    overlayCtx.lineWidth = 0.5;
+    for (const pt of landmarks) {
+      const x = pt.x * overlayCanvas.width;
+      const y = pt.y * overlayCanvas.height;
+      overlayCtx.beginPath();
+      overlayCtx.arc(x, y, 1, 0, 2 * Math.PI);
+      overlayCtx.fillStyle = 'rgba(167,139,250,0.5)';
+      overlayCtx.fill();
+    }
+  }
+
+  // Analyze
+  const features = analyzeFace(landmarks);
+  const rawMood = classifyMood(features);
+  const stableMood = getStableMood(rawMood);
+
+  if (stableMood !== currentMood) {
+    currentMood = stableMood;
+    updateMoodUI(currentMood);
+    addToHistory(currentMood);
+  }
+
+  targetScore = MOOD_CONFIG[currentMood].score + Math.round((Math.random() - 0.5) * 6);
+  targetScore = Math.max(0, Math.min(100, targetScore));
+
+  // Smooth score animation
+  currentScore += (targetScore - currentScore) * 0.08;
+  const displayScore = Math.round(currentScore);
+  document.getElementById('vibeNumber').textContent = displayScore + '%';
+  document.getElementById('vibeBar').style.width = displayScore + '%';
+
+  // Update roast periodically
+  const now = Date.now();
+  if (now - lastRoastTime > 4000) {
+    updateRoast(currentMood);
+    lastRoastTime = now;
+  }
+
+  // Update score history for chart
+  if (scoreHistory.length === 0 || now - (scoreHistory[scoreHistory.length - 1]?.time || 0) > 500) {
+    scoreHistory.push({ time: now, score: displayScore, mood: currentMood });
+    if (scoreHistory.length > 120) scoreHistory.shift();
+    drawHistoryChart();
+  }
+}
+
+function updateMoodUI(mood) {
+  const config = MOOD_CONFIG[mood];
+  const badge = document.getElementById('moodBadge');
+  document.getElementById('moodEmoji').textContent = config.emoji;
+  document.getElementById('moodLabel').textContent = mood;
+  document.getElementById('moodSublabel').textContent = `vibe detected`;
+  badge.style.borderColor = config.color + '40';
+}
+
+function updateRoast(mood) {
+  const banner = document.getElementById('roastBanner');
+  const roasts = ROASTS[mood] || ROASTS['NPC Mode'];
+
+  if (!currentRoastIdx[mood]) currentRoastIdx[mood] = 0;
+  currentRoastIdx[mood] = (currentRoastIdx[mood] + 1) % roasts.length;
+
+  banner.classList.add('fade-out');
+  setTimeout(() => {
+    banner.textContent = '"' + roasts[currentRoastIdx[mood]] + '"';
+    banner.classList.remove('fade-out');
+  }, 300);
+}
+
+// ===== HISTORY =====
+function addToHistory(mood) {
+  const config = MOOD_CONFIG[mood];
+  const entry = { mood, emoji: config.emoji, time: new Date() };
+
+  // Only add if different from last
+  if (moodHistory.length === 0 || moodHistory[moodHistory.length - 1].mood !== mood) {
+    moodHistory.push(entry);
+    if (moodHistory.length > 20) moodHistory.shift();
+    renderHistoryPills();
+  }
+}
+
+function renderHistoryPills() {
+  const container = document.getElementById('historyMoods');
+  container.innerHTML = '';
+  const recent = moodHistory.slice(-10);
+  recent.forEach(entry => {
+    const pill = document.createElement('span');
+    pill.className = 'history-pill';
+    const time = entry.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    pill.innerHTML = `${entry.emoji} ${entry.mood} <span style="opacity:0.4;margin-left:2px">${time}</span>`;
+    container.appendChild(pill);
+  });
+}
+
+function drawHistoryChart() {
+  const canvas = document.getElementById('historyCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const w = rect.width;
+  const h = rect.height;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (scoreHistory.length < 2) return;
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y <= 100; y += 25) {
+    const py = h - (y / 100) * h;
+    ctx.beginPath();
+    ctx.moveTo(0, py);
+    ctx.lineTo(w, py);
+    ctx.stroke();
+  }
+
+  // Score line
+  const grad = ctx.createLinearGradient(0, 0, w, 0);
+  grad.addColorStop(0, '#a78bfa');
+  grad.addColorStop(0.5, '#f472b6');
+  grad.addColorStop(1, '#fb923c');
+
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+
+  const step = w / (scoreHistory.length - 1);
+  scoreHistory.forEach((point, i) => {
+    const x = i * step;
+    const y = h - (point.score / 100) * h;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Fill area under curve
+  const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+  fillGrad.addColorStop(0, 'rgba(167,139,250,0.15)');
+  fillGrad.addColorStop(1, 'rgba(167,139,250,0.0)');
+
+  ctx.lineTo((scoreHistory.length - 1) * step, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fillStyle = fillGrad;
+  ctx.fill();
+
+  // Current score dot
+  const lastPt = scoreHistory[scoreHistory.length - 1];
+  const lx = (scoreHistory.length - 1) * step;
+  const ly = h - (lastPt.score / 100) * h;
+  ctx.beginPath();
+  ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#f472b6';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(244,114,182,0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ===== SCREENSHOT =====
+window.takeScreenshot = function() {
+  const flash = document.getElementById('flash');
+  flash.classList.remove('active');
+  void flash.offsetWidth;
+  flash.classList.add('active');
+
+  const mirrorWrap = document.getElementById('mirrorWrap');
+  const captureCanvas = document.createElement('canvas');
+  const vw = videoEl.videoWidth || 640;
+  const vh = videoEl.videoHeight || 480;
+  captureCanvas.width = vw;
+  captureCanvas.height = vh;
+  const ctx = captureCanvas.getContext('2d');
+
+  // Draw mirrored video
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(videoEl, -vw, 0, vw, vh);
+  ctx.restore();
+
+  // Draw overlay
+  if (showMesh) {
+    ctx.drawImage(overlayCanvas, 0, 0, vw, vh);
+  }
+
+  // Draw mood badge
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  roundRect(ctx, 16, 16, 240, 56, 14);
+  ctx.fill();
+  ctx.font = '32px serif';
+  ctx.fillText(MOOD_CONFIG[currentMood]?.emoji || '', 28, 52);
+  ctx.font = 'bold 16px Inter, sans-serif';
+  ctx.fillStyle = '#fff';
+  ctx.fillText(currentMood || 'NPC Mode', 68, 40);
+  ctx.font = '11px Inter, sans-serif';
+  ctx.fillStyle = '#999';
+  ctx.fillText('vibe detected', 68, 58);
+
+  // Score
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  roundRect(ctx, vw - 110, 16, 94, 50, 14);
+  ctx.fill();
+  ctx.font = 'bold 22px Inter, sans-serif';
+  ctx.fillStyle = '#c084fc';
+  ctx.fillText(Math.round(currentScore) + '%', vw - 92, 48);
+  ctx.font = '9px Inter, sans-serif';
+  ctx.fillStyle = '#666';
+  ctx.fillText('VIBE SCORE', vw - 92, 58);
+
+  // Roast text
+  const roastText = document.getElementById('roastBanner').textContent;
+  ctx.fillStyle = 'rgba(0,0,0,0.75)';
+  roundRect(ctx, 16, vh - 60, vw - 32, 44, 14);
+  ctx.fill();
+  ctx.font = '13px Inter, sans-serif';
+  ctx.fillStyle = '#ddd';
+  ctx.fillText(roastText, 28, vh - 32, vw - 56);
+
+  // Watermark
+  ctx.font = 'bold 10px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillText('vibecheck.mirror', vw - 110, vh - 8);
+
+  // Download
+  captureCanvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vibe-check-${Date.now()}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+};
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ===== TOGGLE MESH =====
+window.toggleMesh = function() {
+  showMesh = !showMesh;
+  document.getElementById('toggleMeshBtn').textContent = showMesh ? 'Hide Mesh' : 'Show Mesh';
+  if (!showMesh) {
+    overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  }
+};
+
+// ===== WINDOW RESIZE =====
+window.addEventListener('resize', () => {
+  drawHistoryChart();
+});
+
+</script>
+</body>
+</html>

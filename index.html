@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fun Builds</title>
+  <meta name="description" content="Free, open-source web toys built in a weekend. No accounts, no servers, no tracking. Just fun.">
+  <meta name="theme-color" content="#0a0a0f">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fun Builds">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --surface-hover: #1a1a24;
+      --border: #2a2a3a;
+      --text: #e8e8f0;
+      --text-dim: #8888a0;
+      --boo-accent: #ff6b35;
+      --vibe-accent: #a855f7;
+      --piano-accent: #06d6a0;
+      --dead-accent: #3b82f6;
+      --rage-accent: #ef4444;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient background glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 30% 20%, rgba(168, 85, 247, 0.04) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 80%, rgba(255, 107, 53, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      padding: 80px 0 60px;
+    }
+
+    header h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 0%, #a0a0c0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    header .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text-dim);
+      margin-top: 16px;
+      font-weight: 500;
+      max-width: 550px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.5;
+    }
+
+    .pill-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 100px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      letter-spacing: 0.02em;
+    }
+
+    /* Card Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+      padding-bottom: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px 28px 28px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                  box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                  border-color 0.25s ease;
+      cursor: default;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--card-accent);
+      opacity: 0.7;
+      transition: opacity 0.25s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px -12px rgba(0, 0, 0, 0.5),
+                  0 0 40px -10px var(--card-glow);
+      border-color: color-mix(in srgb, var(--card-accent) 30%, var(--border));
+    }
+
+    .card:hover::before {
+      opacity: 1;
+    }
+
+    .card-emoji {
+      font-size: 2.8rem;
+      line-height: 1;
+      margin-bottom: 16px;
+      display: inline-block;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .card:hover .card-emoji {
+      transform: scale(1.15) rotate(-5deg);
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    .card p {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+      margin-bottom: 20px;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--card-accent) 12%, transparent);
+      color: var(--card-accent);
+    }
+
+    .try-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--card-accent);
+      border: none;
+      border-radius: 10px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    }
+
+    .try-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 20px -4px var(--card-accent);
+      filter: brightness(1.1);
+    }
+
+    .try-btn::after {
+      content: '\2192';
+      transition: transform 0.2s ease;
+    }
+
+    .try-btn:hover::after {
+      transform: translateX(3px);
+    }
+
+    /* What is this */
+    .what-section {
+      margin: 60px 0;
+      text-align: center;
+      padding: 48px 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .what-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .what-section h3 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: #fff;
+    }
+
+    .what-section p {
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+    }
+
+    .what-section .highlights {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 28px;
+      flex-wrap: wrap;
+    }
+
+    .highlight-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .highlight-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #06d6a0;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 40px 0 60px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--text-dim);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    footer a:hover {
+      color: var(--text);
+      border-color: var(--text);
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      header { padding: 50px 0 40px; }
+      .grid { grid-template-columns: 1fr; }
+      .card { padding: 26px 22px 24px; }
+      .what-section { padding: 36px 20px; }
+      .highlights { gap: 16px !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Fun Builds</h1>
+      <p class="subtitle">Weekend projects that make people say "I need to build that"</p>
+      <div class="pill-row">
+        <span class="pill">No accounts</span>
+        <span class="pill">No servers</span>
+        <span class="pill">100% browser</span>
+        <span class="pill">Open source</span>
+      </div>
+    </header>
+
+    <section class="grid">
+
+      <div class="card" style="--card-accent: var(--boo-accent); --card-glow: rgba(255, 107, 53, 0.25);">
+        <div class="card-emoji">&#127930;</div>
+        <h2>Crowd Boo Machine</h2>
+        <p>Smash buttons to trigger sound effects during video calls. Boo your coworkers in real-time.</p>
+        <div class="card-tags">
+          <span class="tag">sound</span>
+          <span class="tag">party</span>
+          <span class="tag">multiplayer</span>
+        </div>
+        <a href="crowd-boo-machine/" class="try-btn">Try It</a>
+      </div>
+
+      <div class="card" style="--card-accent: var(--vibe-accent); --card-glow: rgba(168, 85, 247, 0.25);">
+        <div class="card-emoji">&#128527;</div>
+        <h2>Vibe Check Mirror</h2>
+        <p>Your webcam reads your face and roasts you. Shows your vibe score in real-time.</p>
+        <div class="card-tags">
+          <span class="tag">webcam</span>
+          <span class="tag">AI</span>
+          <span class="tag">roast</span>
+        </div>
+        <a href="vibe-check-mirror/" class="try-btn">Try It</a>
+      </div>
+
+      <div class="card" style="--card-accent: var(--piano-accent); --card-glow: rgba(6, 214, 160, 0.25);">
+        <div class="card-emoji">&#127929;</div>
+        <h2>Lie Detector Piano</h2>
+        <p>Type a sentence. Happy chords for truths, horror sounds for lies. Pass it around at parties.</p>
+        <div class="card-tags">
+          <span class="tag">sound</span>
+          <span class="tag">party game</span>
+          <span class="tag">text</span>
+        </div>
+        <a href="lie-detector-piano/" class="try-btn">Try It</a>
+      </div>
+
+      <div class="card" style="--card-accent: var(--dead-accent); --card-glow: rgba(59, 130, 246, 0.25);">
+        <div class="card-emoji">&#128373;&#65039;</div>
+        <h2>Dead Drop Messenger</h2>
+        <p>Send secret messages that self-destruct in 30 seconds. No server. Full spy aesthetics.</p>
+        <div class="card-tags">
+          <span class="tag">crypto</span>
+          <span class="tag">spy</span>
+          <span class="tag">messaging</span>
+        </div>
+        <a href="dead-drop/" class="try-btn">Try It</a>
+      </div>
+
+      <div class="card" style="--card-accent: var(--rage-accent); --card-glow: rgba(239, 68, 68, 0.25);">
+        <div class="card-emoji">&#128548;</div>
+        <h2>Rage Quit Detector</h2>
+        <p>Webcam detects your gaming rage in real-time. Triggers dramatic interventions.</p>
+        <div class="card-tags">
+          <span class="tag">webcam</span>
+          <span class="tag">gaming</span>
+          <span class="tag">AI</span>
+        </div>
+        <a href="rage-quit-detector/" class="try-btn">Try It</a>
+      </div>
+
+    </section>
+
+    <section class="what-section">
+      <h3>What is this?</h3>
+      <p>Free, open-source web toys built in a weekend. No accounts, no servers, no tracking. Just fun. Every app is a single HTML file that runs in your browser.</p>
+      <div class="highlights">
+        <div class="highlight-item"><span class="dot"></span> Zero dependencies</div>
+        <div class="highlight-item"><span class="dot"></span> Works offline</div>
+        <div class="highlight-item"><span class="dot"></span> No data collected</div>
+        <div class="highlight-item"><span class="dot"></span> View source = learn</div>
+      </div>
+    </section>
+
+    <footer>
+      Built with <a href="https://claude.ai/claude-code" target="_blank" rel="noopener">Claude Code</a> | Open Source on <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+    </footer>
+  </div>
+
+</body>
+</html>

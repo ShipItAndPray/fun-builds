@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lie Detector Piano</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:translateX(0)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes shakeVerdict{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-4px)}20%,40%,60%,80%{transform:translateX(4px)}}
+
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:#0a0a0f;
+    color:#e0e0e0;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:20px;
+    background-image:
+      radial-gradient(ellipse at 20% 50%,rgba(40,0,60,0.3) 0%,transparent 50%),
+      radial-gradient(ellipse at 80% 50%,rgba(0,20,60,0.3) 0%,transparent 50%);
+  }
+
+  h1{
+    font-size:clamp(1.8rem,5vw,2.8rem);
+    margin-bottom:6px;
+    background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-align:center;
+  }
+  .subtitle{color:#888;font-size:0.95rem;margin-bottom:24px;text-align:center}
+
+  .piano-keys{
+    display:flex;gap:2px;margin-bottom:28px;justify-content:center;
+  }
+  .piano-key{
+    width:28px;height:80px;border-radius:0 0 4px 4px;
+    background:linear-gradient(180deg,#f0f0f0 0%,#d0d0d0 100%);
+    transition:all 0.15s;
+  }
+  .piano-key.black{
+    width:20px;height:50px;margin:0 -10px;z-index:1;
+    background:linear-gradient(180deg,#222 0%,#111 100%);
+  }
+  .piano-key.active{
+    background:linear-gradient(180deg,#ff6b6b,#ffd93d) !important;
+    box-shadow:0 0 12px rgba(255,107,107,0.6);
+    transform:scaleY(0.96);
+  }
+
+  .input-area{
+    width:100%;max-width:600px;margin-bottom:20px;
+  }
+  textarea{
+    width:100%;min-height:100px;padding:16px;
+    background:#151520;border:2px solid #2a2a3a;border-radius:12px;
+    color:#e0e0e0;font-size:1.05rem;resize:vertical;
+    transition:border-color 0.3s;
+    font-family:inherit;
+  }
+  textarea:focus{outline:none;border-color:#6b5bff}
+  textarea::placeholder{color:#555}
+
+  .btn{
+    display:inline-block;padding:12px 32px;margin:8px 4px;
+    background:linear-gradient(135deg,#6b5bff,#8b5cf6);
+    color:#fff;border:none;border-radius:10px;font-size:1.05rem;
+    cursor:pointer;transition:all 0.2s;font-weight:600;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(107,91,255,0.4)}
+  .btn:active{transform:translateY(0)}
+  .btn-row{text-align:center;margin-bottom:24px}
+
+  .meter-section{
+    width:100%;max-width:600px;margin-bottom:28px;text-align:center;
+  }
+  .meter-label{font-size:1.1rem;margin-bottom:8px;font-weight:600}
+  .meter-bar-bg{
+    width:100%;height:32px;background:#1a1a2a;border-radius:16px;overflow:hidden;
+    position:relative;
+  }
+  .meter-bar-fill{
+    height:100%;border-radius:16px;transition:width 0.8s cubic-bezier(.4,2,.6,1), background 0.5s;
+    width:50%;
+    background:linear-gradient(90deg,#ff4444,#ffaa00,#44ff44);
+  }
+  .meter-bar-fill.wobble{animation:wobble 0.4s ease 3}
+  .meter-score{
+    position:absolute;top:0;left:0;right:0;bottom:0;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:1rem;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.8);
+  }
+
+  .verdict-display{
+    width:100%;max-width:600px;min-height:80px;
+    margin-bottom:28px;text-align:center;
+    padding:20px;border-radius:14px;
+    background:#12121e;border:2px solid #2a2a3a;
+    transition:all 0.3s;
+    overflow:hidden;
+  }
+  .verdict-display.active{animation:pulse 0.6s ease}
+  .verdict-display.shake{animation:shakeVerdict 0.5s ease}
+  .verdict-text{font-size:clamp(1.2rem,3vw,1.6rem);font-weight:700;margin-bottom:6px}
+  .verdict-detail{font-size:0.95rem;color:#aaa}
+
+  .examples{
+    width:100%;max-width:600px;margin-bottom:28px;
+  }
+  .examples h3{margin-bottom:10px;color:#888;font-size:0.9rem;text-transform:uppercase;letter-spacing:1px}
+  .example-btn{
+    display:block;width:100%;text-align:left;
+    padding:10px 14px;margin-bottom:6px;
+    background:#151520;border:1px solid #2a2a3a;border-radius:8px;
+    color:#bbb;font-size:0.92rem;cursor:pointer;
+    transition:all 0.2s;font-family:inherit;
+  }
+  .example-btn:hover{background:#1e1e30;border-color:#6b5bff;color:#e0e0e0}
+
+  .history{
+    width:100%;max-width:600px;
+  }
+  .history h3{margin-bottom:12px;color:#888;font-size:0.9rem;text-transform:uppercase;letter-spacing:1px}
+  .history-item{
+    padding:12px 14px;margin-bottom:8px;
+    background:#12121e;border-left:4px solid #555;border-radius:0 8px 8px 0;
+    animation:slideIn 0.4s ease;
+  }
+  .history-item .h-sentence{font-size:0.9rem;color:#aaa;margin-bottom:4px;font-style:italic}
+  .history-item .h-verdict{font-weight:700;font-size:1rem}
+  .history-item .h-score{font-size:0.85rem;color:#888}
+
+  .history-item.truth{border-left-color:#44ff44}
+  .history-item.suspicious{border-left-color:#ffaa00}
+  .history-item.lie{border-left-color:#ff4444}
+  .history-item.excuse{border-left-color:#aa66ff}
+
+  footer{margin-top:40px;color:#444;font-size:0.8rem;text-align:center}
+
+  @media(max-width:500px){
+    .piano-key{width:20px;height:60px}
+    .piano-key.black{width:14px;height:36px;margin:0 -7px}
+    textarea{min-height:80px;font-size:0.95rem}
+    .btn{padding:10px 24px;font-size:0.95rem}
+  }
+</style>
+</head>
+<body>
+
+<h1>Lie Detector Piano</h1>
+<p class="subtitle">Type a sentence. We'll play its truth.</p>
+
+<div class="piano-keys" id="pianoKeys">
+  <div class="piano-key" data-n="0"></div>
+  <div class="piano-key black" data-n="1"></div>
+  <div class="piano-key" data-n="2"></div>
+  <div class="piano-key black" data-n="3"></div>
+  <div class="piano-key" data-n="4"></div>
+  <div class="piano-key" data-n="5"></div>
+  <div class="piano-key black" data-n="6"></div>
+  <div class="piano-key" data-n="7"></div>
+  <div class="piano-key black" data-n="8"></div>
+  <div class="piano-key" data-n="9"></div>
+  <div class="piano-key black" data-n="10"></div>
+  <div class="piano-key" data-n="11"></div>
+  <div class="piano-key" data-n="12"></div>
+</div>
+
+<div class="input-area">
+  <textarea id="input" placeholder="Type your statement here... then face the music." autofocus></textarea>
+</div>
+
+<div class="btn-row">
+  <button class="btn" id="judgeBtn">Judge Me</button>
+</div>
+
+<div class="meter-section">
+  <div class="meter-label">Truth Score</div>
+  <div class="meter-bar-bg">
+    <div class="meter-bar-fill" id="meterFill"></div>
+    <div class="meter-score" id="meterScore">50%</div>
+  </div>
+</div>
+
+<div class="verdict-display" id="verdictBox">
+  <div class="verdict-text" id="verdictText">Awaiting your statement...</div>
+  <div class="verdict-detail" id="verdictDetail">Type something and press Enter or click Judge Me</div>
+</div>
+
+<div class="examples">
+  <h3>Try These</h3>
+  <button class="example-btn">"I definitely studied for the exam"</button>
+  <button class="example-btn">"The WiFi was down, that's why I didn't reply"</button>
+  <button class="example-btn">"I only had one slice of pizza"</button>
+  <button class="example-btn">"I'm fine"</button>
+  <button class="example-btn">"According to my calculations, 2+2=4"</button>
+  <button class="example-btn">"My dog ate my homework"</button>
+  <button class="example-btn">"I love hiking on weekends"</button>
+  <button class="example-btn">"I WAS NOT ANYWHERE NEAR THE COOKIES"</button>
+  <button class="example-btn">"There was so much traffic, you wouldn't believe it"</button>
+</div>
+
+<div class="history" id="historySection" style="display:none">
+  <h3>Verdict History</h3>
+  <div id="historyList"></div>
+</div>
+
+<footer>No actual lie detection. For entertainment only. Pass the phone around at parties.</footer>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+let isPlaying = false;
+
+// --- SOUND ENGINE ---
+
+function playNote(freq, startTime, duration, type='sine', gain=0.15, detune=0) {
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.detune.value = detune;
+  g.gain.setValueAtTime(0, startTime);
+  g.gain.linearRampToValueAtTime(gain, startTime + 0.03);
+  g.gain.linearRampToValueAtTime(gain * 0.7, startTime + duration * 0.6);
+  g.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.connect(g);
+  g.connect(audioCtx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration);
+  return osc;
+}
+
+function lightKey(index, delay, duration) {
+  setTimeout(() => {
+    const keys = document.querySelectorAll('.piano-key');
+    if (keys[index]) {
+      keys[index].classList.add('active');
+      setTimeout(() => keys[index].classList.remove('active'), duration * 1000);
+    }
+  }, delay * 1000);
+}
+
+function playTruthChord() {
+  // C major arpeggio upward, bright and triumphant
+  const t = audioCtx.currentTime;
+  const notes = [261.63, 329.63, 392.00, 523.25, 659.25]; // C4 E4 G4 C5 E5
+  notes.forEach((f, i) => {
+    playNote(f, t + i * 0.12, 0.6, 'triangle', 0.18);
+    playNote(f * 2, t + i * 0.12, 0.4, 'sine', 0.06); // sparkle overtone
+    lightKey(i * 2, i * 0.12, 0.5);
+  });
+  // Final triumphant stab
+  setTimeout(() => {
+    const t2 = audioCtx.currentTime;
+    [261.63, 329.63, 392.00, 523.25].forEach(f => {
+      playNote(f, t2, 1.0, 'triangle', 0.12);
+    });
+  }, 700);
+  return 1.8;
+}
+
+function playSuspiciousChord() {
+  // C minor, slightly detuned, uneasy
+  const t = audioCtx.currentTime;
+  const notes = [261.63, 311.13, 392.00]; // C Eb G
+  notes.forEach((f, i) => {
+    playNote(f, t + i * 0.15, 0.8, 'sawtooth', 0.08, 5);
+    playNote(f, t + i * 0.15, 0.8, 'triangle', 0.1, -5);
+    lightKey(i * 3 + 1, i * 0.15, 0.7);
+  });
+  return 1.2;
+}
+
+function playLieChord() {
+  // Diminished chord with tremolo, horror movie
+  const t = audioCtx.currentTime;
+  const notes = [261.63, 311.13, 369.99]; // C Eb Gb
+
+  notes.forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+
+    osc.type = 'sawtooth';
+    osc.frequency.value = f;
+    osc.detune.value = (i - 1) * 12; // detuning
+
+    lfo.type = 'sine';
+    lfo.frequency.value = 6 + i * 2; // tremolo rate
+    lfoGain.gain.value = 0.08;
+
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.05);
+    g.gain.linearRampToValueAtTime(0.1, t + 1.0);
+    g.gain.linearRampToValueAtTime(0, t + 1.6);
+
+    lfo.connect(lfoGain);
+    lfoGain.connect(g.gain);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 1.6);
+    lfo.start(t);
+    lfo.stop(t + 1.6);
+
+    lightKey(i * 2, 0, 1.5);
+  });
+
+  // Low rumble
+  playNote(65.41, t, 1.8, 'sawtooth', 0.1); // C2
+  return 1.8;
+}
+
+function playOminousBass() {
+  // Deep ominous bass notes
+  const t = audioCtx.currentTime;
+  playNote(65.41, t, 0.5, 'sawtooth', 0.15);
+  playNote(61.74, t + 0.5, 0.5, 'sawtooth', 0.15); // B1
+  playNote(58.27, t + 1.0, 1.0, 'sawtooth', 0.18, 8); // Bb1, detuned
+  lightKey(0, 0, 0.4);
+  lightKey(1, 0.5, 0.4);
+  lightKey(0, 1.0, 0.9);
+  return 2.0;
+}
+
+function playDramaticSting() {
+  // Big dramatic stab then descending
+  const t = audioCtx.currentTime;
+  // Initial stab - all keys
+  [261.63, 329.63, 392, 523.25].forEach(f => playNote(f, t, 0.3, 'square', 0.1));
+  for (let i = 0; i < 13; i++) lightKey(i, 0, 0.25);
+  // Descending chromatic
+  const desc = [523.25, 493.88, 466.16, 440, 415.30, 392];
+  desc.forEach((f, i) => {
+    playNote(f, t + 0.4 + i * 0.12, 0.2, 'sawtooth', 0.1);
+    lightKey(12 - i * 2, 0.4 + i * 0.12, 0.15);
+  });
+  return 1.5;
+}
+
+function playSadTrombone() {
+  // Wah wah wah wahhhh
+  const t = audioCtx.currentTime;
+  const pitches = [293.66, 277.18, 261.63, 246.94]; // D C# C B (descending)
+  const durations = [0.35, 0.35, 0.35, 0.9];
+  let offset = 0;
+  pitches.forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(f, t + offset);
+    // Add slight slide down on last note
+    if (i === 3) {
+      osc.frequency.linearRampToValueAtTime(f * 0.85, t + offset + durations[i]);
+    }
+    g.gain.setValueAtTime(0, t + offset);
+    g.gain.linearRampToValueAtTime(0.18, t + offset + 0.03);
+    g.gain.linearRampToValueAtTime(0.15, t + offset + durations[i] * 0.5);
+    g.gain.linearRampToValueAtTime(0, t + offset + durations[i]);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(t + offset);
+    osc.stop(t + offset + durations[i]);
+    lightKey(8 - i * 2, offset, durations[i] * 0.8);
+    offset += durations[i];
+  });
+  return 2.0;
+}
+
+function playFanfare() {
+  // Triumphant fanfare - like a game show win
+  const t = audioCtx.currentTime;
+  const melody = [
+    [392, 0.15], [392, 0.15], [392, 0.15], [523.25, 0.5],
+    [440, 0.15], [493.88, 0.15], [523.25, 0.8]
+  ];
+  let offset = 0;
+  melody.forEach(([f, d], i) => {
+    playNote(f, t + offset, d, 'triangle', 0.15);
+    playNote(f / 2, t + offset, d, 'triangle', 0.06);
+    lightKey(Math.min(i * 2, 12), offset, d * 0.8);
+    offset += d;
+  });
+  return 2.2;
+}
+
+function playDramaticReveal() {
+  // Building tension then REVEAL
+  const t = audioCtx.currentTime;
+  // Building rumble
+  for (let i = 0; i < 6; i++) {
+    playNote(130.81 + i * 15, t + i * 0.15, 0.2, 'sawtooth', 0.05 + i * 0.02);
+    lightKey(i * 2, i * 0.15, 0.15);
+  }
+  // Reveal stab
+  setTimeout(() => {
+    const t2 = audioCtx.currentTime;
+    [130.81, 155.56, 185.00, 261.63].forEach(f => {
+      playNote(f, t2, 1.2, 'sawtooth', 0.1, 10);
+    });
+    for (let i = 0; i < 13; i++) lightKey(i, 0, 1.0);
+  }, 1000);
+  return 2.5;
+}
+
+// --- HEURISTIC ENGINE ---
+
+const VERDICTS = {
+  PROBABLY_LYING: {
+    text: 'PROBABLY LYING',
+    detail: 'Those are the words of someone with something to hide.',
+    color: '#ff4444',
+    class: 'lie',
+    play: playLieChord,
+    score: () => 10 + Math.random() * 15
+  },
+  SUSPICIOUS: {
+    text: 'SUSPICIOUS',
+    detail: 'Hedging your bets, are we?',
+    color: '#ffaa00',
+    class: 'suspicious',
+    play: playSuspiciousChord,
+    score: () => 30 + Math.random() * 15
+  },
+  HIDING_SOMETHING: {
+    text: 'HIDING SOMETHING',
+    detail: 'Suspiciously brief. What aren\'t you telling us?',
+    color: '#ff6644',
+    class: 'lie',
+    play: playOminousBass,
+    score: () => 20 + Math.random() * 15
+  },
+  OVERCOMPENSATING: {
+    text: 'OVERCOMPENSATING',
+    detail: 'Nobody who\'s telling the truth needs to SHOUT.',
+    color: '#ff8800',
+    class: 'suspicious',
+    play: playDramaticSting,
+    score: () => 15 + Math.random() * 10
+  },
+  PROBABLY_TRUE: {
+    text: 'PROBABLY TRUE',
+    detail: 'Specifics detected. Liars don\'t usually bring receipts.',
+    color: '#88dd44',
+    class: 'truth',
+    play: playTruthChord,
+    score: () => 75 + Math.random() * 15
+  },
+  TRUE: {
+    text: 'TRUE',
+    detail: 'The piano has spoken. This one checks out.',
+    color: '#44ff44',
+    class: 'truth',
+    play: playFanfare,
+    score: () => 85 + Math.random() * 15
+  },
+  DEFINITELY_LYING: {
+    text: 'DEFINITELY LYING',
+    detail: 'Nobody needs that many words unless they\'re making them up.',
+    color: '#ff2222',
+    class: 'lie',
+    play: playDramaticReveal,
+    score: () => 5 + Math.random() * 10
+  },
+  CLASSIC_EXCUSE: {
+    text: 'CLASSIC EXCUSE',
+    detail: 'This one\'s in the Excuse Hall of Fame.',
+    color: '#aa66ff',
+    class: 'excuse',
+    play: playSadTrombone,
+    score: () => 12 + Math.random() * 13
+  }
+};
+
+function analyze(text) {
+  const lower = text.toLowerCase().trim();
+  const words = lower.split(/\s+/);
+
+  // Classic excuses
+  if (/my dog ate|the dog ate|my cat/.test(lower)) return VERDICTS.CLASSIC_EXCUSE;
+  if (/traffic|was down|wifi|internet|battery died|phone died|alarm didn't/.test(lower)) return VERDICTS.CLASSIC_EXCUSE;
+
+  // ALL CAPS check (more than 60% uppercase letters)
+  const letters = text.replace(/[^a-zA-Z]/g, '');
+  if (letters.length > 3 && (letters.replace(/[^A-Z]/g, '').length / letters.length) > 0.6) return VERDICTS.OVERCOMPENSATING;
+
+  // Very short
+  if (words.length <= 2 && lower.length < 15) return VERDICTS.HIDING_SOMETHING;
+
+  // Liar words
+  if (/definitely|totally|trust me|honestly|i swear|believe me|i promise|no offense|not gonna lie|literally/.test(lower)) return VERDICTS.PROBABLY_LYING;
+
+  // Very long explanation (> 25 words)
+  if (words.length > 25) return VERDICTS.DEFINITELY_LYING;
+
+  // Hedging
+  if (/i think|maybe|probably|sort of|kind of|i guess|might have|could be/.test(lower)) return VERDICTS.SUSPICIOUS;
+
+  // Contains "only" + number → suspicious minimizing
+  if (/only\s+(one|two|three|\d)/.test(lower)) return VERDICTS.PROBABLY_LYING;
+
+  // Love + food/hobby
+  if (/i love\s+(cook|hik|read|music|pizza|coffee|tea|dogs|cats|running|garden|bak)/.test(lower)) return VERDICTS.TRUE;
+  if (/i love/.test(lower)) return VERDICTS.PROBABLY_TRUE;
+
+  // Numbers and specifics
+  if (/\d/.test(lower) || /according to|data shows|research|percent|exactly|specifically|measured/.test(lower)) return VERDICTS.PROBABLY_TRUE;
+
+  // If it mentions being fine, okay, good
+  if (/^i'?m (fine|good|okay|ok|great|alright)\.?$/i.test(lower)) return VERDICTS.HIDING_SOMETHING;
+
+  // Default: slightly suspicious
+  return VERDICTS.SUSPICIOUS;
+}
+
+// --- UI ---
+
+const input = document.getElementById('input');
+const judgeBtn = document.getElementById('judgeBtn');
+const meterFill = document.getElementById('meterFill');
+const meterScore = document.getElementById('meterScore');
+const verdictBox = document.getElementById('verdictBox');
+const verdictText = document.getElementById('verdictText');
+const verdictDetail = document.getElementById('verdictDetail');
+const historySection = document.getElementById('historySection');
+const historyList = document.getElementById('historyList');
+
+function setMeter(score, color) {
+  meterFill.style.width = score + '%';
+  // Color gradient based on score
+  if (score > 70) meterFill.style.background = 'linear-gradient(90deg, #88dd44, #44ff44)';
+  else if (score > 40) meterFill.style.background = 'linear-gradient(90deg, #ffaa00, #ffd93d)';
+  else meterFill.style.background = 'linear-gradient(90deg, #ff2222, #ff6644)';
+
+  meterScore.textContent = Math.round(score) + '%';
+  meterFill.classList.remove('wobble');
+  void meterFill.offsetWidth; // force reflow
+  meterFill.classList.add('wobble');
+}
+
+function showVerdict(v, sentence) {
+  const score = v.score();
+
+  verdictText.textContent = v.text;
+  verdictText.style.color = v.color;
+  verdictDetail.textContent = v.detail;
+
+  verdictBox.classList.remove('active', 'shake');
+  void verdictBox.offsetWidth;
+  if (score < 30) verdictBox.classList.add('shake');
+  else verdictBox.classList.add('active');
+
+  setMeter(score, v.color);
+
+  // Add to history
+  historySection.style.display = 'block';
+  const item = document.createElement('div');
+  item.className = 'history-item ' + v.class;
+  item.style.animation = 'none';
+  item.innerHTML = `
+    <div class="h-sentence">"${sentence.length > 80 ? sentence.slice(0, 80) + '...' : sentence}"</div>
+    <div class="h-verdict" style="color:${v.color}">${v.text}</div>
+    <div class="h-score">Truth Score: ${Math.round(score)}%</div>
+  `;
+  historyList.prepend(item);
+  void item.offsetWidth;
+  item.style.animation = '';
+
+  // Keep max 20 items
+  while (historyList.children.length > 20) historyList.lastChild.remove();
+}
+
+function judge() {
+  if (isPlaying) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  // Resume audio context on user gesture
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  isPlaying = true;
+  judgeBtn.textContent = 'Listening...';
+  judgeBtn.style.opacity = '0.6';
+
+  const verdict = analyze(text);
+  const duration = verdict.play();
+  showVerdict(verdict, text);
+
+  setTimeout(() => {
+    isPlaying = false;
+    judgeBtn.textContent = 'Judge Me';
+    judgeBtn.style.opacity = '1';
+  }, duration * 1000);
+}
+
+judgeBtn.addEventListener('click', judge);
+
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    judge();
+  }
+});
+
+document.querySelectorAll('.example-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Strip surrounding quotes
+    input.value = btn.textContent.replace(/^"|"$/g, '');
+    input.focus();
+    judge();
+  });
+});
+</script>
+</body>
+</html>
