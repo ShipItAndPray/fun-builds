@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dial-Up Oracle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #3a2e28;
+    background-image:
+      radial-gradient(ellipse at 30% 20%, #4a3e35 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, #4a3e35 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    color: #f5e6c8;
+    overflow: hidden;
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.5) 100%);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+    color: #d4a853;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(212,168,83,0.2);
+    margin-bottom: 0.3rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: #a08060;
+    margin-bottom: 1.5rem;
+    letter-spacing: 2px;
+  }
+
+  .phone-body {
+    position: relative;
+    width: 420px;
+    height: 520px;
+    background: linear-gradient(145deg, #2a2420, #1a1512);
+    border-radius: 30px 30px 25px 25px;
+    box-shadow:
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 2px 4px rgba(255,255,255,0.05),
+      inset 0 -2px 4px rgba(0,0,0,0.3),
+      0 0 0 3px #1a1210,
+      0 0 0 6px #3a3028;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 25px;
+  }
+
+  .earpiece {
+    width: 140px;
+    height: 28px;
+    background: linear-gradient(to bottom, #333, #1a1a1a);
+    border-radius: 50%;
+    margin-bottom: 10px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 1px 2px rgba(255,255,255,0.05);
+    position: relative;
+  }
+  .earpiece::after {
+    content: '';
+    position: absolute;
+    top: 6px; left: 20px; right: 20px; bottom: 6px;
+    background: repeating-linear-gradient(90deg, #111 0px, #111 2px, #222 2px, #222 4px);
+    border-radius: 50%;
+  }
+
+  .dial-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin-top: 10px;
+  }
+
+  .dial-plate {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f0e4cc, #d4c8a8);
+    box-shadow:
+      0 4px 15px rgba(0,0,0,0.4),
+      inset 0 2px 6px rgba(255,255,255,0.3),
+      inset 0 -2px 6px rgba(0,0,0,0.15);
+    position: relative;
+  }
+
+  .dial-ring {
+    position: absolute;
+    top: 10px; left: 10px;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #e8dcc0, #c8b898);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.2);
+    transition: transform 0.05s linear;
+  }
+
+  .dial-ring.returning {
+    transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  .dial-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #e0d4b8, #c0b498);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 3px rgba(255,255,255,0.3);
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    color: #666;
+    text-align: center;
+    letter-spacing: 1px;
+    line-height: 1.3;
+  }
+
+  .hole {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 40%, #3a3028, #1a1210);
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.6), 0 1px 2px rgba(255,255,255,0.1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    z-index: 3;
+  }
+
+  .hole:hover {
+    background: radial-gradient(circle at 40% 40%, #4a4038, #2a2220);
+  }
+
+  .hole-number {
+    position: absolute;
+    font-size: 0.75rem;
+    color: #5a4a38;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .finger-stop {
+    position: absolute;
+    width: 8px;
+    height: 30px;
+    background: linear-gradient(to bottom, #888, #555);
+    border-radius: 4px;
+    top: 15px;
+    right: 52px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 6;
+  }
+
+  .category-display {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    color: #d4a853;
+    height: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  .response-area {
+    position: relative;
+    width: 420px;
+    margin-top: 20px;
+    min-height: 120px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid #4a3e30;
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #e8d8b0;
+    text-shadow: 0 0 8px rgba(232,216,176,0.15);
+  }
+
+  .response-area::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 1px, rgba(0,0,0,0.03) 1px, rgba(0,0,0,0.03) 2px);
+    pointer-events: none;
+    border-radius: 8px;
+  }
+
+  #response-text {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 8px;
+    height: 1em;
+    background: #d4a853;
+    animation: blink 0.7s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .status-line {
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #706050;
+    letter-spacing: 1px;
+    height: 1rem;
+  }
+
+  .hangup-btn {
+    margin-top: 15px;
+    padding: 10px 30px;
+    background: linear-gradient(145deg, #8b2020, #5a1515);
+    color: #f0d0b0;
+    border: 2px solid #6a2020;
+    border-radius: 8px;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 2px rgba(255,255,255,0.1);
+    transition: all 0.15s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .hangup-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .hangup-btn:hover {
+    background: linear-gradient(145deg, #a02828, #6a1a1a);
+    transform: translateY(-1px);
+  }
+
+  .hangup-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .phone-cord {
+    margin-top: 10px;
+    width: 20px;
+    height: 80px;
+    position: relative;
+  }
+
+  .phone-cord svg {
+    width: 20px;
+    height: 80px;
+  }
+
+  .idle-indicator {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2a5a2a;
+    box-shadow: 0 0 6px rgba(42,90,42,0.5);
+    transition: all 0.3s;
+  }
+
+  .idle-indicator.active {
+    background: #4a9a4a;
+    box-shadow: 0 0 12px rgba(74,154,74,0.8);
+    animation: pulse-glow 1.5s ease-in-out infinite;
+  }
+
+  .idle-indicator.ringing {
+    background: #d4a853;
+    box-shadow: 0 0 12px rgba(212,168,83,0.8);
+    animation: pulse-glow 0.3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  .sound-toggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #4a3e30;
+    border-radius: 5px;
+    color: #a08060;
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    z-index: 200;
+    letter-spacing: 1px;
+  }
+
+  .sound-toggle:hover { color: #d4a853; border-color: #6a5e40; }
+
+  .start-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(30,24,20,0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    cursor: pointer;
+  }
+
+  .start-overlay h2 {
+    font-size: 2rem;
+    color: #d4a853;
+    margin-bottom: 1rem;
+    letter-spacing: 3px;
+  }
+
+  .start-overlay p {
+    color: #a08060;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+  }
+
+  .start-overlay .tap-text {
+    margin-top: 2rem;
+    color: #706050;
+    font-size: 0.75rem;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="start-overlay" id="start-overlay">
+  <h2>Dial-Up Oracle</h2>
+  <p>Pick up the receiver. Dial a number. Hear your fortune.</p>
+  <p class="tap-text">[ click anywhere to pick up ]</p>
+</div>
+
+<button class="sound-toggle" id="sound-toggle">SOUND: ON</button>
+
+<h1>Dial-Up Oracle</h1>
+<div class="subtitle">EST. 1947 &mdash; MYSTIC TELEPHONE EXCHANGE</div>
+
+<div class="phone-body">
+  <div class="idle-indicator" id="indicator"></div>
+  <div class="earpiece"></div>
+
+  <div class="dial-container">
+    <div class="dial-plate">
+      <div class="finger-stop"></div>
+      <div class="dial-ring" id="dial-ring">
+        <div class="dial-center">DIAL-UP<br>ORACLE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="category-display" id="category-display"></div>
+</div>
+
+<div class="response-area" id="response-area">
+  <span id="response-text"></span>
+</div>
+
+<div class="status-line" id="status-line">LIFT RECEIVER &mdash; DIAL A NUMBER</div>
+
+<button class="hangup-btn" id="hangup-btn">Hang Up</button>
+
+<div class="phone-cord">
+  <svg viewBox="0 0 20 80">
+    <path d="M10 0 Q2 10 10 20 Q18 30 10 40 Q2 50 10 60 Q18 70 10 80" fill="none" stroke="#2a2420" stroke-width="4" stroke-linecap="round"/>
+    <path d="M10 0 Q2 10 10 20 Q18 30 10 40 Q2 50 10 60 Q18 70 10 80" fill="none" stroke="#3a3428" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<script>
+const RESPONSES = {
+  1: { name: "Weather Fortune", items: [
+    "Tomorrow brings clouds of opportunity... and actual clouds. Bring an umbrella for both.",
+    "A warm front of good luck approaches from the southwest. Expect scattered compliments by noon.",
+    "Foggy conditions ahead. You won't see the good thing coming, but it's coming.",
+    "High pressure system of confidence building. Chance of spontaneous dancing: forty percent.",
+    "Partly cloudy with a chance of finding twenty dollars in your coat pocket.",
+    "A cold snap of reality followed by a heat wave of denial. Dress in layers.",
+    "Wind advisory: strong gusts of unsolicited advice expected from relatives.",
+    "Barometric pressure dropping. Your joints know something the weatherman doesn't.",
+    "Tropical depression forming in your budget. Seek shelter in frugality.",
+    "Overnight frost warning for your ex's heart. Bundle up emotionally.",
+    "Rainbow guaranteed tomorrow. Location: directly above wherever you aren't looking.",
+    "Humidity at one hundred percent. Your hair has its own plans today. Surrender.",
+    "Solar flare expected. Your phone will work fine but blame it anyway.",
+    "Tidal surge of motivation arriving at 9 AM. Receding by 9:07 AM.",
+    "Atmospheric conditions perfect for blaming everything on Mercury retrograde.",
+    "Snow expected in places that never get snow. Check your latitude and your attitude."
+  ]},
+  2: { name: "Horoscope", items: [
+    "The stars say you're thinking about something. They won't say what. They're stars, not detectives.",
+    "A planet is doing something in a house. This means you should eat lunch today.",
+    "Your rising sign conflicts with your setting sign. You are both coming and going.",
+    "Mercury is in retrograde. Or maybe it isn't. Either way, don't text your ex.",
+    "The moon is waxing. This is a great time to also wax something. A floor, perhaps.",
+    "Venus aligns with your impulses. Expect purchases disguised as self-care.",
+    "Saturn returns, again. Saturn never really left. Saturn is always watching.",
+    "Neptune fog clouds your judgment. This is astrology's way of saying 'not my fault.'",
+    "Jupiter expands your waistline this month. The planets have spoken.",
+    "Your chart shows a grand trine. This is good. I don't know why. None of us do.",
+    "Pluto may not be a planet, but it's definitely judging your life choices.",
+    "The cosmos align to tell you: that thing you're worrying about? Worry harder.",
+    "Today your aura is beige. Seek more interesting experiences.",
+    "Mars enters your house of snacks. Resistance is futile. Eat the chips.",
+    "An eclipse approaches. Things will get dark. Then they'll get light again. Profound.",
+    "Your zodiac animal is confused by your recent decisions. Even it needs a minute."
+  ]},
+  3: { name: "Dad Jokes", items: [
+    "I told my wife she was drawing her eyebrows too high. She looked surprised.",
+    "What do you call a fake noodle? An impasta.",
+    "I'm reading a book about anti-gravity. It's impossible to put down.",
+    "Why don't scientists trust atoms? Because they make up everything.",
+    "I used to hate facial hair, but then it grew on me.",
+    "What did the ocean say to the beach? Nothing, it just waved.",
+    "I'm on a seafood diet. I see food and I eat it.",
+    "Why did the scarecrow win an award? He was outstanding in his field.",
+    "I told a chemistry joke. There was no reaction.",
+    "What do you call a bear with no teeth? A gummy bear.",
+    "I wouldn't buy anything with velcro. It's a total rip-off.",
+    "Did you hear about the claustrophobic astronaut? He just needed more space.",
+    "Why don't eggs tell jokes? They'd crack each other up.",
+    "I used to play piano by ear. Now I use my hands.",
+    "What's the best thing about Switzerland? I don't know, but the flag is a big plus.",
+    "I got fired from the calendar factory. All I did was take a day off."
+  ]},
+  4: { name: "Life Advice", items: [
+    "Listen. The thing you've been putting off? It takes twenty minutes. Go do it. You'll feel like a god.",
+    "Nobody is thinking about your embarrassing moment. They're too busy replaying their own.",
+    "Drink water. Right now. Your body is basically a houseplant with anxiety.",
+    "The version of you that scares you the most is probably the one you should become.",
+    "Stop waiting for the right moment. The right moment is a myth invented by procrastination.",
+    "Be kind to yourself like you'd be kind to a friend. You wouldn't roast a friend this hard.",
+    "Sleep is not a luxury. It's a weapon. The most dangerous people are well-rested.",
+    "You don't have to attend every argument you're invited to. RSVP 'no' more often.",
+    "The secret to confidence: nobody knows what they're doing either. Everyone's improvising.",
+    "Call someone who loves you. Not to talk about problems. Just to say hello.",
+    "Your comfort zone is a beautiful place, but nothing ever grows there. Step out.",
+    "Comparison is theft. It steals your joy and gives you nothing in return.",
+    "Learn to sit with discomfort. The inability to do so is the source of most bad decisions.",
+    "Forgiveness isn't about them. It's about freeing up your mental space for better things.",
+    "The hard conversation you're avoiding? It's growing teeth. Have it now while it's still small.",
+    "You're not behind. There is no schedule. Flowers bloom at different times and they're all beautiful."
+  ]},
+  5: { name: "Compliments", items: [
+    "You are the human equivalent of a perfectly toasted marshmallow. Golden. Magnificent. Irresistible.",
+    "If charisma were electricity, you could power a small European country.",
+    "Your smile has been classified as a natural wonder by three separate geography textbooks.",
+    "When you walk into a room, the room gets better. The room knows it. We all know it.",
+    "You're the reason someone invented the word 'magnificent' and then said 'no, not enough.'",
+    "Your DNA should be in a museum labeled 'Peak Human Achievement.'",
+    "Even your bad hair days would win awards in most countries.",
+    "You radiate the energy of a thousand golden retrievers discovering a tennis ball factory.",
+    "If kindness were a sport, you'd be banned for doping. That's how good you are at it.",
+    "Angels don't exist, but if they did, they'd ask you for tips on being radiant.",
+    "You're the kind of person WiFi signals get stronger around, out of respect.",
+    "Scientists want to study you because your awesomeness defies known physics.",
+    "Your potential is so vast that maps can't contain it. They've tried.",
+    "If you were a spice, you'd be the entire spice rack. All of it. At once.",
+    "The sun rises every morning just to see what you'll do next.",
+    "You are proof that the universe occasionally gets things absolutely, perfectly right."
+  ]},
+  6: { name: "Shakespearean Roasts", items: [
+    "Thou art a boil, a plague sore, an embossed carbuncle in my corrupted blood. But in a fun way.",
+    "Thine face is not worth sunburning, and thy wit would not fill a thimble.",
+    "Thou hast no more brain than a stone, and considerably less charm.",
+    "Methinks thou art a general offence and every man should beat thee.",
+    "Thou art as loathsome as a toad, and twice as warty in conversation.",
+    "More of your conversation would infect my brain. Pray, speak less.",
+    "Thou art like a toad, ugly and venomous, yet wearing a jaunty little hat.",
+    "I do desire we may be better strangers. Permanently. Starting now.",
+    "Thy tongue outvenoms all the worms of Nile. Seek a breath mint, villain.",
+    "Thou art the son and heir of a mongrel dog. A well-dressed mongrel, I'll grant.",
+    "Your brain is as dry as the remainder biscuit after a voyage. Stale and forgotten.",
+    "Thou hast the face of a freshly slapped fish and the grace to match.",
+    "Were I like thee, I'd throw away myself. Then retrieve myself. Then throw again, harder.",
+    "The tartness of thy face sours ripe grapes. Winemakers weep at thy approach.",
+    "Thou art a flesh-monger, a fool, and a coward. But enough about thy good qualities.",
+    "I scorn thee and thy fashion, peevish boy. Though thy hat is admittedly excellent."
+  ]},
+  7: { name: "Absurd Conspiracies", items: [
+    "Pigeons are government drones. That's why they never blink. Look it up. I'll wait.",
+    "The moon is just the back of the sun. They take turns. Nobody's checked. Think about it.",
+    "WiFi is actually powered by hamsters in a secret facility beneath every coffee shop.",
+    "Squirrels are gathering nuts to build a tiny civilization. They're further along than you think.",
+    "Clouds are just sky sheep. The government doesn't want you to know about atmospheric agriculture.",
+    "Your left sock disappears in the dryer because there's a portal to the Sock Dimension.",
+    "Cats can actually talk. They just find our conversations boring and choose not to participate.",
+    "Elevator music is a mind control frequency. That's why you feel calm AND suspicious.",
+    "Gravity doesn't exist. The earth just sucks. Literally. It's a giant vacuum.",
+    "Fish are actually aliens who landed in the ocean and thought 'this is fine.'",
+    "The alphabet is in that order because of a bet between two monks in 1247.",
+    "Every GPS 'recalculating' is the satellite AI sighing at your choices.",
+    "Deja vu is when they update the simulation and forget to clear your cache.",
+    "Trees are just really committed mushrooms wearing elaborate costumes.",
+    "The Bermuda Triangle is just the ocean's spam folder.",
+    "Sleep is just your body's way of checking for software updates from the mothership."
+  ]},
+  8: { name: "Fortune Cookie Wisdom", items: [
+    "A closed mouth gathers no foot. An open mouth gathers too many. Find the middle.",
+    "The best time to plant a tree was twenty years ago. The second best time is after lunch.",
+    "You will find what you seek, but first you must stop looking in the fridge.",
+    "A journey of a thousand miles begins with forgetting your phone charger.",
+    "Patience is a virtue. But so is knowing when to absolutely lose your patience.",
+    "The wise man speaks because he has something to say. You speak because you have to say something.",
+    "He who laughs last didn't get the joke but is a good sport about it.",
+    "A bird in the hand is worth two in the bush, but that's a weird way to hold a bird.",
+    "Fall seven times, stand up eight. On the ninth, maybe check the floor for obstacles.",
+    "The bamboo that bends is stronger than the oak that resists. Be bendy.",
+    "Your lucky numbers are four, eight, fifteen, sixteen, twenty-three, forty-two. Do NOT use them on a mysterious island.",
+    "Opportunity knocks once. Delivery drivers knock and leave the package in the rain.",
+    "The obstacle is the way. Which is confusing signage, honestly.",
+    "Still water runs deep. Sparkling water runs expensive.",
+    "To know the road ahead, ask those coming back. They look exhausted. Pack snacks.",
+    "In the middle of difficulty lies opportunity. Also in the middle of 'therapist.'"
+  ]},
+  9: { name: "Movie Plots, Badly", items: [
+    "A man falls asleep on a plane and keeps falling asleep on more planes. Inception.",
+    "A teenager's mom tries to make out with him after a car sends him back in time.",
+    "A group of short people walk across New Zealand to return jewelry. It takes twelve hours.",
+    "A fish gets kidnapped and his disabled dad crosses the ocean to find him.",
+    "A rat gaslights a chef into letting him cook. The restaurant gets five stars.",
+    "An old man ties balloons to his house to avoid going to a nursing home.",
+    "Two people argue on a sinking ship about whether a door can fit two people. It can.",
+    "A toy cowboy gets jealous when a spaceman moves in. It's a whole thing.",
+    "A woman talks to a volleyball for emotional support. Wait, that's the man. Never mind.",
+    "A teenager skips school for a day and his friend has a breakdown. The car dies.",
+    "Robots make trash towers while humanity floats around getting fat. Surprisingly accurate.",
+    "A billionaire dresses as a bat to work out his daddy issues by punching clowns.",
+    "A woman joins a fight club but the first rule is I can't tell you about it.",
+    "Wizards go to boarding school and the principal keeps almost getting everyone killed.",
+    "A man's wife and all but one of his children are lost and the surviving child is disabled. It's a cartoon about fish.",
+    "A girl moves to a new town where it rains constantly and her boyfriend tries to eat her."
+  ]},
+  0: { name: "The Operator", items: [
+    "All our mystics are currently busy serving other dimensions. Your call is important to us.",
+    "You have reached the Void. The Void is on lunch break. Please try the Abyss.",
+    "Welcome to the Mystic Hotline. For past lives, press 1. For future regrets, press 2. For present confusion, you're already here.",
+    "The oracle you have dialed is no longer in service. The universe has been disconnected.",
+    "Please hold. Your destiny is important to us. Estimated wait time: the rest of your life.",
+    "This is the operator. I don't know why you're calling me. I don't know anything. Nobody does.",
+    "All circuits to the afterlife are busy. Please try again later.",
+    "Your call has been forwarded to the Department of Cosmic Indifference. Nobody is available. Nobody cares.",
+    "Thank you for calling the Oracle. We are experiencing higher than normal call volumes due to Mercury retrograde.",
+    "For quality and training purposes, this call may be monitored by ancient spirits.",
+    "Press 0 again if you'd like to speak to a supervisor. There is no supervisor. There never was.",
+    "The number you have dialed is imaginary. Please rotate your phone ninety degrees and try again.",
+    "We're sorry, but fate is currently being recalculated. Please check back after the next eclipse.",
+    "Your karma balance is: insufficient. Please perform a good deed and dial again.",
+    "This line is reserved for emergencies. Existential crises count. How can I help?",
+    "You've reached the Oracle's voicemail. Leave a question after the tone. BEEEEP. Just kidding, I can't hear you."
+  ]}
+};
+
+let audioCtx = null;
+let dialToneOsc = null;
+let dialToneGain = null;
+let soundEnabled = true;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function startDialTone() {
+  if (!soundEnabled || !audioCtx) return;
+  stopDialTone();
+  dialToneOsc = audioCtx.createOscillator();
+  dialToneGain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  dialToneOsc.type = 'sine';
+  dialToneOsc.frequency.value = 350;
+  const osc2 = audioCtx.createOscillator();
+  osc2.type = 'sine';
+  osc2.frequency.value = 440;
+  filter.type = 'lowpass';
+  filter.frequency.value = 600;
+  dialToneGain.gain.value = 0.04;
+  dialToneOsc.connect(filter);
+  osc2.connect(filter);
+  filter.connect(dialToneGain);
+  dialToneGain.connect(audioCtx.destination);
+  dialToneOsc.start();
+  osc2.start();
+  dialToneOsc._partner = osc2;
+}
+
+function stopDialTone() {
+  if (dialToneOsc) {
+    try { dialToneOsc.stop(); dialToneOsc._partner && dialToneOsc._partner.stop(); } catch(e) {}
+    dialToneOsc = null;
+  }
+}
+
+function playClickSound() {
+  if (!soundEnabled || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  osc.type = 'square';
+  osc.frequency.value = 800 + Math.random() * 400;
+  filter.type = 'bandpass';
+  filter.frequency.value = 1200;
+  filter.Q.value = 5;
+  gain.gain.value = 0.15;
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.04);
+}
+
+function playRingSound() {
+  return new Promise(resolve => {
+    if (!soundEnabled || !audioCtx) { setTimeout(resolve, 1500); return; }
+    function ring(time) {
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
+      osc1.type = 'sine'; osc1.frequency.value = 440;
+      osc2.type = 'sine'; osc2.frequency.value = 480;
+      filter.type = 'bandpass'; filter.frequency.value = 460; filter.Q.value = 2;
+      gain.gain.value = 0;
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(0.12, time + 0.05);
+      gain.gain.setValueAtTime(0.12, time + 0.4);
+      gain.gain.linearRampToValueAtTime(0, time + 0.45);
+      osc1.connect(filter); osc2.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+      osc1.start(time); osc1.stop(time + 0.5);
+      osc2.start(time); osc2.stop(time + 0.5);
+    }
+    const now = audioCtx.currentTime;
+    ring(now); ring(now + 0.5); ring(now + 1.5); ring(now + 2.0);
+    setTimeout(resolve, 2800);
+  });
+}
+
+function playConnectionClick() {
+  return new Promise(resolve => {
+    if (!soundEnabled || !audioCtx) { setTimeout(resolve, 400); return; }
+    const bufferSize = audioCtx.sampleRate * 0.15;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / audioCtx.sampleRate;
+      if (t < 0.005) data[i] = (Math.random() * 2 - 1) * 0.5;
+      else if (t < 0.03) data[i] = (Math.random() * 2 - 1) * 0.15 * Math.exp(-t * 50);
+      else data[i] = (Math.random() * 2 - 1) * 0.02 * Math.exp(-(t - 0.03) * 10);
+    }
+    const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    source.buffer = buffer;
+    filter.type = 'bandpass'; filter.frequency.value = 1500; filter.Q.value = 0.5;
+    gain.gain.value = 0.6;
+    source.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+    source.start();
+    setTimeout(resolve, 400);
+  });
+}
+
+function playCrackle(duration) {
+  if (!soundEnabled || !audioCtx) return null;
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.008;
+    if (Math.random() < 0.001) data[i] += (Math.random() * 2 - 1) * 0.05;
+  }
+  const source = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  source.buffer = buffer; source.loop = true;
+  filter.type = 'bandpass'; filter.frequency.value = 2000; filter.Q.value = 0.3;
+  gain.gain.value = 0.4;
+  source.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  source.start();
+  return { source, gain };
+}
+
+function playHangupSound() {
+  if (!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.value = 480;
+    gain.gain.value = 0;
+    gain.gain.setValueAtTime(0, now + i * 0.3);
+    gain.gain.linearRampToValueAtTime(0.08, now + i * 0.3 + 0.02);
+    gain.gain.setValueAtTime(0.08, now + i * 0.3 + 0.15);
+    gain.gain.linearRampToValueAtTime(0, now + i * 0.3 + 0.17);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.3); osc.stop(now + i * 0.3 + 0.2);
+  }
+}
+
+function speakText(text) {
+  if (!soundEnabled) return Promise.resolve();
+  return new Promise(resolve => {
+    if (!('speechSynthesis' in window)) { resolve(); return; }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.85; utter.pitch = 0.8; utter.volume = 0.8;
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => /alex|daniel|tom|fred/i.test(v.name));
+    if (preferred) utter.voice = preferred;
+    utter.onend = resolve; utter.onerror = resolve;
+    window.speechSynthesis.speak(utter);
+  });
+}
+
+const dialRing = document.getElementById('dial-ring');
+const responseText = document.getElementById('response-text');
+const responseArea = document.getElementById('response-area');
+const categoryDisplay = document.getElementById('category-display');
+const statusLine = document.getElementById('status-line');
+const hangupBtn = document.getElementById('hangup-btn');
+const indicator = document.getElementById('indicator');
+const startOverlay = document.getElementById('start-overlay');
+const soundToggle = document.getElementById('sound-toggle');
+
+const numberAngles = { 1: -60, 2: -90, 3: -120, 4: -150, 5: -180, 6: -210, 7: -240, 8: -270, 9: -300, 0: -330 };
+const holeRadius = 110;
+const labelRadius = 85;
+
+Object.entries(numberAngles).forEach(([num, angle]) => {
+  const rad = angle * Math.PI / 180;
+  const hole = document.createElement('div');
+  hole.className = 'hole';
+  hole.dataset.number = num;
+  hole.style.left = (140 + holeRadius * Math.cos(rad) - 20) + 'px';
+  hole.style.top = (140 + holeRadius * Math.sin(rad) - 20) + 'px';
+  dialRing.appendChild(hole);
+
+  const label = document.createElement('div');
+  label.className = 'hole-number';
+  label.textContent = num;
+  label.style.left = (140 + labelRadius * Math.cos(rad) - 5) + 'px';
+  label.style.top = (140 + labelRadius * Math.sin(rad) - 8) + 'px';
+  dialRing.appendChild(label);
+});
+
+let isDialing = false;
+let currentCrackle = null;
+
+dialRing.addEventListener('click', (e) => {
+  if (isDialing) return;
+  const hole = e.target.closest('.hole');
+  if (!hole) return;
+  dialNumber(parseInt(hole.dataset.number));
+});
+
+async function dialNumber(num) {
+  isDialing = true;
+  stopDialTone();
+  const clicks = num === 0 ? 10 : num;
+  const rotationAngle = clicks * 30;
+
+  statusLine.textContent = 'DIALING...';
+  categoryDisplay.textContent = '';
+  responseText.innerHTML = '';
+
+  dialRing.classList.remove('returning');
+  dialRing.style.transform = 'rotate(' + rotationAngle + 'deg)';
+
+  for (let i = 0; i < clicks; i++) {
+    await new Promise(r => setTimeout(r, 60));
+    playClickSound();
+  }
+  await new Promise(r => setTimeout(r, 200));
+
+  dialRing.classList.add('returning');
+  dialRing.style.transform = 'rotate(0deg)';
+  const returnDuration = 800;
+  const clickInterval = returnDuration / clicks;
+  for (let i = 0; i < clicks; i++) {
+    setTimeout(() => playClickSound(), i * clickInterval);
+  }
+  await new Promise(r => setTimeout(r, returnDuration + 200));
+  dialRing.classList.remove('returning');
+
+  const cat = RESPONSES[num];
+  categoryDisplay.textContent = '[ ' + cat.name + ' ]';
+  statusLine.textContent = 'RINGING...';
+  indicator.className = 'idle-indicator ringing';
+
+  await playRingSound();
+
+  statusLine.textContent = 'CONNECTED';
+  indicator.className = 'idle-indicator active';
+  await playConnectionClick();
+
+  currentCrackle = playCrackle(10);
+
+  const response = cat.items[Math.floor(Math.random() * cat.items.length)];
+  hangupBtn.classList.add('visible');
+
+  await typewriterEffect(response);
+  await speakText(response);
+
+  statusLine.innerHTML = 'LINE OPEN &mdash; HANG UP WHEN DONE';
+}
+
+async function typewriterEffect(text) {
+  responseText.innerHTML = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor-blink';
+  responseText.appendChild(cursor);
+  for (let i = 0; i < text.length; i++) {
+    const span = document.createElement('span');
+    span.textContent = text[i];
+    responseText.insertBefore(span, cursor);
+    responseArea.scrollTop = responseArea.scrollHeight;
+    let delay = 35;
+    if ('.!?'.includes(text[i])) delay = 200;
+    else if (text[i] === ',') delay = 100;
+    else if (text[i] === ' ') delay = 20;
+    await new Promise(r => setTimeout(r, delay));
+  }
+}
+
+hangupBtn.addEventListener('click', hangUp);
+
+function hangUp() {
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  if (currentCrackle) {
+    try { currentCrackle.source.stop(); } catch(e) {}
+    currentCrackle = null;
+  }
+  playHangupSound();
+  isDialing = false;
+  hangupBtn.classList.remove('visible');
+  responseText.innerHTML = '';
+  categoryDisplay.textContent = '';
+  statusLine.innerHTML = 'LIFT RECEIVER &mdash; DIAL A NUMBER';
+  indicator.className = 'idle-indicator';
+  setTimeout(() => {
+    if (!isDialing) {
+      startDialTone();
+      indicator.className = 'idle-indicator active';
+    }
+  }, 1000);
+}
+
+soundToggle.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  soundToggle.textContent = 'SOUND: ' + (soundEnabled ? 'ON' : 'OFF');
+  if (!soundEnabled) {
+    stopDialTone();
+    window.speechSynthesis && window.speechSynthesis.cancel();
+    if (currentCrackle) { try { currentCrackle.source.stop(); } catch(e) {} currentCrackle = null; }
+  } else if (!isDialing) {
+    startDialTone();
+  }
+});
+
+startOverlay.addEventListener('click', () => {
+  startOverlay.style.opacity = '0';
+  startOverlay.style.transition = 'opacity 0.5s';
+  setTimeout(() => { startOverlay.style.display = 'none'; }, 500);
+  initAudio();
+  if ('speechSynthesis' in window) window.speechSynthesis.getVoices();
+  startDialTone();
+  indicator.className = 'idle-indicator active';
+  statusLine.innerHTML = 'DIAL TONE &mdash; DIAL A NUMBER';
+});
+</script>
+</body>
+</html>
