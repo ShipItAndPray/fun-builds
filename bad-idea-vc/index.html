@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bad Idea VC</title>
+<meta name="description" content="Pitch an awful startup and get a dead-serious VC memo, valuation, moat, and investor verdict.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  :root {
+    --bg: #08111b;
+    --panel: rgba(15, 24, 37, 0.9);
+    --panel-strong: #101b2a;
+    --line: rgba(145, 169, 199, 0.16);
+    --ink: #f4f8ff;
+    --muted: #91a5c1;
+    --accent: #7c3aed;
+    --accent-2: #14b8a6;
+    --warm: #f97316;
+    --danger: #ef4444;
+    --success: #10b981;
+    --shadow: 0 28px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 12% 18%, rgba(124, 58, 237, 0.22), transparent 22%),
+      radial-gradient(circle at 84% 16%, rgba(20, 184, 166, 0.16), transparent 24%),
+      radial-gradient(circle at 50% 100%, rgba(249, 115, 22, 0.14), transparent 30%),
+      linear-gradient(180deg, #09121d 0%, #050b13 100%);
+    min-height: 100vh;
+  }
+
+  .shell {
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 28px 0 48px;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .back {
+    color: var(--muted);
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  .back:hover { color: var(--ink); }
+
+  .hero, .composer, .memo, .examples {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero {
+    padding: 30px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: auto -80px -120px auto;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.26), transparent 68%);
+    pointer-events: none;
+  }
+
+  .eyebrow {
+    margin: 0 0 10px;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-2);
+    font-weight: 800;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(42px, 7vw, 78px);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+
+  .sub {
+    margin: 14px 0 0;
+    max-width: 760px;
+    color: var(--muted);
+    font-size: 18px;
+    line-height: 1.65;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 18px;
+    margin-top: 18px;
+  }
+
+  .composer {
+    padding: 24px;
+  }
+
+  .composer h2, .memo h2, .examples h2 {
+    margin: 0 0 14px;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+
+  label {
+    display: block;
+    margin-top: 14px;
+  }
+
+  .label {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  input[type="text"], textarea, select {
+    width: 100%;
+    border: 1px solid rgba(145, 169, 199, 0.18);
+    background: rgba(5, 11, 19, 0.74);
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font: inherit;
+    outline: none;
+  }
+
+  textarea {
+    min-height: 140px;
+    resize: vertical;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+
+  .slider-note {
+    margin-top: 6px;
+    color: #7388a7;
+    font-size: 13px;
+  }
+
+  .slider-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+    margin-top: 10px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    border: none;
+    border-radius: 16px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    padding: 14px 18px;
+    transition: transform 0.18s ease, filter 0.18s ease;
+  }
+
+  button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
+  .primary {
+    background: linear-gradient(135deg, var(--accent), #5b21b6);
+    color: white;
+    flex: 1;
+  }
+
+  .secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--ink);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .memo {
+    padding: 24px;
+  }
+
+  .memo-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border: 1px solid rgba(145, 169, 199, 0.16);
+    border-radius: 22px;
+    padding: 22px;
+  }
+
+  .memo-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: start;
+    margin-bottom: 18px;
+  }
+
+  .firm {
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--accent-2);
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .deal-name {
+    margin: 8px 0 0;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+  }
+
+  .verdict {
+    padding: 10px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+  }
+
+  .verdict.buy {
+    background: rgba(16, 185, 129, 0.16);
+    color: #6ee7b7;
+  }
+
+  .verdict.pass {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fda4af;
+  }
+
+  .verdict.maybe {
+    background: rgba(249, 115, 22, 0.14);
+    color: #fdba74;
+  }
+
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .metric {
+    border-radius: 16px;
+    padding: 14px;
+    background: rgba(5, 11, 19, 0.58);
+    border: 1px solid rgba(145, 169, 199, 0.12);
+  }
+
+  .metric .k {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .metric strong {
+    font-size: 19px;
+    letter-spacing: -0.03em;
+  }
+
+  .section {
+    margin-top: 18px;
+  }
+
+  .section h3 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+
+  .section p, .section li {
+    color: var(--ink);
+    line-height: 1.65;
+  }
+
+  .section ul {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .examples {
+    margin-top: 18px;
+    padding: 22px 24px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .chip {
+    padding: 12px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(145, 169, 199, 0.16);
+    background: rgba(255,255,255,0.04);
+    color: var(--ink);
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease;
+  }
+
+  .chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(124, 58, 237, 0.48);
+  }
+
+  .footer-note {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 920px) {
+    .grid { grid-template-columns: 1fr; }
+    .scoreboard { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .slider-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 560px) {
+    .shell { width: min(100vw - 20px, 1180px); }
+    .hero, .composer, .memo, .examples { border-radius: 22px; }
+    .hero { padding: 24px 20px; }
+    .composer, .memo, .examples { padding: 18px; }
+    .scoreboard { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topbar">
+      <a class="back" href="../">&larr; Back to Fun Builds</a>
+    </div>
+
+    <section class="hero">
+      <p class="eyebrow">Partner Meeting Simulator</p>
+      <h1>Bad Idea VC</h1>
+      <p class="sub">
+        Pitch your worst startup idea and get a brutally serious investment memo: valuation, moat, TAM, risk, and whether a delusional fund partner would wire the money.
+      </p>
+    </section>
+
+    <section class="grid">
+      <section class="composer">
+        <h2>Pitch Something Questionable</h2>
+
+        <label>
+          <div class="label"><span>Startup name</span><span id="nameLen">0/36</span></div>
+          <input id="startupName" type="text" maxlength="36" placeholder="SnackGPT, Divorce-as-a-Service, B2B Goblin..." />
+        </label>
+
+        <label>
+          <div class="label"><span>Idea</span><span id="ideaLen">0/280</span></div>
+          <textarea id="ideaInput" maxlength="280" placeholder="An app that lets roommates auction chores in real time using surge pricing and AI-generated guilt."></textarea>
+        </label>
+
+        <div class="slider-grid">
+          <label>
+            <div class="label"><span>Absurdity</span><span id="absurdityValue">72</span></div>
+            <input id="absurdity" type="range" min="0" max="100" value="72" />
+            <div class="slider-note">How objectively ridiculous is this?</div>
+          </label>
+
+          <label>
+            <div class="label"><span>Hype potential</span><span id="hypeValue">88</span></div>
+            <input id="hype" type="range" min="0" max="100" value="88" />
+            <div class="slider-note">How likely is it to go viral on launch day?</div>
+          </label>
+
+          <label>
+            <div class="label"><span>AI washing</span><span id="aiValue">91</span></div>
+            <input id="aiLevel" type="range" min="0" max="100" value="91" />
+            <div class="slider-note">How aggressively should we pretend AI changes everything?</div>
+          </label>
+
+          <label>
+            <div class="label"><span>Business model confidence</span><span id="businessValue">41</span></div>
+            <input id="businessModel" type="range" min="0" max="100" value="41" />
+            <div class="slider-note">Can anyone explain how this makes money without sweating?</div>
+          </label>
+        </div>
+
+        <label>
+          <div class="label"><span>Partner archetype</span><span>Choose your judge</span></div>
+          <select id="partnerTone">
+            <option value="peak">Peak bubble partner</option>
+            <option value="operator">Ex-operator trying to sound grounded</option>
+            <option value="crypto">Recovered crypto maximalist</option>
+            <option value="doom">Cold-blooded downturn realist</option>
+          </select>
+        </label>
+
+        <div class="actions">
+          <button class="primary" id="generateBtn">Generate Investment Memo</button>
+          <button class="secondary" id="rerollBtn" type="button">Reroll same pitch</button>
+        </div>
+      </section>
+
+      <section class="memo">
+        <h2>Partner Memo</h2>
+        <div class="memo-card">
+          <div class="memo-top">
+            <div>
+              <div class="firm">North Bluff Ventures</div>
+              <div class="deal-name" id="dealName">Waiting for a bad idea...</div>
+            </div>
+            <div class="verdict maybe" id="verdictPill">Pre-seed maybe</div>
+          </div>
+
+          <div class="scoreboard">
+            <div class="metric"><span class="k">Valuation</span><strong id="valuationOut">$18M</strong></div>
+            <div class="metric"><span class="k">TAM</span><strong id="tamOut">$900B*</strong></div>
+            <div class="metric"><span class="k">Moat score</span><strong id="moatOut">6.1 / 10</strong></div>
+            <div class="metric"><span class="k">Fraud energy</span><strong id="fraudOut">Contained</strong></div>
+          </div>
+
+          <div class="section">
+            <h3>Investment thesis</h3>
+            <p id="thesisOut">Enter a pitch and we will pretend there is a category-defining opportunity buried inside it.</p>
+          </div>
+
+          <div class="section">
+            <h3>What the partner says in the room</h3>
+            <p id="roomOut">No memo yet.</p>
+          </div>
+
+          <div class="section">
+            <h3>Risks we are conveniently ignoring</h3>
+            <ul id="risksOut">
+              <li>No memo yet.</li>
+            </ul>
+          </div>
+
+          <div class="section">
+            <h3>Why this somehow still gets funded</h3>
+            <ul id="fundedOut">
+              <li>No memo yet.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section class="examples">
+      <h2>Instantly bad examples</h2>
+      <div class="chips">
+        <button class="chip" data-name="Roommate Exchange" data-idea="A live market where roommates bid on chores using surge pricing, emotional blackmail, and loyalty tiers.">Roommate Exchange</button>
+        <button class="chip" data-name="BreakupOS" data-idea="A copilot that drafts emotionally optimized breakup texts and A/B tests closure quality.">BreakupOS</button>
+        <button class="chip" data-name="LunchChain" data-idea="A blockchain that proves your office salad was ethically sourced and emotionally aligned with your macros.">LunchChain</button>
+        <button class="chip" data-name="GhostGPT" data-idea="An app that answers your unread messages in your tone so you can maintain 14 fake social lives at once.">GhostGPT</button>
+        <button class="chip" data-name="Funeral-as-a-Service" data-idea="A SaaS dashboard for planning themed funerals with CRM follow-ups, grief analytics, and enterprise SLAs.">Funeral-as-a-Service</button>
+      </div>
+      <p class="footer-note">
+        No APIs. No accounts. No backend. Just deterministic investor theater running in your browser.
+      </p>
+    </section>
+  </main>
+
+<script>
+const nameInput = document.getElementById('startupName');
+const ideaInput = document.getElementById('ideaInput');
+const partnerTone = document.getElementById('partnerTone');
+
+const sliderIds = [
+  ['absurdity', 'absurdityValue'],
+  ['hype', 'hypeValue'],
+  ['aiLevel', 'aiValue'],
+  ['businessModel', 'businessValue'],
+];
+
+const partnerProfiles = {
+  peak: {
+    opening: ['This is either completely insane or a new category.', 'The deck is absurd, which is why it might work.', 'I hate that this feels investable.'],
+    style: 'We should invest before anyone asks a follow-up question.',
+    riskBias: ['regulatory confusion', 'founder delusion', 'zero retention proof', 'too much consumer internet energy'],
+  },
+  operator: {
+    opening: ['I understand the workflow pain, unfortunately.', 'There is a real wedge here if we ignore the optics.', 'This is embarrassing but operationally sticky.'],
+    style: 'The founder is chaotic, but the user behavior is real.',
+    riskBias: ['ugly onboarding', 'support burden', 'margin compression', 'niche market reality'],
+  },
+  crypto: {
+    opening: ['This is post-application-layer absurdity.', 'The meme is the moat.', 'Distribution is the protocol now.'],
+    style: 'If this catches culture before software, we win.',
+    riskBias: ['attention collapse', 'speculative users', 'trust vacuum', 'token temptation'],
+  },
+  doom: {
+    opening: ['In a rational market this dies immediately.', 'I resent that there may be demand for this.', 'This should not exist, which makes it dangerous.'],
+    style: 'We fund uglier things than this every quarter.',
+    riskBias: ['unit economics fantasy', 'copyability', 'feature-not-company disease', 'founder stamina'],
+  }
+};
+
+const tamFragments = [
+  'knowledge workers with weak boundaries',
+  'people who need a tiny excuse to spend money',
+  'users who confuse convenience with identity',
+  'every team currently held together by vibes',
+  'consumers with more anxiety than discipline',
+  'small businesses pretending to be software companies'
+];
+
+const moatFragments = [
+  'behavioral lock-in disguised as utility',
+  'embarrassingly strong word-of-mouth',
+  'workflow gravity once a team adopts it',
+  'shame-driven retention loops',
+  'brand voice that screenshots well',
+  'distribution through social humiliation'
+];
+
+const riskFragments = [
+  'The product may be funniest before it is useful.',
+  'There is a non-zero chance this is just a feature inside a bigger app.',
+  'Customer acquisition might depend entirely on people posting it ironically.',
+  'The founder could accidentally pivot into a compliance problem.',
+  'If this works, copycats will appear before the press cycle ends.',
+  'The business model currently sounds more like a dare than a plan.'
+];
+
+const whyNowFragments = [
+  'AI lowered the cost of shipping unserious software with serious polish.',
+  'People increasingly pay for tools that make them feel seen before they make them productive.',
+  'Software is now cheap enough that niche emotional workflows can support standalone products.',
+  'Virality is becoming a more bankable moat than technical depth at the earliest stage.',
+  'Every absurd consumer behavior now has infrastructure underneath it.'
+];
+
+function sample(list, seed) {
+  const index = Math.abs(Math.floor(seed)) % list.length;
+  return list[index];
+}
+
+function mulberry32(a) {
+  return function() {
+    let t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function hashString(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+    h = h << 13 | h >>> 19;
+  }
+  return () => {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return (h ^= h >>> 16) >>> 0;
+  };
+}
+
+function formatCurrency(value) {
+  if (value >= 1000) return `$${(value / 1000).toFixed(1)}B`;
+  return `$${Math.round(value)}M`;
+}
+
+function listToHtml(id, items) {
+  document.getElementById(id).innerHTML = items.map(item => `<li>${item}</li>`).join('');
+}
+
+function syncLengths() {
+  document.getElementById('nameLen').textContent = `${nameInput.value.length}/36`;
+  document.getElementById('ideaLen').textContent = `${ideaInput.value.length}/280`;
+}
+
+function syncSliders() {
+  for (const [id, out] of sliderIds) {
+    document.getElementById(out).textContent = document.getElementById(id).value;
+  }
+}
+
+function evaluatePitch(salt = 0) {
+  const startup = nameInput.value.trim() || 'Unnamed nonsense';
+  const idea = ideaInput.value.trim() || 'A suspiciously polished product with no clear reason to exist.';
+  const absurdity = Number(document.getElementById('absurdity').value);
+  const hype = Number(document.getElementById('hype').value);
+  const ai = Number(document.getElementById('aiLevel').value);
+  const business = Number(document.getElementById('businessModel').value);
+  const profile = partnerProfiles[partnerTone.value];
+
+  const seedBase = hashString(`${startup}|${idea}|${absurdity}|${hype}|${ai}|${business}|${partnerTone.value}|${salt}`)();
+  const rand = mulberry32(seedBase);
+
+  const valuation = 3 + hype * 0.17 + ai * 0.11 + business * 0.09 + rand() * 8;
+  const tam = 80 + hype * 3.8 + ai * 2.6 + rand() * 240;
+  const moat = Math.max(1.2, Math.min(9.9, (hype * 0.03 + business * 0.04 + ai * 0.018 + rand() * 2.2)));
+
+  const absurdityWord = absurdity > 82 ? 'feral' : absurdity > 62 ? 'unhinged' : absurdity > 45 ? 'aggressive' : 'surprisingly grounded';
+  const AIWord = ai > 84 ? 'AI-native' : ai > 64 ? 'AI-assisted' : ai > 40 ? 'AI-decorated' : 'mostly not AI';
+  const businessWord = business > 78 ? 'deceptively coherent' : business > 52 ? 'half-plausible' : business > 28 ? 'foggy' : 'fictional';
+
+  const rawScore = hype * 0.45 + business * 0.25 + ai * 0.15 - absurdity * 0.08 + rand() * 18;
+  let verdict = 'pass';
+  let verdictLabel = 'Hard pass';
+  if (rawScore > 76) { verdict = 'buy'; verdictLabel = 'Lead the round'; }
+  else if (rawScore > 54) { verdict = 'maybe'; verdictLabel = 'Pre-seed maybe'; }
+
+  const fraudEnergy = ai > 90 && business < 35 ? 'Nuclear' : absurdity > 75 && business < 45 ? 'Elevated' : rawScore > 70 ? 'Contained' : 'Manageable';
+
+  document.getElementById('dealName').textContent = startup;
+  const verdictEl = document.getElementById('verdictPill');
+  verdictEl.textContent = verdictLabel;
+  verdictEl.className = `verdict ${verdict}`;
+  document.getElementById('valuationOut').textContent = formatCurrency(valuation);
+  document.getElementById('tamOut').textContent = `${formatCurrency(tam)}*`;
+  document.getElementById('moatOut').textContent = `${moat.toFixed(1)} / 10`;
+  document.getElementById('fraudOut').textContent = fraudEnergy;
+
+  document.getElementById('thesisOut').textContent =
+    `${sample(profile.opening, rand() * 1000)} ${startup} is a ${absurdityWord}, ${AIWord}, ${businessWord} bet on ${sample(tamFragments, rand() * 1000)}. ` +
+    `The core pitch is simple: ${idea.replace(/\.$/, '')}. If the product lands as performance software instead of just software, there is a real chance users drag distribution in through the front door themselves.`;
+
+  document.getElementById('roomOut').textContent =
+    `${profile.style} I do not believe the slide with the market map, but I do believe someone will post this, try it, and invite five friends because it makes them feel clever. ` +
+    `That alone may be enough to fake initial momentum while the company figures out whether it is a tool, a game, or an accidental category.`;
+
+  listToHtml('risksOut', [
+    sample(riskFragments, rand() * 1000),
+    `The current moat appears to be ${sample(moatFragments, rand() * 1000)}, which is compelling right up until a better-designed copy appears.`,
+    `Our biggest unpriced risk is ${sample(profile.riskBias, rand() * 1000)} dressed up as product vision.`
+  ]);
+
+  listToHtml('fundedOut', [
+    sample(whyNowFragments, rand() * 1000),
+    `The founder can truthfully say the company is ${AIWord}, which unfortunately still opens doors.`,
+    `Even if retention is mediocre, the screenshot-to-signup ratio could be absurdly strong for the first 90 days.`
+  ]);
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => evaluatePitch(0));
+document.getElementById('rerollBtn').addEventListener('click', () => evaluatePitch(Date.now()));
+
+for (const [id] of sliderIds) {
+  document.getElementById(id).addEventListener('input', syncSliders);
+}
+
+nameInput.addEventListener('input', syncLengths);
+ideaInput.addEventListener('input', syncLengths);
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    nameInput.value = chip.dataset.name;
+    ideaInput.value = chip.dataset.idea;
+    syncLengths();
+    evaluatePitch(Date.now());
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+nameInput.value = 'GhostGPT';
+ideaInput.value = 'An app that answers your unread messages in your tone so you can maintain fake intimacy at scale while avoiding every difficult conversation.';
+syncLengths();
+syncSliders();
+evaluatePitch(0);
+</script>
+</body>
+</html>
