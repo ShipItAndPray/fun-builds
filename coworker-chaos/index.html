@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coworker Chaos Chart</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#ff6b6b,#feca57);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:550px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+textarea{width:100%;padding:12px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:1rem;min-height:80px;resize:vertical;font-family:inherit}
+.hint{color:#666;font-size:.85rem;margin:6px 0 12px}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#f093fb,#f5576c);color:#fff;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;transition:transform .15s}
+button:hover{transform:scale(1.02)}
+#chart{margin-top:20px}
+.card{background:#16213e;border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid;animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.card-name{font-weight:700;font-size:1.1rem;margin-bottom:4px}
+.card-type{font-size:.95rem;margin-bottom:6px}
+.card-desc{color:#999;font-size:.85rem;line-height:1.5}
+.card-emoji{font-size:1.5rem;float:right;margin-left:8px}
+.share-btn{margin-top:16px;background:linear-gradient(135deg,#667eea,#764ba2);font-size:.95rem;padding:10px}
+</style>
+</head>
+<body>
+<h1>Coworker Chaos Chart</h1>
+<div class="container">
+<textarea id="names" placeholder="Enter coworker names, one per line...&#10;e.g.&#10;Sarah&#10;Mike&#10;Linda"></textarea>
+<div class="hint">One name per line. We'll reveal their true archetype.</div>
+<button onclick="generate()">Generate Chaos Chart</button>
+<div id="chart"></div>
+</div>
+<script>
+const types=[
+{name:"The Ghost",emoji:"&#128123;",color:"#9b59b6",desc:"Never at their desk. Never on Slack. Possibly doesn't work here anymore. No one's sure."},
+{name:"Reply-All Offender",emoji:"&#128227;",color:"#e74c3c",desc:"Will reply-all to a 200-person thread with 'Thanks!' Has caused at least 3 email storms."},
+{name:"The Lunch Thief",emoji:"&#127828;",color:"#e67e22",desc:"Your clearly labeled yogurt? Gone. Your leftover pasta? Vanished. They show no remorse."},
+{name:"Meeting Marathoner",emoji:"&#128197;",color:"#3498db",desc:"Could have been an email. Could have been a Slack message. But no, it's a 90-minute meeting."},
+{name:"The Overexplainer",emoji:"&#128172;",color:"#1abc9c",desc:"Asked what time the meeting is. Got a 15-minute history of how meetings evolved at the company."},
+{name:"Passive-Aggressive Post-It Artist",emoji:"&#128221;",color:"#f39c12",desc:"'To whoever keeps using my mug: I know who you are.' Spoiler: they don't."},
+{name:"The CC Sniper",emoji:"&#127919;",color:"#c0392b",desc:"CC's your boss on everything. Even lunch plans. Especially lunch plans."},
+{name:"Kitchen Disaster Zone",emoji:"&#128165;",color:"#d35400",desc:"Leaves mugs in the sink like modern art installations. The microwave? A war crime scene."},
+{name:"The Humble Bragger",emoji:"&#128526;",color:"#8e44ad",desc:"'Ugh, my Tesla is in the shop AGAIN. Guess I'll take my other car. Anyway, how's everyone?'"},
+{name:"Calendar Tetris Champion",emoji:"&#128198;",color:"#2980b9",desc:"Their calendar is 98% meetings. They do actual work between 6-8pm. This is fine."},
+{name:"The Slack Poet",emoji:"&#128214;",color:"#16a085",desc:"Sends 47 one-word messages instead of one paragraph. Typing... Typing... Still typing..."},
+{name:"Thermostat Warrior",emoji:"&#127777;&#65039;",color:"#2c3e50",desc:"Will fight to the death over 2 degrees. Has a personal space heater AND a desk fan. Simultaneously."},
+{name:"The Volunteer-er",emoji:"&#9996;&#65039;",color:"#27ae60",desc:"'I'll take that on!' *volunteers you without asking* 'WE'll take that on!'"},
+{name:"LinkedIn Influencer Wannabe",emoji:"&#128188;",color:"#7f8c8d",desc:"Posts motivational content about 'the grind' during work hours. Agree?"},
+{name:"The Time Zone Terrorist",emoji:"&#127760;",color:"#e84393",desc:"Schedules meetings at 7am YOUR time because it's 'convenient for the Singapore office.'"},
+{name:"Printer Whisperer",emoji:"&#128424;",color:"#00b894",desc:"Only person who can fix the printer. Holds this power over everyone. Will not share their secrets."},
+{name:"The Snack Dealer",emoji:"&#127851;",color:"#fdcb6e",desc:"Desk is a convenience store. Trades snacks for favors. Controls the office black market."},
+{name:"Background Noise Champion",emoji:"&#127911;",color:"#6c5ce7",desc:"Mechanical keyboard. Speaker phone calls. Clips their nails at their desk. All at once."},
+{name:"The Early Bird Martyr",emoji:"&#9200;",color:"#00cec9",desc:"'I've been here since 5am!' Nobody asked. Nobody cares. They'll tell you again tomorrow."},
+{name:"Drama Meteorologist",emoji:"&#127786;&#65039;",color:"#ff7675",desc:"Always has breaking office gossip. 'Did you HEAR what happened in accounting?' Always."}
+];
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i),h|=0;return Math.abs(h)}
+function generate(){
+const names=document.getElementById('names').value.trim().split('\n').filter(n=>n.trim());
+if(!names.length)return;
+const chart=document.getElementById('chart');
+chart.innerHTML='';
+const used=new Set();
+names.forEach((name,i)=>{
+let idx=hash(name.trim())%types.length;
+while(used.has(idx)&&used.size<types.length)idx=(idx+1)%types.length;
+used.add(idx);
+const t=types[idx];
+const card=document.createElement('div');
+card.className='card';
+card.style.borderColor=t.color;
+card.style.animationDelay=i*0.1+'s';
+card.innerHTML=`<div class="card-emoji">${t.emoji}</div><div class="card-name" style="color:${t.color}">${name.trim()}</div><div class="card-type">${t.name}</div><div class="card-desc">${t.desc}</div>`;
+chart.appendChild(card);
+});
+const btn=document.createElement('button');
+btn.className='share-btn';
+btn.textContent='Copy Team Chart to Clipboard';
+btn.onclick=()=>{
+let txt='COWORKER CHAOS CHART\n'+('='.repeat(30))+'\n';
+names.forEach((name,i)=>{
+let idx=hash(name.trim())%types.length;
+const t=types[idx];
+txt+=`\n${name.trim()} - ${t.name}\n${t.desc}\n`;
+});
+navigator.clipboard.writeText(txt).then(()=>btn.textContent='Copied!');
+};
+chart.appendChild(btn);
+}
+</script>
+</body>
+</html>

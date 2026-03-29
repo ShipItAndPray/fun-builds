@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quit-O-Meter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#ff416c,#ff4b2b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:520px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.slider-area{text-align:center;margin:20px 0}
+.slider-label{font-size:1rem;color:#aaa;margin-bottom:12px}
+.value-display{font-size:4rem;font-weight:900;margin:10px 0;transition:color .3s}
+input[type=range]{width:100%;height:8px;-webkit-appearance:none;background:#222;border-radius:4px;outline:none;margin:16px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ff416c,#ff4b2b);cursor:pointer;box-shadow:0 2px 8px rgba(255,65,108,.5)}
+.status{font-size:1.2rem;font-weight:600;text-align:center;margin:12px 0;min-height:60px}
+.advice{background:#16213e;border-radius:8px;padding:14px;margin:12px 0;font-size:.9rem;color:#bbb;line-height:1.6;border-left:4px solid #ff416c}
+button{width:100%;padding:12px;background:linear-gradient(135deg,#ff416c,#ff4b2b);color:#fff;border:none;border-radius:10px;font-size:1rem;cursor:pointer;font-weight:700;margin-top:8px}
+button:hover{transform:scale(1.02)}
+.chart-area{margin-top:20px}
+.chart-title{font-size:.9rem;color:#888;margin-bottom:8px}
+canvas{width:100%;background:#16213e;border-radius:8px}
+.history-note{font-size:.8rem;color:#555;text-align:center;margin-top:8px}
+.btn-row{display:flex;gap:8px;margin-top:12px}
+.btn-row button{font-size:.85rem;padding:10px}
+.btn-secondary{background:linear-gradient(135deg,#667eea,#764ba2)!important}
+</style>
+</head>
+<body>
+<h1>Quit-O-Meter</h1>
+<div class="container">
+<div class="slider-area">
+<div class="slider-label">How close are you to quitting today?</div>
+<div class="value-display" id="val">50</div>
+<input type="range" id="slider" min="0" max="100" value="50" oninput="updateDisplay()">
+</div>
+<div class="status" id="status"></div>
+<div class="advice" id="advice"></div>
+<button onclick="logToday()">Log Today's Mood</button>
+<div class="btn-row">
+<button class="btn-secondary" onclick="clearData()">Clear History</button>
+<button class="btn-secondary" onclick="exportData()">Export Data</button>
+</div>
+<div class="chart-area">
+<div class="chart-title">Your Weekly Quit Trajectory</div>
+<canvas id="chart" height="200"></canvas>
+<div class="history-note" id="histNote"></div>
+</div>
+</div>
+<script>
+const levels=[
+{max:5,label:"Corporate Zen",color:"#4CAF50",advice:"You actually like your job? Are you sure you're not just in denial? Enjoy it while it lasts."},
+{max:15,label:"Mildly Content",color:"#8BC34A",advice:"Things are fine. 'Fine' is the beige of emotions. You'll survive another quarter."},
+{max:25,label:"Sunday Scaries",color:"#CDDC39",advice:"The dread is there, lurking. It starts with Sunday evenings and grows from there."},
+{max:35,label:"Monday Resistant",color:"#FFC107",advice:"You've started calculating how long you could survive on savings. The math isn't great."},
+{max:45,label:"Passive Job Browsing",color:"#FF9800",advice:"'Just looking' at LinkedIn. Like 'just looking' at real estate you can't afford. Sure."},
+{max:55,label:"Active Fantasy Zone",color:"#FF5722",advice:"You've mentally written your resignation letter. Multiple drafts. Some include profanity."},
+{max:65,label:"Resume Polishing",color:"#f44336",advice:"Your resume is updated. Your headshot is fresh. You're one bad meeting away from applying somewhere."},
+{max:75,label:"Interview Prepping",color:"#E91E63",advice:"You're practicing STAR method answers in the shower. Your spouse is concerned."},
+{max:85,label:"Two Weeks Notice Draft",color:"#9C27B0",advice:"The letter is written. The date is blank. You're just waiting for one more thing to push you over."},
+{max:95,label:"Nuclear Option Armed",color:"#673AB7",advice:"You've calculated your runway, told your partner, and have 3 offers. This is happening."},
+{max:100,label:"I QUIT (Emotionally)",color:"#880E4F",advice:"You are physically present but spiritually gone. Your body shows up. Your soul clocked out weeks ago."}
+];
+function getLevel(v){return levels.find(l=>v<=l.max)||levels[levels.length-1];}
+function updateDisplay(){
+const v=parseInt(document.getElementById('slider').value);
+const l=getLevel(v);
+document.getElementById('val').textContent=v;
+document.getElementById('val').style.color=l.color;
+document.getElementById('status').innerHTML=`<span style="color:${l.color}">${l.label}</span>`;
+document.getElementById('advice').textContent=l.advice;
+}
+function logToday(){
+const v=parseInt(document.getElementById('slider').value);
+const data=JSON.parse(localStorage.getItem('quitometer')||'[]');
+const today=new Date().toISOString().slice(0,10);
+const existing=data.findIndex(d=>d.date===today);
+if(existing>=0)data[existing].value=v;else data.push({date:today,value:v});
+localStorage.setItem('quitometer',JSON.stringify(data));
+drawChart();
+}
+function drawChart(){
+const data=JSON.parse(localStorage.getItem('quitometer')||'[]').slice(-14);
+const canvas=document.getElementById('chart');
+const ctx=canvas.getContext('2d');
+canvas.width=canvas.offsetWidth*2;canvas.height=400;
+ctx.clearRect(0,0,canvas.width,canvas.height);
+if(!data.length){
+ctx.fillStyle='#555';ctx.font='24px sans-serif';ctx.textAlign='center';
+ctx.fillText('No data yet. Log your first mood!',canvas.width/2,200);
+document.getElementById('histNote').textContent='';
+return;
+}
+const pad=60,w=canvas.width-pad*2,h=canvas.height-pad*2;
+ctx.strokeStyle='#333';ctx.lineWidth=1;
+for(let i=0;i<=4;i++){
+const y=pad+h*i/4;
+ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(pad+w,y);ctx.stroke();
+ctx.fillStyle='#555';ctx.font='18px sans-serif';ctx.textAlign='right';
+ctx.fillText((100-i*25)+'',pad-8,y+6);
+}
+if(data.length===1){
+const x=pad+w/2,y=pad+h*(1-data[0].value/100);
+const l=getLevel(data[0].value);
+ctx.fillStyle=l.color;ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fill();
+}else{
+ctx.beginPath();ctx.strokeStyle='#ff416c';ctx.lineWidth=3;
+data.forEach((d,i)=>{
+const x=pad+w*i/(data.length-1),y=pad+h*(1-d.value/100);
+i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+});
+ctx.stroke();
+data.forEach((d,i)=>{
+const x=pad+w*i/(data.length-1),y=pad+h*(1-d.value/100);
+const l=getLevel(d.value);
+ctx.fillStyle=l.color;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill();
+});
+}
+data.forEach((d,i)=>{
+const x=data.length===1?pad+w/2:pad+w*i/(data.length-1);
+ctx.save();ctx.translate(x,canvas.height-10);ctx.rotate(-0.5);
+ctx.fillStyle='#666';ctx.font='14px sans-serif';ctx.textAlign='right';
+ctx.fillText(d.date.slice(5),0,0);ctx.restore();
+});
+const avg=data.reduce((s,d)=>s+d.value,0)/data.length;
+const trend=data.length>1?data[data.length-1].value-data[0].value:0;
+document.getElementById('histNote').textContent=
+`${data.length} entries | Avg: ${avg.toFixed(0)} | Trend: ${trend>0?'+':''}${trend.toFixed(0)} ${trend>5?'(getting worse)':trend<-5?'(improving!)':'(stable)'}`;
+}
+function clearData(){if(confirm('Clear all history?')){localStorage.removeItem('quitometer');drawChart();}}
+function exportData(){
+const data=JSON.parse(localStorage.getItem('quitometer')||'[]');
+const txt=data.map(d=>`${d.date}: ${d.value}/100`).join('\n');
+navigator.clipboard.writeText(txt).then(()=>alert('Copied to clipboard!'));
+}
+updateDisplay();drawChart();
+</script>
+</body>
+</html>

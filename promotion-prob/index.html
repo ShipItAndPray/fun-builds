@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promotion Probability Calculator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#a8e063,#56ab2f);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:520px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.q{margin-bottom:16px}
+.q label{display:block;margin-bottom:6px;font-weight:600;color:#ccc;font-size:.95rem}
+.q select{width:100%;padding:10px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:.95rem}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#56ab2f,#a8e063);color:#000;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;margin-top:8px;transition:transform .15s}
+button:hover{transform:scale(1.02)}
+.result{margin-top:24px;text-align:center;display:none}
+.pct{font-size:3.5rem;font-weight:900;color:#f44336;margin:16px 0}
+.verdict{font-size:1.1rem;font-weight:600;color:#ffd93d;margin:12px 0;line-height:1.5}
+.breakdown{text-align:left;background:#16213e;border-radius:8px;padding:14px;margin-top:16px;font-size:.85rem;color:#999;line-height:1.7}
+.bar{height:20px;background:#222;border-radius:10px;margin:12px 0;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#f44336,#ff9800);border-radius:10px;transition:width 1.5s ease}
+</style>
+</head>
+<body>
+<h1>Promotion Probability Calculator</h1>
+<div class="container">
+<div class="q"><label>1. Years at current level?</label><select id="q1"><option value="0">Less than 1</option><option value="1">1-2 years</option><option value="2">3-5 years</option><option value="3">5+ years (the forgotten)</option></select></div>
+<div class="q"><label>2. Relationship with boss?</label><select id="q2"><option value="0">We're best friends</option><option value="1">Professional and cordial</option><option value="2">They don't know my name</option><option value="3">Active hostility</option></select></div>
+<div class="q"><label>3. Last performance review?</label><select id="q3"><option value="0">"Exceeds expectations"</option><option value="1">"Meets expectations"</option><option value="2">"Room for growth" (bad)</option><option value="3">They "forgot" to do mine</option></select></div>
+<div class="q"><label>4. Office visibility?</label><select id="q4"><option value="0">Present at every meeting, always speaking up</option><option value="1">Show up, contribute sometimes</option><option value="2">Work from home, camera off</option><option value="3">People ask "who?" when my name comes up</option></select></div>
+<div class="q"><label>5. Do you do your boss's job for them?</label><select id="q5"><option value="0">Yes, constantly</option><option value="1">Sometimes I cover</option><option value="2">I do my own job only</option><option value="3">I barely do my own job</option></select></div>
+<div class="q"><label>6. Company's financial health?</label><select id="q6"><option value="0">Printing money</option><option value="1">Stable</option><option value="2">Layoff rumors</option><option value="3">CEO just sold all their stock</option></select></div>
+<div class="q"><label>7. Have you asked for a promotion?</label><select id="q7"><option value="0">Directly, with evidence</option><option value="1">Hinted at it</option><option value="2">Waiting to be noticed</option><option value="3">Scared to bring it up</option></select></div>
+<div class="q"><label>8. Someone less qualified got promoted recently?</label><select id="q8"><option value="0">No, promotions seem fair</option><option value="1">Maybe one case</option><option value="2">The boss's golf buddy got promoted</option><option value="3">The intern is now my manager</option></select></div>
+<button onclick="calculate()">Calculate My Odds</button>
+<div class="result" id="result">
+<div class="pct" id="pct"></div>
+<div class="bar"><div class="bar-fill" id="barFill"></div></div>
+<div class="verdict" id="verdict"></div>
+<div class="breakdown" id="breakdown"></div>
+</div>
+</div>
+<script>
+const verdicts=[
+{max:1,text:"Probability: {p}%. You have better odds of being struck by lightning while winning the lottery. On Mars.",category:"Absolutely Not"},
+{max:2,text:"Probability: {p}%. Your promotion exists in the same dimension as affordable rent and free healthcare.",category:"Theoretical"},
+{max:3,text:"Probability: {p}%. Scientists would classify this as 'statistically indistinguishable from zero.'",category:"Approaching Zero"},
+{max:4,text:"Probability: {p}%. You'd have better luck finding a parking spot at Costco on a Saturday.",category:"Laughable"},
+{max:5,text:"Probability: {p}%. The HR system literally doesn't have a button for promoting you.",category:"System Error"},
+{max:6,text:"Probability: {p}%. Your boss's boss doesn't know your department exists.",category:"Invisible"},
+{max:7,text:"Probability: {p}%. At this rate, you'll be promoted posthumously.",category:"Glacial"},
+{max:8,text:"Probability: {p}%. The office plant has a better trajectory than you.",category:"Botanical"},
+{max:10,text:"Probability: {p}%. Fun fact: the average person changes jobs 12 times. Start counting.",category:"Hopeless"},
+{max:12,text:"Probability: {p}%. If promotions were rain, you'd be in the Sahara.",category:"Drought"},
+{max:15,text:"Probability: {p}%. Look, it COULD happen. Like a comet COULD cure cancer.",category:"Miracle Required"},
+{max:18,text:"Probability: {p}%. There's a nonzero chance. We're being generous with 'nonzero.'",category:"Technically Possible"},
+{max:22,text:"Probability: {p}%. Somewhere between 'maybe' and 'keep dreaming.'",category:"Don't Hold Breath"},
+{max:26,text:"Probability: {p}%. You're in the 'might happen in 3-5 years' zone. So, never.",category:"Long Shot"},
+{max:30,text:"Probability: {p}%. Not impossible! Just extremely, breathtakingly unlikely.",category:"Slim"},
+{max:35,text:"Probability: {p}%. You have a pulse and a prayer. That's something.",category:"Underdog"},
+{max:40,text:"Probability: {p}%. Better than most, but 'most' starts at 0%.",category:"Fighting Chance"},
+{max:50,text:"Probability: {p}%. Coin flip territory. Except the coin is weighted against you.",category:"Maybe"},
+{max:60,text:"Probability: {p}%. Decent odds! (By corporate standards, where 60% means 'probably not.')",category:"Cautiously Optimistic"},
+{max:70,text:"Probability: {p}%. Wait, really? Double-check your answers. This seems too high.",category:"Suspicious"},
+{max:80,text:"Probability: {p}%. Either you're the CEO's kid or you lied on this quiz.",category:"Nepotism Check"},
+{max:90,text:"Probability: {p}%. Did you blackmail someone? Because these numbers don't add up.",category:"Impossibly High"},
+{max:100,text:"Probability: {p}%. You're either lying or you ARE the boss.",category:"Fraud Detected"},
+];
+const bonusReasons=[
+"Mercury is in retrograde, which HR uses as an actual decision-making factor.",
+"Budget was redirected to the CEO's new standing desk collection.",
+"Your role was 'restructured' which means the same job with a worse title.",
+"Someone printed your self-evaluation and it's being used as scratch paper.",
+"The promotion committee meets annually. In a leap year. On Feb 30th.",
+"Your skip-level doesn't know what your team does.",
+"HR lost your file. Again.",
+"The AI they're building to replace you just got a raise.",
+"Your manager is also waiting for a promotion. They have priority.",
+"Company just announced a 'flat hierarchy' which means no more promotions for anyone.",
+"The budget for raises was spent on the new office ping pong table.",
+"Your department is being 'strategically realigned' which is never good.",
+];
+function calculate(){
+let score=0;
+for(let i=1;i<=8;i++){score+=parseInt(document.getElementById('q'+i).value);}
+// Score 0-24. Higher = worse. Invert and cap.
+let pct=Math.max(0.3,Math.min(95,100-score*4.1+Math.random()*3));
+pct=parseFloat(pct.toFixed(1));
+// Always make it feel low
+if(pct>30)pct=pct*0.4+Math.random()*5;
+pct=parseFloat(Math.max(0.1,pct).toFixed(1));
+const v=verdicts.find(x=>pct<=x.max)||verdicts[verdicts.length-1];
+const bonus=bonusReasons[Math.floor(Math.random()*bonusReasons.length)];
+document.getElementById('pct').textContent=pct+'%';
+document.getElementById('barFill').style.width=Math.max(2,pct)+'%';
+document.getElementById('verdict').textContent=v.text.replace('{p}',pct);
+document.getElementById('breakdown').innerHTML=`<strong>Category:</strong> ${v.category}<br><br><strong>Contributing Factor:</strong> ${bonus}<br><br><strong>Recommendation:</strong> Update your LinkedIn. Not as a threat to your employer, but as a genuine career move. They won't notice anyway.`;
+document.getElementById('result').style.display='block';
+}
+</script>
+</body>
+</html>

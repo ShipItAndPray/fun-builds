@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gordon Mode</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Arial',sans-serif;background:#0d0d0d;color:#eee;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2.4em;color:#ff3333;margin:15px 0 5px;text-transform:uppercase;letter-spacing:3px}
+.subtitle{color:#888;margin-bottom:25px}
+.upload-zone{width:100%;max-width:400px;height:200px;border:2px dashed #333;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;transition:all 0.3s;background:#111}
+.upload-zone:hover{border-color:#ff3333;background:#1a0a0a}
+.upload-zone.has-img{border:none;height:auto;padding:10px}
+.upload-zone img{max-width:100%;max-height:300px;border-radius:8px}
+.upload-icon{font-size:3em;margin-bottom:10px}
+input[type=file]{display:none}
+.roast-card{background:#1a1a1a;border-left:4px solid #ff3333;border-radius:0 12px 12px 0;padding:25px;margin-top:25px;max-width:500px;width:100%;opacity:0;transform:translateX(-20px);transition:all 0.5s}
+.roast-card.show{opacity:1;transform:translateX(0)}
+.chef-says{color:#ff3333;font-weight:bold;font-size:1.1em;margin-bottom:10px}
+.roast-text{font-size:1.2em;line-height:1.5;margin-bottom:15px;font-style:italic}
+.scores{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+.score-box{background:#222;padding:12px;border-radius:8px;text-align:center}
+.score-label{font-size:0.75em;color:#888;text-transform:uppercase;letter-spacing:1px}
+.score-val{font-size:1.8em;font-weight:bold;margin-top:4px}
+.terrible{color:#ff3333}
+.bad{color:#ff6633}
+.meh{color:#ffaa33}
+.final-verdict{text-align:center;margin-top:15px;padding:15px;background:#220a0a;border-radius:8px;color:#ff3333;font-weight:bold;font-size:1.1em}
+button.analyze{background:#ff3333;color:#fff;border:none;padding:12px 30px;border-radius:8px;font-size:1em;cursor:pointer;margin-top:15px;font-weight:bold;text-transform:uppercase;letter-spacing:1px}
+button.analyze:hover{background:#ff4444}
+</style>
+</head>
+<body>
+<h1>Gordon Mode</h1>
+<p class="subtitle">Upload food. Get destroyed.</p>
+<div class="upload-zone" id="dropZone" onclick="document.getElementById('fileIn').click()">
+<span class="upload-icon">&#127858;</span>
+<span>Drop your "food" here</span>
+</div>
+<input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
+<button class="analyze" id="analyzeBtn" style="display:none" onclick="roastIt()">ROAST MY FOOD</button>
+<div class="roast-card" id="roastCard"></div>
+<script>
+const roasts=[
+{main:"This looks like something my DOG wouldn't eat, and he eats his own vomit!",plating:"Did you plate this with your FEET?!",verdict:"Absolutely DISGUSTING. Get out of my kitchen!"},
+{main:"It's RAW! IT'S RAWWWW! Did you even LOOK at the stove?!",plating:"The presentation says 'I gave up on life.'",verdict:"I've seen better food in a PRISON CAFETERIA!"},
+{main:"This is so overcooked it could be used as a HOCKEY PUCK!",plating:"Looks like a crime scene on a plate.",verdict:"My nan could do better, and she's DEAD!"},
+{main:"What IS this? Seriously, WHAT IS THIS?! Is it alive?!",plating:"The plating screams 'microwave at 2 AM.'",verdict:"I wouldn't serve this to someone I HATED!"},
+{main:"The color alone makes me want to call the health inspector!",plating:"Did you close your eyes while plating?",verdict:"This belongs in the BIN, not on a plate!"},
+{main:"You call this SEASONING?! I've tasted more flavor in CARDBOARD!",plating:"A toddler with crayons has better presentation skills.",verdict:"DONKEY! This is a complete DISASTER!"},
+{main:"This has the texture of a FLIP FLOP dipped in sadness!",plating:"It looks like it was plated during an earthquake.",verdict:"Shut it DOWN! SHUT IT ALL DOWN!"},
+{main:"Did you cook this or did you just THREATEN it with heat?!",plating:"The presentation is an insult to plates everywhere.",verdict:"Even the GARBAGE can would reject this!"},
+{main:"There's so much oil on this plate the US wants to INVADE it!",plating:"Looks like modern art. And NOT the good kind.",verdict:"I'm SPEECHLESS. And that NEVER happens!"},
+{main:"This is so bland it makes WATER taste exciting!",plating:"A cat coughing up a hairball has more aesthetic appeal.",verdict:"You should be ASHAMED. Truly, deeply ashamed."},
+{main:"The sauce looks like something from a HORROR MOVIE!",plating:"Were you blindfolded? DRUNK? Both?!",verdict:"I need a moment. I'm going to be SICK."},
+{main:"It's FROZEN in the middle! You've served me an ICE CUBE with garnish!",plating:"This plating violates the Geneva Convention.",verdict:"Get out. GET OUT! And take this WITH you!"},
+{main:"My 5-year-old could make better pasta. She's never COOKED!",plating:"Looks like it fell from a great height. Onto another disaster.",verdict:"This restaurant would be better as a PARKING LOT!"},
+{main:"The proteins are WEEPING! You've MURDERED them!",plating:"Presentation of a gas station sandwich. On a BAD day.",verdict:"I wouldn't feed this to my WORST ENEMY!"},
+{main:"Is this a JOKE?! Are there hidden cameras?! This CAN'T be real!",plating:"Plated with the grace of a BULLDOZER.",verdict:"Years of culinary training... for THIS?!"},
+{main:"You've somehow made food DEPRESSING. That takes TALENT!",plating:"The garnish is crying. I can see it CRYING.",verdict:"This is why restaurants FAIL!"},
+{main:"The only thing this dish has going for it is that it ENDED!",plating:"Looks like someone sat on the plate before serving.",verdict:"PATHETIC. Absolutely, unequivocally PATHETIC!"},
+{main:"This risotto has more lumps than a MATTRESS from 1972!",plating:"The visual appeal of a puddle. An ugly puddle.",verdict:"Start OVER. Actually, start a different CAREER!"},
+{main:"The vegetables are so overcooked they've lost the WILL TO LIVE!",plating:"I've seen better presentation at a FOOD FIGHT.",verdict:"Congratulations. You've hit ROCK BOTTOM!"},
+{main:"There's no love in this dish. There's no ANYTHING in this dish!",plating:"Plating score: negative infinity.",verdict:"Even the PLATE is embarrassed!"},
+{main:"You've used enough butter to grease a WATERSLIDE!",plating:"It looks like a landslide hit a buffet.",verdict:"My heart stopped. From the cholesterol AND the disappointment!"},
+{main:"This steak is so tough I could sole SHOES with it!",plating:"Presentation of someone who googled 'food' once.",verdict:"The cow died for NOTHING!"},
+{main:"The balance of flavors here is like a SEESAW with an elephant on one side!",plating:"Asymmetry isn't always artistic. THIS proves it.",verdict:"Back to BASICS. Back to ZERO!"},
+{main:"This soup has the consistency of WALLPAPER PASTE!",plating:"Bowl choice: the only good decision made here.",verdict:"My grandmother is SPINNING in her grave!"},
+{main:"The fish is so old it could have its own PENSION!",plating:"Garnished with what appears to be REGRET.",verdict:"The ocean called. It wants an APOLOGY!"},
+{main:"You've managed to make chocolate taste like DISAPPOINTMENT!",plating:"This dessert looks like a modern art MISTAKE.",verdict:"Willy Wonka would SHUT YOU DOWN!"},
+{main:"The eggs are so scrambled they need THERAPY!",plating:"Presentation suggests a 3 AM REGRET meal.",verdict:"Simple eggs. You ruined SIMPLE EGGS!"},
+{main:"This bread is so dense it has its own GRAVITATIONAL PULL!",plating:"Looks like a brick cosplaying as food.",verdict:"Even PIGEONS would walk away!"},
+{main:"The salad looks like it was assembled by a LAWNMOWER!",plating:"Tossed? More like THROWN. From across the room.",verdict:"Vegetables did NOT consent to this treatment!"},
+{main:"You have committed CRIMES against pasta. Actual CRIMES!",plating:"Italy just declared war on your kitchen.",verdict:"Mama Mia? More like Mama NO!"},
+{main:"This has less flavor than a WET NEWSPAPER!",plating:"The visual equivalent of elevator music.",verdict:"I need therapy after LOOKING at this!"},
+{main:"The sauce broke harder than my WILL to eat this!",plating:"It looks like abstract expressionism. Gone WRONG.",verdict:"Please. I'm BEGGING you. Stop cooking."},
+{main:"This curry is an insult to EVERY SPICE that gave its life!",plating:"Presentation of a school cafeteria REJECT.",verdict:"Spices have FEELINGS! And you HURT them!"},
+{main:"There's a fine line between 'rustic' and 'TERRIBLE.' Guess which side this is on?!",plating:"Rustic plating requires actual SKILL. This has NONE.",verdict:"I would rather eat the TABLECLOTH!"},
+{main:"The crispy bits are the ONLY thing holding this disaster together!",plating:"The plate looks like a BATTLEFIELD. Food lost.",verdict:"One good element does NOT save this catastrophe!"},
+{main:"Did you TASTE this before serving?! Of COURSE you didn't!",plating:"Garnish placement says 'I have given up.'",verdict:"QC stands for Quality Control, NOT Quit Caring!"},
+{main:"This puree is so thin it's basically COLORED WATER!",plating:"A Jackson Pollock, but with LESS intent.",verdict:"WATERY, WEAK, and utterly WORTHLESS!"},
+{main:"These scallops are more RUBBER than the tires on my car!",plating:"Scattered across the plate like LOST HOPES.",verdict:"Scallops are EXPENSIVE. You WASTED them!"},
+{main:"The only thing perfectly executed here is my DISAPPOINTMENT!",plating:"Plating that says 'first day, last day.'",verdict:"Perfection in failure. REMARKABLE in the worst way!"},
+{main:"This is not FOOD. This is a CRY FOR HELP!",plating:"Even the drizzle looks DEPRESSED.",verdict:"Someone call 999. This dish needs EMERGENCY services!"},
+{main:"I have eaten in 47 countries. This is the WORST thing I have had. ANYWHERE!",plating:"Makes hospital food look MICHELIN-starred.",verdict:"How dare you. How DARE you serve this!"},
+{main:"The only seasoning I detect is AUDACITY!",plating:"Plated with all the care of a SNEEZE.",verdict:"Salt exists. Pepper exists. USE THEM!"},
+{main:"This wellington is more SOGGY than a WET DOG!",plating:"The pastry weeps. I WEEP. We all weep.",verdict:"Gordon Ramsay would quit the industry if he saw this!"},
+{main:"You somehow made GARLIC BREAD taste like NOTHING!",plating:"Looks like it was served from a CATAPULT.",verdict:"Garlic bread is IMPOSSIBLE to ruin. You found a WAY!"},
+{main:"The reduction has reduced my will to LIVE!",plating:"A reduction should be elegant. This is a PUDDLE.",verdict:"REDUCE the sauce, not my LIFESPAN!"},
+{main:"This Beef Wellington looks like a Beef WELLING-DONE. BADLY!",plating:"Cross section reveals layers of FAILURE.",verdict:"Wellington? More like WELLINGDONE with your career!"},
+{main:"The mousse has the texture of CEMENT mixed with TEARS!",plating:"Presented with the finesse of a DUMP TRUCK.",verdict:"Mousse means FOAM not CONCRETE!"},
+{main:"Crispy on the outside, RAW on the inside. Just like your CAREER!",plating:"The char marks spell out FAILURE.",verdict:"Two textures: wrong and WRONGER!"},
+{main:"This risotto moves like a GLACIER. And tastes like one!",plating:"Should flow like LAVA. Moves like a BRICK.",verdict:"Risotto should WAVE at you! This one STARES!"},
+{main:"These flavors clash like ANGRY NEIGHBORS at 3 AM!",plating:"The colors fight each other. EVERYONE loses.",verdict:"A flavor profile that belongs in COURT!"}
+];
+let currentImg=null;
+const dz=document.getElementById('dropZone');
+dz.ondragover=e=>{e.preventDefault();dz.style.borderColor='#ff3333'};
+dz.ondragleave=()=>dz.style.borderColor='#333';
+dz.ondrop=e=>{e.preventDefault();dz.style.borderColor='#333';if(e.dataTransfer.files[0])loadImage(e.dataTransfer.files[0])};
+function handleFile(inp){if(inp.files[0])loadImage(inp.files[0])}
+function loadImage(f){
+const r=new FileReader();
+r.onload=e=>{
+dz.innerHTML='<img src="'+e.target.result+'">';
+dz.classList.add('has-img');currentImg=true;
+document.getElementById('analyzeBtn').style.display='block';
+document.getElementById('roastCard').classList.remove('show');
+};r.readAsDataURL(f);
+}
+function roastIt(){
+if(!currentImg)return;
+const r=roasts[Math.floor(Math.random()*roasts.length)];
+const platScore=Math.floor(Math.random()*15)+1;
+const tasteScore=Math.floor(Math.random()*20)+1;
+const effortScore=Math.floor(Math.random()*25)+1;
+const overallScore=Math.floor((platScore+tasteScore+effortScore)/3);
+const cls=s=>s<15?'terrible':s<30?'bad':'meh';
+const card=document.getElementById('roastCard');
+card.innerHTML='<div class="chef-says">CHEF SAYS:</div>'
++'<div class="roast-text">"'+r.main+'"</div>'
++'<div style="color:#aaa;font-size:0.9em">On the plating: "'+r.plating+'"</div>'
++'<div class="scores">'
++'<div class="score-box"><div class="score-label">Plating</div><div class="score-val '+cls(platScore)+'">'+platScore+'/100</div></div>'
++'<div class="score-box"><div class="score-label">Taste Guess</div><div class="score-val '+cls(tasteScore)+'">'+tasteScore+'/100</div></div>'
++'<div class="score-box"><div class="score-label">Effort</div><div class="score-val '+cls(effortScore)+'">'+effortScore+'/100</div></div>'
++'<div class="score-box"><div class="score-label">Overall</div><div class="score-val '+cls(overallScore)+'">'+overallScore+'/100</div></div>'
++'</div>'
++'<div class="final-verdict">"'+r.verdict+'"</div>';
+card.classList.add('show');
+}
+</script>
+</body>
+</html>

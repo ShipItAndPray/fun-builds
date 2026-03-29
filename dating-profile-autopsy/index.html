@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dating Profile Autopsy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#ee5a24,#f9ca24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#666;text-align:center;margin-bottom:16px;font-size:.9rem}
+.container{max-width:550px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+textarea{width:100%;padding:12px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:1rem;min-height:120px;resize:vertical;font-family:inherit}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#ee5a24,#f9ca24);color:#000;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;margin-top:12px}
+button:hover{transform:scale(1.02)}
+#report{margin-top:20px;display:none}
+.report-header{text-align:center;border-bottom:2px solid #333;padding-bottom:16px;margin-bottom:16px}
+.report-title{font-size:1.4rem;color:#ee5a24;font-weight:700}
+.report-sub{color:#666;font-size:.85rem;margin-top:4px}
+.finding{background:#16213e;border-radius:8px;padding:12px;margin-bottom:10px;border-left:4px solid #ee5a24}
+.finding-title{font-weight:700;color:#f9ca24;font-size:.95rem;margin-bottom:4px}
+.finding-detail{color:#999;font-size:.85rem;line-height:1.5}
+.severity{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700;margin-left:8px}
+.sev-critical{background:#d63031;color:#fff}
+.sev-major{background:#e17055;color:#fff}
+.sev-minor{background:#fdcb6e;color:#000}
+.sev-note{background:#636e72;color:#fff}
+.summary{background:#16213e;border-radius:8px;padding:16px;margin-top:16px;text-align:center}
+.grade{font-size:3rem;font-weight:900;margin:8px 0}
+.grade-text{color:#aaa;font-size:.9rem}
+</style>
+</head>
+<body>
+<h1>Dating Profile Autopsy</h1>
+<p class="sub">Paste your dating profile. We'll perform a full forensic analysis.</p>
+<div class="container">
+<textarea id="profile" placeholder="Paste your dating profile bio here...&#10;&#10;e.g. 'Just a chill guy who loves hiking and craft beer. Looking for my partner in crime. Fluent in sarcasm.'"></textarea>
+<button onclick="autopsy()">Perform Autopsy</button>
+<div id="report"></div>
+</div>
+<script>
+const rules=[
+{pattern:/partner in crime/i,title:"'Partner in Crime' Detected",detail:"Bonnie and Clyde were partners in crime. They got shot. Maybe pick a different metaphor.",sev:"critical"},
+{pattern:/fluent in sarcasm/i,title:"'Fluent in Sarcasm' Alert",detail:"This is on 47% of all dating profiles. You are not unique. You are a statistic.",sev:"critical"},
+{pattern:/love.{0,10}laugh/i,title:"Love/Laugh Combo Found",detail:"Live, Laugh, Love energy detected. This bio was written on a decorative pillow.",sev:"critical"},
+{pattern:/just ask/i,title:"'Just Ask' Deflection",detail:"Translation: 'I couldn't be bothered to write a bio.' Neither could 80% of the profiles you'll be competing with.",sev:"major"},
+{pattern:/looking for.{0,20}real/i,title:"'Looking for Something Real'",detail:"As opposed to something imaginary? Everyone wants something real. This says nothing.",sev:"major"},
+{pattern:/no drama/i,title:"'No Drama' Red Flag",detail:"People who say 'no drama' are statistically the #1 source of drama. This is a universal law.",sev:"critical"},
+{pattern:/\b6['']?\s*f(oo|ee)?t|6['"]?\d/i,title:"Height Flex Detected",detail:"Leading with height suggests you have nothing else to offer. Do you, though?",sev:"minor"},
+{pattern:/gym|workout|fitness|crossfit|lift/i,title:"Gym Bro Alert",detail:"We get it. You work out. But can you hold a conversation that doesn't involve macros?",sev:"minor"},
+{pattern:/dog (mom|dad)|fur (baby|babies)/i,title:"Dog Parent Identity",detail:"Making your pet your entire personality is a choice. A bad one, but a choice.",sev:"minor"},
+{pattern:/the office|office quotes/i,title:"The Office Reference",detail:"The show ended in 2013. Your personality cannot be a TV show. Please develop hobbies.",sev:"major"},
+{pattern:/netflix/i,title:"Netflix Mentioned",detail:"Everyone watches Netflix. This is like saying 'I breathe oxygen.' Add literally anything else.",sev:"minor"},
+{pattern:/adventur/i,title:"'Adventure' Detected",detail:"'Love adventures' = went to brunch once at a new restaurant. Be specific or be forgotten.",sev:"minor"},
+{pattern:/travel/i,title:"Travel Mentioned",detail:"Your Bali trip from 2019 is not a personality trait. Where did you go last Tuesday?",sev:"note"},
+{pattern:/foodie/i,title:"'Foodie' Alert",detail:"You eat food? Groundbreaking. So does every living organism. This tells us nothing.",sev:"major"},
+{pattern:/sapiosexual/i,title:"'Sapiosexual' Found",detail:"CRITICAL: This word makes 94% of people swipe left immediately. Delete with extreme prejudice.",sev:"critical"},
+{pattern:/good vibes/i,title:"'Good Vibes Only'",detail:"Bad vibes are part of life. This makes you seem emotionally unavailable, not chill.",sev:"major"},
+{pattern:/not here for hookup/i,title:"Anti-Hookup Declaration",detail:"Announcing this upfront is like walking into a restaurant screaming 'I'M NOT HERE TO ROB YOU.'",sev:"major"},
+{pattern:/swipe right if/i,title:"'Swipe Right If' Command",detail:"Issuing demands in your bio? Bold strategy. Let's see how that works out.",sev:"minor"},
+{pattern:/pineapple.{0,10}pizza/i,title:"Pineapple Pizza Take",detail:"This was a fun conversation starter in 2016. It's 2026. Find a new food opinion.",sev:"note"},
+{pattern:/hiking/i,title:"Hiking Mentioned",detail:"90% of people who list hiking haven't hiked in 6 months. The trail receipts don't lie.",sev:"note"},
+{pattern:/craft beer|ipa|brewery/i,title:"Craft Beer Reference",detail:"Having a beer preference is not a personality. It's a beverage choice.",sev:"note"},
+{pattern:/entrepreneur|hustle|grind/i,title:"Hustle Culture Detected",detail:"Translation: 'I will cancel plans to answer emails.' Romantic.",sev:"major"},
+{pattern:/old soul/i,title:"'Old Soul' Claim",detail:"This either means you like vinyl records or you're emotionally unavailable. Often both.",sev:"minor"},
+{pattern:/laid.?back|easy.?going|chill/i,title:"'Chill/Laid-Back' Detected",detail:"The chillest people never need to announce they're chill. This is the dating equivalent of 'I'm not like other people.'",sev:"minor"},
+{pattern:/looking for my|searching for/i,title:"Quest Narrative Detected",detail:"You're not on a Lord of the Rings quest. You're on an app. Lower the stakes.",sev:"note"},
+{pattern:/can't believe i'm on (here|this)/i,title:"App Shame Detected",detail:"We're ALL on the app. Pretending you're above it while BEING on it is not the flex you think.",sev:"major"},
+{pattern:/\bwine\b/i,title:"Wine Personality",detail:"Liking wine is not interesting. Everyone's aunt likes wine. What ELSE do you like?",sev:"note"},
+{pattern:/not sure what to (write|put|say)/i,title:"Admission of Defeat",detail:"Starting your bio by saying you can't write a bio is... certainly a choice.",sev:"major"},
+{pattern:/\bemoji.{0,5}(only|instead)/i,title:"Emoji-Only Bio Strategy",detail:"A bio of just emojis says 'I cannot express myself with words.' Concerning.",sev:"major"},
+{pattern:/work hard play hard/i,title:"'Work Hard Play Hard'",detail:"This phrase peaked in 2010 and should have stayed there. It now reads as 'I have no boundaries.'",sev:"critical"},
+{pattern:/looking for.{0,15}other half/i,title:"'Other Half' Romanticism",detail:"You are already whole. Framing yourself as incomplete is not attractive, it's codependent.",sev:"minor"},
+{pattern:/coffee/i,title:"Coffee Dependency Flex",detail:"Basing your personality on caffeine addiction is like basing it on breathing. Necessary but not interesting.",sev:"note"},
+{pattern:/tacos/i,title:"Taco Mention",detail:"Tacos are universally loved. This is not a distinguishing characteristic. It's the default human setting.",sev:"note"},
+{pattern:/dog|dogs/i,title:"Dog Mention",detail:"Dogs are great. But 'I like dogs' appears in roughly 100% of dating profiles. Stand out.",sev:"note"},
+{pattern:/music/i,title:"'Love Music'",detail:"Every human with functioning ears loves music. Name a band. Name a genre. Give us SOMETHING.",sev:"note"},
+{pattern:/fun/i,title:"'Fun' Used Unironically",detail:"Saying you're fun is like a restaurant saying 'we have food.' It's the bare minimum.",sev:"note"},
+{pattern:/honest|loyal|genuine/i,title:"Basic Virtue Signaling",detail:"Listing 'honest' as a trait suggests the bar is underground. These should be assumed, not advertised.",sev:"minor"},
+{pattern:/6.{0,5}figure/i,title:"Income Flex",detail:"Broadcasting income on a dating profile attracts exactly the people you claim you don't want.",sev:"major"},
+{pattern:/open.{0,5}book/i,title:"'Open Book' Claim",detail:"Open books still have a table of contents. Give us a preview chapter, not just the cover.",sev:"note"},
+{pattern:/new (here|to (this|the))/i,title:"Newbie Declaration",detail:"'New here' is not a personality. It's a temporary status. Write an actual bio.",sev:"minor"},
+{pattern:/fluent in.{0,20}(movie|tv|song|pop)/i,title:"Pop Culture Fluency Claim",detail:"Everyone consumes media. Calling it a 'fluency' is putting 'Netflix' on your resume.",sev:"minor"},
+{pattern:/don't know what (i'm|to)/i,title:"Existential Bio Crisis",detail:"If you don't know what you're looking for, why are you here? This radiates confusion.",sev:"major"},
+];
+function autopsy(){
+const text=document.getElementById('profile').value.trim();
+if(!text){alert('Paste a profile first!');return;}
+const findings=[];
+rules.forEach(r=>{if(r.pattern.test(text))findings.push(r);});
+// Generic checks
+const words=text.split(/\s+/).length;
+if(words<10)findings.push({title:"Bio Too Short",detail:`${words} words. That's a tweet, not a bio. Put in some effort.`,sev:"major"});
+if(words>200)findings.push({title:"Novel-Length Bio",detail:`${words} words. This is a dating app, not a memoir submission. Edit ruthlessly.`,sev:"minor"});
+if(text===text.toLowerCase()&&words>5)findings.push({title:"All Lowercase Aesthetic",detail:"The 'too cool to capitalize' look. It reads as 'too lazy to shift key.'",sev:"note"});
+if(text===text.toUpperCase()&&words>5)findings.push({title:"ALL CAPS DETECTED",detail:"WHY ARE YOU YELLING? This reads like a ransom note, not a love letter.",sev:"critical"});
+if((text.match(/!/g)||[]).length>3)findings.push({title:"Excessive Exclamation Points",detail:"Each '!' after the first one reduces perceived maturity by 15%. You're at -"+(((text.match(/!/g)||[]).length-1)*15)+"%.",sev:"minor"});
+if((text.match(/\b(I|i'm|my|me|myself)\b/gi)||[]).length>8)findings.push({title:"Narcissism Index: High",detail:"Your profile mentions yourself "+((text.match(/\b(I|i'm|my|me|myself)\b/gi)||[]).length)+" times. Consider mentioning what you'd offer a PARTNER.",sev:"major"});
+const emojiCount=(text.match(/[\u{1F000}-\u{1FFFF}]/gu)||[]).length;
+if(emojiCount>10)findings.push({title:"Emoji Overload",detail:`${emojiCount} emojis detected. Your bio looks like a slot machine had a stroke.`,sev:"major"});
+if(!findings.length)findings.push({title:"Suspiciously Clean",detail:"No common cliches detected. Either your profile is genuinely unique, or our detection failed. Probably the latter.",sev:"note"});
+const report=document.getElementById('report');
+let grade,gradeColor;
+const crits=findings.filter(f=>f.sev==='critical').length;
+const majors=findings.filter(f=>f.sev==='major').length;
+const score=Math.max(0,100-crits*20-majors*10-findings.length*3);
+if(score>=80){grade='B+';gradeColor='#4CAF50';}
+else if(score>=60){grade='C';gradeColor='#FFC107';}
+else if(score>=40){grade='D';gradeColor='#FF9800';}
+else if(score>=20){grade='D-';gradeColor='#f44336';}
+else{grade='F';gradeColor='#d32f2f';}
+report.innerHTML=`
+<div class="report-header">
+<div class="report-title">AUTOPSY REPORT</div>
+<div class="report-sub">Case #${Math.floor(Math.random()*90000+10000)} | Date of Examination: ${new Date().toLocaleDateString()}</div>
+<div class="report-sub">Findings: ${findings.length} issue(s) identified</div>
+</div>
+${findings.map(f=>`<div class="finding">
+<div class="finding-title">${f.title} <span class="severity sev-${f.sev}">${f.sev.toUpperCase()}</span></div>
+<div class="finding-detail">${f.detail}</div>
+</div>`).join('')}
+<div class="summary">
+<div style="color:#888;font-size:.85rem">OVERALL PROFILE VIABILITY</div>
+<div class="grade" style="color:${gradeColor}">${grade}</div>
+<div class="grade-text">${score>=60?'Salvageable with minor revisions.':score>=30?'Needs significant work. Consider starting over.':'Cause of death: cliches. Time of death: the moment you typed "partner in crime."'}</div>
+</div>`;
+report.style.display='block';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rip-Off Detector</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0f0a;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#00cc66;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:25px}
+.form{max-width:450px;width:100%;display:flex;flex-direction:column;gap:12px}
+label{color:#888;font-size:0.85em}
+input,select{background:#1a1f1a;border:1px solid #2a3a2a;border-radius:8px;padding:12px;color:#ddd;font-size:1em;width:100%}
+input:focus,select:focus{outline:none;border-color:#00cc66}
+button{background:#00cc66;color:#000;border:none;padding:14px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer;margin-top:5px}
+button:hover{background:#00dd77}
+.result{max-width:450px;width:100%;margin-top:25px;background:#1a1f1a;border-radius:12px;padding:25px;display:none}
+.result.show{display:block;animation:pop 0.3s ease}
+@keyframes pop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.converted{font-size:1.5em;color:#00cc66;text-align:center;margin-bottom:15px}
+.judgment{font-size:1.3em;text-align:center;line-height:1.4;margin:15px 0;font-weight:bold}
+.rip{color:#ff4444}
+.fair{color:#00cc66}
+.ok{color:#ffaa44}
+.meter{height:20px;background:#111;border-radius:10px;overflow:hidden;margin:15px 0}
+.meter-fill{height:100%;border-radius:10px;transition:width 0.8s ease}
+.meter-label{display:flex;justify-content:space-between;font-size:0.8em;color:#666}
+.detail{color:#888;font-size:0.9em;text-align:center;margin-top:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<h1>Rip-Off Detector</h1>
+<p class="subtitle">Enter what you paid. We judge you.</p>
+<div class="form">
+<div><label>Item</label><input id="item" placeholder="e.g., sandwich, coffee, taxi ride"></div>
+<div><label>Price (in local currency)</label><input id="price" type="number" step="0.01" placeholder="e.g., 15.00"></div>
+<div><label>Currency</label>
+<select id="currency">
+<option value="USD">USD - US Dollar</option>
+<option value="EUR">EUR - Euro</option>
+<option value="GBP">GBP - British Pound</option>
+<option value="JPY">JPY - Japanese Yen</option>
+<option value="AUD">AUD - Australian Dollar</option>
+<option value="CAD">CAD - Canadian Dollar</option>
+<option value="CHF">CHF - Swiss Franc</option>
+<option value="INR">INR - Indian Rupee</option>
+<option value="MXN">MXN - Mexican Peso</option>
+<option value="BRL">BRL - Brazilian Real</option>
+<option value="THB">THB - Thai Baht</option>
+<option value="SEK">SEK - Swedish Krona</option>
+<option value="NOK">NOK - Norwegian Krone</option>
+<option value="DKK">DKK - Danish Krone</option>
+<option value="SGD">SGD - Singapore Dollar</option>
+<option value="HKD">HKD - Hong Kong Dollar</option>
+<option value="KRW">KRW - South Korean Won</option>
+<option value="TRY">TRY - Turkish Lira</option>
+<option value="AED">AED - UAE Dirham</option>
+<option value="ZAR">ZAR - South African Rand</option>
+</select></div>
+<div><label>Country of purchase</label>
+<select id="country">
+<option value="tourist">Tourist Area</option>
+<option value="airport">Airport</option>
+<option value="hotel">Hotel</option>
+<option value="local">Local Spot</option>
+<option value="street">Street Vendor</option>
+<option value="fancy">Fancy Restaurant</option>
+<option value="online">Online</option>
+</select></div>
+<button onclick="judge()">JUDGE MY PURCHASE</button>
+</div>
+<div class="result" id="result"></div>
+<script>
+const rates={USD:1,EUR:1.08,GBP:1.26,JPY:0.0067,AUD:0.65,CAD:0.74,CHF:1.12,INR:0.012,MXN:0.058,BRL:0.20,THB:0.028,SEK:0.096,NOK:0.094,DKK:0.145,SGD:0.74,HKD:0.128,KRW:0.00075,TRY:0.031,AED:0.27,ZAR:0.055};
+const markups={tourist:1.8,airport:2.5,hotel:2.2,local:1.0,street:0.8,fancy:3.0,online:1.1};
+const items={
+sandwich:{base:6,max:15},coffee:{base:3,max:8},"taxi ride":{base:10,max:40},beer:{base:4,max:12},
+water:{base:1,max:4},pizza:{base:8,max:20},burger:{base:7,max:18},salad:{base:8,max:16},
+wine:{base:8,max:25},cocktail:{base:10,max:22},breakfast:{base:8,max:25},lunch:{base:12,max:30},
+dinner:{base:20,max:60},snack:{base:3,max:10},dessert:{base:6,max:15},juice:{base:4,max:10},
+souvenir:{base:5,max:30},tshirt:{base:10,max:35},"phone charger":{base:8,max:25},sunscreen:{base:6,max:20},
+umbrella:{base:5,max:20},sunglasses:{base:8,max:30},hat:{base:8,max:25},massage:{base:30,max:100}
+};
+const judgments={
+ripoff:[
+"That is HIGHWAY ROBBERY! Call the police!","You got absolutely FLEECED. The vendor is still laughing.",
+"For THAT price?! Was it made of GOLD?!","You paid WHAT?! I am speechless. And horrified.",
+"Congratulations, you funded someone's vacation with one purchase.","That is not a price, that is a RANSOM NOTE.",
+"The markup on this should be ILLEGAL. Actually, it might be.","I have seen cheaper things in a hospital gift shop.",
+"You did not buy this. You were MUGGED. With a receipt.","This price should come with a free apology.",
+"Even a tourist trap would blush at this price.","Was this item hand-delivered by a celebrity?!",
+"The only thing ripped off more than you is the receipt paper.","This purchase will haunt your bank statement for YEARS.",
+"I need to sit down. The audacity of this price has weakened me."
+],
+overpriced:[
+"You overpaid, but you will survive. Barely.","A bit steep. Your wallet felt that one.",
+"Not the worst I have seen, but your money deserved better.","You could have done better. Much better. Significantly better.",
+"The vendor saw you coming from a MILE away.","Overpriced, but at least it was not armed robbery.",
+"Your wallet just filed a complaint with HR.","That is premium pricing for a decidedly non-premium experience.",
+"Slightly ripped off. The kind where you realize it 3 hours later.","Not catastrophic, but your financial advisor would frown."
+],
+fair:[
+"Actually... that is pretty reasonable. Well done.","Fair price. You are surprisingly competent at this.",
+"Right in the normal range. How boring and responsible of you.","Acceptable. Your wallet can unclench.",
+"Standard pricing. You are officially not a tourist stereotype.","This passes the sanity check. Congratulations on basic competence.",
+"Fair deal. The vendor is not laughing OR crying.","Middle of the road. Perfectly adequate purchase.",
+"Reasonable. I am almost disappointed I cannot roast you.","A normal transaction between normal humans. How refreshing."
+],
+bargain:[
+"Wait, seriously?! That is a STEAL!","You basically committed theft. Legal theft, but still.",
+"The vendor is crying into their cash register right now.","Bargain hunter SUPREME. You should teach a masterclass.",
+"At that price, you should have bought TEN.","I am honestly impressed. And slightly suspicious.",
+"Either a great deal or it fell off a truck. Either way, nice.","Your haggling skills are LEGENDARY.",
+"This price defies the laws of economics.","If this is real, frame the receipt."
+]
+};
+function judge(){
+const itemName=document.getElementById('item').value.trim().toLowerCase();
+const price=parseFloat(document.getElementById('price').value);
+const curr=document.getElementById('currency').value;
+const loc=document.getElementById('country').value;
+if(!itemName||isNaN(price)||price<=0){alert('Fill in all fields!');return}
+const usdPrice=price*rates[curr];
+let baseRef=10;
+for(const[k,v]of Object.entries(items)){if(itemName.includes(k)||k.includes(itemName)){baseRef=v.base;break}}
+const fairPrice=baseRef*markups[loc];
+const ratio=usdPrice/fairPrice;
+let category,color,ripPercent;
+if(ratio>2.5){category='ripoff';color='#ff4444';ripPercent=Math.min(100,ratio*25)}
+else if(ratio>1.4){category='overpriced';color='#ffaa44';ripPercent=ratio*25}
+else if(ratio>0.6){category='fair';color='#00cc66';ripPercent=ratio*20}
+else{category='bargain';color='#00aaff';ripPercent=Math.max(5,ratio*20)}
+const j=judgments[category];
+const verdict=j[Math.floor(Math.random()*j.length)];
+const res=document.getElementById('result');
+res.innerHTML='<div class="converted">$'+usdPrice.toFixed(2)+' USD for a '+itemName.toUpperCase()+'</div>'
++'<div class="judgment" style="color:'+color+'">'+verdict+'</div>'
++'<div class="meter"><div class="meter-fill" style="width:'+ripPercent+'%;background:'+color+'"></div></div>'
++'<div class="meter-label"><span>Steal</span><span>Fair</span><span>RIP-OFF</span></div>'
++'<div class="detail">Fair estimate for a '+itemName+' at a '+loc+' location: ~$'+fairPrice.toFixed(2)+' USD<br>You paid '+(ratio>1?(ratio.toFixed(1)+'x the fair price'):(Math.round(1/ratio*100)+'% of fair price - bargain!'))+'</div>';
+res.classList.add('show');
+}
+</script>
+</body>
+</html>

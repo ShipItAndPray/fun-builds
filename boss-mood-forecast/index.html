@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boss Mood Forecast</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:1.8rem;margin:20px 0;text-align:center;background:linear-gradient(135deg,#ff6b6b,#ffd93d);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:500px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.question{margin-bottom:20px}
+.question label{display:block;margin-bottom:8px;font-weight:600;color:#ccc}
+.question select{width:100%;padding:10px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:1rem}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;margin-top:10px;transition:transform .15s}
+button:hover{transform:scale(1.02)}
+.result{margin-top:24px;text-align:center;display:none}
+.weather-icon{font-size:4rem;margin:16px 0}
+.forecast-text{font-size:1.3rem;font-weight:700;color:#ffd93d;margin:12px 0}
+.detail{color:#aaa;font-size:.95rem;line-height:1.6}
+.meter{height:12px;background:#222;border-radius:6px;margin:16px 0;overflow:hidden}
+.meter-fill{height:100%;border-radius:6px;transition:width .8s ease}
+.survival-tip{margin-top:16px;padding:12px;background:#16213e;border-radius:8px;border-left:4px solid #667eea;font-style:italic;color:#bbb}
+</style>
+</head>
+<body>
+<h1>Boss Mood Forecast</h1>
+<div class="container">
+<div class="question">
+<label>1. How was their commute this morning?</label>
+<select id="q1"><option value="0">Didn't notice</option><option value="1">Arrived calm</option><option value="2">Arrived flustered</option><option value="3">Slammed the door</option><option value="4">Haven't seen them yet (ominous)</option></select>
+</div>
+<div class="question">
+<label>2. Email tone today?</label>
+<select id="q2"><option value="0">No emails yet</option><option value="1">Normal with greetings</option><option value="2">Short, no greetings</option><option value="3">ALL CAPS somewhere</option><option value="4">Passive-aggressive "per my last email"</option></select>
+</div>
+<div class="question">
+<label>3. Coffee intake observed?</label>
+<select id="q3"><option value="0">Zero cups</option><option value="1">One cup, sipping peacefully</option><option value="2">Two cups before 10am</option><option value="3">Mainlining espresso</option><option value="4">Brought their own french press</option></select>
+</div>
+<div class="question">
+<label>4. Meeting schedule density?</label>
+<select id="q4"><option value="0">Clear calendar</option><option value="1">A few meetings</option><option value="2">Back-to-back until lunch</option><option value="3">Triple-booked all day</option><option value="4">Called an "emergency all-hands"</option></select>
+</div>
+<div class="question">
+<label>5. How did they greet the team?</label>
+<select id="q5"><option value="0">Warm "Good morning!"</option><option value="1">Polite nod</option><option value="2">Walked straight to office</option><option value="3">Visible sigh before speaking</option><option value="4">Didn't greet anyone / office door closed</option></select>
+</div>
+<button onclick="forecast()">Get Today's Forecast</button>
+<div class="result" id="result">
+<div class="weather-icon" id="icon"></div>
+<div class="forecast-text" id="forecastText"></div>
+<div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+<div class="detail" id="detail"></div>
+<div class="survival-tip" id="tip"></div>
+</div>
+</div>
+<script>
+const forecasts=[
+{max:3,icon:"&#9728;&#65039;",title:"Sunny with Clear Skies",detail:"Boss is in a great mood. This is your window to ask for anything. Time off? Raise? Go now.",color:"#4CAF50",tip:"Strike while the iron is hot. Ask for that raise before lunch."},
+{max:4,icon:"&#127780;&#65039;",title:"Mostly Sunny, Light Breeze",detail:"Pleasant disposition detected. Safe to approach with minor requests.",color:"#8BC34A",tip:"Good day to submit that expense report you've been hiding."},
+{max:5,icon:"&#9925;",title:"Partly Cloudy",detail:"Mood is baseline. Not great, not terrible. Proceed with normal caution.",color:"#CDDC39",tip:"Keep your head down, do your work, don't rock the boat."},
+{max:6,icon:"&#127781;&#65039;",title:"Overcast with Occasional Grumbling",detail:"Dark clouds forming. They're one bad email away from snapping.",color:"#FFC107",tip:"Avoid eye contact. Communicate via Slack only."},
+{max:8,icon:"&#127783;&#65039;",title:"Steady Rain of Disappointment",detail:"Boss is in a funk. Everything you do will be wrong today.",color:"#FF9800",tip:"Perfect day to work from the break room. Bring headphones."},
+{max:10,icon:"&#9889;",title:"Thunderstorm Warning",detail:"Severe mood disturbance detected. High probability of unreasonable demands.",color:"#FF5722",tip:"Do not present new ideas today. Do not make jokes. Do not breathe loudly."},
+{max:12,icon:"&#127786;&#65039;",title:"Tornado Watch in Effect",detail:"Boss is spiraling. Expect sudden direction changes and contradictory orders.",color:"#f44336",tip:"Document everything in writing. You'll need receipts later."},
+{max:14,icon:"&#127785;&#65039;",title:"Category 3 Hurricane",detail:"Full meltdown imminent. They've already thrown something.",color:"#d32f2f",tip:"Work from home tomorrow. Call in with 'food poisoning.'"},
+{max:16,icon:"&#128165;",title:"Volcanic Eruption",detail:"This isn't a mood, it's a natural disaster. HR may need to get involved.",color:"#b71c1c",tip:"Update your LinkedIn. Not kidding."},
+{max:20,icon:"&#9762;&#65039;",title:"Nuclear Winter",detail:"The boss has transcended anger into a cold, terrifying calm. Layoffs incoming.",color:"#880E4F",tip:"Polish your resume. Text your recruiter friend. This is not a drill."}
+];
+const bonusForecasts=[
+"Foggy with confusion: Boss gave contradictory instructions to three different people.",
+"Hail of micromanagement: Expect pixel-level feedback on your font choices.",
+"Barometric pressure dropping: They just came back from a board meeting.",
+"Flash flood warning: Boss discovered the team's meme Slack channel.",
+"Drought of praise: No matter what you do, expect zero acknowledgment.",
+"Heat advisory: Boss is 'passionate' about the new KPIs.",
+"Wind chill factor: That joke you made in the meeting landed very badly.",
+"Avalanche risk: Three deadlines converging. Boss realizes none will be met.",
+"Frost warning: Boss CC'd their boss on your email thread.",
+"Seismic activity: Org restructuring rumors confirmed.",
+"Acid rain: Boss is forwarding articles about 'quiet quitting' to the team.",
+"Solar flare: Boss just discovered a new productivity methodology.",
+"Dust storm: Everything is unclear. No one knows the priorities.",
+"Monsoon season: Boss is cycling between fury and fake cheerfulness.",
+"Ice age: Boss has gone completely silent. This is worse than yelling.",
+"Wildfire spread: Boss's bad mood is infecting the entire floor.",
+"Tsunami advisory: A client complaint just hit the boss's inbox.",
+"Sandstorm: Boss is 'just asking questions' in the group chat.",
+"Ball lightning: Rare and terrifying - boss is being nice to everyone.",
+"Permafrost: Boss has been in their office with the door closed for 4 hours.",
+"Stormy with a chance of layoffs.",
+"Cloudy with scattered blame assignments.",
+"70% chance of passive-aggressive Slack messages.",
+"High pressure system of unrealistic deadlines moving in.",
+"Cold front: Boss just learned about the budget cuts.",
+"Tropical depression: Boss's favorite project got cancelled.",
+"Freezing rain of last-minute scope changes.",
+"Humidity index: 100% chance they'll say 'circle back' today.",
+"UV index extreme: Boss is radiating stress in all directions.",
+"Smog alert: Toxic positivity detected. They just read a leadership book."
+];
+function forecast(){
+const score=[...'12345'].reduce((s,i)=>s+parseInt(document.getElementById('q'+i).value),0);
+let f=forecasts.find(x=>score<=x.max)||forecasts[forecasts.length-1];
+const bonus=bonusForecasts[Math.floor(Math.random()*bonusForecasts.length)];
+const pct=Math.min(100,Math.round(score/20*100));
+document.getElementById('icon').innerHTML=f.icon;
+document.getElementById('forecastText').textContent=f.title;
+document.getElementById('detail').innerHTML=f.detail+'<br><br><strong>Bonus:</strong> '+bonus;
+document.getElementById('meterFill').style.width=pct+'%';
+document.getElementById('meterFill').style.background=f.color;
+document.getElementById('tip').textContent='Survival Tip: '+f.tip;
+document.getElementById('result').style.display='block';
+}
+</script>
+</body>
+</html>

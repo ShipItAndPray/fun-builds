@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jet Lag Dread Calculator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a18;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#7b68ee;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:25px}
+.form{max-width:400px;width:100%;display:flex;flex-direction:column;gap:12px}
+label{color:#888;font-size:0.85em}
+select,input{background:#12122a;border:1px solid #2a2a4a;border-radius:8px;padding:12px;color:#ddd;font-size:1em;width:100%}
+button{background:#7b68ee;color:#fff;border:none;padding:14px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer}
+button:hover{background:#8b78ff}
+.timeline{max-width:500px;width:100%;margin-top:30px;display:none}
+.timeline.show{display:block}
+.day{background:#12122a;border-radius:10px;padding:18px;margin-bottom:12px;border-left:4px solid #7b68ee;position:relative;overflow:hidden}
+.day-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.day-num{color:#7b68ee;font-weight:bold;font-size:1.1em}
+.misery{padding:3px 10px;border-radius:12px;font-size:0.8em;font-weight:bold}
+.m-low{background:#1a2a1a;color:#44cc44}
+.m-med{background:#2a2a1a;color:#cccc44}
+.m-high{background:#2a1a1a;color:#ff6644}
+.m-extreme{background:#3a0a0a;color:#ff2222}
+.sleep-bar{display:flex;height:30px;border-radius:6px;overflow:hidden;margin:10px 0;background:#0a0a15}
+.sleep-block{display:flex;align-items:center;justify-content:center;font-size:0.7em;color:#fff;font-weight:bold}
+.awake{background:#2a2a4a}
+.restless{background:#4a3a2a}
+.asleep{background:#1a3a5a}
+.wired{background:#4a1a2a}
+.symptoms{color:#999;font-size:0.85em;line-height:1.4}
+.summary{background:#1a1a30;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+.sum-num{font-size:2.5em;color:#7b68ee;font-weight:bold}
+.sum-label{color:#888;font-size:0.9em}
+</style>
+</head>
+<body>
+<h1>Jet Lag Dread</h1>
+<p class="subtitle">See exactly how your sleep will be destroyed</p>
+<div class="form">
+<div><label>Current Timezone (UTC offset)</label>
+<select id="fromTZ"></select></div>
+<div><label>Destination Timezone (UTC offset)</label>
+<select id="toTZ"></select></div>
+<div><label>Direction</label>
+<select id="direction"><option value="east">Flying East (harder)</option><option value="west">Flying West (easier)</option></select></div>
+<button onclick="calculate()">CALCULATE MY SUFFERING</button>
+</div>
+<div class="timeline" id="timeline"></div>
+<script>
+const tzSel=document.getElementById('fromTZ'),tzSel2=document.getElementById('toTZ');
+for(let i=-12;i<=12;i++){const o=document.createElement('option');o.value=i;o.textContent='UTC'+(i>=0?'+':'')+i;tzSel.appendChild(o);tzSel2.appendChild(o.cloneNode(true));}
+tzSel.value='-5';tzSel2.value='1';
+const symptomPool=[
+"Staring at ceiling at 3 AM questioning all life choices","Falling asleep mid-sentence at dinner",
+"Waking up at 4 AM ABSOLUTELY STARVING","Eyes burning like you stared at the sun",
+"Micro-sleeping during important conversations","Craving breakfast at midnight",
+"Complete inability to form coherent sentences","Wondering what day/month/year it is",
+"Random waves of existential dread","Eating lunch at 4 AM because your body said so",
+"Passing out at 6 PM like a toddler","Brain fog thicker than London smog",
+"Emotional volatility of a reality TV contestant","Hallucinating that your hotel room is your bedroom",
+"Forgetting why you walked into rooms","Spontaneous napping in public places",
+"Aggressive irritability over minor inconveniences","Complete time blindness",
+"Phantom hunger at impossible hours","Body temperature regulation goes haywire",
+"Digestive system staging a full revolt","Coffee becoming a food group",
+"Sunlight feeling personally offensive","Social skills of a malfunctioning robot",
+"Memory of a goldfish with jet lag","Sweating at inappropriate temperatures",
+"Heart racing at 2 AM for no reason","Dreams so vivid they feel like a second job",
+"Waking up not knowing what continent you are on","Accidentally speaking wrong language from exhaustion"
+];
+function calculate(){
+const diff=Math.abs(parseInt(tzSel2.value)-parseInt(tzSel.value));
+const dir=document.getElementById('direction').value;
+const recoveryDays=Math.ceil(diff*(dir==='east'?1.5:1))+1;
+const tl=document.getElementById('timeline');
+let html='<div class="summary"><div class="sum-num">'+diff+' hours</div><div class="sum-label">timezone shift</div><br><div class="sum-num">'+recoveryDays+' days</div><div class="sum-label">of suffering (estimated)</div></div>';
+for(let d=0;d<recoveryDays;d++){
+const progress=d/recoveryDays;
+const misery=Math.max(0,Math.min(100,100-progress*110));
+const mClass=misery>75?'m-extreme':misery>50?'m-high':misery>25?'m-med':'m-low';
+const mLabel=misery>75?'EXTREME':misery>50?'HIGH':misery>25?'MODERATE':'FADING';
+const sleepHrs=Math.min(8,3+progress*6);
+const awakeBlocks=Math.floor((24-sleepHrs)/3);
+let barHtml='';
+const segments=8;
+for(let s=0;s<segments;s++){
+const hr=s*3;
+const isSleep=(d===0)?(hr>2&&hr<5):(hr>(22-progress*14)%24||(hr<(6+progress*2)));
+const type=isSleep?(Math.random()>progress?'restless':'asleep'):(Math.random()>0.7&&misery>40?'wired':'awake');
+const labels={awake:'Awake',restless:'Tossing',asleep:'Sleep',wired:'WIRED'};
+barHtml+='<div class="sleep-block '+type+'" style="width:12.5%">'+labels[type]+'</div>';
+}
+const numSymptoms=Math.max(1,Math.floor((1-progress)*3));
+let daySymptoms=[];
+while(daySymptoms.length<numSymptoms){const s=symptomPool[Math.floor(Math.random()*symptomPool.length)];if(!daySymptoms.includes(s))daySymptoms.push(s)}
+html+='<div class="day"><div class="day-header"><span class="day-num">'+(d===0?'Arrival Day':'Day '+(d+1))+'</span><span class="misery '+mClass+'">Misery: '+mLabel+'</span></div>'
++'<div class="sleep-bar">'+barHtml+'</div>'
++'<div class="symptoms">'+daySymptoms.map(s=>'- '+s).join('<br>')+'</div></div>';
+}
+html+='<div class="day" style="border-color:#44cc44"><div class="day-header"><span class="day-num">Day '+(recoveryDays+1)+'</span><span class="misery m-low">RECOVERED (maybe)</span></div><div class="symptoms">You might feel normal again. Or this could be Stockholm syndrome with your new sleep schedule.</div></div>';
+tl.innerHTML=html;tl.classList.add('show');
+}
+</script>
+</body>
+</html>
