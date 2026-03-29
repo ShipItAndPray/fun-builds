@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Roaster - Career Counselor From Hell</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a2e;--border:#2a2a3e;
+--text:#c8c8d4;--text-dim:#6a6a7e;--accent:#ff4444;--accent2:#ff6b35;
+--gold:#ffd700;--green:#22c55e;--purple:#a855f7;
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:20px}
+h1{font-size:2.2rem;text-align:center;margin:30px 0 5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none}
+.subtitle{text-align:center;color:var(--text-dim);font-size:0.95rem;margin-bottom:30px;font-style:italic}
+.input-area{position:relative;margin-bottom:20px}
+textarea{width:100%;height:220px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;color:var(--text);font-size:0.95rem;resize:vertical;outline:none;transition:border-color .3s}
+textarea:focus{border-color:var(--accent)}
+textarea::placeholder{color:var(--text-dim)}
+.btn-row{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
+button{padding:12px 24px;border:none;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+button:active{transform:scale(0.97)}
+.btn-roast{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;flex:1;min-width:150px}
+.btn-roast:hover{filter:brightness(1.15)}
+.btn-speak{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-speak:hover{border-color:var(--accent)}
+.btn-share{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-share:hover{border-color:var(--gold)}
+.btn-sample{background:var(--surface2);color:var(--text-dim);border:1px solid var(--border);font-size:0.85rem;padding:8px 16px}
+.btn-sample:hover{color:var(--text);border-color:var(--purple)}
+#results{display:none}
+.score-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:24px;text-align:center}
+.big-score{font-size:5rem;font-weight:800;line-height:1;margin:10px 0}
+.score-label{font-size:1.1rem;color:var(--text-dim);margin-bottom:8px}
+.score-verdict{font-size:1.2rem;font-weight:600;margin-top:8px}
+.meters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:24px 0}
+@media(max-width:600px){.meters{grid-template-columns:1fr}}
+.meter{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.meter-label{font-size:0.8rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.meter-value{font-size:2rem;font-weight:700}
+.meter-bar{height:6px;background:var(--surface2);border-radius:3px;margin-top:8px;overflow:hidden}
+.meter-fill{height:100%;border-radius:3px;transition:width 1s ease}
+.roast-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.roast-section h3{color:var(--accent);margin-bottom:12px;font-size:1rem;text-transform:uppercase;letter-spacing:1px}
+.buzzword-hit{display:inline-block;background:var(--surface2);border:1px solid var(--accent);border-radius:6px;padding:4px 10px;margin:4px;font-size:0.85rem;color:var(--accent)}
+.roast-line{padding:8px 0;border-bottom:1px solid var(--border);font-size:0.95rem;line-height:1.5}
+.roast-line:last-child{border-bottom:none}
+.roast-line .bw{color:var(--accent);font-weight:600}
+.overall-roast{font-size:1.1rem;line-height:1.7;color:var(--text);padding:12px 0}
+.skills-found{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.skill-tag{background:var(--surface2);border:1px solid var(--green);border-radius:6px;padding:4px 10px;font-size:0.85rem;color:var(--green)}
+.no-skills{color:var(--text-dim);font-style:italic}
+.share-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--green);color:#000;padding:12px 24px;border-radius:8px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.share-toast.show{opacity:1}
+.loading{text-align:center;padding:40px;display:none}
+.loading .dot{display:inline-block;width:10px;height:10px;background:var(--accent);border-radius:50%;margin:0 4px;animation:bounce .6s infinite alternate}
+.loading .dot:nth-child(2){animation-delay:.2s}
+.loading .dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{to{transform:translateY(-12px);opacity:.3}}
+footer{text-align:center;color:var(--text-dim);font-size:0.8rem;padding:30px 0 20px;border-top:1px solid var(--border);margin-top:40px}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Resume Roaster</h1>
+<p class="subtitle">"I've read 10,000 resumes and yours is... something." -- Your Career Counselor (15 years, 3 divorces, 1 functioning kidney)</p>
+
+<div class="input-area">
+<textarea id="resumeInput" placeholder="Paste your resume here. Don't worry, it can't get any worse than what I've already seen today..."></textarea>
+</div>
+<div class="btn-row">
+<button class="btn-roast" onclick="roastResume()">Roast My Resume</button>
+<button class="btn-speak" onclick="speakVerdict()" id="btnSpeak" style="display:none">Read Verdict Aloud</button>
+<button class="btn-share" onclick="shareRoast()" id="btnShare" style="display:none">Share Roast</button>
+<button class="btn-sample" onclick="loadSample()">Load Sample Resume</button>
+</div>
+
+<div class="loading" id="loading">
+<span class="dot"></span><span class="dot"></span><span class="dot"></span>
+<p style="margin-top:16px;color:var(--text-dim)">Summoning decades of career disappointment...</p>
+</div>
+
+<div id="results"></div>
+</div>
+
+<div class="share-toast" id="toast">Roast copied to clipboard!</div>
+
+<script>
+const BUZZWORDS = {
+"synergy":"Ah yes, 'synergy.' The word people use when they can't describe what they actually did.",
+"team player":"'Team player' -- translation: 'I let other people do the work and took partial credit.'",
+"results-driven":"'Results-driven.' What results? Driving your team to therapy doesn't count.",
+"passionate":"'Passionate.' About what? Leaving at 5:01 PM? We're all passionate about something.",
+"self-starter":"'Self-starter' -- so you couldn't find anyone willing to work with you. Got it.",
+"leverage":"'Leverage.' That's a fancy word for 'use.' You could've just said 'use.'",
+"proactive":"'Proactive.' As opposed to what? Reactively staring at your screen hoping work does itself?",
+"detail-oriented":"'Detail-oriented' and yet there are three typos in your cover letter.",
+"fast-paced":"'Fast-paced environment.' Code for: 'We have no process and everything is on fire.'",
+"dynamic":"'Dynamic.' Another word that means absolutely nothing but sounds impressive at brunch.",
+"innovative":"'Innovative.' If I had a dollar for every resume that claimed innovation, I could retire. Again.",
+"strategic":"'Strategic.' You went to one brainstorming meeting and now you're Sun Tzu?",
+"stakeholder":"'Stakeholder.' We get it. You've been in meetings. Lots of meetings.",
+"deep dive":"'Deep dive.' You looked at a spreadsheet for 20 minutes.",
+"thought leader":"'Thought leader.' Sir/ma'am, you have a blog with 12 followers. Eleven of them are bots.",
+"go-getter":"'Go-getter.' The career counselor equivalent of 'bless your heart.'",
+"paradigm":"'Paradigm.' Nobody has used this word sincerely since 2004. Please stop.",
+"ecosystem":"'Ecosystem.' It's a company, not a rainforest. Though the toxicity levels might be similar.",
+"value-add":"'Value-add.' What value? Eating all the snacks in the break room?",
+"rockstar":"'Rockstar.' Real rockstars don't need to put it on their resume. They trash hotel rooms.",
+"ninja":"'Ninja.' If you were really a ninja, I wouldn't be reading about it.",
+"guru":"'Guru.' You watched a YouTube tutorial. That doesn't make you a guru.",
+"wizard":"'Wizard.' The only thing you're conjuring is disappointment in your interviewer.",
+"evangelist":"'Evangelist.' You talked about the product at a dinner party once.",
+"disrupt":"'Disrupt.' You disrupted nothing except your coworkers' peace of mind.",
+"scalable":"'Scalable.' Everything is scalable if you throw enough money and interns at it.",
+"bandwidth":"'Bandwidth.' Just say you're busy. It's okay to be busy.",
+"circle back":"'Circle back.' The corporate equivalent of 'I'm ghosting this conversation.'",
+"move the needle":"'Move the needle.' What needle? The one on your BS detector? Because it's maxed out.",
+"low-hanging fruit":"'Low-hanging fruit.' So you did the easiest possible thing and want credit?",
+"deliverables":"'Deliverables.' You mean your actual job? You want praise for doing your job?",
+"ideate":"'Ideate.' Just say 'think.' We all know what thinking is.",
+"pivot":"'Pivot.' You changed direction because the first idea failed. That's just life, not a strategy.",
+"bleeding edge":"'Bleeding edge.' The only thing bleeding is my will to continue reading this.",
+"best practices":"'Best practices.' Copy-pasted from Google. We've all been there.",
+"core competency":"'Core competency.' Fancy way of saying 'things I can sort of do.'",
+"actionable":"'Actionable.' As opposed to the non-actionable insights you usually provide?",
+"robust":"'Robust.' It crashed twice last week but sure, robust.",
+"streamline":"'Streamline.' You deleted some files and called it efficiency.",
+"optimize":"'Optimize.' You changed a font size and the page loaded 0.2ms faster.",
+"spearheaded":"'Spearheaded.' You sent an email suggesting something. One email.",
+"orchestrated":"'Orchestrated.' You scheduled a meeting. That's not orchestrating.",
+"revolutionized":"'Revolutionized.' You updated a PowerPoint template from 2015.",
+"transformed":"'Transformed.' The only thing you transformed was coffee into bathroom breaks.",
+"facilitated":"'Facilitated.' You forwarded an email to the right person. Congratulations.",
+"cross-functional":"'Cross-functional.' You talked to someone from a different department once.",
+"synergize":"'Synergize.' This word should be illegal. I'm calling the police.",
+"empower":"'Empower.' You delegated your work to someone else and called it empowerment.",
+"holistic":"'Holistic.' You considered two things instead of one. Groundbreaking.",
+"agile":"'Agile.' You had daily standups where nobody stood up and nothing was agile.",
+"lean":"'Lean.' You fired people and did their work badly.",
+"disruptive":"'Disruptive.' In meetings, yes. In the industry, absolutely not.",
+"growth hacking":"'Growth hacking.' You changed a button color and signups went up 2%.",
+"world-class":"'World-class.' I've seen the world. You're not in it.",
+"cutting-edge":"'Cutting-edge.' The only edge here is the one I'm teetering on reading this.",
+"mission-critical":"'Mission-critical.' Your report on Q3 paper towel usage was not mission-critical.",
+"visionary":"'Visionary.' You need glasses, not a vision statement.",
+"game-changer":"'Game-changer.' The game remained exactly the same.",
+"impact":"'Impact.' An asteroid has impact. Your weekly status report does not.",
+"hands-on":"'Hands-on.' You broke something in production. Twice.",
+"fast learner":"'Fast learner.' So you Google things quickly. We all do.",
+"strong communicator":"'Strong communicator.' You reply-all'd to the entire company. That's not communication.",
+"driven":"'Driven.' Driven where? Because based on this resume, it's in circles.",
+"motivated":"'Motivated.' By your alarm clock, mostly.",
+"enthusiastic":"'Enthusiastic.' The exclamation marks in your emails don't count as enthusiasm.",
+"proven track record":"'Proven track record.' Proven by whom? Your mom doesn't count.",
+"excellent communication skills":"'Excellent communication skills' -- the most meaningless phrase in resume history.",
+"work ethic":"'Work ethic.' You showed up. That's the minimum.",
+"multitasking":"'Multitasking.' Science says you can't. Your resume confirms it."
+};
+
+const REAL_SKILLS = [
+"python","javascript","typescript","java","c\\+\\+","c#","rust","go","golang","ruby","php","swift","kotlin",
+"sql","html","css","react","angular","vue","node","django","flask","spring","docker","kubernetes",
+"aws","azure","gcp","terraform","jenkins","git","linux","mongodb","postgresql","mysql","redis",
+"tensorflow","pytorch","machine learning","deep learning","data science","api","rest","graphql",
+"figma","photoshop","illustrator","excel","tableau","power bi","jira",
+"solidity","blockchain","devops","ci/cd","microservices","kafka","elasticsearch",
+"pandas","numpy","scikit","opencv","nlp","computer vision","pytorch","assembly",
+"firebase","supabase","vercel","netlify","nginx","apache"
+];
+
+const OVERALL_ROASTS = [
+"I've seen grocery lists with more career direction than this resume.",
+"This resume reads like it was written by a motivational poster that gave up.",
+"If your resume were a movie, it would be direct-to-DVD. In 2003.",
+"I've been doing this for 15 years and this resume just aged me another 5.",
+"Your resume is the literary equivalent of a beige wall in a windowless office.",
+"I printed this resume and my printer filed a complaint with HR.",
+"This resume has all the excitement of a mandatory compliance training video.",
+"I've read fortune cookies with more substance than this.",
+"Your resume is like a hotel continental breakfast -- technically complete but deeply unsatisfying.",
+"If resumes had a Yelp rating, this would be 'Not Recommended' with the owner replying defensively.",
+"This resume makes me nostalgic for the ones that are just blank pages. At least those were honest.",
+"I showed this to my cat and she walked away. Even she has standards.",
+"Your resume reads like it was generated by an AI that was trained exclusively on LinkedIn posts.",
+"This is the resume equivalent of showing up to a potluck with a store-bought veggie tray.",
+"I've reviewed this resume three times and I still don't know what you do.",
+"Your resume is proof that spell check can't fix everything.",
+"If career documents were weather, this would be an overcast Tuesday in November.",
+"I need a coffee break after reading this, and I just had one.",
+"This resume has the same energy as a 'live, laugh, love' sign in a divorce lawyer's office.",
+"Your resume makes Comic Sans look like a bold creative choice.",
+"In 15 years of career counseling, this is the most... resume... I've ever seen.",
+"This resume is what happens when you prioritize fonts over accomplishments.",
+"I'd say this resume needs work, but honestly, it needs a complete demolition and rebuild.",
+"Your resume is the human resources equivalent of a mystery meat sandwich.",
+"If this resume were a car, it would be a 1997 Pontiac Sunfire with 200,000 miles. And a check engine light.",
+"I've seen better professional narratives on bathroom walls.",
+"This resume makes me want to go back to my previous career in food service. And I hated food service.",
+"Your resume is like WiFi at an airport -- it technically exists but nobody's getting anything done with it.",
+"I read this resume and now I need to update my own, just to feel something.",
+"This is what happens when someone takes 'fake it till you make it' way too literally.",
+"Your resume has the structural integrity of a house of cards in a wind tunnel.",
+"I would say this needs a second opinion, but the first opinion is already devastating enough.",
+"After reading this, I'm going to pour one out for your interviewer.",
+"This resume is the professional equivalent of wearing socks with sandals to a job interview.",
+"I've been staring at this for five minutes trying to find something nice to say. I'm still looking.",
+"Your career trajectory looks like a GPS recalculating after you've ignored it for the 47th time.",
+"This resume gives off the energy of someone who peaked during their group project in college.",
+"If I had to describe this resume in one word: beige.",
+"I showed this to the office shredder and it got excited.",
+"This resume has all the depth and nuance of a puddle in a parking lot.",
+"Your professional summary reads like a horoscope -- vague enough to apply to literally anyone.",
+"I've eaten gas station sushi more confidently than I can recommend this resume.",
+"This resume is like a participation trophy -- it exists, but let's not pretend it means something.",
+"Reading this was like watching paint dry, except the paint had a more compelling career narrative.",
+"Your resume makes me question whether career counseling was the right field for me. And I've been questioning that for years.",
+"If your resume were a spice, it would be flour.",
+"I need you to know that my disappointed sigh just set a new personal record.",
+"This resume walks into a bar and the bartender says 'we don't serve generic here.'",
+"Your resume and my student loans have something in common -- they're both things I deeply regret encountering.",
+"I've seen more impressive accomplishments on a toddler's fridge art collection.",
+"This is the professional equivalent of microwaving fish in the office kitchen.",
+"Your resume reads like someone described their job to a parrot and the parrot wrote it down.",
+"I once reviewed a resume that was just a photo of a dog. It was more hireable.",
+"This resume has the same impact as a 'Please Do Not Disturb' sign on an empty room.",
+"If careers were roller coasters, yours would be the kiddie train that goes in a small circle.",
+"Your resume is the 'We have food at home' of professional documents.",
+"I would frame this resume, but only as a cautionary tale.",
+"This resume makes me want to open a window. We're on the first floor, but still.",
+"Your professional experience section reads like a to-do list that never got done.",
+"I've seen more convincing arguments for employment on a cardboard sign at an intersection.",
+"This resume is what happens when you run out of things to say but haven't run out of pages."
+];
+
+const SCORE_VERDICTS = [
+{max:10, text:"Unhireable. Consider witness protection.", color:"#ff0000"},
+{max:20, text:"I've seen better resumes from fictional characters.", color:"#ff2200"},
+{max:30, text:"Your resume could cure insomnia. That's... something?", color:"#ff4400"},
+{max:40, text:"Technically a document. That's the nicest thing I can say.", color:"#ff6600"},
+{max:50, text:"Aggressively average. The human equivalent of room temperature water.", color:"#ff8800"},
+{max:60, text:"Not the worst I've seen today. And I've seen four.", color:"#ffaa00"},
+{max:70, text:"There's a pulse here. Faint, but detectable.", color:"#ccaa00"},
+{max:80, text:"Almost decent. Like gas station coffee -- it'll do.", color:"#88aa00"},
+{max:90, text:"Suspiciously competent. Did someone else write this?", color:"#44aa00"},
+{max:100, text:"I don't believe you. Nobody's this qualified.", color:"#00cc00"}
+];
+
+let lastRoastText = "";
+
+function loadSample() {
+document.getElementById("resumeInput").value = `JOHN Q. PROFESSIONAL
+Passionate, results-driven team player with a proven track record of leveraging synergy to deliver world-class, cutting-edge solutions in fast-paced, dynamic environments.
+
+PROFESSIONAL SUMMARY
+Innovative thought leader and self-starter with 7+ years of experience spearheading cross-functional initiatives. Skilled at deep dives into strategic ecosystems and orchestrating holistic, agile transformations. Proven ability to move the needle on mission-critical deliverables while maintaining a robust, scalable approach. A true rockstar ninja guru with excellent communication skills and strong work ethic.
+
+EXPERIENCE
+Senior Synergy Facilitator | BuzzCorp Industries | 2020-Present
+- Revolutionized paradigm-shifting value-add strategies across stakeholder ecosystems
+- Empowered cross-functional teams to ideate disruptive, game-changing solutions
+- Spearheaded bleeding-edge optimization of low-hanging fruit deliverables
+- Facilitated dynamic bandwidth allocation for mission-critical growth hacking initiatives
+- Transformed holistic ideation pipelines resulting in 200% more synergy (unverified)
+
+Junior Buzzword Engineer | Corporate Solutions LLC | 2017-2020
+- Streamlined actionable best practices for core competency enhancement
+- Orchestrated robust, scalable frameworks in a lean, agile environment
+- Proactive approach to circle-back methodologies and pivot optimization
+- Hands-on experience with Excel (I can make a bar chart)
+
+SKILLS
+Microsoft Word, team player, enthusiasm, being passionate, multitasking, fast learner, strong communicator
+
+EDUCATION
+B.A. in Communications - State University, 2017
+Minor in Thinking About Things
+
+CERTIFICATIONS
+- Certified Synergy Professional (self-issued)
+- LinkedIn Learning: "How to Use LinkedIn"`;
+}
+
+function roastResume() {
+const text = document.getElementById("resumeInput").value.trim();
+if (!text) { alert("Paste a resume first. I can't roast nothing... well, I could, but that's existential."); return; }
+
+document.getElementById("loading").style.display = "block";
+document.getElementById("results").style.display = "none";
+
+setTimeout(() => analyzeAndRoast(text), 1200 + Math.random() * 800);
+}
+
+function analyzeAndRoast(text) {
+const lower = text.toLowerCase();
+const words = text.split(/\s+/).length;
+
+// Detect buzzwords
+const found = [];
+for (const [bw, roast] of Object.entries(BUZZWORDS)) {
+  const regex = new RegExp("\\b" + bw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "\\b", "gi");
+  const matches = lower.match(regex);
+  if (matches) {
+    found.push({ word: bw, count: matches.length, roast });
+  }
+}
+
+// Detect real skills
+const skillsFound = [];
+for (const sk of REAL_SKILLS) {
+  const regex = new RegExp("\\b" + sk + "\\b", "gi");
+  if (regex.test(text)) {
+    skillsFound.push(sk.replace(/\\\+/g, "+"));
+  }
+}
+
+// Calculate scores
+const buzzDensity = Math.min(100, Math.round((found.length / Math.max(words, 1)) * 600));
+const yearsMatch = text.match(/(\d+)\+?\s*years?/gi);
+let yearsOfBS = 0;
+if (yearsMatch) {
+  yearsMatch.forEach(m => { const n = parseInt(m); if (n > yearsOfBS) yearsOfBS = n; });
+}
+const bsMultiplier = found.length > 0 ? Math.min(yearsOfBS * 1.5, yearsOfBS + 10) : yearsOfBS;
+
+// Hireability score (always hilariously low)
+let score = 50;
+score -= found.length * 2.5; // buzzwords tank it
+score += skillsFound.length * 3; // real skills help a tiny bit
+score -= buzzDensity * 0.3;
+if (found.length > 15) score -= 15; // extra penalty for egregious buzzword abuse
+if (skillsFound.length === 0) score -= 10;
+if (words < 50) score -= 10; // too short
+score += Math.random() * 8; // chaos factor
+score = Math.max(3, Math.min(42, Math.round(score))); // cap at 42 max -- always bad
+
+const verdict = SCORE_VERDICTS.find(v => score <= v.max);
+
+// Pick random overall roasts (3-4 of them)
+const shuffled = [...OVERALL_ROASTS].sort(() => Math.random() - 0.5);
+const overallRoasts = shuffled.slice(0, 3 + Math.floor(Math.random() * 2));
+
+// Build results HTML
+let html = `
+<div class="score-card">
+  <div class="score-label">HIREABILITY SCORE</div>
+  <div class="big-score" style="color:${verdict.color}">${score}<span style="font-size:1.5rem;color:var(--text-dim)">/100</span></div>
+  <div class="score-verdict" style="color:${verdict.color}">${verdict.text}</div>
+</div>
+
+<div class="meters">
+  <div class="meter">
+    <div class="meter-label">Buzzword Density</div>
+    <div class="meter-value" style="color:${buzzDensity > 50 ? 'var(--accent)' : buzzDensity > 25 ? 'var(--accent2)' : 'var(--green)'}">${buzzDensity}%</div>
+    <div class="meter-bar"><div class="meter-fill" style="width:${buzzDensity}%;background:${buzzDensity > 50 ? 'var(--accent)' : buzzDensity > 25 ? 'var(--accent2)' : 'var(--green)'}"></div></div>
+  </div>
+  <div class="meter">
+    <div class="meter-label">Actual Skills</div>
+    <div class="meter-value" style="color:${skillsFound.length > 5 ? 'var(--green)' : skillsFound.length > 0 ? 'var(--gold)' : 'var(--accent)'}">${skillsFound.length}</div>
+    <div class="meter-bar"><div class="meter-fill" style="width:${Math.min(100, skillsFound.length * 10)}%;background:var(--green)"></div></div>
+  </div>
+  <div class="meter">
+    <div class="meter-label">Years of BS</div>
+    <div class="meter-value" style="color:var(--purple)">${Math.round(bsMultiplier)}</div>
+    <div class="meter-bar"><div class="meter-fill" style="width:${Math.min(100, bsMultiplier * 5)}%;background:var(--purple)"></div></div>
+  </div>
+</div>`;
+
+// Overall roast
+html += `<div class="roast-section">
+  <h3>The Counselor's Verdict</h3>
+  <div class="overall-roast">${overallRoasts.map(r => `<p style="margin-bottom:10px">"${r}"</p>`).join("")}</div>
+</div>`;
+
+// Buzzword roasts
+if (found.length > 0) {
+  found.sort((a, b) => b.count - a.count);
+  html += `<div class="roast-section">
+    <h3>Buzzword Autopsy (${found.length} found)</h3>
+    <div style="margin-bottom:12px">${found.map(f => `<span class="buzzword-hit">${f.word}${f.count > 1 ? ' x' + f.count : ''}</span>`).join("")}</div>
+    ${found.map(f => `<div class="roast-line"><span class="bw">${f.word}${f.count > 1 ? ' (x' + f.count + ')' : ''}:</span> ${f.roast}</div>`).join("")}
+  </div>`;
+} else {
+  html += `<div class="roast-section">
+    <h3>Buzzword Autopsy</h3>
+    <p style="color:var(--text-dim)">No buzzwords detected. Either you're genuinely talented or this resume is so bland it doesn't even have the energy for buzzwords.</p>
+  </div>`;
+}
+
+// Real skills
+html += `<div class="roast-section">
+  <h3>Actual Skills Detected</h3>`;
+if (skillsFound.length > 0) {
+  html += `<div class="skills-found">${skillsFound.map(s => `<span class="skill-tag">${s}</span>`).join("")}</div>
+  <p style="margin-top:12px;color:var(--text-dim)">${skillsFound.length > 5 ? "Okay, you actually know some things. Buried under all that fluff, but they're there." : skillsFound.length > 2 ? "A few real skills hiding in there like needles in a haystack of corporate jargon." : "Barely detectable signs of actual competence. It's a start, I guess."}</p>`;
+} else {
+  html += `<p class="no-skills">No recognizable technical skills detected. Your resume is 100% vibes. Impressive in the worst way.</p>`;
+}
+html += `</div>`;
+
+// Counselor's recommendation
+const recs = [
+  "My recommendation: Print this resume, fold it into a paper airplane, and let it fly into the sunset. Start fresh.",
+  "Honest advice: Strip out every buzzword, and if there's nothing left... we need to talk.",
+  "Career tip: Your resume should describe what you DID, not what you ASPIRE TO SOUND LIKE.",
+  "Pro tip: Replace every buzzword with a specific number or result. '200% more synergy' is not a number. It's a cry for help.",
+  "Final thought: Somewhere in this resume is a real person with real skills. Find them. Let them out.",
+  "Look, I've seen worse. Not recently, and not by much, but technically I have.",
+  "Suggestion: Read your resume out loud. If you cringe, it's working. If you don't, you've been in corporate too long.",
+  "Next steps: Delete everything that sounds like a TED talk title and keep everything that sounds like actual work."
+];
+html += `<div class="roast-section">
+  <h3>Counselor's Recommendation</h3>
+  <p class="overall-roast" style="font-style:italic">"${recs[Math.floor(Math.random() * recs.length)]}"</p>
+  <p style="color:var(--text-dim);font-size:0.85rem;margin-top:8px">-- Your Career Counselor (who is now going to take a very long walk)</p>
+</div>`;
+
+document.getElementById("loading").style.display = "none";
+document.getElementById("results").innerHTML = html;
+document.getElementById("results").style.display = "block";
+document.getElementById("btnSpeak").style.display = "inline-block";
+document.getElementById("btnShare").style.display = "inline-block";
+
+// Save text for sharing/speaking
+lastRoastText = `Resume Roaster Score: ${score}/100 - ${verdict.text}\n\nBuzzwords found: ${found.length}\n${found.map(f => `- ${f.word}: ${f.roast}`).join("\n")}\n\nVerdict:\n${overallRoasts.map(r => `"${r}"`).join("\n")}`;
+
+document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+}
+
+function speakVerdict() {
+if (!("speechSynthesis" in window)) { alert("Your browser doesn't support speech. Probably for the best."); return; }
+speechSynthesis.cancel();
+
+const scoreEl = document.querySelector(".big-score");
+const verdictEl = document.querySelector(".score-verdict");
+const roastEls = document.querySelectorAll(".overall-roast p");
+const buzzLines = document.querySelectorAll(".roast-line");
+
+let speechText = `Your hireability score is ${scoreEl?.textContent?.replace("/100", " out of 100")}. ${verdictEl?.textContent || ""} ... `;
+
+roastEls.forEach(p => { speechText += p.textContent + " ... "; });
+
+// Add a few buzzword roasts
+let count = 0;
+buzzLines.forEach(line => {
+  if (count < 5) { speechText += line.textContent + " ... "; count++; }
+});
+
+const recEl = document.querySelector(".roast-section:last-child .overall-roast");
+if (recEl) speechText += "My recommendation: " + recEl.textContent;
+
+const utter = new SpeechSynthesisUtterance(speechText);
+utter.rate = 0.85;
+utter.pitch = 0.7;
+
+// Try to find a deep/tired voice
+const voices = speechSynthesis.getVoices();
+const preferred = voices.find(v => /daniel|thomas|james|male/i.test(v.name) && /en/i.test(v.lang));
+if (preferred) utter.voice = preferred;
+
+speechSynthesis.speak(utter);
+}
+
+// Pre-load voices
+if ("speechSynthesis" in window) {
+speechSynthesis.getVoices();
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+function shareRoast() {
+if (navigator.clipboard && lastRoastText) {
+  navigator.clipboard.writeText(lastRoastText).then(() => {
+    const toast = document.getElementById("toast");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2000);
+  });
+} else if (navigator.share && lastRoastText) {
+  navigator.share({ title: "Resume Roaster Results", text: lastRoastText });
+} else {
+  alert("Copy not supported. Just screenshot it like everyone else.");
+}
+}
+</script>
+</body>
+</html>

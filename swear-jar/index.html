@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Digital Swear Jar</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0f0f0f; --surface: #1a1a2e; --surface2: #16213e;
+    --accent: #e94560; --gold: #f5c518; --green: #00e676;
+    --text: #eee; --muted: #888; --glass: rgba(255,255,255,0.05);
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 1rem; overflow-x: hidden;
+  }
+  h1 { font-size: 2rem; margin: 0.5rem 0; text-align: center; }
+  h1 span { color: var(--gold); }
+  .jar-container {
+    position: relative; width: 180px; height: 220px; margin: 1rem auto;
+  }
+  .jar {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    border: 3px solid rgba(255,255,255,0.15);
+    border-radius: 0 0 30px 30px; position: relative; overflow: hidden;
+  }
+  .jar-lid {
+    position: absolute; top: -14px; left: 10%; width: 80%; height: 18px;
+    background: #555; border-radius: 6px 6px 0 0; border: 2px solid #777;
+  }
+  .jar-fill {
+    position: absolute; bottom: 0; width: 100%;
+    background: linear-gradient(to top, #f5c518, #ffeb3b);
+    border-radius: 0 0 27px 27px; transition: height 0.6s ease;
+  }
+  .jar-coins {
+    position: absolute; bottom: 0; width: 100%; text-align: center;
+    font-size: 1.5rem; padding-bottom: 8px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  }
+  .total {
+    font-size: 3rem; font-weight: 900; color: var(--gold);
+    text-shadow: 0 0 20px rgba(245,197,24,0.4); text-align: center;
+    margin: 0.5rem 0;
+  }
+  .offense-count { color: var(--muted); text-align: center; font-size: 0.9rem; }
+  .controls { display: flex; gap: 0.75rem; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }
+  button {
+    padding: 0.6rem 1.2rem; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; transition: all 0.2s;
+  }
+  button:active { transform: scale(0.95); }
+  .btn-listen {
+    background: var(--accent); color: white; font-size: 1.1rem; padding: 0.8rem 2rem;
+    border-radius: 50px; position: relative; overflow: hidden;
+  }
+  .btn-listen.active {
+    background: var(--green); animation: pulse 1.5s infinite;
+  }
+  .btn-listen.active::after {
+    content: ''; position: absolute; top: 50%; left: 50%;
+    width: 120%; height: 120%; background: rgba(255,255,255,0.1);
+    border-radius: 50%; transform: translate(-50%,-50%) scale(0);
+    animation: ripple 1.5s infinite;
+  }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,0.4); } 50% { box-shadow: 0 0 0 12px rgba(0,230,118,0); } }
+  @keyframes ripple { to { transform: translate(-50%,-50%) scale(1); opacity: 0; } }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: #c62828; color: white; }
+  .roast-box {
+    background: var(--surface); border-left: 4px solid var(--accent);
+    padding: 1rem; border-radius: 0 8px 8px 0; max-width: 500px; width: 100%;
+    margin: 0.5rem 0; min-height: 3rem; font-style: italic; color: #ccc;
+    transition: all 0.3s;
+  }
+  .roast-box.flash { border-left-color: var(--gold); background: var(--surface2); }
+  .log {
+    max-width: 500px; width: 100%; margin: 1rem 0;
+    max-height: 200px; overflow-y: auto;
+  }
+  .log-entry {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.4rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.85rem;
+  }
+  .log-word { color: var(--accent); font-weight: 600; }
+  .log-time { color: var(--muted); font-size: 0.75rem; }
+  .chart-container {
+    max-width: 500px; width: 100%; margin: 1rem 0;
+    background: var(--surface); border-radius: 12px; padding: 1rem;
+  }
+  .chart-title { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem; }
+  .chart {
+    display: flex; align-items: flex-end; gap: 4px; height: 120px;
+    justify-content: space-around;
+  }
+  .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .bar {
+    width: 100%; max-width: 40px; background: linear-gradient(to top, var(--accent), var(--gold));
+    border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 2px;
+  }
+  .bar-label { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
+  .bar-value { font-size: 0.7rem; color: var(--text); margin-bottom: 2px; }
+  .transcript {
+    max-width: 500px; width: 100%; background: var(--surface);
+    border-radius: 8px; padding: 0.8rem; font-size: 0.8rem; color: var(--muted);
+    min-height: 2rem; margin: 0.5rem 0;
+  }
+  .transcript span { color: var(--green); }
+  .share-card {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 100; align-items: center; justify-content: center;
+  }
+  .share-card.show { display: flex; }
+  .share-content {
+    background: var(--surface); padding: 2rem; border-radius: 16px;
+    text-align: center; max-width: 350px; width: 90%;
+  }
+  .share-content h2 { color: var(--gold); margin-bottom: 1rem; }
+  .share-content .share-total { font-size: 3rem; font-weight: 900; color: var(--accent); }
+  .share-content .share-msg { margin: 1rem 0; color: var(--muted); }
+  .share-btns { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+  .coin-anim {
+    position: fixed; pointer-events: none; font-size: 2rem; z-index: 50;
+    animation: coinDrop 0.8s ease-in forwards;
+  }
+  @keyframes coinDrop {
+    0% { opacity: 1; transform: translateY(-60px) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(100px) rotate(360deg); }
+  }
+  .settings-row {
+    display: flex; align-items: center; gap: 0.5rem;
+    max-width: 500px; width: 100%; justify-content: center;
+    margin: 0.5rem 0; flex-wrap: wrap;
+  }
+  .settings-row label { color: var(--muted); font-size: 0.85rem; }
+  .settings-row select, .settings-row input {
+    background: var(--surface2); color: var(--text); border: 1px solid #333;
+    padding: 0.3rem 0.5rem; border-radius: 6px; font-size: 0.85rem;
+  }
+  .badge {
+    display: inline-block; background: var(--accent); color: white;
+    padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem;
+    font-weight: 700; margin: 0.25rem;
+  }
+  .badge.gold { background: var(--gold); color: #000; }
+  .badge.green { background: var(--green); color: #000; }
+  footer { margin-top: auto; padding: 1rem; color: var(--muted); font-size: 0.75rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Digital <span>Swear Jar</span></h1>
+
+<div class="jar-container">
+  <div class="jar-lid"></div>
+  <div class="jar">
+    <div class="jar-fill" id="jarFill"></div>
+    <div class="jar-coins" id="jarCoins"></div>
+  </div>
+</div>
+
+<div class="total" id="totalDisplay">$0.00</div>
+<div class="offense-count" id="offenseCount">0 offenses this week</div>
+
+<div class="controls">
+  <button class="btn-listen" id="listenBtn" onclick="toggleListening()">Start Listening</button>
+</div>
+
+<div class="transcript" id="transcript"><span>Transcript:</span> waiting...</div>
+
+<div class="roast-box" id="roastBox">Press "Start Listening" and let the mic hear your sins.</div>
+
+<div class="log" id="logContainer"></div>
+
+<div class="settings-row">
+  <label>Cost per offense:</label>
+  <select id="costSelect" onchange="updateCost()">
+    <option value="0.25" selected>$0.25</option>
+    <option value="0.50">$0.50</option>
+    <option value="1.00">$1.00</option>
+    <option value="5.00">$5.00 (nuclear)</option>
+  </select>
+  <label>Voice roasts:</label>
+  <input type="checkbox" id="voiceToggle" checked>
+</div>
+
+<div class="controls">
+  <button class="btn-secondary" onclick="showShare()">Share Shame</button>
+  <button class="btn-secondary" onclick="testDetection()">Test Detection</button>
+  <button class="btn-danger" onclick="resetJar()">Reset Jar</button>
+</div>
+
+<div class="chart-container">
+  <div class="chart-title">Weekly Shame Chart</div>
+  <div class="chart" id="weeklyChart"></div>
+</div>
+
+<div id="shareCard" class="share-card" onclick="hideShare(event)">
+  <div class="share-content">
+    <h2>My Swear Jar Shame</h2>
+    <div class="share-total" id="shareTotal">$0.00</div>
+    <div class="share-msg" id="shareMsg"></div>
+    <div class="share-btns">
+      <button class="btn-secondary" onclick="copyShame()">Copy to Clipboard</button>
+      <button class="btn-listen" onclick="tweetShame()">Post on X</button>
+    </div>
+    <button class="btn-secondary" style="margin-top:0.5rem" onclick="hideShare(null)">Close</button>
+  </div>
+</div>
+
+<footer>Web Speech API required. Works best in Chrome/Edge. Your shame stays on your device.</footer>
+
+<script>
+// --- Swear word list (30+ words/phrases) ---
+const SWEAR_WORDS = [
+  'shit','fuck','damn','hell','ass','bitch','crap','bastard','dick',
+  'piss','douche','cock','twat','wanker','bollocks','bugger','arse',
+  'bloody','goddam','goddamn','motherfucker','bullshit','horseshit',
+  'dipshit','jackass','asshole','dumbass','shithead','fuckface',
+  'son of a bitch','what the fuck','holy shit','oh shit','fucking',
+  'freaking','frickin','screw you','pissed off','for fuck sake',
+  'shut the fuck up','dammit','piece of shit','go to hell'
+];
+
+// Roasts
+const ROASTS = [
+  "Wow, real creative vocabulary there, Shakespeare.",
+  "Your mother would be SO proud right now.",
+  "That word just cost you. Worth it? Didn't think so.",
+  "Another quarter for the jar. At this rate you're funding a vacation.",
+  "Potty mouth detected. Deploying shame.",
+  "Language! There are electrons present.",
+  "Did you kiss your mother with that mouth?",
+  "Congratulations, you've enriched the jar and impoverished your dignity.",
+  "That's going on your permanent record.",
+  "I've heard sailors with cleaner mouths.",
+  "Swear jar says thank you for your generous donation.",
+  "At this rate the jar will need a bigger jar.",
+  "Your eloquence is truly... breathtaking.",
+  "The microphone didn't consent to hearing that.",
+  "Adding that to your lifetime shame total.",
+  "Was that really necessary? The jar thinks so.",
+  "Cha-ching! Another coin in the shame bank.",
+  "Profanity detected. Initiating judgment protocol.",
+  "You know there are, like, 170,000 other English words, right?",
+  "Your vocabulary called. It wants a refund.",
+  "That one echoed. Even the jar flinched.",
+  "Keep going, you're single-handedly funding charity.",
+  "That word has been noted, judged, and fined.",
+  "Swearing is the refuge of the inarticulate. Just saying.",
+  "Bleep! Oh wait, this isn't TV. Pay up.",
+];
+
+// --- State ---
+let state = loadState();
+let recognition = null;
+let isListening = false;
+let costPerOffense = parseFloat(localStorage.getItem('sj_cost') || '0.25');
+
+function defaultState() {
+  return { total: 0, offenses: [], weeklyData: {} };
+}
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('swearJarState'));
+    return s && typeof s.total === 'number' ? s : defaultState();
+  } catch { return defaultState(); }
+}
+
+function saveState() {
+  localStorage.setItem('swearJarState', JSON.stringify(state));
+}
+
+function updateCost() {
+  costPerOffense = parseFloat(document.getElementById('costSelect').value);
+  localStorage.setItem('sj_cost', costPerOffense);
+}
+
+// --- Audio: coin clink via Web Audio API ---
+function playCoinSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // High metallic ping
+    [800, 1200, 1600].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + i * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.06 + 0.3);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.06);
+      osc.stop(ctx.currentTime + i * 0.06 + 0.3);
+    });
+  } catch {}
+}
+
+// --- Coin animation ---
+function spawnCoin() {
+  const coin = document.createElement('div');
+  coin.className = 'coin-anim';
+  coin.textContent = '\uD83E\uDE99';
+  coin.style.left = (Math.random() * 60 + 20) + '%';
+  coin.style.top = '30%';
+  document.body.appendChild(coin);
+  setTimeout(() => coin.remove(), 900);
+}
+
+// --- Speech Synthesis roast ---
+function speakRoast(text) {
+  if (!document.getElementById('voiceToggle').checked) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.1;
+  utter.pitch = 0.9;
+  synth.speak(utter);
+}
+
+// --- Detection ---
+function detectSwear(text) {
+  const lower = text.toLowerCase();
+  for (const word of SWEAR_WORDS) {
+    // Match as substring with word boundaries where possible
+    const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp('\\b' + escaped + '\\b', 'i');
+    if (regex.test(lower)) return word;
+  }
+  // Looser match for multi-word phrases
+  for (const word of SWEAR_WORDS) {
+    if (word.includes(' ') && lower.includes(word)) return word;
+  }
+  return null;
+}
+
+function registerOffense(word) {
+  state.total += costPerOffense;
+  const now = new Date();
+  state.offenses.push({ word, time: now.toISOString(), cost: costPerOffense });
+
+  // Weekly data
+  const weekKey = getWeekKey(now);
+  const dayKey = now.toLocaleDateString('en-US', { weekday: 'short' });
+  if (!state.weeklyData[weekKey]) state.weeklyData[weekKey] = {};
+  state.weeklyData[weekKey][dayKey] = (state.weeklyData[weekKey][dayKey] || 0) + 1;
+
+  saveState();
+  updateUI();
+  playCoinSound();
+  spawnCoin();
+
+  // Roast
+  const roast = ROASTS[Math.floor(Math.random() * ROASTS.length)];
+  const box = document.getElementById('roastBox');
+  box.textContent = `"${word}" -- ${roast}`;
+  box.classList.add('flash');
+  setTimeout(() => box.classList.remove('flash'), 600);
+
+  // Speak
+  const spokenLines = [
+    "That's another quarter!",
+    `That's another ${costPerOffense < 1 ? (costPerOffense * 100) + ' cents' : costPerOffense + ' dollars'}!`,
+    "Pay up, potty mouth!",
+    "Cha-ching!",
+    "The jar grows fatter!",
+  ];
+  speakRoast(spokenLines[Math.floor(Math.random() * spokenLines.length)]);
+
+  // Add log entry
+  addLogEntry(word, now);
+}
+
+function getWeekKey(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - d.getDay());
+  return d.toISOString().split('T')[0];
+}
+
+// --- UI Updates ---
+function updateUI() {
+  document.getElementById('totalDisplay').textContent = '$' + state.total.toFixed(2);
+
+  // Offense count this week
+  const thisWeek = getWeekKey(new Date());
+  const weekData = state.weeklyData[thisWeek] || {};
+  const weekTotal = Object.values(weekData).reduce((a, b) => a + b, 0);
+  document.getElementById('offenseCount').textContent = `${weekTotal} offense${weekTotal !== 1 ? 's' : ''} this week`;
+
+  // Jar fill (caps at 100%)
+  const fillPct = Math.min(100, (state.total / 50) * 100);
+  document.getElementById('jarFill').style.height = fillPct + '%';
+
+  // Coins in jar
+  const coinCount = Math.min(12, Math.floor(state.total / costPerOffense));
+  document.getElementById('jarCoins').textContent = '\uD83E\uDE99'.repeat(coinCount);
+
+  // Share card
+  document.getElementById('shareTotal').textContent = '$' + state.total.toFixed(2);
+
+  // Weekly chart
+  renderChart();
+}
+
+function addLogEntry(word, date) {
+  const container = document.getElementById('logContainer');
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-word">${word}</span><span class="log-time">${date.toLocaleTimeString()}</span>`;
+  container.prepend(entry);
+  // Keep max 50
+  while (container.children.length > 50) container.lastChild.remove();
+}
+
+function renderChart() {
+  const chart = document.getElementById('weeklyChart');
+  chart.innerHTML = '';
+  const thisWeek = getWeekKey(new Date());
+  const weekData = state.weeklyData[thisWeek] || {};
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const maxVal = Math.max(1, ...days.map(d => weekData[d] || 0));
+
+  days.forEach(day => {
+    const val = weekData[day] || 0;
+    const height = Math.max(2, (val / maxVal) * 100);
+    const group = document.createElement('div');
+    group.className = 'bar-group';
+    group.innerHTML = `
+      <span class="bar-value">${val || ''}</span>
+      <div class="bar" style="height:${height}px"></div>
+      <span class="bar-label">${day}</span>
+    `;
+    chart.appendChild(group);
+  });
+}
+
+function rebuildLog() {
+  const container = document.getElementById('logContainer');
+  container.innerHTML = '';
+  const recent = state.offenses.slice(-50).reverse();
+  recent.forEach(o => {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    const d = new Date(o.time);
+    entry.innerHTML = `<span class="log-word">${o.word}</span><span class="log-time">${d.toLocaleTimeString()}</span>`;
+    container.appendChild(entry);
+  });
+}
+
+// --- Speech Recognition ---
+function toggleListening() {
+  if (isListening) { stopListening(); return; }
+  startListening();
+}
+
+function startListening() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    alert('Web Speech Recognition API not supported. Use Chrome or Edge.');
+    return;
+  }
+
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (event) => {
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const t = event.results[i][0].transcript;
+      transcript += t;
+      if (event.results[i].isFinal) {
+        const detected = detectSwear(t);
+        if (detected) registerOffense(detected);
+      }
+    }
+    document.getElementById('transcript').innerHTML = `<span>Hearing:</span> ${transcript}`;
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      alert('Microphone access denied. Please allow mic access.');
+      stopListening();
+    }
+    // auto-restart on other errors
+    if (e.error === 'network' || e.error === 'aborted') {
+      setTimeout(() => { if (isListening) recognition.start(); }, 500);
+    }
+  };
+
+  recognition.onend = () => {
+    // Auto-restart if still supposed to be listening
+    if (isListening) {
+      try { recognition.start(); } catch {}
+    }
+  };
+
+  try {
+    recognition.start();
+    isListening = true;
+    const btn = document.getElementById('listenBtn');
+    btn.textContent = 'Listening...';
+    btn.classList.add('active');
+  } catch (e) {
+    alert('Could not start speech recognition: ' + e.message);
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  if (recognition) { recognition.stop(); recognition = null; }
+  const btn = document.getElementById('listenBtn');
+  btn.textContent = 'Start Listening';
+  btn.classList.remove('active');
+  document.getElementById('transcript').innerHTML = '<span>Transcript:</span> stopped.';
+}
+
+// --- Share ---
+function showShare() {
+  const totalOffenses = state.offenses.length;
+  const msgs = [
+    `${totalOffenses} total offenses recorded. Impressive... in a bad way.`,
+    `That's ${totalOffenses} times you chose violence (verbal).`,
+    `You've sworn ${totalOffenses} times. The jar remembers everything.`,
+  ];
+  document.getElementById('shareMsg').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+  document.getElementById('shareCard').classList.add('show');
+}
+
+function hideShare(e) {
+  if (e === null || e.target.id === 'shareCard')
+    document.getElementById('shareCard').classList.remove('show');
+}
+
+function copyShame() {
+  const text = `My Digital Swear Jar: $${state.total.toFixed(2)} from ${state.offenses.length} offenses. I need help.`;
+  navigator.clipboard.writeText(text).then(() => alert('Shame copied to clipboard!'));
+}
+
+function tweetShame() {
+  const text = encodeURIComponent(`My Digital Swear Jar: $${state.total.toFixed(2)} from ${state.offenses.length} offenses. I need help. \uD83E\uDE99`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+}
+
+// --- Test ---
+function testDetection() {
+  const testWords = SWEAR_WORDS.slice(0, 10);
+  const pick = testWords[Math.floor(Math.random() * testWords.length)];
+  document.getElementById('transcript').innerHTML = `<span>Test:</span> "${pick}"`;
+  registerOffense(pick);
+}
+
+// --- Reset ---
+function resetJar() {
+  if (confirm('Reset the entire swear jar? This erases all data.')) {
+    state = defaultState();
+    saveState();
+    document.getElementById('logContainer').innerHTML = '';
+    document.getElementById('roastBox').textContent = 'Jar reset. A clean slate. Let\'s see how long this lasts.';
+    updateUI();
+  }
+}
+
+// --- Init ---
+document.getElementById('costSelect').value = costPerOffense;
+rebuildLog();
+updateUI();
+</script>
+</body>
+</html>

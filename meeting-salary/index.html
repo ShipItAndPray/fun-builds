@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting Cost Calculator - Watch Your Money Burn</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0a0a0f;--card:#12121a;--accent:#ff6b35;--accent2:#ff3d3d;--gold:#ffd700;--text:#e8e8e8;--dim:#666;--green:#22c55e;--border:#1e1e2e}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  /* Fire particles canvas */
+  #fire-canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:0.6}
+
+  .container{max-width:640px;margin:0 auto;padding:16px;position:relative;z-index:1}
+
+  h1{text-align:center;font-size:1.8rem;margin:20px 0 6px;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none}
+  .subtitle{text-align:center;color:var(--dim);font-size:0.85rem;margin-bottom:24px}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+  .card h2{font-size:1.1rem;margin-bottom:14px;color:var(--accent)}
+
+  /* Setup */
+  label{display:block;font-size:0.85rem;color:var(--dim);margin-bottom:4px}
+  input[type=number]{width:100%;padding:10px 12px;background:#1a1a28;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:1rem;margin-bottom:12px;outline:none;transition:border .2s}
+  input[type=number]:focus{border-color:var(--accent)}
+  input[type=number]::-webkit-inner-spin-button{opacity:1}
+
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .preset{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;font-size:0.8rem;transition:all .2s}
+  .preset:hover,.preset.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:600}
+
+  .btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .2s}
+  .btn-start{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn-start:hover{transform:scale(1.02);box-shadow:0 4px 20px rgba(255,107,53,0.4)}
+  .btn-stop{background:linear-gradient(135deg,#444,#333);color:#fff;margin-top:10px}
+  .btn-stop:hover{background:linear-gradient(135deg,#555,#444)}
+  .btn-share{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;margin-top:10px}
+  .btn-share:hover{box-shadow:0 4px 20px rgba(37,99,235,0.4)}
+
+  /* Live counter */
+  #live-section{display:none}
+  .burn-rate{text-align:center;margin-bottom:16px}
+  .burn-rate .per-sec{font-size:0.9rem;color:var(--dim)}
+  .burn-rate .per-sec span{color:var(--accent);font-weight:700}
+
+  .total-burned{text-align:center;margin:20px 0}
+  .total-burned .amount{font-size:3.2rem;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:'Courier New',monospace;letter-spacing:-1px}
+  .total-burned .label{font-size:0.8rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px}
+
+  .elapsed{text-align:center;color:var(--dim);font-size:0.9rem;margin-bottom:16px}
+  .elapsed span{color:var(--text);font-weight:600}
+
+  .equivalent{text-align:center;padding:14px;background:#1a1a28;border-radius:10px;margin:12px 0;font-size:1rem}
+  .equivalent .emoji{font-size:1.3rem}
+  .equivalent .count{color:var(--gold);font-weight:700;font-size:1.2rem}
+
+  .milestone{text-align:center;padding:10px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,53,0.1));border:1px solid rgba(255,215,0,0.3);border-radius:8px;margin:10px 0;animation:milestoneFlash .6s ease}
+  @keyframes milestoneFlash{0%{transform:scale(1.1);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  .attendees-display{text-align:center;color:var(--dim);font-size:0.85rem;margin-bottom:8px}
+  .attendees-display span{color:var(--text)}
+
+  /* Summary */
+  #summary-section{display:none}
+  .summary-amount{text-align:center;font-size:2.8rem;font-weight:800;color:var(--accent2);font-family:'Courier New',monospace;margin:10px 0}
+  .summary-detail{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.9rem}
+  .summary-detail:last-child{border:none}
+  .summary-detail .val{font-weight:600}
+
+  /* Poll */
+  .poll{margin-top:16px}
+  .poll h3{font-size:0.95rem;margin-bottom:10px;text-align:center}
+  .poll-options{display:flex;gap:8px}
+  .poll-btn{flex:1;padding:12px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);cursor:pointer;font-size:0.85rem;transition:all .2s;text-align:center}
+  .poll-btn:hover{border-color:var(--accent)}
+  .poll-btn.selected{border-color:var(--green);background:rgba(34,197,94,0.1);color:var(--green)}
+  .poll-btn.selected-no{border-color:var(--accent2);background:rgba(255,61,61,0.1);color:var(--accent2)}
+
+  /* History */
+  #history-section{display:none}
+  .history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem}
+  .history-item:last-child{border:none}
+  .history-item .cost{color:var(--accent);font-weight:700;font-family:'Courier New',monospace}
+  .history-item .meta{color:var(--dim)}
+  .lifetime-total{text-align:center;padding:14px;background:linear-gradient(135deg,rgba(255,61,61,0.1),rgba(255,107,53,0.1));border-radius:10px;margin-bottom:14px}
+  .lifetime-total .amount{font-size:1.8rem;font-weight:800;color:var(--accent2);font-family:'Courier New',monospace}
+  .lifetime-total .label{font-size:0.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+  .clear-history{background:none;border:none;color:var(--dim);font-size:0.8rem;cursor:pointer;text-decoration:underline;display:block;margin:10px auto 0}
+  .clear-history:hover{color:var(--accent2)}
+
+  /* Money particles */
+  .money-particle{position:fixed;font-size:1.2rem;pointer-events:none;z-index:10;animation:floatUp 2s ease-out forwards}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0) rotate(0deg)}100%{opacity:0;transform:translateY(-120px) rotate(45deg)}}
+
+  @media(max-width:480px){
+    .container{padding:10px}
+    h1{font-size:1.4rem}
+    .total-burned .amount{font-size:2.4rem}
+    .presets{gap:6px}
+    .preset{padding:5px 10px;font-size:0.75rem}
+  }
+</style>
+</head>
+<body>
+<canvas id="fire-canvas"></canvas>
+<div class="container">
+  <h1>Meeting Salary Burner</h1>
+  <p class="subtitle">Real-time cost of your meeting. Every second counts.</p>
+
+  <!-- SETUP -->
+  <div id="setup-section">
+    <div class="card">
+      <h2>Meeting Setup</h2>
+      <label for="attendees">Number of Attendees</label>
+      <input type="number" id="attendees" value="5" min="1" max="500">
+
+      <label>Average Salary (click preset or type below)</label>
+      <div class="presets">
+        <button class="preset" data-salary="60000">Junior $60K</button>
+        <button class="preset active" data-salary="90000">Mid $90K</button>
+        <button class="preset" data-salary="130000">Senior $130K</button>
+        <button class="preset" data-salary="200000">Exec $200K</button>
+      </div>
+      <input type="number" id="salary" value="90000" min="10000" max="10000000" step="5000">
+
+      <button class="btn btn-start" id="start-btn">Start Meeting</button>
+    </div>
+
+    <div id="history-section">
+      <div class="card">
+        <h2>Meeting History</h2>
+        <div class="lifetime-total">
+          <div class="label">Lifetime Meetings Wasted</div>
+          <div class="amount" id="lifetime-total">$0.00</div>
+        </div>
+        <div id="history-list"></div>
+        <button class="clear-history" id="clear-history">Clear History</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE COUNTER -->
+  <div id="live-section">
+    <div class="card">
+      <div class="attendees-display"><span id="live-attendees">5</span> people burning money</div>
+      <div class="burn-rate">
+        <div class="per-sec">Burning <span id="per-second">$0.00</span> / second</div>
+      </div>
+      <div class="total-burned">
+        <div class="label">Total Burned</div>
+        <div class="amount" id="total-amount">$0.00</div>
+      </div>
+      <div class="elapsed">Elapsed: <span id="elapsed-time">00:00</span></div>
+      <div class="equivalent" id="equivalent">
+        <span class="emoji"></span> <span class="count"></span> <span class="item"></span>
+      </div>
+      <div id="milestone-container"></div>
+      <button class="btn btn-stop" id="stop-btn">End Meeting</button>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="summary-section">
+    <div class="card">
+      <h2>Meeting Over</h2>
+      <div class="summary-amount" id="summary-total">$0.00</div>
+      <div class="summary-detail"><span>Duration</span><span class="val" id="summary-duration">0m</span></div>
+      <div class="summary-detail"><span>Attendees</span><span class="val" id="summary-attendees">0</span></div>
+      <div class="summary-detail"><span>Avg Salary</span><span class="val" id="summary-salary">$0</span></div>
+      <div class="summary-detail"><span>Cost per person</span><span class="val" id="summary-per-person">$0</span></div>
+      <div class="summary-detail"><span>Equivalent</span><span class="val" id="summary-equiv">-</span></div>
+
+      <div class="poll">
+        <h3>Was this meeting worth it?</h3>
+        <div class="poll-options">
+          <button class="poll-btn" data-vote="yes" onclick="vote('yes',this)">Absolutely</button>
+          <button class="poll-btn" data-vote="meh" onclick="vote('meh',this)">Could've been an email</button>
+          <button class="poll-btn" data-vote="no" onclick="vote('no',this)">Total waste</button>
+        </div>
+      </div>
+
+      <button class="btn btn-share" id="share-btn">Share Result</button>
+      <button class="btn btn-stop" id="new-btn">New Meeting</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// === Audio Context for milestone sounds ===
+let audioCtx;
+function ensureAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)()}
+function playMilestoneSound(){
+  ensureAudio();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='triangle';o.frequency.setValueAtTime(523,audioCtx.currentTime);
+  o.frequency.setValueAtTime(659,audioCtx.currentTime+0.08);
+  o.frequency.setValueAtTime(784,audioCtx.currentTime+0.16);
+  g.gain.setValueAtTime(0.15,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.4);
+  o.start();o.stop(audioCtx.currentTime+0.4);
+}
+
+// === Fire canvas ===
+const canvas=document.getElementById('fire-canvas'),ctx=canvas.getContext('2d');
+let particles=[],fireActive=false;
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+window.addEventListener('resize',resizeCanvas);resizeCanvas();
+
+class FireParticle{
+  constructor(){this.reset()}
+  reset(){
+    this.x=Math.random()*canvas.width;
+    this.y=canvas.height+10;
+    this.vx=(Math.random()-0.5)*1.5;
+    this.vy=-(Math.random()*3+1.5);
+    this.life=1;
+    this.decay=Math.random()*0.015+0.005;
+    this.size=Math.random()*4+2;
+    this.type=Math.random()>0.7?'money':'fire';
+  }
+  update(){
+    this.x+=this.vx;this.y+=this.vy;this.life-=this.decay;
+    if(this.life<=0)this.reset();
+  }
+  draw(){
+    ctx.globalAlpha=this.life*0.6;
+    if(this.type==='fire'){
+      const grad=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.size);
+      grad.addColorStop(0,'rgba(255,215,0,0.8)');
+      grad.addColorStop(0.5,'rgba(255,107,53,0.5)');
+      grad.addColorStop(1,'rgba(255,61,61,0)');
+      ctx.fillStyle=grad;
+      ctx.beginPath();ctx.arc(this.x,this.y,this.size,0,Math.PI*2);ctx.fill();
+    }else{
+      ctx.font=`${this.size*3}px serif`;
+      ctx.fillText('$',this.x,this.y);
+    }
+    ctx.globalAlpha=1;
+  }
+}
+
+function initFire(){
+  particles=[];
+  for(let i=0;i<60;i++)particles.push(new FireParticle());
+  fireActive=true;animateFire();
+}
+function stopFire(){fireActive=false;ctx.clearRect(0,0,canvas.width,canvas.height)}
+function animateFire(){
+  if(!fireActive)return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{p.update();p.draw()});
+  requestAnimationFrame(animateFire);
+}
+
+// === Equivalents ===
+const equivalents=[
+  {item:'coffees',emoji:'\u2615',price:5.50},
+  {item:'burritos',emoji:'\ud83c\udf2f',price:12},
+  {item:'pizzas',emoji:'\ud83c\udf55',price:18},
+  {item:'movie tickets',emoji:'\ud83c\udfac',price:15},
+  {item:'Uber rides',emoji:'\ud83d\ude95',price:25},
+  {item:'gym memberships (monthly)',emoji:'\ud83c\udfcb\ufe0f',price:50},
+  {item:'AirPods',emoji:'\ud83c\udfa7',price:130},
+  {item:'PS5 games',emoji:'\ud83c\udfae',price:70},
+  {item:'nice dinners',emoji:'\ud83c\udf7d\ufe0f',price:85},
+  {item:'concert tickets',emoji:'\ud83c\udfb5',price:120},
+  {item:'flights (domestic)',emoji:'\u2708\ufe0f',price:300},
+  {item:'iPhones',emoji:'\ud83d\udcf1',price:1000},
+  {item:'MacBooks',emoji:'\ud83d\udcbb',price:1500},
+  {item:'used cars',emoji:'\ud83d\ude97',price:8000},
+  {item:'vacations',emoji:'\ud83c\udfd6\ufe0f',price:3000},
+];
+
+function getEquivalent(amount){
+  // pick most interesting equivalent (count between 2-999 preferred)
+  let best=equivalents[0],bestScore=Infinity;
+  for(const eq of equivalents){
+    const count=Math.floor(amount/eq.price);
+    if(count<1)continue;
+    const score=count<2?1000:count>999?count:Math.abs(Math.log(count)-Math.log(20));
+    if(score<bestScore){bestScore=score;best=eq}
+  }
+  const count=Math.floor(amount/best.price);
+  return{...best,count:Math.max(1,count)};
+}
+
+// === Money float particles ===
+function spawnMoney(x,y){
+  const el=document.createElement('div');
+  el.className='money-particle';
+  el.textContent=['$','$$','$$$','\ud83d\udcb8','\ud83d\udcb0'][Math.floor(Math.random()*5)];
+  el.style.left=(x||Math.random()*window.innerWidth)+'px';
+  el.style.top=(y||window.innerHeight*0.4)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2000);
+}
+
+// === State ===
+let meetingInterval=null,startTime=null,totalCost=0,perSecond=0,nextMilestone=100,numAttendees=5,avgSalary=90000;
+
+// === DOM ===
+const $=id=>document.getElementById(id);
+const setupSection=$('setup-section'),liveSection=$('live-section'),summarySection=$('summary-section');
+const attendeesInput=$('attendees'),salaryInput=$('salary');
+const presetBtns=document.querySelectorAll('.preset');
+
+presetBtns.forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    presetBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    salaryInput.value=btn.dataset.salary;
+  });
+});
+salaryInput.addEventListener('input',()=>presetBtns.forEach(b=>{
+  b.classList.toggle('active',b.dataset.salary===salaryInput.value);
+}));
+
+// === History ===
+function getHistory(){return JSON.parse(localStorage.getItem('meetingHistory')||'[]')}
+function saveHistory(h){localStorage.setItem('meetingHistory',JSON.stringify(h))}
+function renderHistory(){
+  const h=getHistory();
+  const section=$('history-section');
+  if(!h.length){section.style.display='none';return}
+  section.style.display='block';
+  const total=h.reduce((s,m)=>s+m.cost,0);
+  $('lifetime-total').textContent='$'+total.toFixed(2);
+  $('history-list').innerHTML=h.slice(-10).reverse().map(m=>`
+    <div class="history-item">
+      <div>
+        <div>${m.attendees} people, ${m.duration}</div>
+        <div class="meta">${m.date}</div>
+      </div>
+      <div class="cost">$${m.cost.toFixed(2)}</div>
+    </div>
+  `).join('');
+}
+$('clear-history').addEventListener('click',()=>{localStorage.removeItem('meetingHistory');renderHistory()});
+
+// === Start meeting ===
+$('start-btn').addEventListener('click',()=>{
+  ensureAudio();
+  numAttendees=Math.max(1,parseInt(attendeesInput.value)||1);
+  avgSalary=Math.max(10000,parseInt(salaryInput.value)||90000);
+
+  // salary per second: annual / (52 weeks * 40 hrs * 3600 sec)
+  const salaryPerSec=avgSalary/(52*40*3600);
+  perSecond=salaryPerSec*numAttendees;
+
+  totalCost=0;nextMilestone=100;startTime=Date.now();
+
+  setupSection.style.display='none';
+  summarySection.style.display='none';
+  liveSection.style.display='block';
+
+  $('live-attendees').textContent=numAttendees;
+  $('per-second').textContent='$'+perSecond.toFixed(3);
+  $('milestone-container').innerHTML='';
+
+  initFire();
+
+  meetingInterval=setInterval(updateCounter,50);
+});
+
+function updateCounter(){
+  const elapsed=(Date.now()-startTime)/1000;
+  totalCost=perSecond*elapsed;
+
+  $('total-amount').textContent='$'+totalCost.toFixed(2);
+
+  const mins=Math.floor(elapsed/60);
+  const secs=Math.floor(elapsed%60);
+  $('elapsed-time').textContent=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+  const eq=getEquivalent(totalCost);
+  const eqEl=$('equivalent');
+  eqEl.querySelector('.emoji').textContent=eq.emoji;
+  eqEl.querySelector('.count').textContent=eq.count;
+  eqEl.querySelector('.item').textContent=eq.item;
+
+  // Milestones
+  if(totalCost>=nextMilestone){
+    playMilestoneSound();
+    const mc=$('milestone-container');
+    const div=document.createElement('div');
+    div.className='milestone';
+    div.textContent=`\ud83d\udd25 $${nextMilestone} burned! ${getEquivalent(nextMilestone).count} ${getEquivalent(nextMilestone).item} gone.`;
+    mc.prepend(div);
+    if(mc.children.length>5)mc.lastChild.remove();
+    for(let i=0;i<5;i++)setTimeout(()=>spawnMoney(),i*100);
+    nextMilestone+=100;
+  }
+
+  // Spawn occasional money particles
+  if(Math.random()<0.03)spawnMoney();
+}
+
+// === End meeting ===
+$('stop-btn').addEventListener('click',endMeeting);
+function endMeeting(){
+  clearInterval(meetingInterval);
+  stopFire();
+
+  const elapsed=(Date.now()-startTime)/1000;
+  const mins=Math.floor(elapsed/60),secs=Math.floor(elapsed%60);
+  const durationStr=mins>0?`${mins}m ${secs}s`:`${secs}s`;
+  const eq=getEquivalent(totalCost);
+
+  $('summary-total').textContent='$'+totalCost.toFixed(2);
+  $('summary-duration').textContent=durationStr;
+  $('summary-attendees').textContent=numAttendees;
+  $('summary-salary').textContent='$'+avgSalary.toLocaleString();
+  $('summary-per-person').textContent='$'+(totalCost/numAttendees).toFixed(2);
+  $('summary-equiv').textContent=`${eq.count} ${eq.item} ${eq.emoji}`;
+
+  // Reset poll
+  document.querySelectorAll('.poll-btn').forEach(b=>{b.classList.remove('selected','selected-no');b.disabled=false});
+
+  // Save to history
+  const h=getHistory();
+  h.push({cost:totalCost,attendees:numAttendees,duration:durationStr,salary:avgSalary,date:new Date().toLocaleDateString()});
+  if(h.length>50)h.shift();
+  saveHistory(h);
+
+  liveSection.style.display='none';
+  summarySection.style.display='block';
+}
+
+// === Poll ===
+function vote(choice,el){
+  document.querySelectorAll('.poll-btn').forEach(b=>{b.classList.remove('selected','selected-no');b.disabled=true});
+  el.classList.add(choice==='yes'?'selected':'selected-no');
+  el.disabled=false;
+}
+
+// === Share ===
+$('share-btn').addEventListener('click',()=>{
+  const text=`Our meeting just cost ${$('summary-total').textContent} with ${numAttendees} people for ${$('summary-duration').textContent}. That's ${$('summary-equiv').textContent}. Was it worth it? meetingsalarycalculator.com`;
+  if(navigator.share){
+    navigator.share({title:'Meeting Cost Result',text}).catch(()=>{});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=$('share-btn');btn.textContent='Copied to clipboard!';
+      setTimeout(()=>btn.textContent='Share Result',2000);
+    });
+  }
+});
+
+// === New Meeting ===
+$('new-btn').addEventListener('click',()=>{
+  summarySection.style.display='none';
+  setupSection.style.display='block';
+  renderHistory();
+});
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>

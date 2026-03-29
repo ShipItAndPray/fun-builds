@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HYPE MAN</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+  h1 {
+    font-size: clamp(2rem, 8vw, 4rem);
+    margin-top: 1.5rem;
+    text-align: center;
+    background: linear-gradient(90deg, #ff00ff, #00ffff, #ffff00, #ff00ff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-shift 3s linear infinite;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  @keyframes gradient-shift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  .stats {
+    display: flex;
+    gap: 1.5rem;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .stat-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    text-align: center;
+    min-width: 120px;
+  }
+  .stat-box .label { font-size: 0.7rem; text-transform: uppercase; color: #888; letter-spacing: 0.1em; }
+  .stat-box .value { font-size: 1.8rem; font-weight: 900; }
+  #hypeCount .value { color: #ff00ff; }
+  #streakCount .value { color: #00ffff; }
+  #levelDisplay .value { color: #ffff00; font-size: 1.2rem; }
+  textarea {
+    width: min(90vw, 700px);
+    height: 200px;
+    background: rgba(255,255,255,0.03);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    color: #fff;
+    font-size: 1.2rem;
+    padding: 1.2rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin: 0.5rem 0;
+  }
+  textarea:focus {
+    border-color: #ff00ff;
+    box-shadow: 0 0 30px rgba(255,0,255,0.2);
+  }
+  textarea.hyped {
+    animation: hype-border 0.5s ease;
+  }
+  @keyframes hype-border {
+    0% { border-color: #ff00ff; box-shadow: 0 0 60px rgba(255,0,255,0.6); }
+    50% { border-color: #00ffff; box-shadow: 0 0 80px rgba(0,255,255,0.6); }
+    100% { border-color: #ffff00; box-shadow: 0 0 30px rgba(255,255,0,0.3); }
+  }
+  #hypeBanner {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    font-weight: 900;
+    text-align: center;
+    min-height: 3.5rem;
+    margin: 0.5rem 0;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.2s, transform 0.2s;
+    text-shadow: 0 0 20px currentColor;
+  }
+  #hypeBanner.show {
+    opacity: 1;
+    transform: scale(1);
+    animation: banner-pop 0.6s ease;
+  }
+  @keyframes banner-pop {
+    0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+    50% { transform: scale(1.2) rotate(3deg); }
+    70% { transform: scale(0.95); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .hint {
+    color: #555;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  canvas#confetti {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .screen-flash {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .screen-flash.flash {
+    opacity: 1;
+    animation: flash-out 0.4s ease forwards;
+  }
+  @keyframes flash-out {
+    0% { opacity: 0.3; }
+    100% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="screen-flash" id="flash"></div>
+
+<h1>HYPE MAN</h1>
+
+<div class="stats">
+  <div class="stat-box" id="hypeCount">
+    <div class="label">Hype Count</div>
+    <div class="value">0</div>
+  </div>
+  <div class="stat-box" id="streakCount">
+    <div class="label">Streak</div>
+    <div class="value">0</div>
+  </div>
+  <div class="stat-box" id="levelDisplay">
+    <div class="label">Hype Level</div>
+    <div class="value">WARMING UP</div>
+  </div>
+</div>
+
+<div id="hypeBanner"></div>
+
+<textarea id="input" placeholder="Start typing your thoughts... end a sentence with . ! or ? to unleash the hype!" autofocus></textarea>
+<div class="hint">Every sentence you finish = PURE HYPE ENERGY</div>
+
+<script>
+const HYPE_PHRASES = [
+  "LET'S GOOOO!", "ABSOLUTELY GOATED!", "YOU'RE ON FIRE!",
+  "UNSTOPPABLE!", "PURE GREATNESS!", "LEGENDARY STUFF!",
+  "BUILT DIFFERENT!", "NO CAP, THAT'S HEAT!", "SHEEEESH!",
+  "THAT'S WHAT I'M TALKING ABOUT!", "CERTIFIED BANGER!",
+  "THE CROWD GOES WILD!", "ICONIC MOMENT!", "HISTORY IN THE MAKING!",
+  "YOU JUST DON'T MISS!", "MAIN CHARACTER ENERGY!", "KING STUFF!",
+  "BARS! STRAIGHT BARS!", "PEAK PERFORMANCE!", "ELITE MENTALITY!",
+  "THEY'RE NOT READY FOR YOU!", "WENT SICKO MODE!", "DIFFERENT GRAVY!",
+  "COOKING WITH GAS!", "NEXT LEVEL ACTIVATED!", "MASTERCLASS!",
+  "THAT HIT DIFFERENT!", "GOOSEBUMPS! LITERAL GOOSEBUMPS!",
+  "THE GOAT HAS SPOKEN!", "W AFTER W AFTER W!", "UNREAL!",
+  "SOMEBODY CALL 911, THIS IS TOO FIRE!", "NUCLEAR TAKE!",
+  "SPITTING STRAIGHT FACTS!", "GAME CHANGER!", "MIC DROP MOMENT!"
+];
+
+const SPEECH_PHRASES = [
+  "Let's go!", "Amazing!", "You're incredible!", "Keep going!",
+  "Fire!", "Unstoppable!", "Legendary!", "Yes yes yes!",
+  "That's what I'm talking about!", "Pure greatness!",
+  "You are the moment!", "Nobody does it like you!"
+];
+
+const LEVELS = [
+  { min: 0, name: "WARMING UP", color: "#888" },
+  { min: 3, name: "GETTING HYPED", color: "#ff6600" },
+  { min: 6, name: "ON FIRE", color: "#ff0066" },
+  { min: 10, name: "SICKO MODE", color: "#ff00ff" },
+  { min: 15, name: "LEGENDARY", color: "#00ffff" },
+  { min: 20, name: "TRANSCENDENT", color: "#ffff00" },
+  { min: 30, name: "GOD MODE", color: "#fff" },
+];
+
+let hypeCount = 0;
+let streak = 0;
+let lastSentenceEnd = 0;
+let audioCtx = null;
+let prevText = "";
+
+// --- Confetti ---
+const canvas = document.getElementById('confetti');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+function spawnConfetti(count) {
+  const colors = ['#ff00ff','#00ffff','#ffff00','#ff3366','#33ff66','#6633ff','#ff6600','#00ff99'];
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 40,
+      w: 6 + Math.random() * 6,
+      h: 4 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 6,
+      vy: 2 + Math.random() * 4,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.2,
+      life: 1
+    });
+  }
+}
+
+function animateConfetti() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.life > 0);
+  for (const p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.rot += p.vr;
+    p.life -= 0.005;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+    ctx.restore();
+  }
+  requestAnimationFrame(animateConfetti);
+}
+animateConfetti();
+
+// --- Web Audio: crowd roar + air horn ---
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playCrowdRoar(intensity) {
+  const ac = getAudioCtx();
+  const duration = 1.5 + intensity * 0.3;
+  const bufSize = ac.sampleRate * duration;
+  const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  // White noise shaped as crowd roar
+  for (let i = 0; i < bufSize; i++) {
+    const env = Math.sin(Math.PI * i / bufSize);
+    data[i] = (Math.random() * 2 - 1) * env * 0.3;
+  }
+  const src = ac.createBufferSource();
+  src.buffer = buf;
+  // Bandpass to sound more crowd-like
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 800 + intensity * 200;
+  bp.Q.value = 0.5;
+  const gain = ac.createGain();
+  gain.gain.value = Math.min(0.4 + intensity * 0.05, 0.8);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+  src.connect(bp).connect(gain).connect(ac.destination);
+  src.start();
+}
+
+function playAirHorn(intensity) {
+  const ac = getAudioCtx();
+  const duration = 0.6 + intensity * 0.1;
+  const osc1 = ac.createOscillator();
+  const osc2 = ac.createOscillator();
+  const gain = ac.createGain();
+  osc1.type = 'sawtooth';
+  osc1.frequency.value = 480 + intensity * 20;
+  osc2.type = 'sawtooth';
+  osc2.frequency.value = 500 + intensity * 20;
+  gain.gain.value = Math.min(0.15 + intensity * 0.02, 0.35);
+  gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + duration);
+  // Distortion for that nasty horn sound
+  const dist = ac.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i / 128) - 1;
+    curve[i] = Math.tanh(x * 3);
+  }
+  dist.curve = curve;
+  osc1.connect(dist);
+  osc2.connect(dist);
+  dist.connect(gain).connect(ac.destination);
+  osc1.start();
+  osc2.start();
+  osc1.stop(ac.currentTime + duration);
+  osc2.stop(ac.currentTime + duration);
+}
+
+// --- SpeechSynthesis ---
+function screamEncouragement(intensity) {
+  if (!('speechSynthesis' in window)) return;
+  const phrase = SPEECH_PHRASES[Math.floor(Math.random() * SPEECH_PHRASES.length)];
+  const utter = new SpeechSynthesisUtterance(phrase);
+  utter.rate = 1.2 + Math.min(intensity * 0.1, 0.8);
+  utter.pitch = 1.3 + Math.min(intensity * 0.05, 0.7);
+  utter.volume = 1;
+  speechSynthesis.speak(utter);
+}
+
+// --- Screen flash ---
+function screenFlash(intensity) {
+  const flash = document.getElementById('flash');
+  const colors = ['rgba(255,0,255,0.2)', 'rgba(0,255,255,0.2)', 'rgba(255,255,0,0.2)', 'rgba(255,50,100,0.2)'];
+  flash.style.background = colors[Math.floor(Math.random() * colors.length)];
+  flash.classList.remove('flash');
+  void flash.offsetWidth;
+  flash.classList.add('flash');
+}
+
+// --- Update UI ---
+function updateStats() {
+  document.querySelector('#hypeCount .value').textContent = hypeCount;
+  document.querySelector('#streakCount .value').textContent = streak;
+  const level = [...LEVELS].reverse().find(l => streak >= l.min) || LEVELS[0];
+  const levelEl = document.querySelector('#levelDisplay .value');
+  levelEl.textContent = level.name;
+  levelEl.style.color = level.color;
+}
+
+function showBanner(phrase, color) {
+  const banner = document.getElementById('hypeBanner');
+  banner.textContent = phrase;
+  banner.style.color = color;
+  banner.classList.remove('show');
+  void banner.offsetWidth;
+  banner.classList.add('show');
+  setTimeout(() => banner.classList.remove('show'), 2500);
+}
+
+// --- HYPE! ---
+function triggerHype() {
+  hypeCount++;
+  streak++;
+  const intensity = Math.min(streak, 15);
+
+  updateStats();
+
+  // Pick a random phrase
+  const phrase = HYPE_PHRASES[Math.floor(Math.random() * HYPE_PHRASES.length)];
+  const level = [...LEVELS].reverse().find(l => streak >= l.min) || LEVELS[0];
+  showBanner(phrase, level.color);
+
+  // Confetti scales with streak
+  spawnConfetti(30 + intensity * 15);
+
+  // Audio
+  playCrowdRoar(intensity);
+  if (streak >= 2) playAirHorn(intensity);
+
+  // Speech every 2nd sentence, or always at high streak
+  if (streak % 2 === 0 || streak >= 5) {
+    screamEncouragement(intensity);
+  }
+
+  // Screen flash
+  screenFlash(intensity);
+
+  // Textarea pulse
+  const ta = document.getElementById('input');
+  ta.classList.remove('hyped');
+  void ta.offsetWidth;
+  ta.classList.add('hyped');
+}
+
+// --- Streak timeout ---
+let streakTimer = null;
+function resetStreakTimer() {
+  clearTimeout(streakTimer);
+  streakTimer = setTimeout(() => {
+    streak = 0;
+    updateStats();
+  }, 8000);
+}
+
+// --- Detect sentence endings ---
+const input = document.getElementById('input');
+input.addEventListener('input', () => {
+  const text = input.value;
+  // Count sentence-ending punctuation
+  const endings = (text.match(/[.!?]/g) || []).length;
+  const prevEndings = (prevText.match(/[.!?]/g) || []).length;
+
+  if (endings > prevEndings) {
+    // New sentence completed
+    triggerHype();
+    resetStreakTimer();
+  }
+  prevText = text;
+});
+
+// Resume audio context on first interaction
+input.addEventListener('focus', () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+input.addEventListener('keydown', () => {
+  if (!audioCtx) getAudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}, { once: true });
+
+updateStats();
+</script>
+</body>
+</html>

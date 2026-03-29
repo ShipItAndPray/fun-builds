@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Fake Call</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #000;
+    --text: #fff;
+    --accent: #34c759;
+    --danger: #ff3b30;
+    --dim: rgba(255,255,255,0.5);
+    --glass: rgba(255,255,255,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* ===== SETUP SCREEN ===== */
+  #setup {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding: 60px 24px 40px;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0a0a15 100%);
+  }
+
+  #setup h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
+  }
+
+  #setup .subtitle {
+    color: var(--dim);
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  /* Caller presets */
+  .caller-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .caller-btn {
+    background: var(--glass);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 14px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .caller-btn.active {
+    border-color: var(--accent);
+    background: rgba(52, 199, 89, 0.12);
+  }
+
+  .caller-btn .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    margin: 0 auto 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .caller-btn .name {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  /* Custom name input */
+  .custom-name-wrap {
+    margin-bottom: 28px;
+  }
+
+  .custom-name-wrap input {
+    width: 100%;
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .custom-name-wrap input:focus {
+    border-color: var(--accent);
+  }
+
+  /* Timer */
+  .timer-section { margin-bottom: 28px; }
+
+  .timer-presets {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .timer-btn {
+    background: var(--glass);
+    border: 2px solid transparent;
+    border-radius: 20px;
+    padding: 8px 16px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .timer-btn.active {
+    border-color: var(--accent);
+    background: rgba(52, 199, 89, 0.12);
+  }
+
+  .custom-timer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .custom-timer input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+  }
+
+  .custom-timer .time-display {
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    min-width: 45px;
+    text-align: right;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  /* Scenario */
+  .scenario-section { margin-bottom: 28px; }
+
+  .scenario-select {
+    width: 100%;
+    background: var(--glass);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 15px;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+  }
+
+  .scenario-select option { background: #1a1a2e; }
+
+  /* Start button */
+  .start-btn {
+    margin-top: auto;
+    width: 100%;
+    padding: 18px;
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    letter-spacing: -0.3px;
+  }
+
+  .start-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* ===== COUNTDOWN ===== */
+  #countdown {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0a0a15 100%);
+    padding: 40px 24px;
+  }
+
+  .countdown-label {
+    font-size: 15px;
+    color: var(--dim);
+    margin-bottom: 16px;
+  }
+
+  .countdown-time {
+    font-size: 72px;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
+    margin-bottom: 40px;
+  }
+
+  .countdown-ring {
+    width: 200px;
+    height: 200px;
+    position: relative;
+    margin-bottom: 40px;
+  }
+
+  .countdown-ring svg {
+    transform: rotate(-90deg);
+    width: 200px;
+    height: 200px;
+  }
+
+  .countdown-ring .bg { stroke: rgba(255,255,255,0.08); }
+  .countdown-ring .progress {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+
+  .countdown-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cancel-btn {
+    padding: 14px 48px;
+    border: 2px solid var(--danger);
+    border-radius: 30px;
+    background: transparent;
+    color: var(--danger);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .cancel-btn:active { background: rgba(255,59,48,0.15); }
+
+  /* ===== INCOMING CALL SCREEN ===== */
+  #incoming {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    background: linear-gradient(180deg, #1c1c3a 0%, #0d0d1a 50%, #000 100%);
+    padding: 80px 24px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Animated background blobs */
+  #incoming::before, #incoming::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float 6s ease-in-out infinite;
+  }
+
+  #incoming::before {
+    width: 300px; height: 300px;
+    background: #34c759;
+    top: -50px; left: -80px;
+  }
+
+  #incoming::after {
+    width: 250px; height: 250px;
+    background: #5856d6;
+    bottom: 100px; right: -60px;
+    animation-delay: -3s;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(20px, -30px) scale(1.1); }
+  }
+
+  .incoming-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    width: 100%;
+  }
+
+  .incoming-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background: rgba(255,255,255,0.12);
+    margin-bottom: 16px;
+    animation: pulse-ring 2s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4);
+  }
+
+  @keyframes pulse-ring {
+    0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(52, 199, 89, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+  }
+
+  .incoming-name {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .incoming-label {
+    font-size: 16px;
+    color: var(--dim);
+    margin-bottom: auto;
+  }
+
+  /* Slide to answer */
+  .slide-track {
+    width: 100%;
+    max-width: 320px;
+    height: 64px;
+    border-radius: 32px;
+    background: rgba(52, 199, 89, 0.15);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+
+  .slide-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: rgba(52, 199, 89, 0.7);
+    animation: shimmer 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .slide-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    z-index: 2;
+    transition: left 0.05s;
+    box-shadow: 0 2px 12px rgba(52, 199, 89, 0.4);
+  }
+
+  .slide-thumb svg { width: 24px; height: 24px; fill: #fff; }
+
+  .decline-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: 0 2px 12px rgba(255, 59, 48, 0.4);
+  }
+
+  .decline-btn svg { width: 28px; height: 28px; fill: #fff; }
+
+  /* ===== ACTIVE CALL SCREEN ===== */
+  #active-call {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #0a0a15 100%);
+    padding: 80px 24px 60px;
+  }
+
+  .call-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    background: rgba(255,255,255,0.1);
+    margin-bottom: 12px;
+  }
+
+  .call-name {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .call-timer {
+    font-size: 16px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 40px;
+  }
+
+  /* Waveform */
+  .waveform {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    height: 40px;
+    margin-bottom: 20px;
+  }
+
+  .waveform .bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+    animation: wave 0.8s ease-in-out infinite;
+  }
+
+  @keyframes wave {
+    0%, 100% { height: 6px; opacity: 0.4; }
+    50% { height: 30px; opacity: 1; }
+  }
+
+  /* Subtitle area */
+  .subtitle-area {
+    flex: 1;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .subtitle-text {
+    font-size: 17px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.7);
+    font-style: italic;
+    min-height: 52px;
+  }
+
+  /* Call controls */
+  .call-controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .ctrl-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .ctrl-btn .icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--glass);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+  }
+
+  .ctrl-btn .label {
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  .hangup-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255,59,48,0.4);
+    transition: transform 0.1s;
+  }
+
+  .hangup-btn:active { transform: scale(0.92); }
+  .hangup-btn svg { width: 32px; height: 32px; fill: #fff; }
+
+  /* ===== HIDDEN ===== */
+  .hidden { display: none !important; }
+
+  /* Safe area padding for notch phones */
+  @supports (padding-top: env(safe-area-inset-top)) {
+    #setup { padding-top: calc(60px + env(safe-area-inset-top)); }
+    #incoming { padding-top: calc(80px + env(safe-area-inset-top)); }
+    #active-call { padding-top: calc(80px + env(safe-area-inset-top)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup">
+  <h1>Fake Call</h1>
+  <p class="subtitle">Set up your escape call</p>
+
+  <div class="section-label">Who's calling?</div>
+  <div class="caller-grid">
+    <div class="caller-btn active" data-caller="mom" data-emoji="&#128105;">
+      <div class="avatar">&#128105;</div>
+      <div class="name">Mom</div>
+    </div>
+    <div class="caller-btn" data-caller="boss" data-emoji="&#128084;">
+      <div class="avatar">&#128084;</div>
+      <div class="name">Boss</div>
+    </div>
+    <div class="caller-btn" data-caller="doctor" data-emoji="&#129658;">
+      <div class="avatar">&#129658;</div>
+      <div class="name">Doctor</div>
+    </div>
+    <div class="caller-btn" data-caller="unknown" data-emoji="&#128100;">
+      <div class="avatar">&#128100;</div>
+      <div class="name">Unknown</div>
+    </div>
+  </div>
+
+  <div class="custom-name-wrap">
+    <input type="text" id="custom-name" placeholder="Or type a custom caller name...">
+  </div>
+
+  <div class="section-label">Delay timer</div>
+  <div class="timer-section">
+    <div class="timer-presets">
+      <button class="timer-btn active" data-seconds="10">10s</button>
+      <button class="timer-btn" data-seconds="30">30s</button>
+      <button class="timer-btn" data-seconds="60">1m</button>
+      <button class="timer-btn" data-seconds="120">2m</button>
+      <button class="timer-btn" data-seconds="300">5m</button>
+    </div>
+    <div class="custom-timer">
+      <input type="range" id="timer-slider" min="10" max="300" value="10" step="5">
+      <div class="time-display" id="timer-display">0:10</div>
+    </div>
+  </div>
+
+  <div class="section-label">Scenario</div>
+  <div class="scenario-section">
+    <select class="scenario-select" id="scenario-select">
+      <option value="random">Random</option>
+      <optgroup label="Mom">
+        <option value="mom_dinner">Come home for dinner</option>
+        <option value="mom_emergency">Family emergency</option>
+        <option value="mom_forgot">You forgot something</option>
+        <option value="mom_pickup">Need a ride</option>
+      </optgroup>
+      <optgroup label="Boss">
+        <option value="boss_urgent">Urgent work matter</option>
+        <option value="boss_meeting">Emergency meeting</option>
+        <option value="boss_client">Client issue</option>
+        <option value="boss_deadline">Deadline moved up</option>
+      </optgroup>
+      <optgroup label="Doctor">
+        <option value="doctor_results">Test results ready</option>
+        <option value="doctor_appointment">Appointment reminder</option>
+        <option value="doctor_prescription">Prescription issue</option>
+      </optgroup>
+      <optgroup label="Delivery / Service">
+        <option value="delivery_package">Package delivery</option>
+        <option value="delivery_lockout">Locked out roommate</option>
+        <option value="mechanic_car">Car ready for pickup</option>
+      </optgroup>
+      <optgroup label="Emergency">
+        <option value="emergency_pet">Pet emergency</option>
+        <option value="emergency_water">Water leak at home</option>
+        <option value="emergency_alarm">Home alarm triggered</option>
+      </optgroup>
+      <optgroup label="Social">
+        <option value="friend_ride">Friend needs a ride</option>
+        <option value="friend_locked">Friend locked out</option>
+        <option value="date_rescue">Rescue call from friend</option>
+        <option value="babysitter">Babysitter emergency</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <button class="start-btn" id="start-btn">Start Timer</button>
+</div>
+
+<!-- COUNTDOWN SCREEN -->
+<div id="countdown">
+  <div class="countdown-label">Call incoming in</div>
+  <div class="countdown-ring">
+    <svg viewBox="0 0 200 200">
+      <circle class="bg" cx="100" cy="100" r="90" fill="none" stroke-width="4"/>
+      <circle class="progress" id="ring-progress" cx="100" cy="100" r="90" fill="none" stroke-width="4"
+        stroke-dasharray="565.48" stroke-dashoffset="0"/>
+    </svg>
+    <div class="countdown-inner" id="countdown-display">0:10</div>
+  </div>
+  <button class="cancel-btn" id="cancel-btn">Cancel</button>
+</div>
+
+<!-- INCOMING CALL SCREEN -->
+<div id="incoming">
+  <div class="incoming-content">
+    <div class="incoming-avatar" id="inc-avatar">&#128105;</div>
+    <div class="incoming-name" id="inc-name">Mom</div>
+    <div class="incoming-label">incoming call</div>
+
+    <div class="slide-track" id="slide-track">
+      <div class="slide-text">slide to answer</div>
+      <div class="slide-thumb" id="slide-thumb">
+        <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      </div>
+    </div>
+
+    <button class="decline-btn" id="decline-btn">
+      <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.49 8.69 7.53 7 12 7s8.51 1.69 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ACTIVE CALL SCREEN -->
+<div id="active-call">
+  <div class="call-avatar" id="call-avatar">&#128105;</div>
+  <div class="call-name" id="call-name">Mom</div>
+  <div class="call-timer" id="call-timer">00:00</div>
+
+  <div class="waveform" id="waveform"></div>
+
+  <div class="subtitle-area">
+    <div class="subtitle-text" id="subtitle-text"></div>
+  </div>
+
+  <div class="call-controls">
+    <button class="ctrl-btn" id="mute-btn">
+      <div class="icon">&#128263;</div>
+      <div class="label">mute</div>
+    </button>
+    <button class="ctrl-btn" id="speaker-btn">
+      <div class="icon">&#128266;</div>
+      <div class="label">speaker</div>
+    </button>
+    <button class="ctrl-btn" id="keypad-btn">
+      <div class="icon">&#9029;</div>
+      <div class="label">keypad</div>
+    </button>
+  </div>
+
+  <button class="hangup-btn" id="hangup-btn">
+    <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.956.956 0 010-1.36C3.49 8.69 7.53 7 12 7s8.51 1.69 11.71 4.72c.18.18.29.44.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+  </button>
+</div>
+
+<script>
+// ===== SCENARIOS (20+ conversation scripts) =====
+const SCENARIOS = {
+  mom_dinner: {
+    caller: 'Mom', emoji: '&#128105;',
+    lines: [
+      "Hey sweetie, what time are you coming home?",
+      "I made your favorite... chicken parmesan.",
+      "Your dad is asking about you too.",
+      "Can you pick up some milk on the way?",
+      "Okay, we'll wait for you. Drive safe!",
+      "Love you, bye!"
+    ]
+  },
+  mom_emergency: {
+    caller: 'Mom', emoji: '&#128105;',
+    lines: [
+      "Hey, I need you to come home right now.",
+      "Your grandmother isn't feeling well.",
+      "We might need to take her to the hospital.",
+      "Can you leave now? I really need your help.",
+      "Please hurry. I'll explain everything when you get here.",
+      "Thank you sweetie. See you soon."
+    ]
+  },
+  mom_forgot: {
+    caller: 'Mom', emoji: '&#128105;',
+    lines: [
+      "Hey, you left your wallet on the kitchen counter.",
+      "I found it when I was cleaning up.",
+      "Do you need me to bring it to you?",
+      "Okay, just come get it when you can.",
+      "Also, don't forget your appointment tomorrow.",
+      "Alright, talk later. Bye!"
+    ]
+  },
+  mom_pickup: {
+    caller: 'Mom', emoji: '&#128105;',
+    lines: [
+      "Hi, can you come pick me up?",
+      "My car won't start again.",
+      "I'm at the grocery store on Main Street.",
+      "I've got a bunch of bags, so hurry if you can.",
+      "Thank you so much, you're a lifesaver.",
+      "See you in a bit!"
+    ]
+  },
+  boss_urgent: {
+    caller: 'Boss', emoji: '&#128084;',
+    lines: [
+      "Hey, sorry to bother you but something came up.",
+      "We've got a critical issue with the production server.",
+      "I need you to jump on this right away.",
+      "Can you get to a computer in the next few minutes?",
+      "I'll send you the details in Slack.",
+      "Thanks, I really appreciate you handling this."
+    ]
+  },
+  boss_meeting: {
+    caller: 'Boss', emoji: '&#128084;',
+    lines: [
+      "Hi, I need you for an emergency meeting.",
+      "The VP just called and wants to see the Q4 numbers.",
+      "We're meeting in 30 minutes.",
+      "Can you pull together the latest dashboard?",
+      "I know it's last minute, but this is important.",
+      "See you at the office. Thanks."
+    ]
+  },
+  boss_client: {
+    caller: 'Boss', emoji: '&#128084;',
+    lines: [
+      "Hey, we have a situation with the Anderson account.",
+      "The client is threatening to cancel.",
+      "I need you to call them and smooth things over.",
+      "I'll forward you the email chain.",
+      "This needs to happen today, okay?",
+      "I'm counting on you. Talk soon."
+    ]
+  },
+  boss_deadline: {
+    caller: 'Boss', emoji: '&#128084;',
+    lines: [
+      "Quick heads up, the deadline got moved up.",
+      "We need the deliverable by end of day tomorrow.",
+      "I know, I know, it's tight.",
+      "Can you come in early and we'll figure out a plan?",
+      "Let's prioritize the core features.",
+      "Alright, get some rest and we'll tackle it in the morning."
+    ]
+  },
+  doctor_results: {
+    caller: 'Doctor', emoji: '&#129658;',
+    lines: [
+      "Hello, this is Doctor Chen's office.",
+      "We have your test results back.",
+      "The doctor would like to discuss them with you in person.",
+      "Can you come in tomorrow morning?",
+      "We have a slot open at 9 AM.",
+      "Great, we'll see you then. Have a good day."
+    ]
+  },
+  doctor_appointment: {
+    caller: 'Doctor', emoji: '&#129658;',
+    lines: [
+      "Hi, this is a reminder from the medical center.",
+      "You have an appointment scheduled for today.",
+      "Doctor Patel is ready to see you.",
+      "Can you confirm you're on your way?",
+      "Perfect. Please bring your insurance card.",
+      "See you shortly."
+    ]
+  },
+  doctor_prescription: {
+    caller: 'Doctor', emoji: '&#129658;',
+    lines: [
+      "Hello, this is the pharmacy at the clinic.",
+      "We need to verify your prescription.",
+      "There's an issue with the dosage.",
+      "Can you come in or call us back on the main line?",
+      "It's important we sort this out today.",
+      "Thanks for your time."
+    ]
+  },
+  delivery_package: {
+    caller: 'Delivery', emoji: '&#128230;',
+    lines: [
+      "Hi, this is your delivery driver.",
+      "I'm at your address with a package.",
+      "It requires a signature.",
+      "Are you home? I can wait a few minutes.",
+      "Okay, I'll wait by the door.",
+      "Thanks, see you in a bit."
+    ]
+  },
+  delivery_lockout: {
+    caller: 'Roommate', emoji: '&#128273;',
+    lines: [
+      "Hey, I'm locked out of the apartment!",
+      "I left my keys inside like an idiot.",
+      "Can you come let me in?",
+      "I'm standing outside freezing.",
+      "Please hurry, my phone's almost dead too.",
+      "You're the best, thank you!"
+    ]
+  },
+  mechanic_car: {
+    caller: 'Mechanic', emoji: '&#128663;',
+    lines: [
+      "Hi, this is Mike from the auto shop.",
+      "Your car is ready for pickup.",
+      "We replaced the brakes and did the oil change.",
+      "Total comes to about three-fifty.",
+      "We close at six today, so come when you can.",
+      "Alright, see you later. Bye."
+    ]
+  },
+  emergency_pet: {
+    caller: 'Vet', emoji: '&#128054;',
+    lines: [
+      "Hello, this is Riverside Animal Hospital.",
+      "We have your pet here for observation.",
+      "The vet would like to discuss the treatment plan.",
+      "Can you come in as soon as possible?",
+      "Your pet is stable, don't worry.",
+      "See you soon."
+    ]
+  },
+  emergency_water: {
+    caller: 'Neighbor', emoji: '&#127969;',
+    lines: [
+      "Hey, it's your neighbor from downstairs.",
+      "There's water leaking from your apartment!",
+      "It's coming through my ceiling.",
+      "Can you come check it out right now?",
+      "I think it might be a burst pipe.",
+      "Please hurry, it's getting worse!"
+    ]
+  },
+  emergency_alarm: {
+    caller: 'Security', emoji: '&#128680;',
+    lines: [
+      "This is ADT home security.",
+      "Your alarm was triggered at your home address.",
+      "We've dispatched local authorities.",
+      "Can you confirm if anyone should be at home?",
+      "We recommend you check the premises.",
+      "We'll keep you updated. Stay safe."
+    ]
+  },
+  friend_ride: {
+    caller: 'Friend', emoji: '&#129309;',
+    lines: [
+      "Hey! My Uber cancelled on me.",
+      "Can you come pick me up? I'm stranded.",
+      "I'm at the bar on Fifth Street.",
+      "I'll buy you dinner, I promise.",
+      "You're a lifesaver. Seriously.",
+      "See you in a few!"
+    ]
+  },
+  friend_locked: {
+    caller: 'Friend', emoji: '&#128272;',
+    lines: [
+      "Dude, I'm locked out of my car.",
+      "I left the keys in the ignition like a genius.",
+      "Can you bring the spare key?",
+      "I'm in the parking lot at the mall.",
+      "Please hurry, it's getting dark.",
+      "Thank you so much, I owe you one."
+    ]
+  },
+  date_rescue: {
+    caller: 'Best Friend', emoji: '&#128588;',
+    lines: [
+      "Hey! This is your rescue call!",
+      "If the date is going badly, just say 'oh no' and leave.",
+      "Tell them it's a family emergency.",
+      "I'm parked outside if you need a getaway.",
+      "Just say the word and we're out of here.",
+      "Good luck either way!"
+    ]
+  },
+  babysitter: {
+    caller: 'Babysitter', emoji: '&#128118;',
+    lines: [
+      "Hi, sorry to bother you.",
+      "The kids won't go to sleep.",
+      "And I think the little one might have a fever.",
+      "I gave them water but they keep asking for you.",
+      "Can you come home soon?",
+      "Okay, I'll keep an eye on them. Thanks."
+    ]
+  }
+};
+
+// ===== STATE =====
+let selectedCaller = 'mom';
+let selectedEmoji = '&#128105;';
+let selectedSeconds = 10;
+let selectedScenario = 'random';
+let countdownInterval = null;
+let callTimerInterval = null;
+let callStartTime = 0;
+let speechQueue = [];
+let currentUtterance = null;
+let audioCtx = null;
+let ringOscillators = [];
+
+// ===== DOM REFS =====
+const $ = id => document.getElementById(id);
+
+// ===== CALLER SELECTION =====
+document.querySelectorAll('.caller-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.caller-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedCaller = btn.dataset.caller;
+    selectedEmoji = btn.dataset.emoji;
+    $('custom-name').value = '';
+  });
+});
+
+$('custom-name').addEventListener('input', e => {
+  if (e.target.value.trim()) {
+    document.querySelectorAll('.caller-btn').forEach(b => b.classList.remove('active'));
+    selectedCaller = 'custom';
+    selectedEmoji = '&#128100;';
+  }
+});
+
+// ===== TIMER SELECTION =====
+document.querySelectorAll('.timer-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.timer-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedSeconds = parseInt(btn.dataset.seconds);
+    $('timer-slider').value = selectedSeconds;
+    updateTimerDisplay(selectedSeconds);
+  });
+});
+
+$('timer-slider').addEventListener('input', e => {
+  selectedSeconds = parseInt(e.target.value);
+  document.querySelectorAll('.timer-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.seconds) === selectedSeconds);
+  });
+  updateTimerDisplay(selectedSeconds);
+});
+
+function updateTimerDisplay(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  $('timer-display').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ===== SCENARIO =====
+$('scenario-select').addEventListener('change', e => {
+  selectedScenario = e.target.value;
+});
+
+// ===== START =====
+$('start-btn').addEventListener('click', () => {
+  const customName = $('custom-name').value.trim();
+  if (customName) {
+    selectedCaller = 'custom';
+    selectedEmoji = '&#128100;';
+  }
+
+  showScreen('countdown');
+  startCountdown(selectedSeconds);
+});
+
+// ===== COUNTDOWN =====
+function startCountdown(totalSeconds) {
+  let remaining = totalSeconds;
+  const circumference = 2 * Math.PI * 90;
+  const ring = $('ring-progress');
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = '0';
+
+  updateCountdownDisplay(remaining);
+
+  countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(countdownInterval);
+      triggerIncoming();
+      return;
+    }
+    updateCountdownDisplay(remaining);
+    const progress = 1 - (remaining / totalSeconds);
+    ring.style.strokeDashoffset = progress * circumference;
+  }, 1000);
+}
+
+function updateCountdownDisplay(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  $('countdown-display').textContent = `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+$('cancel-btn').addEventListener('click', () => {
+  clearInterval(countdownInterval);
+  showScreen('setup');
+});
+
+// ===== INCOMING CALL =====
+function triggerIncoming() {
+  const callerName = getCallerName();
+  $('inc-name').textContent = callerName;
+  $('inc-avatar').innerHTML = selectedEmoji;
+
+  showScreen('incoming');
+  startRinging();
+  vibratePhone();
+  resetSlider();
+}
+
+function getCallerName() {
+  const custom = $('custom-name').value.trim();
+  if (custom) return custom;
+  const names = { mom: 'Mom', boss: 'Boss', doctor: 'Doctor', unknown: 'Unknown Number' };
+  return names[selectedCaller] || 'Unknown';
+}
+
+// ===== PHONE RING (Web Audio) =====
+function startRinging() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    ringLoop();
+  } catch(e) {
+    console.log('Audio not available');
+  }
+}
+
+function ringLoop() {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  playRingTone();
+  setTimeout(() => {
+    if (audioCtx && audioCtx.state !== 'closed') ringLoop();
+  }, 3000);
+}
+
+function playRingTone() {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  const now = audioCtx.currentTime;
+
+  // Two-tone ring pattern (like a real phone)
+  for (let burst = 0; burst < 2; burst++) {
+    const offset = burst * 0.7;
+    for (let i = 0; i < 2; i++) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = i === 0 ? 440 : 480;
+      gain.gain.setValueAtTime(0.12, now + offset);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.5);
+    }
+  }
+}
+
+function stopRinging() {
+  if (audioCtx) {
+    audioCtx.close().catch(() => {});
+    audioCtx = null;
+  }
+}
+
+function vibratePhone() {
+  if (navigator.vibrate) {
+    navigator.vibrate([500, 200, 500, 200, 500, 1000, 500, 200, 500, 200, 500]);
+  }
+}
+
+// ===== SLIDE TO ANSWER =====
+const slideTrack = $('slide-track');
+const slideThumb = $('slide-thumb');
+let isDragging = false;
+let startX = 0;
+let thumbLeft = 4;
+
+function resetSlider() {
+  slideThumb.style.left = '4px';
+  thumbLeft = 4;
+}
+
+slideThumb.addEventListener('pointerdown', e => {
+  isDragging = true;
+  startX = e.clientX - thumbLeft;
+  slideThumb.setPointerCapture(e.pointerId);
+  slideThumb.style.cursor = 'grabbing';
+});
+
+slideThumb.addEventListener('pointermove', e => {
+  if (!isDragging) return;
+  const trackWidth = slideTrack.offsetWidth;
+  const maxLeft = trackWidth - 60;
+  let newLeft = e.clientX - startX;
+  newLeft = Math.max(4, Math.min(maxLeft, newLeft));
+  thumbLeft = newLeft;
+  slideThumb.style.left = newLeft + 'px';
+
+  // Check if slid far enough
+  if (newLeft >= maxLeft - 10) {
+    isDragging = false;
+    answerCall();
+  }
+});
+
+slideThumb.addEventListener('pointerup', () => {
+  if (isDragging) {
+    isDragging = false;
+    // Snap back
+    slideThumb.style.transition = 'left 0.3s ease';
+    slideThumb.style.left = '4px';
+    thumbLeft = 4;
+    setTimeout(() => { slideThumb.style.transition = 'left 0.05s'; }, 300);
+  }
+});
+
+// Decline
+$('decline-btn').addEventListener('click', () => {
+  stopRinging();
+  if (navigator.vibrate) navigator.vibrate(0);
+  showScreen('setup');
+});
+
+// ===== ANSWER CALL =====
+function answerCall() {
+  stopRinging();
+  if (navigator.vibrate) navigator.vibrate(0);
+
+  const callerName = getCallerName();
+  $('call-name').textContent = callerName;
+  $('call-avatar').innerHTML = selectedEmoji;
+
+  // Build waveform bars
+  const waveform = $('waveform');
+  waveform.innerHTML = '';
+  for (let i = 0; i < 20; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.animationDelay = `${i * 0.05}s`;
+    bar.style.animationDuration = `${0.5 + Math.random() * 0.6}s`;
+    waveform.appendChild(bar);
+  }
+
+  showScreen('active-call');
+  startCallTimer();
+  startConversation();
+}
+
+// ===== CALL TIMER =====
+function startCallTimer() {
+  callStartTime = Date.now();
+  callTimerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+    const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const s = (elapsed % 60).toString().padStart(2, '0');
+    $('call-timer').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+// ===== SPEECH SYNTHESIS CONVERSATION =====
+function getScenario() {
+  let key = selectedScenario;
+  if (key === 'random') {
+    const keys = Object.keys(SCENARIOS);
+    key = keys[Math.floor(Math.random() * keys.length)];
+  }
+  return SCENARIOS[key];
+}
+
+function startConversation() {
+  const scenario = getScenario();
+  const lines = scenario.lines;
+  let lineIndex = 0;
+
+  function speakNext() {
+    if (lineIndex >= lines.length) {
+      $('subtitle-text').textContent = '"Call ended"';
+      setTimeout(() => hangUp(), 2000);
+      return;
+    }
+
+    const text = lines[lineIndex];
+    $('subtitle-text').textContent = `"${text}"`;
+    lineIndex++;
+
+    if ('speechSynthesis' in window) {
+      // Cancel any pending
+      window.speechSynthesis.cancel();
+
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.95;
+      utter.pitch = 1.0;
+
+      // Try to pick a natural voice
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find(v =>
+        v.name.includes('Samantha') || v.name.includes('Karen') ||
+        v.name.includes('Daniel') || v.name.includes('Google')
+      ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      if (preferred) utter.voice = preferred;
+
+      utter.onend = () => {
+        setTimeout(speakNext, 1200 + Math.random() * 800);
+      };
+      utter.onerror = () => {
+        setTimeout(speakNext, 2000);
+      };
+
+      currentUtterance = utter;
+      window.speechSynthesis.speak(utter);
+    } else {
+      // No speech synthesis — just show subtitles with timing
+      setTimeout(speakNext, 3000);
+    }
+  }
+
+  // Small delay before first line
+  setTimeout(speakNext, 1500);
+}
+
+// ===== HANG UP =====
+function hangUp() {
+  clearInterval(callTimerInterval);
+  window.speechSynthesis?.cancel();
+  showScreen('setup');
+}
+
+$('hangup-btn').addEventListener('click', hangUp);
+
+// ===== CALL CONTROLS (cosmetic) =====
+$('mute-btn').addEventListener('click', function() {
+  this.querySelector('.icon').style.background =
+    this.classList.toggle('toggled') ? 'rgba(52,199,89,0.3)' : 'var(--glass)';
+});
+
+$('speaker-btn').addEventListener('click', function() {
+  this.querySelector('.icon').style.background =
+    this.classList.toggle('toggled') ? 'rgba(52,199,89,0.3)' : 'var(--glass)';
+});
+
+// ===== SCREEN MANAGEMENT =====
+function showScreen(id) {
+  ['setup', 'countdown', 'incoming', 'active-call'].forEach(s => {
+    $(s).style.display = s === id ? 'flex' : 'none';
+  });
+
+  // Lock screen wake for incoming/active
+  if (id === 'incoming' || id === 'active-call') {
+    requestWakeLock();
+  }
+}
+
+// ===== WAKE LOCK (keep screen on) =====
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+
+// ===== LOAD VOICES =====
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

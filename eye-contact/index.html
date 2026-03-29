@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eye Contact Confidence Tracker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0f;color:#e0e0e0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:12px}
+h1{text-align:center;font-size:1.6rem;margin:8px 0;background:linear-gradient(135deg,#00d4ff,#7b2ff7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:#666;font-size:.85rem;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.video-wrap{position:relative;border-radius:12px;overflow:hidden;background:#111;aspect-ratio:4/3;border:2px solid #1a1a2e}
+video,canvas{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+canvas{z-index:2;pointer-events:none}
+.panel{background:#111118;border:1px solid #1a1a2e;border-radius:12px;padding:16px}
+.score-display{text-align:center;margin:8px 0}
+.score-num{font-size:4rem;font-weight:900;background:linear-gradient(135deg,#ff4444,#ffaa00,#00ff88);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.level-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-weight:700;font-size:1rem;margin:8px 0;transition:all .3s}
+.timer-row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;padding:8px 12px;background:#0d0d15;border-radius:8px}
+.timer-label{color:#888;font-size:.85rem}
+.timer-val{font-size:1.1rem;font-weight:700;font-variant-numeric:tabular-nums}
+.callout{background:#1a1025;border:1px solid #2a1a3e;border-radius:10px;padding:12px;margin-top:10px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.95rem;transition:all .3s;color:#c0a0e0}
+.callout.active{border-color:#7b2ff7;background:#251540}
+.leaderboard{margin-top:12px}
+.leaderboard h3{font-size:.95rem;color:#888;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.lb-list{list-style:none}
+.lb-list li{display:flex;justify-content:space-between;padding:6px 10px;border-radius:6px;margin:3px 0;background:#0d0d15;font-size:.85rem}
+.lb-list li:first-child{background:#1a1520;border:1px solid #3a2a5e}
+.lb-rank{color:#7b2ff7;font-weight:700;margin-right:8px}
+.lb-time{color:#00d4ff;font-weight:600}
+.bar-track{height:8px;background:#1a1a2e;border-radius:4px;margin:6px 0;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .3s,background .3s}
+.start-btn{display:block;width:100%;padding:14px;border:none;border-radius:10px;font-size:1.1rem;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#7b2ff7,#00d4ff);color:#fff;margin-top:10px;transition:transform .1s}
+.start-btn:active{transform:scale(.97)}
+.start-btn:disabled{opacity:.5;cursor:not-allowed}
+.status{text-align:center;padding:6px;font-size:.8rem;color:#555}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.stat-box{background:#0d0d15;border-radius:8px;padding:8px;text-align:center}
+.stat-box .val{font-size:1.3rem;font-weight:700;color:#00d4ff}
+.stat-box .lbl{font-size:.7rem;color:#666;margin-top:2px}
+.eye-indicator{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;transition:background .2s}
+.eye-on{background:#00ff88;box-shadow:0 0 8px #00ff8855}
+.eye-off{background:#ff4444;box-shadow:0 0 8px #ff444455}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Eye Contact Confidence Tracker</h1>
+<p class="subtitle">Stare into the void. The void judges back.</p>
+
+<div class="grid">
+<div>
+<div class="video-wrap">
+<video id="vid" autoplay playsinline muted></video>
+<canvas id="overlay"></canvas>
+</div>
+<div class="status" id="status">Loading MediaPipe Face Mesh...</div>
+</div>
+
+<div class="panel">
+<div class="score-display">
+<div class="score-num" id="scoreNum">0</div>
+<div>Confidence Score</div>
+<div class="bar-track"><div class="bar-fill" id="scoreBar" style="width:0%;background:#ff4444"></div></div>
+</div>
+<div style="text-align:center">
+<span class="level-badge" id="levelBadge" style="background:#2a1020;color:#ff6666">Avoiding All Contact</span>
+</div>
+<div class="timer-row">
+<span class="timer-label"><span class="eye-indicator eye-off" id="eyeDot"></span>Current Streak</span>
+<span class="timer-val" id="streakTimer">0.0s</span>
+</div>
+<div class="timer-row">
+<span class="timer-label">Session Best</span>
+<span class="timer-val" id="bestTimer">0.0s</span>
+</div>
+<div class="stats-row">
+<div class="stat-box"><div class="val" id="totalContact">0s</div><div class="lbl">Total Contact</div></div>
+<div class="stat-box"><div class="val" id="contactPct">0%</div><div class="lbl">Contact Rate</div></div>
+<div class="stat-box"><div class="val" id="lookAways">0</div><div class="lbl">Look-Aways</div></div>
+<div class="stat-box"><div class="val" id="avgStreak">0.0s</div><div class="lbl">Avg Streak</div></div>
+</div>
+<div class="callout" id="callout">Press Start to begin your confidence assessment.</div>
+<button class="start-btn" id="startBtn" disabled>Start Session</button>
+
+<div class="leaderboard">
+<h3>High Scores (Longest Streaks)</h3>
+<ol class="lb-list" id="lbList">
+<li style="color:#555;text-align:center">No records yet</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+<script>
+const CALLOUTS_AWAY = [
+  "They noticed you looked away. Awkward.",
+  "Oh, you found the ceiling more interesting than me?",
+  "Was it something I said?",
+  "Classic avoidance behavior detected.",
+  "Looking away won't make this less uncomfortable.",
+  "Your ancestors fought lions. You can't even look at a screen.",
+  "Commitment issues detected.",
+  "That's called 'emotional unavailability' in therapist speak.",
+  "You just failed the FBI interrogation test.",
+  "Even my webcam LED is judging you right now.",
+  "Plot twist: the thing you're looking at is less interesting than this.",
+  "Your eye contact game is weaker than airport Wi-Fi.",
+  "Somewhere, a TED Talk speaker just felt a disturbance.",
+  "You looked away faster than my ex.",
+  "That eye-dart was visible from space.",
+  "Your confidence left the chat.",
+  "If this were a job interview, you'd be walking to your car right now.",
+  "You just gave off 'I didn't do the homework' energy.",
+  "The camera saw that. I saw that. We all saw that.",
+  "You blinked emotionally.",
+  "Are you trying to read the terms and conditions on the wall?",
+  "That wasn't a blink, that was a retreat.",
+  "You're making the webcam feel insecure.",
+  "Is there a more interesting screen behind me?",
+  "Your focus has the half-life of a TikTok attention span.",
+  "That look-away cost you 3 confidence points and your dignity.",
+  "Breaking eye contact: the universal 'I'm uncomfortable' signal.",
+  "A golden retriever has better focus than this.",
+  "You just lost a staring contest with a webpage.",
+  "Your eye contact was on a free trial and it just expired.",
+  "The void stared back, and you flinched.",
+  "Somewhere, a poker player is laughing at you.",
+  "You glanced away like you just got a text from your ex.",
+  "NASA tracks objects with more consistency than your gaze.",
+  "That was a micro-betrayal of eye contact.",
+  "You have the gaze stability of a cat near a laser pointer.",
+  "Even a Roomba follows a straighter path than your eyes.",
+  "Breaking news: Local person cannot look at screen for more than 3 seconds."
+];
+
+const CALLOUTS_STARE = [
+  "Okay, getting a little intense there...",
+  "Do you... need to blink?",
+  "This is the energy of someone who reads terms and conditions.",
+  "You're one eyebrow raise away from a villain monologue.",
+  "HR would like a word about your staring technique.",
+  "Are you trying to unlock the webcam with your eyes?",
+  "This level of eye contact is legally questionable in 12 states.",
+  "You've entered 'uncomfortable first date' territory.",
+  "Even owls blink more than you.",
+  "This is either confidence or a medical emergency."
+];
+
+const LEVELS = [
+  { min: 0,  label: "Avoiding All Contact", bg: "#2a1020", color: "#ff6666" },
+  { min: 20, label: "Shy Glancer",          bg: "#2a2010", color: "#ffaa44" },
+  { min: 40, label: "Normal Human",         bg: "#1a2a1a", color: "#88cc88" },
+  { min: 70, label: "Power Stare",          bg: "#101a2a", color: "#44aaff" },
+  { min: 90, label: "Intimidating",         bg: "#2a102a", color: "#dd66ff" }
+];
+
+const vid = document.getElementById('vid');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const statusEl = document.getElementById('status');
+const scoreNum = document.getElementById('scoreNum');
+const scoreBar = document.getElementById('scoreBar');
+const levelBadge = document.getElementById('levelBadge');
+const streakTimer = document.getElementById('streakTimer');
+const bestTimer = document.getElementById('bestTimer');
+const calloutEl = document.getElementById('callout');
+const startBtn = document.getElementById('startBtn');
+const eyeDot = document.getElementById('eyeDot');
+const totalContactEl = document.getElementById('totalContact');
+const contactPctEl = document.getElementById('contactPct');
+const lookAwaysEl = document.getElementById('lookAways');
+const avgStreakEl = document.getElementById('avgStreak');
+const lbList = document.getElementById('lbList');
+
+let running = false;
+let score = 0;
+let isLooking = false;
+let streakStart = 0;
+let currentStreak = 0;
+let bestStreak = 0;
+let sessionStart = 0;
+let totalContactTime = 0;
+let lookAwayCount = 0;
+let streakCount = 0;
+let streakSum = 0;
+let lastCalloutTime = 0;
+let wasLooking = false;
+let lastAwayIdx = -1;
+let lastStareIdx = -1;
+let longStareNotified = false;
+let leaderboard = JSON.parse(localStorage.getItem('eyeContactLB') || '[]');
+
+// MediaPipe iris landmarks
+const LEFT_IRIS = [468, 469, 470, 471, 472];
+const RIGHT_IRIS = [473, 474, 475, 476, 477];
+const LEFT_EYE_INNER = 133;
+const LEFT_EYE_OUTER = 33;
+const RIGHT_EYE_INNER = 362;
+const RIGHT_EYE_OUTER = 263;
+const LEFT_EYE_TOP = 159;
+const LEFT_EYE_BOTTOM = 145;
+const RIGHT_EYE_TOP = 386;
+const RIGHT_EYE_BOTTOM = 374;
+const NOSE_TIP = 1;
+const FOREHEAD = 10;
+const CHIN = 152;
+const LEFT_CHEEK = 234;
+const RIGHT_CHEEK = 454;
+
+function getIrisCenter(landmarks, indices) {
+  let x = 0, y = 0, z = 0;
+  for (const i of indices) {
+    x += landmarks[i].x;
+    y += landmarks[i].y;
+    z += landmarks[i].z;
+  }
+  return { x: x / indices.length, y: y / indices.length, z: z / indices.length };
+}
+
+function getGazeRatio(landmarks, irisIndices, innerIdx, outerIdx) {
+  const iris = getIrisCenter(landmarks, irisIndices);
+  const inner = landmarks[innerIdx];
+  const outer = landmarks[outerIdx];
+  const eyeWidth = Math.sqrt((inner.x - outer.x) ** 2 + (inner.y - outer.y) ** 2);
+  if (eyeWidth < 0.001) return 0.5;
+  const irisToOuter = Math.sqrt((iris.x - outer.x) ** 2 + (iris.y - outer.y) ** 2);
+  return irisToOuter / eyeWidth;
+}
+
+function getVerticalGazeRatio(landmarks, irisIndices, topIdx, bottomIdx) {
+  const iris = getIrisCenter(landmarks, irisIndices);
+  const top = landmarks[topIdx];
+  const bottom = landmarks[bottomIdx];
+  const eyeH = Math.sqrt((top.x - bottom.x) ** 2 + (top.y - bottom.y) ** 2);
+  if (eyeH < 0.001) return 0.5;
+  const irisToTop = Math.sqrt((iris.x - top.x) ** 2 + (iris.y - top.y) ** 2);
+  return irisToTop / eyeH;
+}
+
+function getHeadPose(landmarks) {
+  const nose = landmarks[NOSE_TIP];
+  const forehead = landmarks[FOREHEAD];
+  const chin = landmarks[CHIN];
+  const left = landmarks[LEFT_CHEEK];
+  const right = landmarks[RIGHT_CHEEK];
+  const faceW = Math.abs(right.x - left.x);
+  const faceCenterX = (left.x + right.x) / 2;
+  const yaw = (nose.x - faceCenterX) / (faceW || 0.001);
+  const faceCenterY = (forehead.y + chin.y) / 2;
+  const faceH = Math.abs(chin.y - forehead.y);
+  const pitch = (nose.y - faceCenterY) / (faceH || 0.001);
+  return { yaw, pitch };
+}
+
+function isEyeContact(landmarks) {
+  const leftRatio = getGazeRatio(landmarks, LEFT_IRIS, LEFT_EYE_INNER, LEFT_EYE_OUTER);
+  const rightRatio = getGazeRatio(landmarks, RIGHT_IRIS, RIGHT_EYE_INNER, RIGHT_EYE_OUTER);
+  const leftVRatio = getVerticalGazeRatio(landmarks, LEFT_IRIS, LEFT_EYE_TOP, LEFT_EYE_BOTTOM);
+  const rightVRatio = getVerticalGazeRatio(landmarks, RIGHT_IRIS, RIGHT_EYE_TOP, RIGHT_EYE_BOTTOM);
+  const head = getHeadPose(landmarks);
+
+  const avgH = (leftRatio + rightRatio) / 2;
+  const avgV = (leftVRatio + rightVRatio) / 2;
+
+  const hCenter = Math.abs(avgH - 0.48) < 0.14;
+  const vCenter = Math.abs(avgV - 0.45) < 0.18;
+  const headStraight = Math.abs(head.yaw) < 0.28 && Math.abs(head.pitch) < 0.25;
+
+  return hCenter && vCenter && headStraight;
+}
+
+function drawEyes(landmarks, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  const drawIris = (indices, color) => {
+    ctx.beginPath();
+    for (let i = 0; i < indices.length; i++) {
+      const lm = landmarks[indices[i]];
+      const x = lm.x * w, y = lm.y * h;
+      if (i === 0) { ctx.arc(x, y, 4, 0, Math.PI * 2); }
+    }
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    const center = getIrisCenter(landmarks, indices);
+    ctx.beginPath();
+    ctx.arc(center.x * w, center.y * h, 8, 0, Math.PI * 2);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  };
+
+  const leftEyeOutline = [33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246];
+  const rightEyeOutline = [362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+
+  const drawOutline = (indices, color) => {
+    ctx.beginPath();
+    for (let i = 0; i < indices.length; i++) {
+      const lm = landmarks[indices[i]];
+      const x = lm.x * w, y = lm.y * h;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  };
+
+  const color = isLooking ? '#00ff88' : '#ff4444';
+  drawOutline(leftEyeOutline, color + '88');
+  drawOutline(rightEyeOutline, color + '88');
+  drawIris(LEFT_IRIS, color);
+  drawIris(RIGHT_IRIS, color);
+
+  // Gaze direction indicator
+  if (isLooking) {
+    ctx.fillStyle = '#00ff8833';
+    ctx.fillRect(0, 0, w, h);
+  }
+}
+
+function updateScore(dt) {
+  if (!running) return;
+  const now = Date.now();
+
+  if (isLooking) {
+    score = Math.min(100, score + dt * 8);
+    currentStreak = (now - streakStart) / 1000;
+    totalContactTime += dt;
+
+    if (currentStreak > bestStreak) bestStreak = currentStreak;
+
+    if (currentStreak > 15 && !longStareNotified) {
+      showCallout(CALLOUTS_STARE, 'lastStareIdx');
+      longStareNotified = true;
+    } else if (currentStreak > 30 && now - lastCalloutTime > 10000) {
+      showCallout(CALLOUTS_STARE, 'lastStareIdx');
+    }
+  } else {
+    score = Math.max(0, score - dt * 12);
+  }
+
+  // Transition detection
+  if (isLooking && !wasLooking) {
+    streakStart = now;
+    longStareNotified = false;
+    eyeDot.className = 'eye-indicator eye-on';
+  }
+  if (!isLooking && wasLooking) {
+    const streak = (now - streakStart) / 1000;
+    if (streak > 0.5) {
+      streakCount++;
+      streakSum += streak;
+      addToLeaderboard(streak);
+    }
+    lookAwayCount++;
+    eyeDot.className = 'eye-indicator eye-off';
+    if (now - lastCalloutTime > 3000) {
+      showCallout(CALLOUTS_AWAY, 'lastAwayIdx');
+    }
+    currentStreak = 0;
+  }
+
+  wasLooking = isLooking;
+
+  // Update UI
+  const s = Math.round(score);
+  scoreNum.textContent = s;
+  scoreBar.style.width = s + '%';
+
+  let lvl = LEVELS[0];
+  for (const l of LEVELS) { if (s >= l.min) lvl = l; }
+  levelBadge.textContent = lvl.label;
+  levelBadge.style.background = lvl.bg;
+  levelBadge.style.color = lvl.color;
+  scoreBar.style.background = lvl.color;
+
+  streakTimer.textContent = currentStreak.toFixed(1) + 's';
+  bestTimer.textContent = bestStreak.toFixed(1) + 's';
+
+  const elapsed = (now - sessionStart) / 1000;
+  totalContactEl.textContent = Math.round(totalContactTime) + 's';
+  contactPctEl.textContent = elapsed > 0 ? Math.round((totalContactTime / elapsed) * 100) + '%' : '0%';
+  lookAwaysEl.textContent = lookAwayCount;
+  avgStreakEl.textContent = streakCount > 0 ? (streakSum / streakCount).toFixed(1) + 's' : '0.0s';
+}
+
+function showCallout(arr, idxKey) {
+  let idx;
+  do { idx = Math.floor(Math.random() * arr.length); } while (idx === (idxKey === 'lastAwayIdx' ? lastAwayIdx : lastStareIdx) && arr.length > 1);
+  if (idxKey === 'lastAwayIdx') lastAwayIdx = idx; else lastStareIdx = idx;
+  calloutEl.textContent = arr[idx];
+  calloutEl.classList.add('active');
+  lastCalloutTime = Date.now();
+  setTimeout(() => calloutEl.classList.remove('active'), 3000);
+}
+
+function addToLeaderboard(time) {
+  leaderboard.push({ time: Math.round(time * 10) / 10, date: new Date().toLocaleTimeString() });
+  leaderboard.sort((a, b) => b.time - a.time);
+  leaderboard = leaderboard.slice(0, 10);
+  localStorage.setItem('eyeContactLB', JSON.stringify(leaderboard));
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  if (leaderboard.length === 0) {
+    lbList.innerHTML = '<li style="color:#555;text-align:center">No records yet</li>';
+    return;
+  }
+  lbList.innerHTML = leaderboard.map((e, i) =>
+    `<li><span><span class="lb-rank">#${i + 1}</span>${e.date}</span><span class="lb-time">${e.time}s</span></li>`
+  ).join('');
+}
+
+// Init MediaPipe
+const faceMesh = new FaceMesh({
+  locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+});
+faceMesh.setOptions({
+  maxNumFaces: 1,
+  refineLandmarks: true,
+  minDetectionConfidence: 0.5,
+  minTrackingConfidence: 0.5
+});
+
+let lastTime = performance.now();
+
+faceMesh.onResults((results) => {
+  const now = performance.now();
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  overlay.width = vid.videoWidth || 640;
+  overlay.height = vid.videoHeight || 480;
+
+  if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+    const landmarks = results.multiFaceLandmarks[0];
+    isLooking = isEyeContact(landmarks);
+    drawEyes(landmarks, overlay.width, overlay.height);
+    if (!running) statusEl.textContent = 'Face detected. Press Start!';
+  } else {
+    isLooking = false;
+    ctx.clearRect(0, 0, overlay.width, overlay.height);
+    if (!running) statusEl.textContent = 'No face detected. Look at the camera.';
+  }
+
+  updateScore(dt);
+});
+
+async function initCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+    });
+    vid.srcObject = stream;
+    await vid.play();
+
+    const camera = new Camera(vid, {
+      onFrame: async () => { await faceMesh.send({ image: vid }); },
+      width: 640,
+      height: 480
+    });
+    camera.start();
+    statusEl.textContent = 'Initializing face detection...';
+    startBtn.disabled = false;
+  } catch (err) {
+    statusEl.textContent = 'Camera access denied. Please allow camera permissions.';
+    console.error(err);
+  }
+}
+
+startBtn.addEventListener('click', () => {
+  if (!running) {
+    running = true;
+    score = 0;
+    currentStreak = 0;
+    bestStreak = 0;
+    totalContactTime = 0;
+    lookAwayCount = 0;
+    streakCount = 0;
+    streakSum = 0;
+    sessionStart = Date.now();
+    streakStart = Date.now();
+    wasLooking = false;
+    startBtn.textContent = 'Reset Session';
+    statusEl.textContent = 'Session active. Look at the camera!';
+    calloutEl.textContent = 'Look into the camera. I dare you.';
+  } else {
+    running = false;
+    if (bestStreak > 0.5) addToLeaderboard(bestStreak);
+    startBtn.textContent = 'Start Session';
+    statusEl.textContent = 'Session ended. Press Start for a new one.';
+    calloutEl.textContent = `Session over. Best streak: ${bestStreak.toFixed(1)}s. ${bestStreak > 10 ? 'Respect.' : 'Try harder.'}`;
+  }
+});
+
+renderLeaderboard();
+initCamera();
+</script>
+</body>
+</html>

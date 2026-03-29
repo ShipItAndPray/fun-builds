@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sigh Counter - Tally Your Daily Suffering</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #c8d3da;
+    --card: #e2e8ed;
+    --text: #2c3e50;
+    --accent: #7f8c9a;
+    --sigh-glow: rgba(100, 130, 160, 0.3);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background 1.5s ease, color 1s ease;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 20px 0 6px;
+    opacity: 0.7;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.5;
+    margin-bottom: 24px;
+  }
+
+  /* Main counter */
+  .counter-ring {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    border: 3px solid var(--accent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: box-shadow 0.5s, border-color 0.5s;
+    margin-bottom: 12px;
+  }
+
+  .counter-ring.pulse {
+    animation: sighPulse 0.8s ease-out;
+  }
+
+  @keyframes sighPulse {
+    0% { box-shadow: 0 0 0 0 var(--sigh-glow); transform: scale(1); }
+    50% { box-shadow: 0 0 40px 15px var(--sigh-glow); transform: scale(1.06); }
+    100% { box-shadow: 0 0 0 0 transparent; transform: scale(1); }
+  }
+
+  .count-number {
+    font-size: 5rem;
+    font-weight: 200;
+    line-height: 1;
+  }
+
+  .count-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    opacity: 0.5;
+    margin-top: 4px;
+  }
+
+  /* Suffering level */
+  .suffering-level {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 8px 0;
+    min-height: 1.4em;
+    text-align: center;
+  }
+
+  /* Snarky comment */
+  .snarky {
+    font-style: italic;
+    font-size: 0.9rem;
+    opacity: 0.7;
+    text-align: center;
+    min-height: 2.6em;
+    margin-bottom: 20px;
+    transition: opacity 0.3s;
+    max-width: 360px;
+  }
+
+  /* Mic button */
+  .mic-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: var(--card);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    margin-bottom: 8px;
+  }
+
+  .mic-btn.listening {
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+    animation: micPulse 1.5s infinite;
+  }
+
+  @keyframes micPulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.15); }
+    50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0.05); }
+  }
+
+  .mic-btn svg {
+    width: 28px;
+    height: 28px;
+    fill: var(--accent);
+    transition: fill 0.3s;
+  }
+
+  .mic-btn.listening svg { fill: #e74c3c; }
+
+  .mic-status {
+    font-size: 0.75rem;
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  /* Visualizer */
+  .visualizer {
+    width: 100%;
+    height: 40px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .viz-bar {
+    width: 4px;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: height 0.05s;
+    min-height: 2px;
+    opacity: 0.6;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    flex: 1;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-card .val {
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .stat-card .lbl {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+    margin-top: 2px;
+  }
+
+  /* Detection indicator */
+  .detection-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 3px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .detection-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.1s, background 0.3s;
+  }
+
+  .detection-fill.hot {
+    background: #e74c3c;
+  }
+
+  /* Chart */
+  .chart-section {
+    width: 100%;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .chart-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.6;
+  }
+
+  .chart-toggle {
+    display: flex;
+    gap: 4px;
+  }
+
+  .chart-toggle button {
+    padding: 3px 10px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    color: var(--text);
+    opacity: 0.5;
+  }
+
+  .chart-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+    opacity: 1;
+  }
+
+  .chart-canvas {
+    width: 100%;
+    height: 120px;
+  }
+
+  /* Share */
+  .share-btn {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid var(--accent);
+    background: transparent;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--text);
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+  }
+
+  .share-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* Reset */
+  .reset-btn {
+    background: none;
+    border: none;
+    font-size: 0.7rem;
+    color: var(--accent);
+    cursor: pointer;
+    opacity: 0.5;
+    margin-bottom: 30px;
+  }
+
+  .reset-btn:hover { opacity: 1; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #333;
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: all 0.4s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Sigh Counter</h1>
+  <p class="subtitle">quantifying your daily despair since today</p>
+
+  <div class="counter-ring" id="counterRing">
+    <div class="count-number" id="countNumber">0</div>
+    <div class="count-label">sighs today</div>
+  </div>
+
+  <div class="suffering-level" id="sufferingLevel">Awaiting first sigh...</div>
+  <div class="snarky" id="snarkyComment">Click the mic and let the despair flow</div>
+
+  <div class="visualizer" id="visualizer"></div>
+
+  <div class="detection-bar">
+    <div class="detection-fill" id="detectionFill"></div>
+  </div>
+
+  <button class="mic-btn" id="micBtn" title="Start listening">
+    <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+  </button>
+  <div class="mic-status" id="micStatus">Tap to start listening</div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val" id="deepestSigh">0s</div>
+      <div class="lbl">Deepest Sigh</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="avgDuration">0s</div>
+      <div class="lbl">Avg Duration</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="totalTime">0s</div>
+      <div class="lbl">Total Sighing</div>
+    </div>
+  </div>
+
+  <div class="chart-section">
+    <div class="chart-header">
+      <span class="chart-title">Suffering History</span>
+      <div class="chart-toggle">
+        <button class="active" data-range="daily">Daily</button>
+        <button data-range="weekly">Weekly</button>
+      </div>
+    </div>
+    <canvas class="chart-canvas" id="chartCanvas"></canvas>
+  </div>
+
+  <button class="share-btn" id="shareBtn">Share Your Suffering Score</button>
+  <button class="reset-btn" id="resetBtn">Reset today's misery</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- State ----
+const STORAGE_KEY = 'sigh_counter_data';
+let state = loadState();
+let audioCtx, analyser, mic, dataArray, freqArray;
+let listening = false;
+let sighStartTime = null;
+let sighConfirmFrames = 0;
+let cooldownUntil = 0;
+const CONFIRM_THRESHOLD = 14;   // frames (~230ms at 60fps) to confirm a sigh
+const COOLDOWN_MS = 2000;
+let vizBars = [];
+
+// ---- Snarky templates (30+) ----
+const SNARKY = [
+  "That one came from the soul.",
+  "Your lungs filed a complaint.",
+  "Was that a sigh or a cry for help?",
+  "The void heard that one.",
+  "Somewhere, a therapist just sensed a disturbance.",
+  "Your diaphragm is working overtime today.",
+  "That sigh could power a small wind turbine.",
+  "Even your sighs sound exhausted.",
+  "Another sigh? At this hour?",
+  "Your coworkers felt that through the wall.",
+  "Adding that to your permanent record.",
+  "The algorithm detected despair. Again.",
+  "That was almost poetic. Almost.",
+  "Your plants are worried about you.",
+  "This one had real weight to it.",
+  "Somewhere a motivational poster just fell off a wall.",
+  "Your WiFi router sighed in solidarity.",
+  "That sigh had a backstory and a sequel.",
+  "Are you okay? Just kidding, clearly not.",
+  "Your exhale-to-inhale ratio is concerning.",
+  "That sigh was loud enough to appear on a seismograph.",
+  "Have you considered competitive sighing?",
+  "Congratulations, that's a new depth record. Oh wait, no it isn't.",
+  "At this rate, you'll run out of air by Thursday.",
+  "Your body is literally deflating from life.",
+  "That sigh had three acts and an intermission.",
+  "If sighs were currency, you'd be rich.",
+  "The microphone asked for hazard pay.",
+  "The universe acknowledges your suffering. Still doesn't care.",
+  "That sigh aged me five years.",
+  "You're really committed to this whole 'being alive is hard' thing.",
+  "Alexa, play Despacito. Actually, that sigh was sadder.",
+  "Your future biographer is going to have a field day.",
+  "That sigh could win an Oscar for Best Short Film.",
+  "NASA just classified that exhale as a weather event.",
+];
+
+// ---- Suffering levels ----
+function getSufferingLevel(count) {
+  if (count === 0) return { label: 'Awaiting first sigh...', emoji: '' };
+  if (count <= 5)  return { label: 'Monday Energy', emoji: '😐' };
+  if (count <= 10) return { label: 'Existential', emoji: '😮‍💨' };
+  if (count <= 20) return { label: 'Send Help', emoji: '😩' };
+  return { label: 'Beyond Repair', emoji: '💀' };
+}
+
+// ---- Color themes by suffering ----
+function updateTheme(count) {
+  const t = Math.min(count / 25, 1);
+  const bgL = 85 - t * 45;   // lightness 85 -> 40
+  const cardL = 90 - t * 40;
+  const textL = 20 + t * 50;
+  const accentL = 55 - t * 20;
+
+  document.documentElement.style.setProperty('--bg', `hsl(210, 12%, ${bgL}%)`);
+  document.documentElement.style.setProperty('--card', `hsl(210, 14%, ${cardL}%)`);
+  document.documentElement.style.setProperty('--text', `hsl(210, 20%, ${textL}%)`);
+  document.documentElement.style.setProperty('--accent', `hsl(210, 12%, ${accentL}%)`);
+  document.documentElement.style.setProperty('--sigh-glow', `hsla(210, 30%, ${50 - t*20}%, 0.4)`);
+}
+
+// ---- LocalStorage ----
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return freshState();
+    const s = JSON.parse(raw);
+    // Reset if new day
+    const today = new Date().toISOString().slice(0, 10);
+    if (s.currentDate !== today) {
+      // Archive yesterday
+      if (s.currentDate && s.count > 0) {
+        s.history.push({ date: s.currentDate, count: s.count, deepest: s.deepestSigh });
+        if (s.history.length > 90) s.history = s.history.slice(-90);
+      }
+      s.currentDate = today;
+      s.count = 0;
+      s.deepestSigh = 0;
+      s.totalDuration = 0;
+      s.sighDurations = [];
+    }
+    return s;
+  } catch { return freshState(); }
+}
+
+function freshState() {
+  return {
+    currentDate: new Date().toISOString().slice(0, 10),
+    count: 0,
+    deepestSigh: 0,
+    totalDuration: 0,
+    sighDurations: [],
+    history: [],
+    allTimeDeepest: 0,
+  };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+// ---- UI Updates ----
+const $ = id => document.getElementById(id);
+
+function updateUI() {
+  $('countNumber').textContent = state.count;
+  const level = getSufferingLevel(state.count);
+  $('sufferingLevel').textContent = level.emoji + ' ' + level.label;
+  $('deepestSigh').textContent = state.deepestSigh.toFixed(1) + 's';
+  $('totalTime').textContent = state.totalDuration.toFixed(1) + 's';
+
+  const avg = state.sighDurations.length ? (state.totalDuration / state.sighDurations.length) : 0;
+  $('avgDuration').textContent = avg.toFixed(1) + 's';
+
+  updateTheme(state.count);
+  drawChart();
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- Audio setup ----
+async function startListening() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mic = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.8;
+    mic.connect(analyser);
+
+    dataArray = new Uint8Array(analyser.fftSize);
+    freqArray = new Uint8Array(analyser.frequencyBinCount);
+
+    listening = true;
+    $('micBtn').classList.add('listening');
+    $('micStatus').textContent = 'Listening for sighs...';
+    buildVisualizer();
+    detectLoop();
+  } catch (e) {
+    showToast('Microphone access denied');
+  }
+}
+
+function stopListening() {
+  listening = false;
+  if (audioCtx) audioCtx.close();
+  audioCtx = analyser = mic = null;
+  $('micBtn').classList.remove('listening');
+  $('micStatus').textContent = 'Tap to start listening';
+  $('detectionFill').style.width = '0%';
+  vizBars.forEach(b => b.style.height = '2px');
+}
+
+function buildVisualizer() {
+  const viz = $('visualizer');
+  viz.innerHTML = '';
+  vizBars = [];
+  for (let i = 0; i < 40; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'viz-bar';
+    bar.style.height = '2px';
+    viz.appendChild(bar);
+    vizBars.push(bar);
+  }
+}
+
+// ---- Sigh detection ----
+// A sigh is: sustained low-mid frequency sound (100-600Hz dominant),
+// with a characteristic energy drop-off pattern (starts louder, trails off),
+// lasting 1-6 seconds.
+function detectLoop() {
+  if (!listening) return;
+
+  analyser.getByteFrequencyData(freqArray);
+  analyser.getByteTimeDomainData(dataArray);
+
+  // Update visualizer
+  const step = Math.floor(freqArray.length / vizBars.length);
+  for (let i = 0; i < vizBars.length; i++) {
+    const val = freqArray[i * step] || 0;
+    vizBars[i].style.height = Math.max(2, val / 255 * 38) + 'px';
+  }
+
+  // Compute energy in sigh-relevant frequency bands
+  const nyquist = audioCtx.sampleRate / 2;
+  const binHz = nyquist / analyser.frequencyBinCount;
+
+  // Low-mid band (80-500Hz) - where sighs live
+  const lowStart = Math.floor(80 / binHz);
+  const lowEnd = Math.floor(500 / binHz);
+  let lowEnergy = 0;
+  for (let i = lowStart; i <= lowEnd && i < freqArray.length; i++) {
+    lowEnergy += freqArray[i];
+  }
+  lowEnergy /= (lowEnd - lowStart + 1);
+
+  // High band (2000-8000Hz) - speech/noise, should be low for sighs
+  const hiStart = Math.floor(2000 / binHz);
+  const hiEnd = Math.floor(8000 / binHz);
+  let hiEnergy = 0;
+  for (let i = hiStart; i <= hiEnd && i < freqArray.length; i++) {
+    hiEnergy += freqArray[i];
+  }
+  hiEnergy /= (hiEnd - hiStart + 1);
+
+  // RMS volume
+  let rms = 0;
+  for (let i = 0; i < dataArray.length; i++) {
+    const v = (dataArray[i] - 128) / 128;
+    rms += v * v;
+  }
+  rms = Math.sqrt(rms / dataArray.length);
+
+  const now = Date.now();
+  const isSighLike = lowEnergy > 25 && rms > 0.02 && rms < 0.5 && (lowEnergy / (hiEnergy + 1)) > 1.8;
+
+  // Update detection bar
+  const fill = $('detectionFill');
+
+  if (isSighLike && now > cooldownUntil) {
+    sighConfirmFrames++;
+    const pct = Math.min(100, (sighConfirmFrames / CONFIRM_THRESHOLD) * 100);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('hot', pct > 70);
+
+    if (!sighStartTime) sighStartTime = now;
+
+    if (sighConfirmFrames >= CONFIRM_THRESHOLD) {
+      // Don't register yet, wait for it to end to measure duration
+    }
+  } else {
+    if (sighConfirmFrames >= CONFIRM_THRESHOLD && sighStartTime) {
+      // Sigh just ended - register it
+      const duration = (now - sighStartTime) / 1000;
+      registerSigh(duration);
+      cooldownUntil = now + COOLDOWN_MS;
+    }
+    sighConfirmFrames = Math.max(0, sighConfirmFrames - 2);
+    fill.style.width = (sighConfirmFrames / CONFIRM_THRESHOLD * 100) + '%';
+    fill.classList.remove('hot');
+    if (sighConfirmFrames === 0) sighStartTime = null;
+  }
+
+  requestAnimationFrame(detectLoop);
+}
+
+function registerSigh(duration) {
+  state.count++;
+  state.totalDuration += duration;
+  state.sighDurations.push(duration);
+  if (duration > state.deepestSigh) state.deepestSigh = duration;
+  if (duration > state.allTimeDeepest) state.allTimeDeepest = duration;
+  saveState();
+  updateUI();
+
+  // Pulse animation
+  const ring = $('counterRing');
+  ring.classList.remove('pulse');
+  void ring.offsetWidth;
+  ring.classList.add('pulse');
+
+  // Snarky comment
+  const idx = Math.floor(Math.random() * SNARKY.length);
+  $('snarkyComment').textContent = SNARKY[idx];
+
+  // Check for deepest sigh record
+  if (duration === state.deepestSigh && state.count > 1) {
+    showToast('New deepest sigh record: ' + duration.toFixed(1) + 's!');
+  }
+}
+
+// ---- Chart ----
+function drawChart() {
+  const canvas = $('chartCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = canvas.clientWidth * dpr;
+  canvas.height = canvas.clientHeight * dpr;
+  ctx.scale(dpr, dpr);
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  ctx.clearRect(0, 0, W, H);
+
+  const range = document.querySelector('.chart-toggle .active')?.dataset.range || 'daily';
+  let data = [];
+  let labels = [];
+
+  if (range === 'daily') {
+    // Last 7 days including today
+    const today = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      labels.push(i === 0 ? 'Today' : dayNames[d.getDay()]);
+      if (i === 0) {
+        data.push(state.count);
+      } else {
+        const entry = state.history.find(h => h.date === key);
+        data.push(entry ? entry.count : 0);
+      }
+    }
+  } else {
+    // Weekly - last 4 weeks
+    const today = new Date();
+    for (let w = 3; w >= 0; w--) {
+      let total = 0;
+      for (let d = 0; d < 7; d++) {
+        const dt = new Date(today);
+        dt.setDate(dt.getDate() - (w * 7 + d));
+        const key = dt.toISOString().slice(0, 10);
+        if (w === 0 && d === 0) {
+          total += state.count;
+        } else {
+          const entry = state.history.find(h => h.date === key);
+          if (entry) total += entry.count;
+        }
+      }
+      labels.push(w === 0 ? 'This wk' : w + 'w ago');
+      data.push(total);
+    }
+  }
+
+  const max = Math.max(...data, 1);
+  const barW = Math.min(36, (W - 40) / data.length - 8);
+  const gap = (W - barW * data.length) / (data.length + 1);
+
+  // Bars
+  const compStyle = getComputedStyle(document.documentElement);
+  const accent = compStyle.getPropertyValue('--accent').trim();
+  const textColor = compStyle.getPropertyValue('--text').trim();
+
+  data.forEach((v, i) => {
+    const x = gap + i * (barW + gap);
+    const barH = (v / max) * (H - 30);
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    const r = 3;
+    const y = H - 20 - barH;
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + barW - r, y);
+    ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+    ctx.lineTo(x + barW, H - 20);
+    ctx.lineTo(x, H - 20);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // Value on top
+    if (v > 0) {
+      ctx.fillStyle = textColor;
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(v, x + barW / 2, y - 4);
+    }
+
+    // Label
+    ctx.fillStyle = textColor;
+    ctx.globalAlpha = 0.5;
+    ctx.font = '9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[i], x + barW / 2, H - 4);
+    ctx.globalAlpha = 1;
+  });
+}
+
+// ---- Share ----
+$('shareBtn').addEventListener('click', () => {
+  const level = getSufferingLevel(state.count);
+  const text = `My suffering score today: ${state.count} sighs ${level.emoji}\n` +
+    `Level: ${level.label}\n` +
+    `Deepest sigh: ${state.deepestSigh.toFixed(1)}s\n` +
+    `Total time sighing: ${state.totalDuration.toFixed(1)}s\n\n` +
+    `Tracked by Sigh Counter - quantifying daily despair`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'My Suffering Score', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Suffering copied to clipboard');
+    }).catch(() => {
+      showToast('Could not copy');
+    });
+  }
+});
+
+// ---- Reset ----
+$('resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset today\'s sigh count? Your history will be preserved.')) return;
+  state.count = 0;
+  state.deepestSigh = 0;
+  state.totalDuration = 0;
+  state.sighDurations = [];
+  saveState();
+  updateUI();
+  $('snarkyComment').textContent = 'A fresh start. It won\'t last.';
+  showToast('Reset. The suffering continues.');
+});
+
+// ---- Mic button ----
+$('micBtn').addEventListener('click', () => {
+  if (listening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+});
+
+// ---- Chart toggle ----
+document.querySelectorAll('.chart-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chart-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    drawChart();
+  });
+});
+
+// ---- Init ----
+updateUI();
+window.addEventListener('resize', drawChart);
+</script>
+</body>
+</html>

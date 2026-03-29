@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karaoke Judge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a12;--panel:#14141f;--gold:#ffd700;--red:#ff3355;--green:#33ff77;
+  --blue:#3388ff;--purple:#aa44ff;--text:#e8e8f0;--dim:#555570;
+  --glow-gold:0 0 20px rgba(255,215,0,.3);--glow-red:0 0 20px rgba(255,51,85,.3);
+  --glow-green:0 0 20px rgba(51,255,119,.3);
+}
+body{
+  background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+/* Stage lights */
+.stage-lights{
+  position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;
+}
+.stage-lights::before,.stage-lights::after{
+  content:'';position:absolute;top:-50%;width:40%;height:200%;
+  background:radial-gradient(ellipse,rgba(255,215,0,.06) 0%,transparent 70%);
+}
+.stage-lights::before{left:-10%;transform:rotate(-15deg)}
+.stage-lights::after{right:-10%;transform:rotate(15deg)}
+.spotlight{
+  position:absolute;top:-20%;width:25%;height:150%;
+  background:radial-gradient(ellipse,rgba(170,68,255,.04) 0%,transparent 60%);
+  left:37%;transform:rotate(0deg);
+}
+
+.container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:16px}
+
+/* Header */
+.header{text-align:center;padding:20px 0}
+.header h1{
+  font-size:clamp(1.8rem,5vw,2.8rem);
+  background:linear-gradient(135deg,var(--gold),#ff8800,var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:none;letter-spacing:2px;
+}
+.header p{color:var(--dim);margin-top:4px;font-size:.9rem}
+
+/* Mic Button */
+.mic-section{text-align:center;margin:20px 0}
+#micBtn{
+  width:90px;height:90px;border-radius:50%;border:3px solid var(--gold);
+  background:radial-gradient(circle,#1a1a2e,#0a0a12);
+  cursor:pointer;position:relative;transition:all .3s;
+  box-shadow:var(--glow-gold);
+}
+#micBtn:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(255,215,0,.5)}
+#micBtn.recording{
+  border-color:var(--red);box-shadow:var(--glow-red);
+  animation:pulse 1.2s infinite;
+}
+#micBtn svg{width:36px;height:36px;fill:var(--gold);transition:fill .3s}
+#micBtn.recording svg{fill:var(--red)}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 20px rgba(255,51,85,.3)}
+  50%{box-shadow:0 0 40px rgba(255,51,85,.6)}
+}
+.mic-label{margin-top:8px;font-size:.85rem;color:var(--dim)}
+.timer{font-size:1.4rem;color:var(--gold);margin-top:6px;font-variant-numeric:tabular-nums}
+
+/* Live meters */
+.meters{
+  display:flex;gap:16px;justify-content:center;margin:16px 0;flex-wrap:wrap;
+}
+.meter{
+  background:var(--panel);border-radius:12px;padding:12px 16px;min-width:120px;
+  text-align:center;border:1px solid #222235;
+}
+.meter-label{font-size:.7rem;text-transform:uppercase;color:var(--dim);letter-spacing:1px}
+.meter-value{font-size:1.6rem;font-weight:700;margin-top:4px}
+.meter-bar{
+  height:4px;background:#222;border-radius:2px;margin-top:6px;overflow:hidden;
+}
+.meter-bar-fill{height:100%;border-radius:2px;transition:width .15s;width:0}
+#pitchMeter .meter-value{color:var(--blue)}
+#pitchMeter .meter-bar-fill{background:var(--blue)}
+#volMeter .meter-value{color:var(--green)}
+#volMeter .meter-bar-fill{background:var(--green)}
+#consMeter .meter-value{color:var(--purple)}
+#consMeter .meter-bar-fill{background:var(--purple)}
+
+/* Judges */
+.judges{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:24px 0}
+@media(max-width:600px){.judges{grid-template-columns:1fr}}
+.judge-card{
+  background:var(--panel);border-radius:16px;padding:20px 16px;text-align:center;
+  border:1px solid #222235;transition:all .5s;position:relative;overflow:hidden;
+}
+.judge-card::before{
+  content:'';position:absolute;top:0;left:0;width:100%;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  opacity:0;transition:opacity .5s;
+}
+.judge-card.active::before{opacity:1}
+.judge-avatar{
+  font-size:3rem;margin-bottom:8px;transition:transform .3s;display:inline-block;
+}
+.judge-card.thumbs-up .judge-avatar{animation:bounceUp .6s}
+.judge-card.thumbs-down .judge-avatar{animation:shake .5s}
+@keyframes bounceUp{
+  0%{transform:scale(1)}30%{transform:scale(1.3) rotate(-10deg)}
+  60%{transform:scale(1.1) rotate(5deg)}100%{transform:scale(1)}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}
+  40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}
+}
+.judge-name{font-weight:700;font-size:1rem;margin-bottom:2px}
+.judge-title{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.judge-score{
+  font-size:2.4rem;font-weight:800;margin:10px 0 6px;
+  transition:all .3s;opacity:0;
+}
+.judge-card.scored .judge-score{opacity:1}
+.judge-reaction{
+  font-size:1.8rem;margin:6px 0;opacity:0;transition:opacity .3s;
+}
+.judge-card.scored .judge-reaction{opacity:1}
+.judge-comment{
+  font-size:.82rem;color:var(--dim);min-height:40px;
+  font-style:italic;line-height:1.4;transition:opacity .3s;opacity:0;
+}
+.judge-card.scored .judge-comment{opacity:1}
+
+/* Final verdict */
+.verdict{
+  background:var(--panel);border-radius:16px;padding:24px;text-align:center;
+  margin:24px 0;border:1px solid #222235;display:none;
+}
+.verdict.show{display:block;animation:fadeIn .6s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.verdict h2{font-size:1.6rem;margin-bottom:8px}
+.verdict .final-score{
+  font-size:3.5rem;font-weight:900;
+  background:linear-gradient(135deg,var(--gold),#ff8800);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.verdict .verdict-text{color:var(--dim);margin-top:8px;font-size:1rem}
+
+/* History */
+.history{margin:24px 0}
+.history h3{font-size:1rem;color:var(--dim);margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{
+  background:var(--panel);border-radius:10px;padding:12px 16px;
+  display:flex;justify-content:space-between;align-items:center;
+  border:1px solid #222235;
+}
+.history-item .hi-left{display:flex;flex-direction:column;gap:2px}
+.history-item .hi-score{
+  font-size:1.4rem;font-weight:700;color:var(--gold);
+}
+.history-item .hi-time{font-size:.75rem;color:var(--dim)}
+.history-item .hi-verdict{font-size:.8rem;color:var(--dim)}
+.clear-btn{
+  background:none;border:1px solid #333;color:var(--dim);padding:6px 14px;
+  border-radius:8px;cursor:pointer;font-size:.75rem;margin-top:8px;
+}
+.clear-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* Visualizer */
+#visualizer{
+  width:100%;height:60px;border-radius:10px;margin:10px 0;
+}
+</style>
+</head>
+<body>
+<div class="stage-lights"><div class="spotlight"></div></div>
+<div class="container">
+  <div class="header">
+    <h1>KARAOKE JUDGE</h1>
+    <p>Sing into your mic. Three judges will decide your fate.</p>
+  </div>
+
+  <div class="mic-section">
+    <button id="micBtn" onclick="toggleRecording()">
+      <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm-1-9c0-.55.45-1 1-1s1 .45 1 1v6c0 .55-.45 1-1 1s-1-.45-1-1V5zm6 6c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+    </button>
+    <div class="mic-label" id="micLabel">Tap to start singing</div>
+    <div class="timer" id="timer"></div>
+  </div>
+
+  <canvas id="visualizer"></canvas>
+
+  <div class="meters">
+    <div class="meter" id="pitchMeter">
+      <div class="meter-label">Pitch</div>
+      <div class="meter-value" id="pitchVal">--</div>
+      <div class="meter-bar"><div class="meter-bar-fill" id="pitchBar"></div></div>
+    </div>
+    <div class="meter" id="volMeter">
+      <div class="meter-label">Volume</div>
+      <div class="meter-value" id="volVal">--</div>
+      <div class="meter-bar"><div class="meter-bar-fill" id="volBar"></div></div>
+    </div>
+    <div class="meter" id="consMeter">
+      <div class="meter-label">Consistency</div>
+      <div class="meter-value" id="consVal">--</div>
+      <div class="meter-bar"><div class="meter-bar-fill" id="consBar"></div></div>
+    </div>
+  </div>
+
+  <div class="judges">
+    <div class="judge-card" id="judge0">
+      <div class="judge-avatar">👨‍🎤</div>
+      <div class="judge-name">Simon Scowl</div>
+      <div class="judge-title">The Harsh One</div>
+      <div class="judge-reaction" id="reaction0"></div>
+      <div class="judge-score" id="score0"></div>
+      <div class="judge-comment" id="comment0"></div>
+    </div>
+    <div class="judge-card" id="judge1">
+      <div class="judge-avatar">👩‍🎤</div>
+      <div class="judge-name">Paula Sparkle</div>
+      <div class="judge-title">The Kind One</div>
+      <div class="judge-reaction" id="reaction1"></div>
+      <div class="judge-score" id="score1"></div>
+      <div class="judge-comment" id="comment1"></div>
+    </div>
+    <div class="judge-card" id="judge2">
+      <div class="judge-avatar">🎵</div>
+      <div class="judge-name">Randy Vibes</div>
+      <div class="judge-title">The Wild Card</div>
+      <div class="judge-reaction" id="reaction2"></div>
+      <div class="judge-score" id="score2"></div>
+      <div class="judge-comment" id="comment2"></div>
+    </div>
+  </div>
+
+  <div class="verdict" id="verdict">
+    <h2>Final Verdict</h2>
+    <div class="final-score" id="finalScore"></div>
+    <div class="verdict-text" id="verdictText"></div>
+  </div>
+
+  <div class="history" id="historySection" style="display:none">
+    <h3>Session History</h3>
+    <div class="history-list" id="historyList"></div>
+    <button class="clear-btn" onclick="clearHistory()">Clear History</button>
+  </div>
+</div>
+
+<script>
+// ===== SOUND EFFECTS (Web Audio synthesized) =====
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playBuzzer(){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sawtooth';o.frequency.setValueAtTime(150,audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(80,audioCtx.currentTime+.3);
+  g.gain.setValueAtTime(.15,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.4);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();o.stop(audioCtx.currentTime+.4);
+}
+
+function playApplause(){
+  // white noise burst simulating applause
+  const dur=1.5,buf=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){
+    const env=Math.min(1,i/(audioCtx.sampleRate*.1))*Math.max(0,1-i/(d.length*.8));
+    d[i]=(Math.random()*2-1)*env;
+  }
+  const src=audioCtx.createBufferSource(),g=audioCtx.createGain(),
+    filt=audioCtx.createBiquadFilter();
+  filt.type='bandpass';filt.frequency.value=3000;filt.Q.value=.5;
+  src.buffer=buf;g.gain.value=.12;
+  src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+  src.start();
+}
+
+function playDing(){
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.value=880;
+  g.gain.setValueAtTime(.1,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.6);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start();o.stop(audioCtx.currentTime+.6);
+}
+
+function playDrumroll(){
+  const dur=1.2,buf=audioCtx.createBuffer(1,audioCtx.sampleRate*dur,audioCtx.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++){
+    const env=Math.min(1,i/(d.length*.7));
+    const beat=Math.sin(i/(audioCtx.sampleRate*.008))*Math.sin(i/(audioCtx.sampleRate*.003));
+    d[i]=beat*(Math.random()*.5+.5)*env*.3;
+  }
+  const src=audioCtx.createBufferSource(),g=audioCtx.createGain(),
+    filt=audioCtx.createBiquadFilter();
+  filt.type='lowpass';filt.frequency.value=800;
+  src.buffer=buf;g.gain.value=.15;
+  src.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+  src.start();
+}
+
+// ===== JUDGE FEEDBACK TEMPLATES =====
+const feedback = {
+  simon: {
+    terrible: [
+      "That wasn't singing, that was a cry for help.",
+      "I've heard better sounds from a broken dishwasher.",
+      "My ears are filing a restraining order.",
+      "Were you trying to sing or summon a demon?",
+      "That was genuinely one of the worst things I've ever heard.",
+      "I think my ears just unionized and went on strike.",
+      "Somewhere, a cat is offended you stole its style.",
+      "That note you hit... doesn't actually exist in music.",
+    ],
+    bad: [
+      "It's a no from me. A very firm no.",
+      "You have a voice. I'll give you that. Not a good one.",
+      "I've heard karaoke at 2 AM that was better than this.",
+      "Your confidence is inspiring. Your pitch is not.",
+      "You sang with passion. Wrong notes, but passion.",
+      "That was... certainly an attempt at music.",
+    ],
+    ok: [
+      "It wasn't terrible. That's the nicest thing I'll say.",
+      "Mediocre. But a high-quality mediocre.",
+      "You're average. Aggressively, relentlessly average.",
+      "There were moments. Brief, fleeting moments of adequacy.",
+      "You didn't make me want to leave the room. Progress.",
+    ],
+    good: [
+      "Alright, I'll admit it. That was decent.",
+      "You surprised me. I hate being surprised. But well done.",
+      "I've heard worse from people who got record deals.",
+      "Not bad. Don't let it go to your head.",
+      "Competent. Which in this competition is basically genius.",
+    ],
+    great: [
+      "I'm... actually impressed. Mark this date on the calendar.",
+      "That was genuinely good. I feel dirty saying that.",
+      "You might actually have something. Don't mess it up.",
+      "Outstanding. I need a moment to process my emotions.",
+    ],
+  },
+  paula: {
+    terrible: [
+      "Oh honey... bless your heart for trying!",
+      "You have such great energy! Let's work on the notes though.",
+      "I can see your soul is beautiful even if the pitch wasn't.",
+      "You remind me of a young... well, you remind me of someone!",
+      "That took real courage, and I admire that SO much.",
+      "Your spirit is perfect. The notes need a little love.",
+      "I believe in you! Even when the notes don't believe in each other.",
+      "You sang with your whole heart! Next time, try your whole voice too.",
+    ],
+    bad: [
+      "You've got potential hiding in there somewhere!",
+      "I see a spark! It's tiny, but it's there!",
+      "With some coaching, you could be... less bad!",
+      "You owned that stage, sweetie! Even the wrong notes!",
+      "There's a diamond in there. Under a lot of rough.",
+      "I loved your stage presence! The singing will come.",
+    ],
+    ok: [
+      "That was really nice! You're on a journey!",
+      "I enjoyed that! You have a likeable quality!",
+      "You made me smile! Some of those notes were beautiful!",
+      "You're growing as an artist right before our eyes!",
+      "That was sweet! Like a cupcake with only slightly burnt edges!",
+    ],
+    good: [
+      "Oh my GOD, that was beautiful!",
+      "I'm getting chills! Actual chills! Look at my arms!",
+      "You are a STAR! I knew it from the first note!",
+      "That gave me goosebumps! In the best way possible!",
+      "You sang that like an angel with a record deal!",
+    ],
+    great: [
+      "I'M CRYING! That was absolutely MAGICAL!",
+      "You just changed my LIFE with that performance!",
+      "STANDING OVATION! I can't feel my hands from clapping!",
+      "That was PERFECTION! Pure, crystalline PERFECTION!",
+    ],
+  },
+  randy: {
+    terrible: [
+      "Yo dawg... that was... something. Not sure what.",
+      "Look man, I love your vibe but the notes said nah.",
+      "That was wild, and not in the good way.",
+      "Bro, you went places. Not the right places, but places.",
+      "I respect the hustle but the vocal cords said no today.",
+      "You gave 100%. The pitch gave about 12%.",
+      "That was a rollercoaster. One that's about to be shut down.",
+      "Your energy was fire. The melody was... water. Cold water.",
+    ],
+    bad: [
+      "Aight so it wasn't great, but you got character!",
+      "You got swag but you need some notes to go with it.",
+      "I've heard that song before, and uh... that wasn't it.",
+      "You got heart, I'll give you that. Not pitch, but heart.",
+      "Look, not everyone can sing. But you can definitely... stand on stage.",
+      "That was rough but I ain't mad at it.",
+    ],
+    ok: [
+      "Yo that was aight! Not bad, not amazing, just aight!",
+      "You're giving me 'decent karaoke night' vibes and I'm here for it!",
+      "That was solid! Like a B-minus! A strong B-minus!",
+      "You held it together! Mostly! I respect that!",
+      "That was cool! Like room temperature cool, but still cool!",
+    ],
+    good: [
+      "Yo that was DOPE! You killed that!",
+      "NOW we're talking! That's what I'm here for!",
+      "You just leveled up, fam! That was legit!",
+      "I'm vibing! I'm actually vibing! This is real!",
+      "That was smooth like butter on a hot pan! YES!",
+    ],
+    great: [
+      "BRO. WHAT. That was INSANE!",
+      "I'm SHOOK! That just blew my whole mind!",
+      "YO THIS IS A MOMENT! We just witnessed a MOMENT!",
+      "That was absolutely RIDICULOUS! In the best way! GOAT status!",
+    ],
+  }
+};
+
+// ===== STATE =====
+let recording=false, mediaStream=null, analyser=null, animFrame=null;
+let startTime=0, timerInterval=null;
+let pitchHistory=[], volumeHistory=[], dataArray, bufferLength;
+let history = JSON.parse(localStorage.getItem('karaokeHistory')||'[]');
+
+const canvas = document.getElementById('visualizer');
+const canvasCtx = canvas.getContext('2d');
+
+// ===== PITCH DETECTION (autocorrelation) =====
+function autoCorrelate(buf, sampleRate){
+  let size=buf.length, rms=0;
+  for(let i=0;i<size;i++) rms+=buf[i]*buf[i];
+  rms=Math.sqrt(rms/size);
+  if(rms<0.01) return -1;
+
+  let r1=0, r2=size-1;
+  const thresh=0.2;
+  for(let i=0;i<size/2;i++){if(Math.abs(buf[i])<thresh){r1=i;break}}
+  for(let i=1;i<size/2;i++){if(Math.abs(buf[size-i])<thresh){r2=size-i;break}}
+
+  buf=buf.slice(r1,r2);
+  size=buf.length;
+
+  const c=new Array(size).fill(0);
+  for(let i=0;i<size;i++)
+    for(let j=0;j<size-i;j++)
+      c[i]+=buf[j]*buf[j+i];
+
+  let d=0;
+  while(c[d]>c[d+1]) d++;
+  let maxval=-1, maxpos=-1;
+  for(let i=d;i<size;i++){
+    if(c[i]>maxval){maxval=c[i];maxpos=i}
+  }
+  let T0=maxpos;
+  // parabolic interpolation
+  const x1=c[T0-1],x2=c[T0],x3=c[T0+1];
+  const a=(x1+x3-2*x2)/2;
+  const b=(x3-x1)/2;
+  if(a) T0=T0-b/(2*a);
+  return sampleRate/T0;
+}
+
+function noteFromFreq(f){
+  const noteNames=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const noteNum=12*(Math.log2(f/440))+69;
+  return noteNames[Math.round(noteNum)%12]+Math.floor(Math.round(noteNum)/12-1);
+}
+
+// ===== RECORDING =====
+async function toggleRecording(){
+  if(recording){stopRecording();return}
+
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    document.getElementById('micLabel').textContent='Mic access denied. Please allow microphone.';
+    return;
+  }
+
+  if(audioCtx.state==='suspended') await audioCtx.resume();
+
+  const source = audioCtx.createMediaStreamSource(mediaStream);
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048;
+  bufferLength = analyser.fftSize;
+  dataArray = new Float32Array(bufferLength);
+  source.connect(analyser);
+
+  recording = true;
+  pitchHistory = [];
+  volumeHistory = [];
+  startTime = Date.now();
+
+  document.getElementById('micBtn').classList.add('recording');
+  document.getElementById('micLabel').textContent='Singing... tap to stop';
+  resetJudges();
+
+  // resize canvas
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+
+  timerInterval = setInterval(updateTimer, 100);
+  analyze();
+}
+
+function stopRecording(){
+  recording = false;
+  if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null}
+  cancelAnimationFrame(animFrame);
+  clearInterval(timerInterval);
+
+  document.getElementById('micBtn').classList.remove('recording');
+  document.getElementById('micLabel').textContent='Tap to sing again';
+
+  // Need minimum data
+  if(pitchHistory.length < 10){
+    document.getElementById('micLabel').textContent='Sing for at least 2 seconds!';
+    return;
+  }
+
+  judge();
+}
+
+function updateTimer(){
+  const elapsed = ((Date.now()-startTime)/1000).toFixed(1);
+  document.getElementById('timer').textContent = elapsed+'s';
+}
+
+// ===== ANALYSIS LOOP =====
+function analyze(){
+  if(!recording) return;
+  animFrame = requestAnimationFrame(analyze);
+  analyser.getFloatTimeDomainData(dataArray);
+
+  // Pitch
+  const freq = autoCorrelate(dataArray, audioCtx.sampleRate);
+  let pitchDisplay = '--';
+  if(freq > 50 && freq < 1500){
+    pitchHistory.push(freq);
+    pitchDisplay = noteFromFreq(freq);
+  }
+
+  // Volume (RMS)
+  let rms=0;
+  for(let i=0;i<dataArray.length;i++) rms+=dataArray[i]*dataArray[i];
+  rms = Math.sqrt(rms/dataArray.length);
+  const vol = Math.min(100, Math.round(rms*500));
+  volumeHistory.push(vol);
+
+  // Consistency (running std dev of recent pitches)
+  let cons = 0;
+  if(pitchHistory.length > 5){
+    const recent = pitchHistory.slice(-20);
+    const mean = recent.reduce((a,b)=>a+b,0)/recent.length;
+    const variance = recent.reduce((a,b)=>a+(b-mean)**2,0)/recent.length;
+    const std = Math.sqrt(variance);
+    cons = Math.max(0, Math.min(100, 100 - std*0.8));
+  }
+
+  // Update UI
+  document.getElementById('pitchVal').textContent = pitchDisplay;
+  document.getElementById('pitchBar').style.width = (freq>0?Math.min(100,freq/10)+'%':'0%');
+  document.getElementById('volVal').textContent = vol+'%';
+  document.getElementById('volBar').style.width = vol+'%';
+  document.getElementById('consVal').textContent = Math.round(cons)+'%';
+  document.getElementById('consBar').style.width = cons+'%';
+
+  drawVisualizer();
+}
+
+function drawVisualizer(){
+  const w=canvas.width, h=canvas.height;
+  canvasCtx.fillStyle='rgba(10,10,18,0.3)';
+  canvasCtx.fillRect(0,0,w,h);
+
+  analyser.getFloatTimeDomainData(dataArray);
+  canvasCtx.lineWidth=2*window.devicePixelRatio;
+  canvasCtx.strokeStyle='rgba(255,215,0,0.6)';
+  canvasCtx.beginPath();
+  const sliceWidth=w/bufferLength;
+  let x=0;
+  for(let i=0;i<bufferLength;i++){
+    const v=dataArray[i]*0.5+0.5;
+    const y=v*h;
+    i===0?canvasCtx.moveTo(x,y):canvasCtx.lineTo(x,y);
+    x+=sliceWidth;
+  }
+  canvasCtx.stroke();
+}
+
+// ===== JUDGING =====
+function computeScores(){
+  // Pitch stability (lower std = better)
+  let pitchScore = 5;
+  if(pitchHistory.length > 5){
+    const mean = pitchHistory.reduce((a,b)=>a+b,0)/pitchHistory.length;
+    const std = Math.sqrt(pitchHistory.reduce((a,b)=>a+(b-mean)**2,0)/pitchHistory.length);
+    // Normalize: std of 0 = perfect (10), std of 200+ = terrible (0)
+    pitchScore = Math.max(0, Math.min(10, 10 - std/20));
+  }
+
+  // Volume consistency and level
+  const avgVol = volumeHistory.reduce((a,b)=>a+b,0)/volumeHistory.length;
+  const volStd = Math.sqrt(volumeHistory.reduce((a,b)=>a+(b-avgVol)**2,0)/volumeHistory.length);
+  // Good volume: 20-60%, low variance
+  let volScore = Math.max(0, Math.min(10, avgVol/6 - volStd/15));
+
+  // Duration bonus (singing longer = more data, slightly rewarded)
+  const duration = (Date.now()-startTime)/1000;
+  const durBonus = Math.min(1, duration/15);
+
+  // Pitch range (using some range is good, too much is bad)
+  const pitchRange = pitchHistory.length > 0 ?
+    Math.max(...pitchHistory) - Math.min(...pitchHistory) : 0;
+  let rangeScore = pitchRange > 20 && pitchRange < 400 ? 1 : 0;
+
+  // Base scores
+  const base = (pitchScore*0.5 + volScore*0.3 + durBonus*1.5 + rangeScore*0.5);
+
+  // Each judge interprets differently
+  const simonScore = Math.max(0, Math.min(10, base - 1.5 + Math.random()*1.5));
+  const paulaScore = Math.max(0, Math.min(10, base + 0.5 + Math.random()*1.5));
+  const randyScore = Math.max(0, Math.min(10, base - 0.5 + Math.random()*2.5));
+
+  return [
+    Math.round(simonScore*10)/10,
+    Math.round(paulaScore*10)/10,
+    Math.round(randyScore*10)/10
+  ];
+}
+
+function getCategory(score){
+  if(score < 2) return 'terrible';
+  if(score < 4) return 'bad';
+  if(score < 6) return 'ok';
+  if(score < 8) return 'good';
+  return 'great';
+}
+
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+
+function getReaction(score){
+  if(score<2) return '👎';
+  if(score<4) return '😬';
+  if(score<6) return '🤔';
+  if(score<8) return '👍';
+  return '🔥';
+}
+
+function resetJudges(){
+  for(let i=0;i<3;i++){
+    const card = document.getElementById('judge'+i);
+    card.classList.remove('scored','thumbs-up','thumbs-down','active');
+    document.getElementById('score'+i).textContent='';
+    document.getElementById('comment'+i).textContent='';
+    document.getElementById('reaction'+i).textContent='';
+  }
+  document.getElementById('verdict').classList.remove('show');
+  document.getElementById('verdict').style.display='none';
+}
+
+function judge(){
+  const scores = computeScores();
+  const judgeKeys = ['simon','paula','randy'];
+
+  playDrumroll();
+
+  // Reveal judges one at a time
+  scores.forEach((score, i) => {
+    setTimeout(()=>{
+      const card = document.getElementById('judge'+i);
+      const cat = getCategory(score);
+      const fb = feedback[judgeKeys[i]][cat];
+
+      card.classList.add('active','scored');
+      card.classList.add(score >= 5 ? 'thumbs-up' : 'thumbs-down');
+
+      document.getElementById('score'+i).textContent = score.toFixed(1);
+      document.getElementById('score'+i).style.color =
+        score < 4 ? 'var(--red)' : score < 7 ? 'var(--gold)' : 'var(--green)';
+      document.getElementById('reaction'+i).textContent = getReaction(score);
+      document.getElementById('comment'+i).textContent = '"'+pick(fb)+'"';
+
+      if(score < 3) playBuzzer();
+      else playDing();
+
+    }, 1200 + i*1200);
+  });
+
+  // Final verdict
+  setTimeout(()=>{
+    const avg = scores.reduce((a,b)=>a+b,0)/3;
+    const finalScore = Math.round(avg*10)/10;
+    document.getElementById('finalScore').textContent = finalScore+' / 10';
+
+    let verdictMsg;
+    if(finalScore < 2) verdictMsg = "Don't quit your day job. Seriously.";
+    else if(finalScore < 3) verdictMsg = "It's a no. Come back when you've practiced... a lot.";
+    else if(finalScore < 4) verdictMsg = "Not the worst we've heard. But close.";
+    else if(finalScore < 5) verdictMsg = "You're getting there. Maybe try the shower first.";
+    else if(finalScore < 6) verdictMsg = "Decent! You could survive a karaoke night.";
+    else if(finalScore < 7) verdictMsg = "Solid performance! You've got something.";
+    else if(finalScore < 8) verdictMsg = "That was really good! You're going to Hollywood!";
+    else if(finalScore < 9) verdictMsg = "Outstanding! The crowd goes wild!";
+    else verdictMsg = "LEGENDARY. We have a new star!";
+
+    document.getElementById('verdictText').textContent = verdictMsg;
+    const v = document.getElementById('verdict');
+    v.style.display='block';
+    setTimeout(()=>v.classList.add('show'),10);
+
+    if(finalScore >= 6) playApplause();
+    else playBuzzer();
+
+    // Save to history
+    history.unshift({
+      score: finalScore,
+      verdict: verdictMsg,
+      time: new Date().toLocaleTimeString(),
+      date: new Date().toLocaleDateString(),
+      scores: scores.map(s=>s.toFixed(1))
+    });
+    if(history.length > 20) history.pop();
+    localStorage.setItem('karaokeHistory', JSON.stringify(history));
+    renderHistory();
+
+  }, 1200 + 3*1200 + 500);
+}
+
+// ===== HISTORY =====
+function renderHistory(){
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if(history.length === 0){section.style.display='none';return}
+  section.style.display='block';
+  list.innerHTML = history.map(h=>`
+    <div class="history-item">
+      <div class="hi-left">
+        <span class="hi-time">${h.date} ${h.time}</span>
+        <span class="hi-verdict">${h.verdict}</span>
+      </div>
+      <span class="hi-score">${h.score}</span>
+    </div>
+  `).join('');
+}
+
+function clearHistory(){
+  history=[];
+  localStorage.removeItem('karaokeHistory');
+  renderHistory();
+}
+
+// Init
+renderHistory();
+
+// Handle resize
+window.addEventListener('resize',()=>{
+  if(recording){
+    canvas.width=canvas.offsetWidth*window.devicePixelRatio;
+    canvas.height=canvas.offsetHeight*window.devicePixelRatio;
+  }
+});
+</script>
+</body>
+</html>

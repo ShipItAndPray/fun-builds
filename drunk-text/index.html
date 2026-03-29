@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drunk Texter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255, 0, 100, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(180, 0, 255, 0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(1.2rem, 4vw, 2rem);
+    background: linear-gradient(90deg, #ff006e, #ff6b9d, #00d4ff, #b300ff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: neonShift 4s ease infinite;
+    text-shadow: 0 0 40px rgba(255, 0, 110, 0.3);
+    margin-bottom: 8px;
+  }
+
+  header p {
+    color: #666;
+    font-size: 0.8rem;
+  }
+
+  @keyframes neonShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .slider-section {
+    background: linear-gradient(135deg, rgba(20, 20, 30, 0.9), rgba(30, 15, 25, 0.9));
+    border: 1px solid rgba(255, 0, 110, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slider-section::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff006e, #00d4ff, transparent);
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .slider-label span {
+    font-size: 0.85rem;
+    color: #aaa;
+  }
+
+  .drunk-level-display {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1.4rem;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .level-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: #555;
+    margin-top: 6px;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #1a3a1a, #3a3a1a, #5a2a1a, #8a1a2a, #ff006e);
+    outline: none;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #ff006e);
+    box-shadow: 0 0 15px rgba(255, 0, 110, 0.6), 0 0 30px rgba(255, 0, 110, 0.3);
+    cursor: grab;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff, #ff006e);
+    box-shadow: 0 0 15px rgba(255, 0, 110, 0.6);
+    border: none;
+    cursor: grab;
+  }
+
+  .status-emoji {
+    font-size: 2rem;
+    text-align: center;
+    margin-top: 8px;
+    transition: transform 0.3s;
+  }
+
+  .panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 640px) {
+    .panels { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: rgba(15, 15, 25, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+  }
+
+  .panel-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
+  .panel.original { border-color: rgba(0, 212, 255, 0.2); }
+  .panel.original .panel-label { color: #00d4ff; }
+
+  .panel.drunk { border-color: rgba(255, 0, 110, 0.2); }
+  .panel.drunk .panel-label { color: #ff006e; }
+
+  #inputText {
+    width: 100%;
+    min-height: 150px;
+    background: transparent;
+    border: none;
+    color: #e0e0e0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+  }
+
+  #inputText::placeholder { color: #333; }
+
+  #drunkOutput {
+    min-height: 150px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #ff6b9d;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .char-counter {
+    text-align: right;
+    font-size: 0.7rem;
+    color: #444;
+    margin-top: 8px;
+  }
+
+  .send-section {
+    background: rgba(15, 15, 25, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .send-section label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .send-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  #recipientName {
+    flex: 1;
+    min-width: 150px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #e0e0e0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  #recipientName:focus { border-color: rgba(255, 0, 110, 0.4); }
+
+  .preview-bubble {
+    background: rgba(255, 0, 110, 0.08);
+    border: 1px solid rgba(255, 0, 110, 0.15);
+    border-radius: 16px 16px 4px 16px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    font-size: 0.85rem;
+    color: #ff6b9d;
+    display: none;
+    position: relative;
+  }
+
+  .preview-bubble .to-label {
+    font-size: 0.65rem;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .preview-bubble .timestamp {
+    font-size: 0.6rem;
+    color: #444;
+    text-align: right;
+    margin-top: 6px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #ccc;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 0, 110, 0.3);
+    color: #fff;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn.primary {
+    background: linear-gradient(135deg, rgba(255, 0, 110, 0.2), rgba(180, 0, 255, 0.2));
+    border-color: rgba(255, 0, 110, 0.3);
+    color: #ff6b9d;
+  }
+
+  .btn.primary:hover {
+    background: linear-gradient(135deg, rgba(255, 0, 110, 0.3), rgba(180, 0, 255, 0.3));
+  }
+
+  .btn.copied {
+    background: rgba(0, 200, 100, 0.15) !important;
+    border-color: rgba(0, 200, 100, 0.4) !important;
+    color: #00c864 !important;
+  }
+
+  .history-section {
+    margin-top: 20px;
+  }
+
+  .history-section h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #444;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .history-section h3 button {
+    background: none;
+    border: none;
+    color: #555;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .history-section h3 button:hover { color: #ff006e; }
+
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .history-item {
+    background: rgba(15, 15, 25, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .history-item:hover { border-color: rgba(255, 0, 110, 0.2); }
+
+  .history-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: #444;
+    margin-bottom: 6px;
+  }
+
+  .history-meta .level-badge {
+    background: rgba(255, 0, 110, 0.15);
+    color: #ff6b9d;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .history-original {
+    font-size: 0.75rem;
+    color: #666;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-drunk {
+    font-size: 0.8rem;
+    color: #ff6b9d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .empty-history {
+    text-align: center;
+    color: #333;
+    font-size: 0.75rem;
+    padding: 30px;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(20, 20, 30, 0.95);
+    border: 1px solid rgba(255, 0, 110, 0.3);
+    border-radius: 10px;
+    padding: 12px 24px;
+    color: #ff6b9d;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 0, 110, 0.2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 0, 110, 0.4); }
+
+  /* Wobble animation for high drunk levels */
+  .wobble {
+    animation: wobble 2s ease-in-out infinite;
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(0.5deg); }
+    75% { transform: rotate(-0.5deg); }
+  }
+
+  .mega-wobble {
+    animation: megaWobble 1s ease-in-out infinite;
+  }
+
+  @keyframes megaWobble {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(1.5deg) scale(1.005); }
+    75% { transform: rotate(-1.5deg) scale(0.995); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>DRUNK TEXTER</h1>
+    <p>type sober. send drunk.</p>
+  </header>
+
+  <div class="slider-section">
+    <div class="slider-label">
+      <span>DRUNK LEVEL</span>
+      <div class="drunk-level-display" id="levelDisplay" style="color: #4a4">1</div>
+    </div>
+    <input type="range" id="drunkSlider" min="1" max="10" value="1">
+    <div class="level-labels">
+      <span>Sober-ish</span>
+      <span>Tipsy</span>
+      <span>Wasted</span>
+      <span>Blackout</span>
+    </div>
+    <div class="status-emoji" id="statusEmoji">&#x1F609;</div>
+  </div>
+
+  <div class="panels">
+    <div class="panel original">
+      <div class="panel-label">What you meant to say</div>
+      <textarea id="inputText" placeholder="Start typing your totally normal, sober message..."></textarea>
+      <div class="char-counter"><span id="charCount">0</span> chars</div>
+    </div>
+    <div class="panel drunk" id="drunkPanel">
+      <div class="panel-label">What you'll actually send</div>
+      <div id="drunkOutput">Your drunk text will appear here...</div>
+      <div class="char-counter"><span id="drunkCharCount">0</span> chars</div>
+    </div>
+  </div>
+
+  <div class="send-section">
+    <label>Send to (preview)</label>
+    <div class="send-row">
+      <input type="text" id="recipientName" placeholder="Enter name...">
+    </div>
+    <div class="preview-bubble" id="previewBubble">
+      <div class="to-label" id="previewTo">To: ???</div>
+      <div id="previewText"></div>
+      <div class="timestamp" id="previewTime"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn primary" id="copyBtn" title="Copy drunk text">Copy Drunk Text</button>
+    <button class="btn" id="shareBtn" title="Share">Share</button>
+    <button class="btn" id="saveBtn" title="Save to history">Save to History</button>
+  </div>
+
+  <div class="history-section">
+    <h3>
+      <span>Drunk Text History</span>
+      <button id="clearHistory">clear all</button>
+    </h3>
+    <div class="history-list" id="historyList">
+      <div class="empty-history">No drunk texts yet. Start typing!</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const inputText = document.getElementById('inputText');
+const drunkOutput = document.getElementById('drunkOutput');
+const drunkSlider = document.getElementById('drunkSlider');
+const levelDisplay = document.getElementById('levelDisplay');
+const statusEmoji = document.getElementById('statusEmoji');
+const charCount = document.getElementById('charCount');
+const drunkCharCount = document.getElementById('drunkCharCount');
+const recipientName = document.getElementById('recipientName');
+const previewBubble = document.getElementById('previewBubble');
+const previewTo = document.getElementById('previewTo');
+const previewText = document.getElementById('previewText');
+const previewTime = document.getElementById('previewTime');
+const drunkPanel = document.getElementById('drunkPanel');
+const copyBtn = document.getElementById('copyBtn');
+const shareBtn = document.getElementById('shareBtn');
+const saveBtn = document.getElementById('saveBtn');
+const historyList = document.getElementById('historyList');
+const clearHistory = document.getElementById('clearHistory');
+const toast = document.getElementById('toast');
+
+const emojis = ['&#x1F609;','&#x1F60A;','&#x1F601;','&#x1F602;','&#x1F61C;','&#x1F60D;','&#x1F92A;','&#x1F974;','&#x1F635;','&#x1F480;'];
+
+const levelColors = [
+  '#4a4','#5a5','#aa3','#cc5','#da3','#e83','#f63','#f33','#f06','#ff006e'
+];
+
+const adjacentKeys = {
+  'a':'sqwz','b':'vghn','c':'xdfv','d':'sfxce','e':'wrd34','f':'dgcvr','g':'fhtbv',
+  'h':'gjybn','i':'uko89','j':'hkunm','k':'jloi','l':'kop','m':'njk','n':'bhjm',
+  'o':'ipkl90','p':'ol0','q':'wa12','r':'eft45','s':'adwxz','t':'rgy56','u':'yij78',
+  'v':'cfgb','w':'qase23','x':'zsdc','y':'thu67','z':'asx'
+};
+
+const wrongWords = {
+  'love':'lofe','hate':'hste','good':'goood','great':'grest','hello':'helo',
+  'thanks':'thsnks','sorry':'sorrry','please':'plzz','want':'wnat','know':'knwo',
+  'think':'thibk','going':'goign','tonight':'tonihgt','tomorrow':'tmrw','meeting':'meetimg',
+  'dinner':'dinnre','party':'praty','drink':'drinl','friend':'frend','phone':'phoen',
+  'message':'mesage','really':'relly','actually':'acutally','because':'becuase','should':'shoud',
+  'would':'woudl','could':'coudl','about':'abotu','where':'wehre','there':'theer',
+  'their':'thier','right':'rihgt','night':'nihgt','come':'coem','home':'hmoe',
+  'work':'wrok','time':'tiem','miss':'msis','much':'muhc','feel':'fele',
+  'need':'nede','call':'calll','text':'txet','back':'bakc','just':'jsut',
+  'like':'liek','with':'wtih','have':'hvae','that':'taht','this':'tihs',
+  'what':'waht','when':'wehn','your':'yuor','here':'hree','been':'bene'
+};
+
+const autocorrectWrong = {
+  'meeting':'meatball','dinner':'dinosaur','party':'panty','drink':'drunk',
+  'tonight':'toothpaste','tomorrow':'tomato','friend':'fridge','phone':'phoney baloney',
+  'sorry':'soooooo','hello':'HELLOOOO','thanks':'tankss','please':'pleeease',
+  'love':'LOVEEEE','miss':'missile','want':'walnut','going':'gonig','work':'worm',
+  'home':'homie','good':'gooooood','great':'grape','right':'rhinoceros',
+  'come':'comb','here':'beer','text':'tent','call':'calm','need':'knee',
+  'feel':'falafel','time':'thyme','just':'juice','know':'gnome','think':'thunk'
+};
+
+const drunkEmojis = [
+  '\u{1F37A}','\u{1F37B}','\u{1F943}','\u{1F602}','\u{1F60D}','\u{1F618}','\u{1F92E}',
+  '\u{1F525}','\u{1F4AF}','\u{1F389}','\u{2764}\u{FE0F}','\u{1F62D}','\u{1F92A}','\u{1F973}',
+  '\u{1F60E}','\u{1F97A}','\u{1F498}','\u{1F37E}','\u{1F631}','\u{1F923}'
+];
+
+const drunkAppends = [
+  "I love you man","ur my best friend","why dont u text me anymore",
+  "i miss u sooo much","ur literally the best","we should hang out more",
+  "remember that time lollll","i need tacos","do u think im a good person",
+  "im not even that drunk","i can totally drive","wjere are my keys",
+  "ur so prettyyy","tell me the truth do u hate me","im ordering pizza rn",
+  "life is beautifl","i just want everyone to be happpy","YOLOOOO"
+];
+
+function rand(n) { return Math.floor(Math.random() * n); }
+function pick(arr) { return arr[rand(arr.length)]; }
+function chance(pct) { return Math.random() * 100 < pct; }
+
+function mangleText(text, level) {
+  if (!text.trim()) return '';
+
+  let words = text.split(/(\s+)/);
+  let result = [];
+
+  for (let i = 0; i < words.length; i++) {
+    let w = words[i];
+    if (/^\s+$/.test(w)) {
+      // Space handling
+      if (level >= 3 && chance(level * 3)) {
+        result.push(''); // miss space
+      } else if (level >= 5 && chance(level * 2)) {
+        result.push('  '); // double space
+      } else {
+        result.push(w);
+      }
+      continue;
+    }
+
+    // Level 1-2: occasional typos
+    if (level >= 1) {
+      let typoChance = level * 5;
+      w = applyTypos(w, typoChance);
+    }
+
+    // Level 3-4: random caps
+    if (level >= 3) {
+      if (chance(level * 4)) {
+        w = randomCaps(w);
+      }
+    }
+
+    // Level 5-6: letter swaps, word repeats
+    if (level >= 5) {
+      if (chance(level * 3)) {
+        w = swapLetters(w);
+      }
+      if (chance(level * 2)) {
+        w = w + ' ' + w; // repeat word
+      }
+    }
+
+    // Level 7-8: autocorrect to wrong words, emojis
+    if (level >= 7) {
+      let lower = w.toLowerCase().replace(/[^a-z]/g, '');
+      if (autocorrectWrong[lower] && chance(level * 5)) {
+        w = autocorrectWrong[lower];
+      }
+      if (chance(level * 3)) {
+        w = w + pick(drunkEmojis);
+      }
+    }
+
+    // Level 9-10: heavy gibberish
+    if (level >= 9) {
+      if (chance(level * 4)) {
+        w = gibberish(w);
+      }
+      if (chance(level * 3)) {
+        w = w.split('').sort(() => Math.random() - 0.5).join('');
+      }
+    }
+
+    result.push(w);
+  }
+
+  let output = result.join('');
+
+  // Level 4+: occasional repeated punctuation
+  if (level >= 4) {
+    output = output.replace(/([!?.])/g, (m) => {
+      if (chance(level * 5)) return m.repeat(rand(4) + 2);
+      return m;
+    });
+  }
+
+  // Level 6+: random all-caps segments
+  if (level >= 6 && chance(level * 4)) {
+    let sentences = output.split(/(?<=[.!?])\s+/);
+    if (sentences.length > 0) {
+      let idx = rand(sentences.length);
+      sentences[idx] = sentences[idx].toUpperCase();
+      output = sentences.join(' ');
+    }
+  }
+
+  // Level 8+: insert random drunk emojis throughout
+  if (level >= 8) {
+    let chars = output.split('');
+    for (let i = chars.length - 1; i > 0; i--) {
+      if (chance(level * 0.8)) {
+        chars.splice(i, 0, pick(drunkEmojis));
+      }
+    }
+    output = chars.join('');
+  }
+
+  // Level 10: append drunk message
+  if (level >= 10) {
+    output += '\n\n' + pick(drunkAppends) + ' ' + pick(drunkEmojis) + pick(drunkEmojis) + pick(drunkEmojis);
+    if (chance(60)) {
+      output += '\n' + pick(drunkAppends);
+    }
+  }
+
+  return output;
+}
+
+function applyTypos(word, pct) {
+  if (word.length < 2) return word;
+  let lower = word.toLowerCase();
+  if (wrongWords[lower] && chance(pct)) {
+    return wrongWords[lower];
+  }
+  let chars = word.split('');
+  for (let i = 0; i < chars.length; i++) {
+    if (chance(pct / 2)) {
+      let c = chars[i].toLowerCase();
+      if (adjacentKeys[c]) {
+        let adj = adjacentKeys[c];
+        chars[i] = adj[rand(adj.length)];
+      }
+    }
+  }
+  return chars.join('');
+}
+
+function randomCaps(word) {
+  return word.split('').map(c => chance(40) ? c.toUpperCase() : c.toLowerCase()).join('');
+}
+
+function swapLetters(word) {
+  if (word.length < 3) return word;
+  let chars = word.split('');
+  let i = rand(chars.length - 1);
+  [chars[i], chars[i + 1]] = [chars[i + 1], chars[i]];
+  return chars.join('');
+}
+
+function gibberish(word) {
+  let keys = 'asdfghjklqwertyuiopzxcvbnm';
+  let result = '';
+  for (let i = 0; i < word.length; i++) {
+    if (chance(50)) {
+      result += keys[rand(keys.length)];
+    } else {
+      result += word[i];
+    }
+  }
+  return result;
+}
+
+function updateOutput() {
+  const level = parseInt(drunkSlider.value);
+  const text = inputText.value;
+
+  charCount.textContent = text.length;
+
+  const drunk = mangleText(text, level);
+  drunkOutput.textContent = drunk || 'Your drunk text will appear here...';
+  drunkCharCount.textContent = drunk.length;
+
+  // Update preview bubble
+  const name = recipientName.value.trim();
+  if (drunk && name) {
+    previewBubble.style.display = 'block';
+    previewTo.textContent = 'To: ' + name;
+    previewText.textContent = drunk;
+    const now = new Date();
+    previewTime.textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + ' (sent while drunk)';
+  } else {
+    previewBubble.style.display = 'none';
+  }
+
+  // Panel wobble
+  drunkPanel.className = 'panel drunk';
+  if (level >= 7) drunkPanel.classList.add('wobble');
+  if (level >= 9) { drunkPanel.classList.remove('wobble'); drunkPanel.classList.add('mega-wobble'); }
+}
+
+function updateSliderUI() {
+  const level = parseInt(drunkSlider.value);
+  levelDisplay.textContent = level;
+  levelDisplay.style.color = levelColors[level - 1];
+  statusEmoji.innerHTML = emojis[level - 1];
+
+  if (level >= 8) {
+    statusEmoji.style.transform = 'rotate(' + (Math.random() * 30 - 15) + 'deg)';
+  } else {
+    statusEmoji.style.transform = 'rotate(0deg)';
+  }
+}
+
+drunkSlider.addEventListener('input', () => {
+  updateSliderUI();
+  updateOutput();
+});
+
+inputText.addEventListener('input', updateOutput);
+recipientName.addEventListener('input', updateOutput);
+
+// Copy button
+copyBtn.addEventListener('click', () => {
+  const text = drunkOutput.textContent;
+  if (!text || text === 'Your drunk text will appear here...') {
+    showToast('Nothing to copy!');
+    return;
+  }
+  navigator.clipboard.writeText(text).then(() => {
+    copyBtn.textContent = 'Copied!';
+    copyBtn.classList.add('copied');
+    showToast('Drunk text copied to clipboard');
+    setTimeout(() => {
+      copyBtn.textContent = 'Copy Drunk Text';
+      copyBtn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied!');
+  });
+});
+
+// Share button
+shareBtn.addEventListener('click', () => {
+  const text = drunkOutput.textContent;
+  if (!text || text === 'Your drunk text will appear here...') {
+    showToast('Nothing to share!');
+    return;
+  }
+  const level = drunkSlider.value;
+  const shareText = `[Drunk Level ${level}/10]\n\nOriginal: ${inputText.value}\n\nDrunk version: ${text}\n\n-- sent via Drunk Texter`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Drunk Text', text: shareText }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Share text copied to clipboard');
+    }).catch(() => showToast('Could not share'));
+  }
+});
+
+// Save to history
+saveBtn.addEventListener('click', () => {
+  const original = inputText.value.trim();
+  const drunk = drunkOutput.textContent;
+  if (!original || drunk === 'Your drunk text will appear here...') {
+    showToast('Type something first!');
+    return;
+  }
+
+  const history = JSON.parse(localStorage.getItem('drunkHistory') || '[]');
+  history.unshift({
+    original,
+    drunk,
+    level: parseInt(drunkSlider.value),
+    recipient: recipientName.value.trim() || null,
+    time: new Date().toISOString()
+  });
+  if (history.length > 50) history.pop();
+  localStorage.setItem('drunkHistory', JSON.stringify(history));
+  renderHistory();
+  showToast('Saved to history!');
+});
+
+// Clear history
+clearHistory.addEventListener('click', () => {
+  localStorage.removeItem('drunkHistory');
+  renderHistory();
+  showToast('History cleared');
+});
+
+function renderHistory() {
+  const history = JSON.parse(localStorage.getItem('drunkHistory') || '[]');
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="empty-history">No drunk texts yet. Start typing!</div>';
+    return;
+  }
+
+  historyList.innerHTML = history.map((h, i) => {
+    const date = new Date(h.time);
+    const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const to = h.recipient ? ` &rarr; ${h.recipient}` : '';
+    return `
+      <div class="history-item" data-index="${i}">
+        <div class="history-meta">
+          <span>${timeStr}${to}</span>
+          <span class="level-badge">Level ${h.level}</span>
+        </div>
+        <div class="history-original">${escapeHtml(h.original)}</div>
+        <div class="history-drunk">${escapeHtml(h.drunk)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Click to load
+  historyList.querySelectorAll('.history-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.index);
+      const h = history[idx];
+      inputText.value = h.original;
+      drunkSlider.value = h.level;
+      if (h.recipient) recipientName.value = h.recipient;
+      updateSliderUI();
+      updateOutput();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Init
+updateSliderUI();
+renderHistory();
+</script>
+</body>
+</html>
