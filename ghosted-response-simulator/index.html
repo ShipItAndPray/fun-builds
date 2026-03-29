@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ghosted Response Simulator</title>
+<meta name="description" content="Paste the last messages in a dead chat and get five dramatic, fake reasons you got ghosted.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap');
+  :root {
+    --bg: #090d14;
+    --panel: rgba(12, 18, 28, 0.92);
+    --line: rgba(255,255,255,0.08);
+    --text: #f4f7ff;
+    --muted: #9cacbf;
+    --accent: #60a5fa;
+    --accent-2: #c084fc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 18%, rgba(96,165,250,0.16), transparent 22%),
+      radial-gradient(circle at 86% 20%, rgba(192,132,252,0.14), transparent 20%),
+      linear-gradient(180deg, #091019, #04070d);
+  }
+  .shell { width: min(1120px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0 44px; }
+  .back { color: var(--muted); text-decoration: none; font-weight: 700; }
+  .hero, .panel { border-radius: 26px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 28px 70px rgba(0,0,0,0.35); }
+  .hero { padding: 28px; margin-top: 20px; }
+  .eyebrow { margin: 0 0 12px; font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 800; }
+  h1 { margin: 0; font-family: 'Instrument Serif', serif; font-size: clamp(2.8rem, 6vw, 5rem); line-height: 0.95; letter-spacing: -0.04em; }
+  .sub { margin: 14px 0 0; max-width: 760px; color: var(--muted); font-size: 18px; line-height: 1.65; }
+  .grid { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 22px; }
+  .label { margin: 14px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 800; }
+  textarea, select {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(5,8,13,0.74);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font: inherit;
+  }
+  textarea { min-height: 220px; resize: vertical; }
+  .actions { display: flex; gap: 12px; margin-top: 18px; }
+  button {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; flex: 1; }
+  .ghost { background: rgba(255,255,255,0.06); color: var(--text); }
+  .reasons { display: grid; gap: 12px; }
+  .reason {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+  }
+  .reason small { display: block; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); font-weight: 800; margin-bottom: 8px; }
+  .reason p { margin: 0; color: #f5f8ff; line-height: 1.65; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font: inherit;
+  }
+  @media (max-width: 880px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <p class="eyebrow">Closure Theater</p>
+      <h1>Ghosted Response Simulator</h1>
+      <p class="sub">Paste the final messages from a dead chat. Receive five extremely specific fake reasons the silence happened, ranging from plausible to spiritually devastating.</p>
+    </section>
+    <div class="grid">
+      <section class="panel">
+        <div class="label">Last Messages</div>
+        <textarea id="chat">Me: hey still on for tonight?
+Them: yeah probably, just finishing something
+Me: nice, what time?
+Me: no rush
+Me: all good if not
+Me: ?</textarea>
+        <div class="label">Mood</div>
+        <select id="mood">
+          <option>Plausible Delusion</option>
+          <option>Petty Spiral</option>
+          <option>Movie Trailer</option>
+          <option>Brutal Honesty</option>
+        </select>
+        <div class="chips">
+          <button class="chip" data-chat="Me: want to grab coffee?\nThem: omg yes\nMe: saturday?\nMe: sunday?\nMe: totally fine if busy">Coffee drift</button>
+          <button class="chip" data-chat="Me: did you get home okay?\nThem: yes!!\nMe: good :)\nMe: had fun tonight\nMe: haha you vanished">Vanished after date</button>
+          <button class="chip" data-chat="Me: sending the deck now\nThem: perfect\nMe: thoughts?\nMe: just bumping this\nMe: circling back">Work ghost</button>
+        </div>
+        <div class="actions">
+          <button class="primary" id="simulate">Simulate Ghosting</button>
+          <button class="ghost" id="reroll">Reroll</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="reasons" id="reasons"></div>
+      </section>
+    </div>
+  </div>
+<script>
+  const tones = {
+    "Plausible Delusion": [
+      "They saw your message, got distracted for 90 seconds, then accidentally let that become a new personality.",
+      "Your chat got mentally filed under 'answer when emotionally organized,' which is a folder many people never reopen.",
+      "They intended to reply with energy, then the bar for a proper response got so high that silence felt easier."
+    ],
+    "Petty Spiral": [
+      "They are absolutely online, but now the reply window has aged into a moral failure and they fear the scene.",
+      "They typed a response, deleted it, reopened the app three times, and chose cowardice each round.",
+      "Your message is now being used as a tiny monument to their commitment issues."
+    ],
+    "Movie Trailer": [
+      "In a world where one text changed everything, one person chose to disappear into the fog of avoidable ambiguity.",
+      "They wanted to reply. But fate, ego, and a glowing screen had other plans.",
+      "Silence was not an accident. It was a sequel."
+    ],
+    "Brutal Honesty": [
+      "They lost interest before they lost signal.",
+      "They liked the attention more than the follow-through.",
+      "They wanted optionality, not commitment, and your last message made that harder to fake."
+    ]
+  };
+
+  function seedFrom(text) {
+    return [...text].reduce((a, c, i) => a + c.charCodeAt(0) * (i + 17), 0);
+  }
+
+  function render() {
+    const chat = document.getElementById('chat').value.trim();
+    const mood = document.getElementById('mood').value;
+    const bank = tones[mood];
+    const seed = seedFrom(chat);
+    const extras = [
+      "Also, your final double-text shifted the moment from casual to archival.",
+      "The phrase 'no rush' convinced them there was, in fact, a rush.",
+      "A reply delayed by one hour became a reply delayed by identity issues.",
+      "Your politeness gave them room to vanish artistically.",
+      "The conversation died not with conflict, but with administrative neglect."
+    ];
+    const reasons = Array.from({ length: 5 }, (_, i) => {
+      const line = bank[(seed + i) % bank.length];
+      const extra = extras[(seed + i * 3) % extras.length];
+      return `<div class="reason"><small>Reason ${i + 1}</small><p>${line} ${extra}</p></div>`;
+    }).join('');
+    document.getElementById('reasons').innerHTML = reasons;
+  }
+
+  document.getElementById('simulate').addEventListener('click', render);
+  document.getElementById('reroll').addEventListener('click', () => {
+    const moods = ["Plausible Delusion", "Petty Spiral", "Movie Trailer", "Brutal Honesty"];
+    document.getElementById('mood').value = moods[Math.floor(Math.random() * moods.length)];
+    render();
+  });
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.getElementById('chat').value = chip.dataset.chat;
+      render();
+    });
+  });
+  render();
+</script>
+</body>
+</html>

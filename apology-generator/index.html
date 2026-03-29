@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apology Generator</title>
+<meta name="description" content="Turn whatever you said into the apology you should have sent instead.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+  :root {
+    --bg: #131019;
+    --panel: rgba(28, 20, 38, 0.92);
+    --line: rgba(255,255,255,0.1);
+    --text: #f8f5ff;
+    --muted: #c7bed9;
+    --accent: #f472b6;
+    --accent-2: #fb7185;
+    --good: #34d399;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(244, 114, 182, 0.22), transparent 24%),
+      radial-gradient(circle at 82% 18%, rgba(251, 113, 133, 0.18), transparent 22%),
+      linear-gradient(180deg, #120f17, #09070c);
+  }
+  .shell { width: min(1080px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0 44px; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .back { color: var(--muted); text-decoration: none; font-weight: 700; }
+  .hero, .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 26px;
+    box-shadow: 0 28px 70px rgba(0,0,0,0.35);
+    backdrop-filter: blur(12px);
+  }
+  .hero { padding: 30px; }
+  .eyebrow { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 800; color: var(--accent); margin: 0 0 10px; }
+  h1 {
+    margin: 0;
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+  .sub { color: var(--muted); font-size: 18px; line-height: 1.6; max-width: 720px; margin: 14px 0 0; }
+  .grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 22px; }
+  h2 { margin: 0 0 14px; font-size: 22px; }
+  .label { margin: 16px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); font-weight: 800; }
+  textarea, select {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    background: rgba(8, 7, 12, 0.7);
+    color: var(--text);
+    padding: 14px 16px;
+    font: inherit;
+  }
+  textarea { min-height: 170px; resize: vertical; }
+  .row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  button {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; flex: 1; }
+  .ghost { background: rgba(255,255,255,0.06); color: var(--text); border: 1px solid rgba(255,255,255,0.09); }
+  .result {
+    background: rgba(9, 7, 13, 0.68);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: rgba(52, 211, 153, 0.14);
+    color: #b8ffdf;
+    font-size: 12px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+  }
+  .apology {
+    font-size: 18px;
+    line-height: 1.7;
+    color: #fff6fe;
+    white-space: pre-wrap;
+  }
+  .notes { display: grid; gap: 10px; margin-top: 18px; }
+  .note { border-left: 3px solid var(--accent); padding-left: 12px; color: var(--muted); line-height: 1.55; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+  .chip {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font: inherit;
+    cursor: pointer;
+  }
+  @media (max-width: 860px) {
+    .grid, .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <a class="back" href="../">← Back to Fun Builds</a>
+    </div>
+
+    <section class="hero">
+      <p class="eyebrow">Damage Control Suite</p>
+      <h1>Apology Generator</h1>
+      <p class="sub">Paste what you actually said. Get the apology you should have sent instead, calibrated for family chats, coworker disasters, and catastrophic group text vibes.</p>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>What Did You Say?</h2>
+        <div class="label">Original Message</div>
+        <textarea id="original">“I didn’t mean you specifically. I just meant everyone in this apartment is impossible.”</textarea>
+
+        <div class="row">
+          <div>
+            <div class="label">Recipient</div>
+            <select id="recipient">
+              <option>Roommate</option>
+              <option>Coworker</option>
+              <option>Partner</option>
+              <option>Parent</option>
+              <option>Group Chat</option>
+            </select>
+          </div>
+          <div>
+            <div class="label">Tone</div>
+            <select id="tone">
+              <option>Sincere</option>
+              <option>Very Sincere</option>
+              <option>Professional</option>
+              <option>Humbling</option>
+              <option>Emergency Cleanup</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="chips">
+          <button class="chip" data-example="I thought I was muted.">I thought I was muted.</button>
+          <button class="chip" data-example="I said your cooking was ambitious.">Ambitious cooking.</button>
+          <button class="chip" data-example="I replied 'lol' to your serious paragraph.">The fatal 'lol'.</button>
+          <button class="chip" data-example="I accidentally sent the wrong screenshot to the group chat.">Wrong screenshot.</button>
+        </div>
+
+        <div class="actions">
+          <button class="primary" id="generate">Generate Apology</button>
+          <button class="ghost" id="reset">Reset</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>The Better Version</h2>
+        <div class="result">
+          <div class="badge">Repair Probability Raised</div>
+          <div class="apology" id="apology"></div>
+          <div class="notes" id="notes"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  const apologyEl = document.getElementById('apology');
+  const notesEl = document.getElementById('notes');
+
+  const openings = {
+    sincere: "I want to apologize clearly and directly.",
+    "very sincere": "You deserved something more thoughtful than what I said, and I want to own that fully.",
+    professional: "I want to acknowledge that what I said was inappropriate and poorly judged.",
+    humbling: "I managed to be loud, wrong, and avoidable all at once. I'm sorry.",
+    "emergency cleanup": "I am stepping in before this gets even more embarrassing: I was wrong, and I'm sorry."
+  };
+
+  const recipientLine = {
+    roommate: "You have to live with me, which makes my comment even more unfair.",
+    coworker: "You should be able to work with me without dealing with careless comments.",
+    partner: "You deserved care from me in that moment, not a cheap reaction.",
+    parent: "I spoke with more irritation than respect, and that wasn't okay.",
+    "group chat": "I made the situation worse in front of other people, which was unfair to everyone involved."
+  };
+
+  function summarizeDamage(text) {
+    const lower = text.toLowerCase();
+    if (lower.includes('muted')) return 'I assumed privacy and spoke carelessly.';
+    if (lower.includes('screenshot')) return 'I created unnecessary chaos by sharing something that was not meant to be shared.';
+    if (lower.includes('lol')) return 'I treated something serious too casually.';
+    if (lower.includes('impossible')) return 'I turned frustration into a personal attack.';
+    return 'I let my frustration come out in a way that was careless and disrespectful.';
+  }
+
+  function generateApology() {
+    const original = document.getElementById('original').value.trim();
+    const recipient = document.getElementById('recipient').value.toLowerCase();
+    const tone = document.getElementById('tone').value.toLowerCase();
+    const opening = openings[tone];
+    const damage = summarizeDamage(original);
+
+    apologyEl.textContent =
+`${opening}
+
+What I said: "${original}"
+
+${damage} ${recipientLine[recipient]}
+
+I'm not asking you to instantly move past it. I just want to be clear that I understand why it landed badly, and I will do better next time.`;
+
+    notesEl.innerHTML = `
+      <div class="note"><strong>What changed:</strong> The apology names the actual behavior instead of hiding behind “if that offended you.”</div>
+      <div class="note"><strong>Removed:</strong> defensiveness, fake ambiguity, and the urge to explain yourself for six paragraphs.</div>
+      <div class="note"><strong>Recommended next move:</strong> Send this, then be quiet long enough to seem teachable.</div>
+    `;
+  }
+
+  document.getElementById('generate').addEventListener('click', generateApology);
+  document.getElementById('reset').addEventListener('click', () => {
+    document.getElementById('original').value = '';
+    generateApology();
+  });
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.getElementById('original').value = chip.dataset.example;
+      generateApology();
+    });
+  });
+
+  generateApology();
+</script>
+</body>
+</html>

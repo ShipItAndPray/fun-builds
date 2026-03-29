@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Excuse Printer</title>
+<meta name="description" content="Generate an absurdly polished excuse receipt for being late, flaky, or suspiciously unavailable.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
+  :root {
+    --bg: #0d1014;
+    --ink: #f5f5ef;
+    --muted: #9ea8b2;
+    --paper: #f0eadb;
+    --accent: #f97316;
+    --accent-2: #fb923c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(249, 115, 22, 0.16), transparent 24%),
+      linear-gradient(180deg, #101318, #090b0f);
+  }
+  .shell { width: min(1100px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0 44px; }
+  .topbar { margin-bottom: 20px; }
+  .back { text-decoration: none; color: var(--muted); font-weight: 700; }
+  .hero, .panel {
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(18, 22, 28, 0.88);
+    box-shadow: 0 24px 70px rgba(0,0,0,0.35);
+  }
+  .hero { padding: 28px; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; color: var(--accent); text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; margin: 0 0 12px; }
+  h1 { margin: 0; font-size: clamp(2.8rem, 6vw, 4.8rem); line-height: 0.95; letter-spacing: -0.04em; }
+  .sub { max-width: 720px; line-height: 1.65; color: var(--muted); font-size: 18px; margin-top: 14px; }
+  .grid { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 22px; }
+  .label { margin: 14px 0 8px; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  input, select, textarea {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(8,10,14,0.72);
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font: inherit;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  .row { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .actions { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  button {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; flex: 1; }
+  .ghost { background: rgba(255,255,255,0.06); color: var(--ink); }
+  .receipt {
+    background: var(--paper);
+    color: #251d13;
+    border-radius: 20px;
+    padding: 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    box-shadow: inset 0 0 0 1px rgba(37,29,19,0.08);
+  }
+  .receipt h2 { margin: 0 0 12px; font-size: 22px; }
+  .tiny { font-size: 12px; opacity: 0.72; }
+  .divider { border-top: 1px dashed rgba(37,29,19,0.3); margin: 16px 0; }
+  .line { display: flex; justify-content: space-between; gap: 16px; margin: 8px 0; }
+  .big {
+    font-size: 18px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font: inherit;
+  }
+  @media (max-width: 860px) {
+    .grid, .row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar"><a class="back" href="../">← Back to Fun Builds</a></div>
+    <section class="hero">
+      <p class="eyebrow">Portable Accountability Theater</p>
+      <h1>Excuse Printer</h1>
+      <p class="sub">Type what happened. Get a professionally formatted excuse receipt with confidence score, supporting fiction, and a narrative that almost sounds credible.</p>
+    </section>
+    <div class="grid">
+      <section class="panel">
+        <div class="label">What are you excusing?</div>
+        <input id="incident" value="I was late to the team sync because I stayed in bed 38 minutes too long.">
+        <div class="row">
+          <div>
+            <div class="label">Audience</div>
+            <select id="audience">
+              <option>Boss</option>
+              <option>Friend</option>
+              <option>Date</option>
+              <option>Family</option>
+              <option>Professor</option>
+            </select>
+          </div>
+          <div>
+            <div class="label">Style</div>
+            <select id="style">
+              <option>Corporate</option>
+              <option>Dramatic</option>
+              <option>Suspiciously Detailed</option>
+              <option>Medieval</option>
+              <option>Airline Announcement</option>
+            </select>
+          </div>
+        </div>
+        <div class="label">Optional supporting detail</div>
+        <textarea id="detail">There was no actual emergency. I simply made tragic life choices before 9 a.m.</textarea>
+        <div class="chips">
+          <button class="chip" data-incident="I forgot your birthday and tried to pivot into a surprise plan.">Forgot the birthday</button>
+          <button class="chip" data-incident="I missed the deadline because I opened one tab and woke up with 47 tabs.">Tab spiral</button>
+          <button class="chip" data-incident="I bailed on dinner because I changed into pajamas and spiritually retired.">Pajama retirement</button>
+        </div>
+        <div class="actions">
+          <button class="primary" id="print">Print Excuse</button>
+          <button class="ghost" id="shuffle">Shuffle</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="receipt" id="receipt"></div>
+      </section>
+    </div>
+  </div>
+<script>
+  const receipt = document.getElementById('receipt');
+  const intros = {
+    corporate: "We regret to inform you there was an unforeseen disruption in normal human operations.",
+    dramatic: "Fate intervened with the elegance of a falling chandelier.",
+    "suspiciously detailed": "At approximately 8:42 a.m., a sequence of deeply avoidable events unfolded with precision.",
+    medieval: "My lord, calamity struck as though summoned by a cursed trumpet.",
+    "airline announcement": "We are experiencing a slight delay in personal competence. Thank you for your continued patience."
+  };
+  const audienceTags = {
+    boss: "Managerial Scrutiny",
+    friend: "Social Tribunal",
+    date: "Romantic Oversight Board",
+    family: "Domestic Council",
+    professor: "Academic Compliance Desk"
+  };
+  function makeCode(text) {
+    return "EX-" + Math.abs([...text].reduce((a, c) => a + c.charCodeAt(0) * 7, 0) % 90000 + 10000);
+  }
+  function confidence(style, incident) {
+    const base = 84 - Math.min(incident.length / 3, 28);
+    const stylePenalty = style === "Suspiciously Detailed" ? 11 : style === "Dramatic" ? 6 : 0;
+    return Math.max(27, Math.round(base - stylePenalty));
+  }
+  function render() {
+    const incident = document.getElementById('incident').value.trim();
+    const audience = document.getElementById('audience').value.toLowerCase();
+    const style = document.getElementById('style').value.toLowerCase();
+    const detail = document.getElementById('detail').value.trim();
+    const score = confidence(document.getElementById('style').value, incident);
+    receipt.innerHTML = `
+      <h2>Excuse Receipt</h2>
+      <div class="tiny">Issued by the ${audienceTags[audience]} · Code ${makeCode(incident + detail)}</div>
+      <div class="divider"></div>
+      <div class="line"><span>Incident</span><strong>${incident}</strong></div>
+      <div class="line"><span>Believability</span><strong>${score}%</strong></div>
+      <div class="line"><span>Delivery Style</span><strong>${document.getElementById('style').value}</strong></div>
+      <div class="divider"></div>
+      <div class="big">${intros[style]}
+
+Official explanation: ${incident}
+
+Supporting detail: ${detail}
+
+Recommended closing line: "Thanks for understanding during this uniquely preventable situation."</div>
+      <div class="divider"></div>
+      <div class="tiny">Warning: excessive eye contact may reduce effectiveness.</div>
+    `;
+  }
+  document.getElementById('print').addEventListener('click', render);
+  document.getElementById('shuffle').addEventListener('click', () => {
+    const styles = ["Corporate", "Dramatic", "Suspiciously Detailed", "Medieval", "Airline Announcement"];
+    document.getElementById('style').value = styles[Math.floor(Math.random() * styles.length)];
+    render();
+  });
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.getElementById('incident').value = chip.dataset.incident;
+      render();
+    });
+  });
+  render();
+</script>
+</body>
+</html>

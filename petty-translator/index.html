@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Petty Translator</title>
+<meta name="description" content="Translate one bitter thought into therapist mode, HR mode, villain mode, and your actual petty impulse.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;800&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap');
+  :root {
+    --bg: #0b1018;
+    --panel: rgba(12, 18, 28, 0.9);
+    --line: rgba(255,255,255,0.1);
+    --text: #f3f6fb;
+    --muted: #a3b1c8;
+    --gold: #facc15;
+    --violet: #8b5cf6;
+    --rose: #fb7185;
+    --cyan: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Outfit', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 18% 18%, rgba(139,92,246,0.18), transparent 24%),
+      radial-gradient(circle at 85% 24%, rgba(250,204,21,0.12), transparent 20%),
+      linear-gradient(180deg, #0b1119, #05080d);
+  }
+  .shell { width: min(1120px, calc(100vw - 28px)); margin: 0 auto; padding: 28px 0 44px; }
+  .back { color: var(--muted); text-decoration: none; font-weight: 700; }
+  .hero, .panel {
+    border-radius: 26px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    box-shadow: 0 28px 70px rgba(0,0,0,0.35);
+  }
+  .hero { padding: 28px; margin-top: 20px; }
+  .eyebrow { margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.18em; font-size: 12px; color: var(--gold); font-weight: 800; }
+  h1 {
+    margin: 0;
+    font-family: 'Newsreader', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+  .sub { margin: 14px 0 0; max-width: 760px; color: var(--muted); line-height: 1.65; font-size: 18px; }
+  .layout { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 18px; margin-top: 18px; }
+  .panel { padding: 22px; }
+  .label { margin: 14px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px; font-weight: 800; }
+  textarea, select {
+    width: 100%;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(5,8,13,0.72);
+    color: var(--text);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font: inherit;
+  }
+  textarea { min-height: 180px; resize: vertical; }
+  .actions { display: flex; gap: 12px; margin-top: 18px; }
+  button {
+    border: none;
+    border-radius: 16px;
+    padding: 14px 18px;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+  }
+  .primary { background: linear-gradient(135deg, var(--gold), #f59e0b); color: #1c1400; flex: 1; }
+  .ghost { background: rgba(255,255,255,0.06); color: var(--text); }
+  .cards { display: grid; gap: 12px; }
+  .card {
+    border-radius: 20px;
+    padding: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+  }
+  .tone { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 800; margin-bottom: 10px; }
+  .therapist .tone { color: var(--cyan); }
+  .hr .tone { color: var(--gold); }
+  .villain .tone { color: var(--rose); }
+  .petty .tone { color: var(--violet); }
+  .line { line-height: 1.65; color: #f5f7fd; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip {
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font: inherit;
+  }
+  @media (max-width: 880px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <p class="eyebrow">Diplomatic Rewrite Engine</p>
+      <h1>Petty Translator</h1>
+      <p class="sub">Type what you actually want to say. See how it sounds in therapist mode, HR mode, villain mode, and the fully committed petty version your soul briefly wanted.</p>
+    </section>
+    <div class="layout">
+      <section class="panel">
+        <div class="label">Raw Message</div>
+        <textarea id="input">“Amazing how you had time to like stories all day but not answer a single text.”</textarea>
+        <div class="label">Scenario</div>
+        <select id="scenario">
+          <option>Texting Drama</option>
+          <option>Workplace Irritation</option>
+          <option>Roommate Tension</option>
+          <option>Family Side-Eye</option>
+        </select>
+        <div class="chips">
+          <button class="chip" data-text="Thanks for forwarding my own idea back to me with your name attached.">Idea theft</button>
+          <button class="chip" data-text="I love how the dishes become conceptual art the second it's your turn.">Dishes</button>
+          <button class="chip" data-text="You always say 'on my way' like time is theoretical.">On my way</button>
+        </div>
+        <div class="actions">
+          <button class="primary" id="translate">Translate Pettiness</button>
+          <button class="ghost" id="randomize">Randomize Tone</button>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="cards">
+          <div class="card therapist">
+            <div class="tone">Therapist Mode</div>
+            <div class="line" id="therapist"></div>
+          </div>
+          <div class="card hr">
+            <div class="tone">HR Mode</div>
+            <div class="line" id="hr"></div>
+          </div>
+          <div class="card villain">
+            <div class="tone">Villain Mode</div>
+            <div class="line" id="villain"></div>
+          </div>
+          <div class="card petty">
+            <div class="tone">True Petty Mode</div>
+            <div class="line" id="petty"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+<script>
+  const scenarioFlavor = {
+    "Texting Drama": "communication and attention",
+    "Workplace Irritation": "credit, timing, and professional respect",
+    "Roommate Tension": "shared space and mutual responsibility",
+    "Family Side-Eye": "tone, history, and small recurring injuries"
+  };
+  function translate() {
+    const text = document.getElementById('input').value.trim();
+    const scenario = document.getElementById('scenario').value;
+    document.getElementById('therapist').textContent =
+      `When ${scenarioFlavor[scenario]} feels uneven, it makes sense that you would feel dismissed. A calmer version is: "That landed badly for me, and I'd rather address it directly than keep building resentment."`;
+    document.getElementById('hr').textContent =
+      `For documentation purposes: "I want to flag a repeated pattern that is creating friction. I'd appreciate a clearer expectation around follow-through so this doesn't continue."`;
+    document.getElementById('villain').textContent =
+      `You could say: "Interesting. I didn't realize inconsistency was now part of your personal brand, but thank you for clarifying the standard."`;
+    document.getElementById('petty').textContent =
+      `What you almost sent: ${text} Also, since we're apparently doing performance art, let me know when you'd like to rehearse basic respect.`;
+  }
+  document.getElementById('translate').addEventListener('click', translate);
+  document.getElementById('randomize').addEventListener('click', () => {
+    const options = ["Texting Drama", "Workplace Irritation", "Roommate Tension", "Family Side-Eye"];
+    document.getElementById('scenario').value = options[Math.floor(Math.random() * options.length)];
+    translate();
+  });
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+      document.getElementById('input').value = chip.dataset.text;
+      translate();
+    });
+  });
+  translate();
+</script>
+</body>
+</html>
