@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakup Translator - Passive-Aggressive to Dramatic</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+.container{max-width:900px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:2.2rem;margin:30px 0 8px;background:linear-gradient(135deg,#ff4757,#ff6b81,#ffa502);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:#666;font-size:0.95rem;margin-bottom:30px;font-style:italic}
+.input-section{background:#13131f;border:1px solid #2a2a3a;border-radius:16px;padding:24px;margin-bottom:20px}
+.input-section label{display:block;font-size:0.85rem;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+textarea{width:100%;height:120px;background:#0d0d18;border:1px solid #2a2a3a;border-radius:10px;padding:14px;color:#e0e0e0;font-size:1rem;resize:vertical;font-family:inherit;transition:border-color .3s}
+textarea:focus{outline:none;border-color:#ff4757}
+textarea::placeholder{color:#444}
+.style-selector{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.style-btn{padding:8px 16px;border:1px solid #2a2a3a;border-radius:20px;background:#0d0d18;color:#888;cursor:pointer;font-size:0.85rem;transition:all .3s}
+.style-btn:hover{border-color:#ff6b81;color:#ff6b81}
+.style-btn.active{background:linear-gradient(135deg,#ff4757,#ff6b81);color:#fff;border-color:transparent}
+.dramatize-btn{display:block;width:100%;padding:16px;margin:20px 0;border:none;border-radius:12px;background:linear-gradient(135deg,#ff4757,#c0392b);color:#fff;font-size:1.2rem;font-weight:bold;letter-spacing:2px;cursor:pointer;transition:all .3s;text-transform:uppercase}
+.dramatize-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,71,87,.4)}
+.dramatize-btn:active{transform:translateY(0)}
+.dramatize-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.countdown-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.92);z-index:100;justify-content:center;align-items:center;flex-direction:column}
+.countdown-overlay.show{display:flex}
+.countdown-text{font-size:1.2rem;color:#ff6b81;text-transform:uppercase;letter-spacing:4px;margin-bottom:20px;animation:pulse 1s infinite}
+.countdown-number{font-size:8rem;font-weight:900;background:linear-gradient(135deg,#ff4757,#ffa502);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:countPop .5s ease}
+.countdown-subtitle{color:#555;margin-top:10px;font-size:.9rem}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes countPop{0%{transform:scale(1.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.results{display:none;gap:20px;margin-top:20px}
+.results.show{display:grid;grid-template-columns:1fr 1fr}
+.result-panel{background:#13131f;border:1px solid #2a2a3a;border-radius:16px;padding:24px;animation:slideUp .5s ease}
+.result-panel h3{font-size:.8rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.result-panel h3 span{font-size:1.1rem}
+.original-label{color:#666}
+.dramatic-label{color:#ff6b81}
+.result-text{font-size:1rem;line-height:1.7;white-space:pre-wrap}
+.dramatic-text{color:#ffeaa7;font-style:italic;font-size:1.05rem}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.action-bar{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.action-btn{padding:8px 18px;border:1px solid #2a2a3a;border-radius:8px;background:#0d0d18;color:#888;cursor:pointer;font-size:.85rem;transition:all .3s;display:flex;align-items:center;gap:6px}
+.action-btn:hover{border-color:#ff6b81;color:#ff6b81}
+.action-btn.speaking{border-color:#ffa502;color:#ffa502;animation:pulse 1s infinite}
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#ff4757;color:#fff;padding:12px 24px;border-radius:10px;font-size:.9rem;transition:transform .3s ease;z-index:200}
+.toast.show{transform:translateX(-50%) translateY(0)}
+@media(max-width:700px){
+  h1{font-size:1.6rem}
+  .results.show{grid-template-columns:1fr}
+  .style-selector{justify-content:center}
+  .countdown-number{font-size:5rem}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>BREAKUP TRANSLATOR</h1>
+  <p class="subtitle">Turn passive-aggressive texts into the dramatic monologues they deserve</p>
+  <div class="input-section">
+    <label>Paste your passive-aggressive text</label>
+    <textarea id="inputText" placeholder='e.g. "I am fine. Do whatever you want. It is not like I care anyway."'></textarea>
+    <label style="margin-top:16px">Choose your drama style</label>
+    <div class="style-selector">
+      <button class="style-btn active" data-style="shakespearean">Shakespearean</button>
+      <button class="style-btn" data-style="corporate">Corporate HR</button>
+      <button class="style-btn" data-style="reality">Reality TV Confessional</button>
+      <button class="style-btn" data-style="soap">Soap Opera</button>
+      <button class="style-btn" data-style="sports">Sports Commentator</button>
+    </div>
+  </div>
+  <button class="dramatize-btn" id="dramatizeBtn">DRAMATIZE</button>
+  <div class="countdown-overlay" id="countdown">
+    <div class="countdown-text">Seconds to stop the drama</div>
+    <div class="countdown-number" id="countNum">5</div>
+    <div class="countdown-subtitle">There is no stopping it.</div>
+  </div>
+  <div class="results" id="results">
+    <div class="result-panel">
+      <h3 class="original-label"><span>&#128172;</span> Original</h3>
+      <div class="result-text" id="originalOut"></div>
+    </div>
+    <div class="result-panel">
+      <h3 class="dramatic-label"><span>&#127917;</span> Dramatized</h3>
+      <div class="result-text dramatic-text" id="dramaticOut"></div>
+      <div class="action-bar">
+        <button class="action-btn" id="speakBtn" title="Read aloud">&#128266; Speak</button>
+        <button class="action-btn" id="copyBtn" title="Copy to clipboard">&#128203; Copy</button>
+        <button class="action-btn" id="shareBtn" title="Share">&#128279; Share</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const TRANSFORMS={
+shakespearean:[
+["i'm fine","The wounds thou hast inflicted have merely hardened me into an impenetrable fortress of emotional numbness, a citadel where no tender feeling shall ever breach these walls again."],
+["im fine","The wounds thou hast inflicted have merely hardened me into an impenetrable fortress of emotional numbness, a citadel where no tender feeling shall ever breach these walls again."],
+["i am fine","The wounds thou hast inflicted have merely hardened me into an impenetrable fortress of emotional numbness."],
+["it's fine","Let the chronicles record that all is well, though the heavens themselves weep at this betrayal most foul."],
+["whatever","Cast thy indifference upon the winds, for I shall stand unmoved as stone whilst the tempest of thy apathy rages around me, signifying nothing."],
+["do whatever you want","Go forth and pursue thine own reckless desires, for I have relinquished all claim upon thy conscience, thou ungovernable beast of selfish whimsy."],
+["i don't care","Let it be known throughout the kingdom that mine heart hath been emptied of all tender regard, drained like a chalice of poisoned wine."],
+["i dont care","Let it be known throughout the kingdom that mine heart hath been emptied of all tender regard, drained like a chalice of poisoned wine."],
+["it's not like i care","Nay, speak not of caring, for I have cast that wretched sentiment into the deepest abyss, where it shall rot alongside the corpse of our once-luminous bond."],
+["ok","Very well. I accept this fate with the quiet dignity of a monarch ascending the scaffold, betrayed by the very soul I once crowned with my devotion."],
+["okay","Very well. I accept this fate with the quiet dignity of a monarch ascending the scaffold, betrayed by the very soul I once crowned with my devotion."],
+["k","A single letter! Thou hast reduced the entire lexicon of human feeling to a solitary consonant! Shakespeare himself would weep, then set his quill ablaze."],
+["sure","With what hollow compliance I accept, as the prisoner accepts the executioner's blade, knowing protest is but wind against the stone of thy indifference."],
+["lol","Thou laughest! THOU LAUGHEST! While Rome burns and my soul crumbles to ash, thou offerest... laughter? Truly, the comedy of my suffering is thy evening's entertainment."],
+["we need to talk","Summon the court! Draw the curtains upon this stage of sorrow! For what words now approach carry the weight of a thousand funeral bells tolling in unison."],
+["i'm busy","Occupied! With matters more pressing than the dissolution of a love that once moved mountains! What grand affair eclipses this, our final reckoning?"],
+["im busy","Occupied! With matters more pressing than the dissolution of a love that once moved mountains! What grand affair eclipses this, our final reckoning?"],
+["leave me alone","Banish me then to solitude's darkest chamber! Cast me from thy presence as one discards a withered rose, once cherished, now trodden beneath careless feet."],
+["you always","Thou speakest of 'always' as though mine every breath were an offense, each heartbeat a transgression against thy divine and unforgiving judgment."],
+["you never","Never! NEVER, thou sayest! As though the sun hath never risen, as though I have existed solely as a shadow, unseen and unacknowledged in thy radiant court."],
+["i'm not mad","Mad? Nay! I transcended mere mortal anger three acts ago. What thou witnesseth now is the cold, crystalline clarity of one who hath seen behind the curtain of thy deceits."],
+["im not mad","Mad? Nay! I transcended mere mortal anger three acts ago. What thou witnesseth now is the cold, crystalline clarity of one who hath seen behind the curtain of thy deceits."],
+["i guess","I suppose, with the weary resignation of Atlas bearing the world upon shoulders that grow ever more brittle beneath the weight of unreciprocated devotion."],
+["thanks","I offer thee gratitude, hollow and echoing as a cathedral emptied of all faith, for teaching me the true architecture of disappointment."],
+["thank you","I offer thee gratitude, hollow and echoing as a cathedral emptied of all faith, for teaching me the true architecture of disappointment."],
+["cool","How magnificently glacial. Thy response carries all the warmth of a winter tomb, where our love lies interred beneath six feet of frozen indifference."],
+["no worries","Worry not, for I have already consumed every last morsel of worry upon thy behalf, and now stand before thee, spiritually malnourished but free of concern."],
+["it doesn't matter","Matter? Nothing matters in this void! The stars have dimmed, the poets have shattered their pens, and meaning itself lies gasping upon the cobblestones of thy callousness."],
+["it doesnt matter","Matter? Nothing matters in this void! The stars have dimmed, the poets have shattered their pens, and meaning itself lies gasping upon the cobblestones of thy callousness."],
+["good for you","How resplendent thy fortune! May the trumpets of heaven herald thy triumph whilst I, thy discarded squire, polish the armor thou no longer needest."],
+["have fun","Revel! Dance upon the grave of our shared history! Let merriment flow as freely as the tears I shall shed in private, watched only by the mocking moon."],
+["i'm over it","The chapter is closed! The ink hath dried upon this tragedy! I emerge from the wreckage not broken but... reconstructed. A phoenix of emotional devastation."],
+["im over it","The chapter is closed! The ink hath dried upon this tragedy! I emerge from the wreckage not broken but... reconstructed. A phoenix of emotional devastation."],
+["we're done","Then let the final curtain fall upon this most wretched of productions! Exit stage left, pursued by the ghost of everything we might have been!"],
+["i need space","Grant me the vast emptiness of the cosmos itself, for only a void of astronomical proportions can accommodate the magnitude of my present disillusionment."],
+["you've changed","Metamorphosis most foul! The creature before me wears thy face yet speaks with a stranger's tongue, a changeling placed in the cradle of our love by malicious fate."],
+["sorry","Apologies! Like rose petals scattered upon an ocean of grievance, beautiful in gesture yet utterly powerless against the tide of accumulated sorrow."],
+["i'm sorry","Mine apologies fall like autumn leaves upon the frozen ground of thy heart, where no seed of forgiveness shall ever take root again."],
+["forget it","Erase it from the annals! Strike it from the scrolls! As if memory were a servant to be dismissed, rather than a tyrant that rules us all."],
+["forget about it","Erase it from the annals of history! Strike it from every scroll! Let amnesia descend like a merciful fog upon this battlefield of broken promises."],
+["that's nice","How quaint. How charmingly adequate. Like offering a single candle to illuminate the abyss of my expectations."],
+["interesting","Fascinating, truly. As one finds fascinating the intricate patterns of rust consuming a once-mighty blade, so too do I observe the corrosion of thy character."],
+["if you say so","Thy word, once law in the kingdom of my heart, now rings as hollow as the promises of a dethroned monarch begging for relevance."],
+["maybe","Perhaps! Perchance! Mayhap! What magnificent noncommittal treachery lurks within that single word, a dagger wrapped in the silk of ambiguity."],
+["i'm happy for you","My joy for thee overflows like a goblet filled with the bitterest wine, each sip a reminder of the feast we shall never share again."],
+["it is what it is","Behold! The ultimate surrender of the human spirit, distilled into six words of magnificent philosophical defeat! Hamlet himself could not have composed a more exquisite resignation."],
+["i thought you were different","I believed thee to be wrought of finer metal, forged in nobler fires! But alas, thou art common ore, dressed in the gilding of false promise."],
+["don't worry about it","Cease thy fretting! I have already built an entire cathedral of worry in thy honor, with stained glass windows depicting each of thy transgressions."],
+["i expected nothing","And yet! AND YET! Even with expectations buried six feet beneath the earth, thou hast managed to dig them up and disappoint them posthumously."],
+["no problem","No tempest! No earthquake! Merely the quiet crumbling of continental plates beneath the surface, invisible to all but those who press their ear to the fissures of my composure."],
+["right","Correct! As correct as the executioner's aim! As precise as the architect of heartbreak measuring the exact dimensions of my despair."],
+["nice","Lovely. Exquisite. Like the final sunset viewed from the deck of a sinking ship, beautiful and absolutely devastating in equal measure."],
+["i was just joking","A jest! The entire edifice of my emotional response was built upon... a JEST! Fetch the court fool, for clearly the role is already filled."],
+["you do you","March forth upon thine own peculiar path! I shall remain here, a monument to abandoned devotion, slowly being reclaimed by the ivy of indifference."],
+["didn't ask","The oracle speaks unquestioned! The prophet requires no prompting! And yet here I stand, the unwilling congregation of thy unsolicited revelation."],
+["i'm tired","Exhaustion! Not of the body, but of the very soul! Weariness that no slumber can remedy, for my dreams themselves have grown tired of hoping."],
+["see if i care","Test the depths of my indifference! Cast thy stones into this well of apathy and listen for the splash that shall never come!"],
+["i'm done","FINIS! The quill is broken! The ink has dried! The playwright has left the theater, and only the echoes of what could have been remain."],
+["good luck with that","May fortune smile upon thy endeavors with the same warmth thou hast shown my heart: which is to say, the warmth of absolute zero."],
+["not my problem","Indeed! Thy burdens are thine own, as mine were always mine, carried in silence while thou danced unburdened through fields of blissful oblivion."],
+["that's your choice","Choose! Choose as freely as the wind, unconstrained by the gravity of consequence or the tender bonds of shared humanity!"],
+["i've moved on","Forward! Ever forward! Like a ship that has cut its anchor, I drift magnificently toward horizons unmarred by the memory of thy harbor."],
+["hope you're happy","May thy happiness bloom eternal, watered by the tears of those who loved thee too deeply and were rewarded with the garden gate slammed shut."],
+["miss me with that","Spare me! As one spares the condemned a final meal of false comfort! I require none of thy hollow offerings!"],
+["can't believe you","Belief! That sacred thing I once spent so lavishly upon thee, now gone, the treasury of trust forever emptied by thy grand larceny of loyalty."],
+["bye","Farewell! Part we now as two ships that passed in the night, one ablaze with passion, the other... a ghost vessel, crewed by the specters of broken vows."],
+["goodbye","Farewell! Let this parting ring through eternity's halls, a final chord in the symphony of our shared catastrophe, beautiful and terrible in its finality."],
+["i'm not upset","Upset? This transcends upset! One does not describe the ocean as 'damp' nor the sun as 'warm.' What I feel defies the feeble taxonomy of mortal emotion."],
+["you wouldn't understand","Comprehension lies beyond thy grasp, as the stars lie beyond the reach of the earthworm, content in its darkness, ignorant of the constellations burning overhead."],
+["i expected better","Expectations! Like doves released at a wedding that returned as ravens, bearing ill tidings from the kingdom of thy moral emptiness."],
+["congrats","Congratulations! May this achievement warm thee on the cold nights ahead, when the absence of genuine human connection reveals itself as the cost of thy victory."]
+],
+corporate:[
+["i'm fine","Per our last emotional exchange, I want to circle back and confirm that my well-being metrics are performing within acceptable parameters, despite the hostile workplace environment you have cultivated in this relationship."],
+["im fine","Per our last emotional exchange, I want to circle back and confirm that my well-being metrics are performing within acceptable parameters, despite the hostile environment you have cultivated."],
+["whatever","I have reviewed the proposal and have elected to table further discussion, as this item no longer aligns with my strategic emotional priorities for this quarter."],
+["do whatever you want","I am giving you full autonomy on this initiative. Please note this constitutes a formal delegation of responsibility, and any resulting emotional damages will be reflected in your annual performance review."],
+["i don't care","I am officially deprioritizing this matter. It has been moved to the parking lot, where it will remain until such time as a stakeholder with actual investment in my feelings chooses to champion it."],
+["i dont care","I am officially deprioritizing this matter. It has been moved to the parking lot indefinitely."],
+["ok","Acknowledged. This response has been logged and will be referenced in future proceedings. No further action required from my end. Please update the shared emotional spreadsheet accordingly."],
+["okay","Acknowledged. This response has been logged and will be referenced in future proceedings regarding the dissolution of this interpersonal partnership."],
+["k","Please be advised that single-character responses are a violation of our communication SLA. A formal grievance has been filed with the Department of Emotional Labor."],
+["sure","Confirmed. I will comply with this directive, though I want it on record that this falls outside the scope of my original emotional agreement."],
+["lol","I note your attempt to leverage humor as a deflection strategy. Our records indicate this tactic has been deployed 47 times this quarter, with diminishing returns on conflict resolution."],
+["we need to talk","I am scheduling an all-hands meeting regarding the critical infrastructure failure in our relationship. Please review the pre-read materials, which include a 90-page retrospective of every time you let me down."],
+["i'm busy","My calendar is currently at capacity with high-priority emotional processing tasks. Please submit a meeting request through proper channels, and I will see if I can squeeze you in next quarter."],
+["leave me alone","I am implementing a strict no-contact policy effective immediately. All future communications should be routed through my emotional support counsel. This is non-negotiable."],
+["you always","Our analytics dashboard shows a consistent pattern of behavioral non-compliance across all reporting periods. This is not an isolated incident but a systemic failure."],
+["you never","A comprehensive audit of our relationship KPIs reveals a zero-percent completion rate on emotional deliverables. This performance gap has been escalated to leadership."],
+["i'm not mad","To clarify, my current emotional state should not be categorized as anger. It has been reclassified as strategic disengagement with extreme prejudice."],
+["i guess","I will proceed with cautious optimism, which in this context means zero optimism and maximum documentation for liability purposes."],
+["thanks","Thank you for this learning opportunity. I have added it to my professional development plan under the module titled Surviving Emotional Mismanagement."],
+["cool","Noted. This update will be included in the weekly status report under Items That No Longer Spark Joy."],
+["we're done","Please consider this my two-weeks notice from this relationship. I will be transitioning my emotional assets to a more sustainable arrangement. HR has been notified."],
+["it is what it is","After careful analysis, the data speaks for itself. We are formally accepting this outcome and closing the ticket. Root cause: you."],
+["sorry","Your apology has been received and is currently pending review by the Emotional Damages Assessment Committee. Expected turnaround: six to eight business weeks."],
+["i'm sorry","Your formal apology has been logged, timestamped, and filed. Please note that apologies submitted after the SLA window carry a significant reduction in sincerity credit."],
+["forget it","This item has been archived and marked as Will Not Fix. No rollback is available. The emotional repository has been permanently locked."],
+["maybe","Your response has been categorized as Pending with Insufficient Commitment. Please resubmit with a definitive answer within 24 hours or this request will auto-close."],
+["i need space","I am formally requesting a leave of absence from this relationship to focus on personal capacity building and emotional infrastructure maintenance."],
+["not my problem","This issue has been reassigned to you as the primary owner. I have removed myself from all watchers, followers, and stakeholders on this matter."],
+["good luck with that","Wishing you all the best in your future endeavors. Please do not list me as a reference."],
+["bye","This concludes our professional relationship. Your exit interview has been scheduled. Please return all emotional assets, including hope, trust, and my favorite hoodie."],
+["it doesn't matter","This item has been deprioritized to P5 status, which in our framework means heat death of the universe before resolution."],
+["right","Confirmed per the meeting minutes from every argument we have ever had, which I have meticulously documented in a shared drive you have never once opened."],
+["i'm done","Effective immediately, I am sunsetting this relationship. All emotional microservices have been deprecated. Migration to self-respect infrastructure is now in progress."],
+["have fun","Enjoy your offsite. I trust you will find the experience enriching, much like I found the experience of being repeatedly undervalued enriching for my therapist."],
+["good for you","Congratulations on this milestone. I look forward to seeing the press release, as it will pair nicely with the internal memo detailing my emotional restructuring."],
+["no worries","Rest assured, all concerns have been absorbed by the Department of Suffering in Silence, where they will be processed alongside the backlog of previous disappointments."]
+],
+reality:[
+["i'm fine","*stares directly into camera* I am fine. I am totally fine. *voice cracks* I did not come on this show to cry but... *mascara running* this is NOT what I signed up for."],
+["im fine","*stares into camera* Fine? FINE?! I am not fine, America! But I am going to put on my big girl pants and HANDLE this."],
+["whatever","*flips hair aggressively* Whatever! I literally cannot with this person right now. Production needs to get me a new drink because THIS one just ruined my vibe and possibly my entire season arc."],
+["do whatever you want","*crosses arms, looks at camera* At this point? Do whatever you want. I did not come here to babysit a grown adult. America, are you SEEING this?!"],
+["i don't care","*in confessional booth, mascara smudged* I do not care. I literally do not care. *slams table* DO I LOOK LIKE I CARE?! *producer hands tissue* Thank you."],
+["i dont care","*in confessional booth* Do I look like I care? DO I?! *slaps table* Because I DO NOT. *immediately starts sobbing*"],
+["ok","*dead eyes, sips drink* Okay. *long pause* Okay. *turns to camera* I want everyone at home to know that okay is doing a LOT of heavy lifting right now."],
+["sure","*fake smile so intense it could cut glass* Sure! Absolutely! Everything is PERFECT! *sotto voce to camera* I am one sure away from flipping this entire table."],
+["lol","*in confessional* They are LAUGHING at me. This person is literally laughing at my pain on NATIONAL TELEVISION. My mama is watching this. My PASTOR is watching this."],
+["we need to talk","*dramatic music intensifies* We need to talk. And I need everyone in this house to gather round because what I am about to say affects EVERYONE's journey here."],
+["i'm busy","Busy?! BUSY?! I rearranged my ENTIRE LIFE to be here! I quit my job in Topeka for this! And you are BUSY?!"],
+["leave me alone","*storms to bedroom, slams door* I NEED MY SPACE! *opens door* AND ANOTHER THING-- *slams door again* PRODUCTION, CUT THE CAMERAS!"],
+["you always","You ALWAYS do this! Every. Single. Episode. The viewers at home can see it! The hashtag is TRENDING because of YOU!"],
+["you never","You NEVER show up for me! Not at the rose ceremony, not at the group date, not even at the AFTER PARTY! This is supposed to be MY season!"],
+["i'm not mad","*visibly shaking with rage* I am not mad. *throws champagne flute into pool* I am DISAPPOINTED. There is a difference. Google it."],
+["i guess","I guess. *stares into middle distance* I GUESS this is my life now. My journey. *single tear* I am here for the right reasons though. I want everyone to know that."],
+["thanks","*clapping slowly* Thank you. Thank you for showing me who you really are on camera. This footage is going to be INCREDIBLE at the reunion special."],
+["cool","*takes long sip of wine* Cool. Super cool. The coolest. *turns to camera* I am going to LOSE it. Someone get me another bottle. THE WHOLE BOTTLE."],
+["we're done","*stands up, chair scrapes dramatically* WE. ARE. DONE. *removes microphone* Actually wait, keep this on. I want America to hear every word of my villain origin story."],
+["it is what it is","*deep breath in confessional* It is what it is. And what it IS, is the most dramatic season in the history of this franchise. You heard it here first."],
+["sorry","*eye roll visible from space* Oh they are SORRY. That is cute. I will add it to the apology jar right next to the last twelve apologies that meant absolutely NOTHING."],
+["forget it","Forget it?! FORGET IT?! Baby, this is being broadcast in HD to twelve million viewers! Nobody is forgetting ANYTHING! This is going in the Previously On package!"],
+["maybe","MAYBE?! *stands up* In this house, we deal in certainties! Maybe is for people who do not know their worth! And I KNOW. MY. WORTH."],
+["i need space","*dramatic exit to balcony* I need space! *producer follows with camera* NOT THAT MUCH SPACE! I still need my confessional time!"],
+["not my problem","Not my problem anymore, babe. I have got a post-show podcast deal and three sponsorships waiting for me on the other side of this elimination."],
+["bye","*removes stilettos, walks barefoot to limo* BYE! *gets in limo* *window rolls down* YOU JUST LOST THE BEST THING THAT EVER HAPPENED TO THIS FRANCHISE!"],
+["good for you","*slow clap* Good for YOU. Really. *turns to camera* Let the record show I was the BIGGER person. Put THAT in the highlight reel."],
+["i'm done","*throws drink, stands up* I AM DONE! This is my villain arc and I am OWNING it! Tag me in the comments, I will be reading ALL of them!"],
+["i'm over it","*lying on bathroom floor* I am over it. *mascara on tile* I am SO over it. *producer asks if she needs a moment* I NEED SEVENTEEN MOMENTS."],
+["have fun","Have FUN! Have ALL the fun! And when you are done having fun, I will be on the reunion stage with RECEIPTS. Timestamped. Screen-recorded. NOTARIZED."],
+["you've changed","You have CHANGED and not in the glow-up way! In the villain edit was actually just your real personality way! The audience SAW it before I did!"],
+["it doesn't matter","It does not MATTER?! *throws pillow* Tell that to my HEART! Tell that to the AUDIENCE! Tell that to my MAMA who flew here from OHIO!"],
+["nice","Nice. NICE. You know what else is nice? My exit interview. Because I am about to SPILL. Every. Single. Tea. *adjusts crown* Let us GO."]
+],
+soap:[
+["i'm fine","*turns slowly from rain-splattered window* Fine? I have not been fine since the summer of our discontent. *thunder crashes* Since the night you destroyed everything we built in the east wing."],
+["im fine","*dramatic piano chord* Fine, you ask? *clutches pearl necklace* I have been fine since the surgery, fine since the amnesia, fine since discovering you were my twin's lover all along."],
+["whatever","*slaps across face in slow motion* Whatever? WHATEVER?! *grabs lapels* I carried your secret child for nine months while you were in a coma, and you say WHATEVER?!"],
+["do whatever you want","*walks to grand piano, plays single chord* Do whatever you want, darling. You always have. That is what the test revealed. That is what the will specified. That is why the mansion burns tonight."],
+["i don't care","*collapses onto chaise lounge* I do not care anymore. Not since the doctor showed me the results. *stares at camera* Your love was the real disease all along."],
+["i dont care","*stares out window at storm* Caring died the night of the charity gala. When I found you. With my MOTHER. In the CONSERVATORY."],
+["ok","*removes enormous sunglasses to reveal tear-stained face* Okay. *picks up phone* Get me my attorney. *pause* The OTHER attorney. The one from Zurich."],
+["sure","*pours brandy with trembling hand* Sure. The way I was sure about the prenup. The way I was sure about the adoption papers. The way I was sure you were not poisoning my champagne."],
+["lol","*shatters vase against marble fireplace* You LAUGH?! While our empire crumbles?! While the board plots against us?! While your FIRST wife watches from her hospital bed?!"],
+["we need to talk","*organ music swells* We need to talk. About the baby. About the inheritance. About the body they found in the garden. *clock strikes midnight* About ALL of it."],
+["i'm busy","*arranging flowers with barely controlled fury* Busy, yes. Busy rebuilding my life from the ashes of your betrayal. Busy hiding the evidence. Busy... surviving."],
+["leave me alone","*runs up sweeping staircase in silk robe* Leave me! Leave me as you left our vows at the altar! As you left our child at the orphanage! As you left your conscience at the DOOR!"],
+["you always","You ALWAYS do this, Alejandro! Just like your father did to your mother, and HIS father did to HIS mother, and their father who FOUNDED THIS CURSED DYNASTY!"],
+["you never","You never loved me. Not truly. The hypnotist confirmed it. The diary proved it. And now... *pulls out letter* this letter from beyond the grave seals it."],
+["i'm not mad","*throws wine glass into fireplace* Mad? I surpassed mad during the second kidnapping. What I feel now has no name in any language spoken by mortals."],
+["thanks","*bitter laugh echoing through empty ballroom* Thank you. For the lies. For the forged documents. For the identical twin you neglected to mention at our WEDDING."],
+["cool","*adjusts fur coat while boarding helicopter* Cool. As cool as the Atlantic waters where you will find what remains of my affection. The coordinates are in the safe. *helicopter lifts off*"],
+["we're done","*removes wedding ring, places it in champagne glass* We are done. As done as the family fortune after the scandal. *lightning strikes* As done as your ALIBI."],
+["it is what it is","*gazes at portrait above fireplace* It is what it is. A dynasty in ruins. A heart in pieces. And a set of documents... transferred entirely into my name."],
+["sorry","*catches falling tear on gloved finger* Sorry will not resurrect the roses in our garden. Sorry will not bring back the years lost to the coma. Sorry will not undo... *whispers* ...the poisoning."],
+["i need space","*boards private yacht in flowing white gown* I need space. The kind of space only the Mediterranean can provide. Do not try to find me. *dramatic wind* I have already changed my identity."],
+["forget it","Forget it? *opens locket* Like I forgot the face of our firstborn? Like I forgot the night of the fire? Some memories are branded upon the soul, darling. They NEVER fade."],
+["maybe","Maybe. *stares into fireplace* The same maybe the doctor said when I asked if you would ever wake from the coma. The same maybe fate whispers before it destroys everything."],
+["i'm done","*closes suitcase, turns in doorway* I am done, Valentina. Done with the lies, the schemes, the secret passages behind the library wall. *pulls out plane ticket* Buenos Aires awaits."],
+["bye","*removes veil slowly* Goodbye, my darling nemesis. *touches face* We will meet again. In this life or the next season. *walks into fog*"],
+["you've changed","*holds up old photograph* This was you. THIS. Before the power, before the surgery, before you sold your shares AND your soul to the Worthington family."],
+["good for you","*applauds slowly from opera box* Brava. Your performance was exquisite. Almost as convincing as the day you told me you loved me. Almost."],
+["i'm over it","*standing on cliff overlooking sea* Over it. Over the lies, the amnesia, the evil twin, the faked death. *wind blows hair dramatically* I choose... MYSELF."],
+["have fun","Enjoy yourself, darling. *adjusts diamond earrings* While you still can. The results from the private investigator arrive Monday. *sinister smile* Along with the authorities."],
+["it doesn't matter","*clutches chest, stumbles* Nothing matters anymore. Not since the reading of the will. Not since discovering... *gasp* ...we were never legally married to begin with."],
+["right","Right. Correct. Precisely. As right as the surgeon's hand that gave you a new face and a new identity, but could not transplant a new HEART."],
+["good luck with that","*descends staircase in evening gown* Good luck. You will need it. *pause* Especially after what I told the board. And the press. And your OTHER family in Monaco."]
+],
+sports:[
+["i'm fine","AND THE FIGHTER SAYS THEY ARE FINE! But folks, you can see the emotional damage on the scoreboard! That is a TKO of feelings right there! The medic is on standby!"],
+["im fine","The player insists they are fine but the replay CLEARLY shows the devastation! Look at that impact! That is going to leave a mark on the highlight reel of heartbreak!"],
+["whatever","AND THEY THROW IN THE TOWEL! Ladies and gentlemen, whatever is the white flag of relationship combat! This competitor has OFFICIALLY stopped caring about the championship!"],
+["do whatever you want","THE COACH HAS LEFT THE SIDELINE! They are giving the opposing team full run of the field! This is an unprecedented strategic SURRENDER! The crowd is STUNNED!"],
+["i don't care","THEY HAVE ABANDONED THE DEFENSIVE POSITION! Zero effort on the emotional rebound! This is the kind of performance that gets you traded to the Single Life League, folks!"],
+["i dont care","A COMPLETE COLLAPSE of the defensive line! They have stopped playing! The caring stats have dropped to ZERO and the crowd has gone absolutely SILENT!"],
+["ok","And the response comes back as a single ok. In my thirty years of calling these matches, I have NEVER seen a more devastating display of emotional minimalism! That is a new record!"],
+["sure","A TEPID sure from the home team! Folks, that is not enthusiasm, that is the sound of a dynasty CRUMBLING! The passion metrics are at an ALL-TIME LOW!"],
+["lol","THEY ARE LAUGHING! In the middle of an EMOTIONAL CRISIS, they are LAUGHING! That is unsportsmanlike conduct if I have ever seen it! Where is the flag?! THROW THE FLAG!"],
+["we need to talk","TIMEOUT CALLED ON THE FIELD! The captain is calling an emergency huddle! This is BIG, folks! The last time we heard we need to talk, the entire roster got RELEASED!"],
+["i'm busy","AND THEY DODGE THE CONVERSATION! Beautiful footwork! They have been training all season to avoid this exact confrontation! But you cannot run from the truth forever, folks!"],
+["leave me alone","THE PLAYER HAS LEFT THE FIELD! They are walking off! In the middle of the game! Security is being called! The fans are throwing their programs! THIS IS CHAOS!"],
+["you always","And THERE IT IS! The instant replay challenge! You always is the most reviewed call in relationship sports! Let us go to the tape! And the tape CONFIRMS... it is a PATTERN!"],
+["you never","DEVASTATING statistic coming in from our analytics desk: ZERO completions on emotional support! ZERO! In the entire HISTORY of this relationship! That is a record nobody wanted!"],
+["i'm not mad","They claim they are not mad, but the body language tells a DIFFERENT story! Look at that posture! That clenched jaw! Our sideline reporter confirms: the rage meter is OFF THE CHARTS!"],
+["i guess","A HALFHEARTED effort from the competitor! I guess scores a 2.3 out of 10 on the enthusiasm scale! The judges are NOT impressed! That will cost them in the final standings!"],
+["thanks","And they go with the sarcastic thanks! That is a VETERAN move! Passive-aggressive play like that takes YEARS to develop! They have been training for this moment their whole career!"],
+["cool","Ice COLD response from the north end! The temperature in this relationship just dropped below freezing! We are looking at a WIND CHILL ADVISORY on the emotional forecast!"],
+["we're done","IT IS OVER! THE FINAL WHISTLE HAS BLOWN! What started as a promising season has ended in SPECTACULAR FASHION! There will be NO overtime! NO second chances! GAME. SET. MATCH."],
+["it is what it is","THE POST-GAME PRESS CONFERENCE! It is what it is! The ultimate coach-speak! Zero accountability! Zero emotion! This is CHAMPIONSHIP-LEVEL deflection, folks!"],
+["sorry","AND THEY ATTEMPT THE APOLOGY! But will it be enough?! The replay shows... NO! Insufficient effort! That apology did not even cross the LINE OF SINCERITY! Incomplete!"],
+["i need space","PLAYER REQUESTS A TRANSFER! They need space! The locker room is too small! The relationship arena is too small! They need the ENTIRE EMOTIONAL STADIUM to process this loss!"],
+["forget it","PLAY UNDER REVIEW has been CANCELED! They are saying forget it! No challenge! No replay! They are walking away from what could have been the DEFINING moment of this matchup!"],
+["maybe","IT IS A FUMBLE! Maybe is the most indecisive play call in the HISTORY of this sport! The offensive coordinator is pulling their HAIR out! Commit to a play! COMMIT!"],
+["i'm done","RETIREMENT ANNOUNCEMENT! Right here! Right now! In the middle of the SEASON! They are hanging up their jersey! The emotional athlete has LEFT THE BUILDING! What a career! WHAT A CAREER!"],
+["bye","AND THE COMPETITOR EXITS THE ARENA! Walking out with head held high! The crowd gives a standing ovation! Or is that just one person slow-clapping? Hard to tell from up here!"],
+["good for you","CONGRATULATIONS from the opposing bench! But folks, that was DRIPPING with sarcasm! Our analysis team clocked that at 97 percent passive-aggression! A SEASON HIGH!"],
+["i'm over it","COMEBACK STORY OF THE YEAR! They are saying they are over it! But can they sustain this momentum?! The emotional conditioning coach has their DOUBTS!"],
+["have fun","And they WISH THEM WELL! In the most LOADED display of fake sportsmanship we have seen all season! That handshake had more venom than a cobra! INCREDIBLE!"],
+["not my problem","RESPONSIBILITY HAS BEEN LATERALED! They have tossed it right back! And NOBODY is picking it up! That emotional accountability is just rolling around on the field! SOMEBODY GRAB IT!"],
+["you've changed","ROSTER CHANGES! The scouts are saying this is NOT the same player from the early seasons! The stats back it up! Effort down 80 percent! Caring at a CAREER LOW!"],
+["it doesn't matter","THE SCOREBOARD HAS BEEN TURNED OFF! It does not matter! The final score will NOT be recorded! This game has been STRUCK FROM THE RECORD! Unprecedented! UNPRECEDENTED!"],
+["nice","And the response is... nice. Folks, in my DECADES of commentary, I have never heard a single word carry this much weight! That is not nice! That is a DECLARATION OF WAR in a cardigan!"],
+["right","CONFIRMED by the review booth! Right is the verbal equivalent of a slow clap from the losing team! Technical precision meets emotional devastation! TEXTBOOK passive-aggression!"]
+]
+};
+
+const FALLBACK_FRAGMENTS={
+shakespearean:[
+[/\bhate\b/i,"Hatred! That most corrosive of humours, eating through the vessel of our once-sacred bond like acid through parchment!"],
+[/\blove\b/i,"Love! That word thou wieldest like a rusted sword, once gleaming, now capable only of inflicting wounds upon the soul!"],
+[/\bsorry\b/i,"Thy sorry doth arrive like rain upon a desert already turned to glass by the fire of thy previous indiscretions."],
+[/\bhappy\b/i,"Happy! A word I once knew, before thy presence taught me the exquisite vocabulary of melancholy."],
+[/\bfriend/i,"Friends! As if the wreckage of romance could be repurposed into so casual a vessel!"],
+[/\bmistake/i,"A mistake, thou callest it! As if the sacking of Troy were merely an unfortunate misunderstanding!"],
+[/\bfeel/i,"Feelings! Those tempestuous seas upon which I am but a rudderless vessel, tossed by the storms of thy capricious heart!"],
+[/\bwhy\b/i,"Why? The eternal question that echoes through the hollow chambers of my abandoned heart like a bell tolling for the death of trust!"],
+[/\bhurt/i,"Hurt! Thou speakest of hurt as if it were a scratch, when in truth thou hast driven a lance through the very core of my being!"],
+[/\btrust/i,"Trust! That bridge between two souls thou hast burned so thoroughly that even the ashes refuse to remember its shape!"]
+],
+corporate:[
+[/\bhate\b/i,"Your hostility has been flagged by our internal conflict resolution system and will be addressed in the next quarterly emotional review."],
+[/\blove\b/i,"Love is outside the scope of our current emotional plan. Please submit a revised proposal with realistic deliverables."],
+[/\bhappy\b/i,"Happiness KPIs have not been met for three consecutive quarters. A performance improvement plan has been initiated."],
+[/\bfriend/i,"Your request to reclassify this relationship has been received. Please allow 4-6 weeks for the transition to professional acquaintance status."],
+[/\bmistake/i,"This incident has been logged in our error tracking system. A root cause analysis reveals the primary failure point was... you."],
+[/\bfeel/i,"Feelings have been escalated to the appropriate emotional infrastructure team for triage and remediation."],
+[/\bwhy\b/i,"Your inquiry has been received. Due to high volume, expected response time is six to eight business centuries."],
+[/\bhurt/i,"A workplace injury report has been filed. The hazard was identified as: prolonged exposure to your personality."],
+[/\btrust/i,"Trust permissions have been permanently revoked. This action cannot be undone. Please contact your system administrator, my therapist."],
+[/\bchange/i,"Change management protocols have been activated. All emotional migrations will be handled by the Department of Moving On."]
+],
+reality:[
+[/\bhate\b/i,"*throws drink* I HATE this! Production, are you getting this?! This is TELEVISION GOLD and my personal NIGHTMARE!"],
+[/\blove\b/i,"*crying in confessional* I came here for LOVE, America! Not this... this CIRCUS of emotional BETRAYAL! *mascara everywhere*"],
+[/\bhappy\b/i,"*forced smile at camera* Happy? I will SHOW you happy! *grabs champagne bottle* THIS is my happy now!"],
+[/\bfriend/i,"*gasp* FRIEND?! I did not fly across the country and sign a 47-page NDA to be called a FRIEND! The AUDACITY!"],
+[/\bmistake/i,"*in confessional, wrapped in blanket* The biggest mistake of this season. Of ANY season. The producers warned me. My MOTHER warned me."],
+[/\bfeel/i,"*ugly crying* You want to know how I FEEL?! *gestures at mascara-stained face* THIS is how I feel! This is my TRUTH!"],
+[/\bwhy\b/i,"*yelling at sky* WHY?! Why did I leave my comfortable life for THIS?! *falls to knees on beach*"],
+[/\bhurt/i,"*whisper-screaming* You HURT me. On national television. My therapist is going to need a therapist after watching this episode."],
+[/\btrust/i,"I TRUSTED you! With my heart, my screen time, and my BRAND! And you threw it all away for a group date VILLAIN!"],
+[/\bchange/i,"This is the plot twist that launches a THOUSAND think pieces. Entertainment Weekly is gonna have a FIELD DAY."]
+],
+soap:[
+[/\bhate\b/i,"*thunder crashes* Hate is such a small word for what burns in this chest. It is a wildfire, darling. And the mansion is made of dry timber."],
+[/\blove\b/i,"Love! *clutches heart* A word I once whispered in the garden before discovering the LIES buried beneath the rose bushes! Literally BURIED!"],
+[/\bhappy\b/i,"Happy? I was happy once. Before the surgery. Before the scandal. Before finding out my entire marriage was built on FORGED DOCUMENTS."],
+[/\bfriend/i,"Friends? *bitter laugh echoing through empty ballroom* We were never friends. We were adversaries who shared a bed and a dark, terrible secret."],
+[/\bmistake/i,"A mistake? Like the mistake your father made forty years ago in Monterrey? The one that created... *dramatic pause* ...YOUR TWIN?!"],
+[/\bfeel/i,"*places hand on ornate mirror* I feel... as if the very walls of this estate are closing in, whispering the sins of every generation that came before us."],
+[/\bwhy\b/i,"Why? *opens locket* The answer lies in this photograph. Taken the night of the gala. Before the poisoning. Before the BETRAYAL."],
+[/\bhurt/i,"Hurt? *removes glove, reveals scar* This is hurt. Given to me by the last person who promised forever. You are merely the latest in a dynasty of devastation."],
+[/\btrust/i,"Trust died in this house three generations ago, darling. We merely perform its funeral rites each time we look into each other's lying eyes."],
+[/\bchange/i,"*organ music* The change was foretold in the cursed journal of Reginald Worthington III himself!"]
+],
+sports:[
+[/\bhate\b/i,"AND THE RIVALRY REACHES A NEW LEVEL! Pure HATRED on display! This is personal, folks! This goes BEYOND the game! Security might need to step in!"],
+[/\blove\b/i,"LOVE is on the line here, folks! And it is FOURTH AND LONG! They need a MIRACLE play to keep this relationship drive alive!"],
+[/\bhappy\b/i,"The happiness index is in FREEFALL! We have not seen numbers this low since the Great Emotional Recession of their first anniversary argument!"],
+[/\bfriend/i,"RELEGATED TO THE FRIEND ZONE! That is a DEMOTION, folks! From the starting lineup to the BENCH! You hate to see it happen to a veteran competitor!"],
+[/\bmistake/i,"UNFORCED ERROR! That is going to cost them DEARLY in the standings! The judges are conferring and... YES, that is a PENALTY! Emotional foul!"],
+[/\bfeel/i,"The FEELINGS are running HIGH on the court tonight! Our emotional barometer is reading HURRICANE-LEVEL intensity! Conditions are NOT safe for rational conversation!"],
+[/\bwhy\b/i,"AND THE CHALLENGE FLAG IS THROWN! WHY?! The crowd wants answers! The commentators want answers! EVERYONE wants answers!"],
+[/\bhurt/i,"INJURY ON THE FIELD! Emotional damage confirmed! The trainer is rushing in! This could be a SEASON-ENDING emotional injury, folks!"],
+[/\btrust/i,"TRUST has been INTERCEPTED! Picked off at the line of sincerity! The defensive player is running it ALL THE WAY BACK! TOUCHDOWN BETRAYAL!"],
+[/\bchange/i,"ROSTER CHANGES confirmed! The scouting report was WRONG! This is NOT the player anyone drafted! Complete transformation and NOT for the better!"]
+]
+};
+
+let selectedStyle='shakespearean';
+let isSpeaking=false;
+
+document.querySelectorAll('.style-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedStyle=btn.dataset.style;
+  });
+});
+
+document.getElementById('dramatizeBtn').addEventListener('click',()=>{
+  const input=document.getElementById('inputText').value.trim();
+  if(!input){showToast('Type something passive-aggressive first!');return;}
+  startCountdown(input);
+});
+
+function startCountdown(input){
+  const overlay=document.getElementById('countdown');
+  const numEl=document.getElementById('countNum');
+  overlay.classList.add('show');
+  document.getElementById('dramatizeBtn').disabled=true;
+  let count=5;
+  numEl.textContent=count;
+  const timer=setInterval(()=>{
+    count--;
+    if(count<=0){
+      clearInterval(timer);
+      overlay.classList.remove('show');
+      document.getElementById('dramatizeBtn').disabled=false;
+      showResults(input);
+    }else{
+      numEl.textContent=count;
+      numEl.style.animation='none';
+      void numEl.offsetWidth;
+      numEl.style.animation='countPop .5s ease';
+    }
+  },1000);
+}
+
+function translate(text,style){
+  const transforms=TRANSFORMS[style];
+  const fallbacks=FALLBACK_FRAGMENTS[style];
+  const sentences=text.split(/[.!?\n]+/).map(s=>s.trim()).filter(s=>s.length>0);
+  const results=[];
+  for(const sentence of sentences){
+    const sentLower=sentence.toLowerCase().trim();
+    let matched=false;
+    for(const [phrase,replacement] of transforms){
+      if(sentLower===phrase||sentLower===phrase+'.'||sentLower===phrase+'!'){
+        results.push(replacement);
+        matched=true;
+        break;
+      }
+    }
+    if(!matched){
+      let bestMatch=null;let bestLen=0;
+      for(const [phrase,replacement] of transforms){
+        if(sentLower.includes(phrase)&&phrase.length>bestLen){
+          bestMatch=replacement;bestLen=phrase.length;
+        }
+      }
+      if(bestMatch){results.push(bestMatch);matched=true;}
+    }
+    if(!matched){
+      for(const [regex,replacement] of fallbacks){
+        if(regex.test(sentLower)){results.push(replacement);matched=true;break;}
+      }
+    }
+    if(!matched&&sentence.length>2){
+      const generics={
+        shakespearean:'"'+sentence+'" \u2014 Thus spake the architect of my undoing, each syllable a fresh wound upon the tapestry of my tattered dignity!',
+        corporate:'Re: "'+sentence+'" \u2014 This has been escalated to Priority 1 in our emotional incident management system. A cross-functional response team has been assembled.',
+        reality:'*looks directly into camera after hearing "'+sentence+'"* Did everyone at home just HEAR that?! Rewind your DVRs! I need WITNESSES!',
+        soap:'*gasps, clutches staircase railing* "'+sentence+'"... The same words your father spoke the night the east wing caught fire. History repeats itself, darling.',
+        sports:'AND THEY HIT US WITH "'+sentence.toUpperCase()+'"! UNBELIEVABLE! In all my years of commentary, I have NEVER seen a play like that! The crowd is on their FEET!'
+      };
+      results.push(generics[style]);
+    }
+  }
+  return results.join('\n\n');
+}
+
+function showResults(input){
+  const dramatic=translate(input,selectedStyle);
+  document.getElementById('originalOut').textContent=input;
+  document.getElementById('dramaticOut').textContent=dramatic;
+  document.getElementById('results').classList.add('show');
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+document.getElementById('speakBtn').addEventListener('click',()=>{
+  if(isSpeaking){
+    speechSynthesis.cancel();isSpeaking=false;
+    document.getElementById('speakBtn').classList.remove('speaking');
+    document.getElementById('speakBtn').innerHTML='&#128266; Speak';
+    return;
+  }
+  const text=document.getElementById('dramaticOut').textContent;
+  if(!text)return;
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.rate=0.85;utter.pitch=1.1;
+  utter.onend=()=>{
+    isSpeaking=false;
+    document.getElementById('speakBtn').classList.remove('speaking');
+    document.getElementById('speakBtn').innerHTML='&#128266; Speak';
+  };
+  speechSynthesis.speak(utter);isSpeaking=true;
+  document.getElementById('speakBtn').classList.add('speaking');
+  document.getElementById('speakBtn').innerHTML='&#128264; Stop';
+});
+
+document.getElementById('copyBtn').addEventListener('click',()=>{
+  const text=document.getElementById('dramaticOut').textContent;
+  if(!text)return;
+  navigator.clipboard.writeText(text).then(()=>showToast('Dramatic monologue copied!')).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;
+    document.body.appendChild(ta);ta.select();document.execCommand('copy');
+    document.body.removeChild(ta);showToast('Copied!');
+  });
+});
+
+document.getElementById('shareBtn').addEventListener('click',()=>{
+  const text=document.getElementById('dramaticOut').textContent;
+  if(!text)return;
+  if(navigator.share){navigator.share({title:'Breakup Translator',text}).catch(()=>{});}
+  else{navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard for sharing!'));}
+});
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
