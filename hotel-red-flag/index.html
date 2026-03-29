@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hotel Red Flag</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ff0044,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.hotel-name{width:100%;padding:12px;background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#fff;font-size:1rem;margin-bottom:16px;text-align:center}
+.hotel-name::placeholder{color:#555}
+.checklist{margin-bottom:16px}
+.checklist h2{font-size:1rem;color:#ff4444;margin-bottom:12px}
+.flag-item{display:flex;align-items:center;padding:10px 14px;background:#111;border-radius:10px;margin-bottom:6px;cursor:pointer;transition:.2s;user-select:none}
+.flag-item:hover{background:#1a1020}
+.flag-item.checked{background:#1a0a0a;border:1px solid #ff4444}
+.flag-item .cb{width:22px;height:22px;border:2px solid #444;border-radius:4px;margin-right:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s}
+.flag-item.checked .cb{background:#ff4444;border-color:#ff4444}
+.flag-item.checked .cb::after{content:'!';color:#fff;font-weight:700;font-size:.8rem}
+.flag-item .text{flex:1;font-size:.9rem}
+.flag-item .severity{font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px;white-space:nowrap}
+.sev-low{background:#1a1a0a;color:#ffcc00}
+.sev-med{background:#2a1a0a;color:#ff8800}
+.sev-high{background:#2a0a0a;color:#ff4444}
+.sev-run{background:#ff0044;color:#fff}
+.score-btn{width:100%;padding:14px;background:linear-gradient(135deg,#ff0044,#cc0033);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;margin:16px 0;transition:.3s}
+.score-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(255,0,68,.4)}
+.result{background:#1a1020;border:2px solid #ff4444;border-radius:16px;padding:24px;margin:16px 0;text-align:center;display:none;animation:fadeIn .5s}
+.result .score{font-size:4rem;font-weight:700}
+.result .title{font-size:1.3rem;margin:8px 0;font-weight:700}
+.result .desc{color:#999;font-size:.9rem;line-height:1.5;margin-top:8px}
+.result .verdict{margin-top:12px;padding:10px;background:#111;border-radius:8px;font-size:.85rem;color:#ff8888}
+.stars{font-size:2rem;margin:10px 0}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Hotel Red Flag</h1>
+<p class="subtitle">Rate the horror. Calculate the regret.</p>
+<input class="hotel-name" id="hotelName" placeholder="Hotel Name (optional)" />
+<div class="checklist">
+<h2>Red Flag Checklist</h2>
+<div id="flags"></div>
+</div>
+<button class="score-btn" onclick="calculate()">Calculate Hotel Horror Score</button>
+<div class="result" id="result"></div>
+</div>
+
+<script>
+const flags=[
+{text:"Thin walls (you know your neighbor's phone alarm)",severity:"med",points:6},
+{text:"Weird smell that 'freshener' can't hide",severity:"high",points:8},
+{text:"Stains of unknown origin on bedspread",severity:"high",points:9},
+{text:"TV remote is sticky",severity:"med",points:5},
+{text:"WiFi password is 12345678",severity:"low",points:3},
+{text:"Bathroom fan sounds like a helicopter",severity:"low",points:3},
+{text:"Hair in the shower that isn't yours",severity:"high",points:8},
+{text:"The 'view' is a parking lot",severity:"low",points:4},
+{text:"Ice machine is 'temporarily' out of order (since 2019)",severity:"low",points:3},
+{text:"Continental breakfast = stale muffins + despair",severity:"med",points:5},
+{text:"Key card fails 3+ times before working",severity:"low",points:3},
+{text:"Carpet has a mysterious damp patch",severity:"high",points:9},
+{text:"Elevator makes concerning sounds",severity:"med",points:6},
+{text:"'Complimentary' shampoo is watered down dish soap",severity:"low",points:4},
+{text:"AC has two settings: Arctic and Off",severity:"med",points:5},
+{text:"Bed has a permanent body-shaped dip",severity:"med",points:6},
+{text:"Curtains don't fully close (sunrise alarm!)",severity:"med",points:5},
+{text:"Fire escape plan is hand-drawn",severity:"high",points:8},
+{text:"Pool is 'closed for maintenance' indefinitely",severity:"low",points:3},
+{text:"Front desk couldn't find your reservation",severity:"med",points:6},
+{text:"Towels are thinner than paper",severity:"med",points:5},
+{text:"You can hear the highway from bed",severity:"med",points:5},
+{text:"Smoke detector is missing batteries",severity:"run",points:10},
+{text:"Door lock is loose / doesn't fully engage",severity:"run",points:10},
+{text:"Bugs. Any kind. Any size.",severity:"run",points:10},
+{text:"Previous guest's belongings still in room",severity:"high",points:8},
+{text:"Hot water takes 10+ minutes to arrive",severity:"med",points:5},
+{text:"'Renovated' means they added a coat of paint. One coat.",severity:"low",points:4},
+{text:"Minibar has expired items",severity:"med",points:6},
+{text:"The hallway smells like a crime scene",severity:"high",points:8},
+{text:"Check-in person looked surprised you actually booked here",severity:"med",points:7},
+{text:"Bathroom door doesn't lock",severity:"high",points:8},
+{text:"Light switch sparks when you flip it",severity:"run",points:10},
+{text:"Mysterious sounds from the room above at 3am",severity:"high",points:7},
+{text:"'King bed' is two twins pushed together",severity:"med",points:5}
+];
+
+const verdicts=[
+{max:10,title:"Surprisingly Decent",color:"#00cc66",stars:4,desc:"Either this hotel is fine or your standards are dangerously low."},
+{max:30,title:"Mildly Concerning",color:"#ffcc00",stars:3,desc:"It's got character. 'Character' means problems that aren't quite bad enough to leave."},
+{max:60,title:"Certified Dump",color:"#ff8800",stars:2,desc:"You're getting what you paid for. Which is apparently nothing."},
+{max:90,title:"Horror Show",color:"#ff4444",stars:1,desc:"This is less a hotel and more a cautionary tale. Your TripAdvisor review will be legendary."},
+{max:150,title:"Condemned Building",color:"#ff0044",stars:0,desc:"This isn't a hotel. This is a crime scene with a continental breakfast. Leave. Now. Don't look back."},
+{max:999,title:"FLEE IMMEDIATELY",color:"#ff0044",stars:0,desc:"You are in danger. This 'hotel' violates the Geneva Convention. Grab your passport. Run. File a report from a safe location."}
+];
+
+const roasts=[
+"Your hotel's TripAdvisor page should come with a content warning.",
+"This hotel was clearly designed by someone who has never slept indoors.",
+"The only thing 5-star about this place is the number of health violations.",
+"If this hotel were a movie, it would be rated R for 'Really don't stay here.'",
+"The ghost of every previous guest is judging you for staying.",
+"This hotel's motto: 'At least it's not the street.' (Debatable.)",
+"Your hotel has big 'we don't ask questions' energy.",
+"Fun fact: this hotel's last good review was written by the owner's mom.",
+"This hotel is proof that a roof over your head isn't always a good thing.",
+"Congratulations, you've found the hotel that other bad hotels look down on.",
+"Your hotel called. It wants to apologize. But the phone doesn't work.",
+"This hotel is what happens when 'budget' meets 'no budget for anything.'",
+"The hotel brochure and reality are in two completely different zip codes.",
+"Your room has more red flags than a Soviet parade.",
+"This hotel's cleanliness standards peak at 'visible from space.'",
+"If tetanus were a place, it would leave a 1-star review of THIS hotel.",
+"The only positive thing about this hotel is the COVID test you'll need after.",
+"This hotel makes camping look like the Four Seasons.",
+"Your hotel is the reason travel insurance exists.",
+"Legend says the last satisfied guest checked in during the Cold War.",
+"This hotel's elevator music is just screaming.",
+"The complimentary mints on the pillow are from 2017.",
+"This hotel was clearly decorated during a blackout.",
+"Your hotel's 'recently renovated' means they changed the lightbulb in the hallway.",
+"The 'ocean view' is a poster of the ocean taped to the wall.",
+"This hotel makes you appreciate your own bathroom like never before.",
+"Even the cockroaches filed a complaint.",
+"Your hotel is where dreams go to check in and never check out.",
+"The hotel's fire escape plan is: 'Good luck.'",
+"This is less a hotel and more a 'choose your own adventure' in survival."
+];
+
+document.getElementById('flags').innerHTML=flags.map((f,i)=>
+`<div class="flag-item" id="flag${i}" onclick="toggleFlag(${i})"><div class="cb"></div><span class="text">${f.text}</span><span class="severity sev-${f.severity}">${f.severity==='run'?'RUN':f.severity.toUpperCase()}</span></div>`
+).join('');
+
+function toggleFlag(i){document.getElementById('flag'+i).classList.toggle('checked')}
+
+function calculate(){
+let total=0;
+const checked=[];
+flags.forEach((f,i)=>{if(document.getElementById('flag'+i).classList.contains('checked')){total+=f.points;checked.push(f)}});
+if(checked.length===0){alert('Check at least one red flag!');return}
+const v=verdicts.find(v=>total<=v.max)||verdicts[verdicts.length-1];
+const hotel=document.getElementById('hotelName').value||'Your Hotel';
+const roast=roasts[Math.floor(Math.random()*roasts.length)];
+const el=document.getElementById('result');
+el.style.display='block';
+el.innerHTML=`
+<div class="score" style="color:${v.color}">${total}</div>
+<div class="stars">${'&#9733;'.repeat(v.stars)}${'&#9734;'.repeat(5-v.stars)}</div>
+<div class="title" style="color:${v.color}">${v.title}</div>
+<div class="desc">${v.desc}</div>
+<div class="verdict">${roast}</div>
+<div style="margin-top:12px;font-size:.8rem;color:#666">${hotel}: ${checked.length} red flags detected out of ${flags.length} possible</div>`;
+el.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

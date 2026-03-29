@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cooking Chaos</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ff7043,#ffa726);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:15px;font-size:0.9em;text-align:center}
+.chaos-meter{max-width:500px;width:100%;margin-bottom:15px;text-align:center}
+.chaos-label{font-size:0.8em;color:#888;margin-bottom:5px}
+.chaos-bar{height:10px;background:#222;border-radius:5px;overflow:hidden}
+.chaos-fill{height:100%;border-radius:5px;transition:width .3s,background .3s}
+.controls{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;justify-content:center}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.9em;color:#fff;transition:all .3s}
+.btn-add{background:linear-gradient(135deg,#ff7043,#ffa726)}.btn-add:hover{transform:scale(1.05)}
+.btn-clear{background:#333}
+.timers{max-width:600px;width:100%;display:flex;flex-direction:column;gap:10px}
+.timer-card{background:#1a1a2e;border-radius:14px;padding:15px 20px;display:flex;align-items:center;gap:15px;animation:slideIn .3s;position:relative;overflow:hidden}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.timer-card.disaster{border:2px solid #ff5252;animation:shake .3s}
+.timer-card.done{border:2px solid #66bb6a}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.timer-emoji{font-size:2em;min-width:45px;text-align:center}
+.timer-info{flex:1}
+.timer-name{font-weight:bold;font-size:0.95em;margin-bottom:3px}
+.timer-status{font-size:0.8em;color:#888}
+.timer-time{font-family:'Courier New',monospace;font-size:1.5em;font-weight:bold;min-width:70px;text-align:right}
+.timer-progress{position:absolute;bottom:0;left:0;height:3px;background:#ff7043;transition:width 1s linear}
+.timer-btn{background:none;border:none;font-size:1.3em;cursor:pointer;padding:5px}
+.event-log{max-width:600px;width:100%;margin-top:15px;max-height:200px;overflow-y:auto}
+.event{padding:8px 12px;border-radius:8px;margin-bottom:5px;font-size:0.8em;background:#111;animation:fadeIn .3s}
+.event-disaster{background:#2a1111;color:#ff8a80}
+.event-good{background:#112a11;color:#a5d6a7}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+</style>
+</head>
+<body>
+<h1>Cooking Chaos</h1>
+<p class="subtitle">Manage multiple timers. Embrace the disasters.</p>
+
+<div class="chaos-meter">
+  <div class="chaos-label">CHAOS LEVEL: <span id="chaosText">Calm Kitchen</span></div>
+  <div class="chaos-bar"><div class="chaos-fill" id="chaosFill" style="width:0%;background:#66bb6a"></div></div>
+</div>
+
+<div class="controls">
+  <button class="btn btn-add" onclick="addRandomTimer()">Add Random Dish</button>
+  <button class="btn btn-clear" onclick="clearAll()">Abandon Kitchen</button>
+</div>
+
+<div class="timers" id="timers"></div>
+<div class="event-log" id="eventLog"></div>
+
+<script>
+const dishes = [
+  {name:"Pasta",emoji:"🍝",time:30,statuses:["Boiling water...","Bubbles forming...","Pasta is softening...","Getting al dente...","DONE! Drain now or it's mush!"]},
+  {name:"Toast",emoji:"🍞",time:15,statuses:["Bread in toaster...","Getting warm...","Starting to brown...","Golden perfection approaching...","DONE! It's toast! (or charcoal)"]},
+  {name:"Eggs",emoji:"🥚",time:20,statuses:["Cracked into pan...","Whites setting...","Yolk still runny...","Almost there...","DONE! Slide onto plate!"]},
+  {name:"Steak",emoji:"🥩",time:45,statuses:["Searing side one...","Getting a nice crust...","Flip it! FLIP IT!","Resting... don't touch it...","DONE! Medium rare (hopefully)"]},
+  {name:"Rice",emoji:"🍚",time:35,statuses:["Water absorbing...","Steam building...","Grains expanding...","Getting fluffy...","DONE! Fluff with fork!"]},
+  {name:"Soup",emoji:"🍲",time:40,statuses:["Simmering...","Flavors melding...","Thickness building...","Taste test time...","DONE! Season and serve!"]},
+  {name:"Pizza",emoji:"🍕",time:25,statuses:["Oven preheating...","Cheese starting to melt...","Bubbling nicely...","Crust browning...","DONE! Let it cool! (You won't)"]},
+  {name:"Bacon",emoji:"🥓",time:18,statuses:["Fat rendering...","Starting to curl...","Sizzling intensely...","Crispy edges forming...","DONE! Paper towel time!"]},
+  {name:"Pancakes",emoji:"🥞",time:12,statuses:["Batter in pan...","Bubbles forming on top...","Time to flip!","Second side cooking...","DONE! Stack 'em up!"]},
+  {name:"Cookies",emoji:"🍪",time:22,statuses:["In the oven...","Spreading out...","Edges setting...","Golden brown developing...","DONE! Cool on rack! (Eat one hot)"]},
+  {name:"Stir Fry",emoji:"🥘",time:15,statuses:["Wok is screaming hot...","Veggies hitting oil...","Tossing frantically...","Sauce going in...","DONE! Plate immediately!"]},
+  {name:"Cake",emoji:"🎂",time:50,statuses:["Batter in oven...","Rising slowly...","Center still jiggly...","Toothpick test...","DONE! Cool before frosting!"]},
+];
+
+const disasters = [
+  {text:"THE SMOKE ALARM JUST WENT OFF! Wave a towel frantically!",emoji:"🚨"},
+  {text:"A pot just boiled over! The stovetop is a lake!",emoji:"💨"},
+  {text:"The oven temperature was wrong this whole time!",emoji:"🌡️"},
+  {text:"The cat jumped on the counter and knocked over the spices!",emoji:"🐱"},
+  {text:"You grabbed the salt instead of sugar! Surprise!",emoji:"🧂"},
+  {text:"The kitchen timer from 1987 just went off. Nobody knows which dish.",emoji:"⏰"},
+  {text:"A pan handle just got really hot. OW!",emoji:"🔥"},
+  {text:"You forgot to defrost the chicken. It's been 'thawing' for 2 minutes.",emoji:"🧊"},
+  {text:"The recipe calls for 'a pinch' of chili. You poured.",emoji:"🌶️"},
+  {text:"The dog ate an ingredient off the counter. Which one? Who knows!",emoji:"🐕"},
+  {text:"Power flickered! Did the oven reset? CHECK THE OVEN!",emoji:"⚡"},
+  {text:"You just realized you're out of butter. In the MIDDLE of cooking.",emoji:"🧈"},
+  {text:"Something in the back of the fridge just fell and broke. Ignore it.",emoji:"💥"},
+  {text:"The blender lid wasn't on properly. The ceiling is now seasoned.",emoji:"🌪️"},
+  {text:"Guests are arriving 30 minutes EARLY. Panic stations!",emoji:"🚪"},
+];
+
+const goodEvents = [
+  {text:"Somehow that actually smells amazing!",emoji:"😍"},
+  {text:"The seasoning is PERFECT. Even surprised yourself.",emoji:"✨"},
+  {text:"A neighbor smelled your cooking and knocked to ask for the recipe.",emoji:"🏠"},
+  {text:"Everything is on schedule. This feels wrong. Suspiciously easy.",emoji:"🤔"},
+  {text:"You just did a chef's kiss and actually felt like a chef.",emoji:"👨‍🍳"},
+];
+
+let timers = [];
+let timerIdCounter = 0;
+
+function addRandomTimer() {
+  const dish = dishes[Math.floor(Math.random() * dishes.length)];
+  const id = timerIdCounter++;
+  const timer = {
+    id, name: dish.name, emoji: dish.emoji,
+    totalTime: dish.time, remaining: dish.time,
+    statuses: dish.statuses, done: false, disaster: false
+  };
+  timers.push(timer);
+  renderTimers();
+  logEvent(`Started cooking ${dish.emoji} ${dish.name} (${dish.time}s)`, 'good');
+  updateChaos();
+}
+
+function renderTimers() {
+  const div = document.getElementById('timers');
+  div.innerHTML = '';
+  timers.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'timer-card' + (t.disaster ? ' disaster' : '') + (t.done ? ' done' : '');
+    const pct = ((t.totalTime - t.remaining) / t.totalTime * 100);
+    const statusIdx = Math.min(t.statuses.length - 1, Math.floor(pct / (100 / t.statuses.length)));
+    const min = String(Math.floor(t.remaining / 60)).padStart(2,'0');
+    const sec = String(t.remaining % 60).padStart(2,'0');
+    card.innerHTML = `
+      <div class="timer-emoji">${t.emoji}</div>
+      <div class="timer-info">
+        <div class="timer-name">${t.name}${t.disaster ? ' -- DISASTER!' : ''}${t.done ? ' -- DONE!' : ''}</div>
+        <div class="timer-status">${t.done ? 'Remove from heat!' : t.statuses[statusIdx]}</div>
+      </div>
+      <div class="timer-time" style="color:${t.remaining < 5 && !t.done ? '#ff5252' : t.done ? '#66bb6a' : '#ffa726'}">${min}:${sec}</div>
+      <button class="timer-btn" onclick="removeTimer(${t.id})">✕</button>
+      <div class="timer-progress" style="width:${pct}%;background:${t.done?'#66bb6a':t.disaster?'#ff5252':'#ff7043'}"></div>
+    `;
+    div.appendChild(card);
+  });
+}
+
+function removeTimer(id) {
+  timers = timers.filter(t => t.id !== id);
+  renderTimers();
+  updateChaos();
+}
+
+function clearAll() {
+  timers = [];
+  renderTimers();
+  updateChaos();
+  logEvent("Kitchen abandoned. The dishes fend for themselves.", 'disaster');
+}
+
+function logEvent(text, type) {
+  const log = document.getElementById('eventLog');
+  const ev = document.createElement('div');
+  ev.className = 'event' + (type === 'disaster' ? ' event-disaster' : ' event-good');
+  ev.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+  log.prepend(ev);
+  if (log.children.length > 20) log.lastChild.remove();
+}
+
+function updateChaos() {
+  const active = timers.filter(t => !t.done).length;
+  const disasterCount = timers.filter(t => t.disaster).length;
+  const chaos = Math.min(100, active * 15 + disasterCount * 25);
+  const fill = document.getElementById('chaosFill');
+  fill.style.width = chaos + '%';
+  fill.style.background = chaos < 30 ? '#66bb6a' : chaos < 60 ? '#ffa726' : '#ff5252';
+  const labels = ['Calm Kitchen','Getting Busy','Controlled Chaos','Total Mayhem','KITCHEN ON FIRE'];
+  document.getElementById('chaosText').textContent = labels[Math.min(4, Math.floor(chaos/25))];
+}
+
+// Main tick
+setInterval(() => {
+  let changed = false;
+  timers.forEach(t => {
+    if (t.done) return;
+    t.remaining--;
+    changed = true;
+    if (t.remaining <= 0) {
+      t.remaining = 0;
+      t.done = true;
+      logEvent(`${t.emoji} ${t.name} is DONE! Get it off the heat!`, 'good');
+    }
+  });
+  // Random disasters
+  if (timers.filter(t => !t.done).length > 0 && Math.random() < 0.03) {
+    const d = disasters[Math.floor(Math.random() * disasters.length)];
+    logEvent(`${d.emoji} ${d.text}`, 'disaster');
+    // Mark a random active timer as disaster
+    const active = timers.filter(t => !t.done && !t.disaster);
+    if (active.length > 0 && Math.random() < 0.5) {
+      const victim = active[Math.floor(Math.random() * active.length)];
+      victim.disaster = true;
+      victim.remaining = Math.max(0, victim.remaining + Math.floor(Math.random()*10-5));
+    }
+    updateChaos();
+  }
+  // Random good events
+  if (timers.filter(t => !t.done).length > 0 && Math.random() < 0.015) {
+    const g = goodEvents[Math.floor(Math.random() * goodEvents.length)];
+    logEvent(`${g.emoji} ${g.text}`, 'good');
+  }
+  if (changed) renderTimers();
+}, 1000);
+</script>
+</body>
+</html>

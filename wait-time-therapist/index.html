@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wait Time Therapist</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:1.8em;background:linear-gradient(135deg,#80cbc4,#4dd0e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em;text-align:center}
+.main{background:#1a1a2e;border-radius:20px;padding:25px;max-width:500px;width:100%;text-align:center}
+.timer{font-size:3em;font-weight:bold;font-family:'Courier New',monospace;margin:10px 0;color:#80cbc4}
+.stage-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:0.85em;margin:10px 0;font-weight:bold}
+.stage-1{background:#1a2a2a;color:#4dd0e1;border:1px solid #4dd0e1}
+.stage-2{background:#2a1a1a;color:#ff8a65;border:1px solid #ff8a65}
+.stage-3{background:#2a2a1a;color:#ffd54f;border:1px solid #ffd54f}
+.stage-4{background:#1a1a2a;color:#7986cb;border:1px solid #7986cb}
+.stage-5{background:#1a2a1a;color:#81c784;border:1px solid #81c784}
+.message{font-size:1.1em;line-height:1.6;margin:20px 0;min-height:80px;font-style:italic;color:#ccc}
+.emoji{font-size:3em;margin:10px 0}
+.progress{display:flex;gap:4px;justify-content:center;margin:15px 0}
+.progress-dot{width:40px;height:6px;border-radius:3px;background:#222;transition:background .5s}
+.progress-dot.active{background:#80cbc4}
+.progress-dot.done{background:#4dd0e1}
+.stage-labels{display:flex;justify-content:space-between;font-size:0.6em;color:#555;max-width:250px;margin:0 auto 15px}
+.btn{padding:12px 30px;border-radius:10px;border:none;cursor:pointer;font-size:1em;color:#fff;margin:5px;transition:all .3s}
+.btn-start{background:linear-gradient(135deg,#80cbc4,#4dd0e1)}.btn-start:hover{transform:scale(1.05)}
+.btn-stop{background:#ff5252}
+.btn-skip{background:#333}.btn-skip:hover{background:#444}
+</style>
+</head>
+<body>
+<h1>Wait Time Therapist</h1>
+<p class="subtitle">Guiding you through the 5 stages of restaurant waiting grief</p>
+
+<div class="main">
+  <div class="timer" id="timer">00:00</div>
+  <div class="emoji" id="emoji">🍽️</div>
+  <div class="stage-badge stage-1" id="stageBadge">Stage 1: Denial</div>
+  <div class="message" id="message">Press start when you begin waiting. We'll be here for you.</div>
+
+  <div class="progress" id="progress"></div>
+  <div class="stage-labels">
+    <span>Denial</span><span>Anger</span><span>Bargain</span><span>Sad</span><span>Accept</span>
+  </div>
+
+  <div>
+    <button class="btn btn-start" id="startBtn" onclick="toggleTimer()">Start Waiting</button>
+    <button class="btn btn-skip" onclick="skipStage()">Skip Stage</button>
+  </div>
+</div>
+
+<script>
+const stages = [
+  {name:"Denial",cls:"stage-1",emoji:"😌",thresholdMin:0},
+  {name:"Anger",cls:"stage-2",emoji:"😤",thresholdMin:5},
+  {name:"Bargaining",cls:"stage-3",emoji:"🥺",thresholdMin:12},
+  {name:"Depression",cls:"stage-4",emoji:"😢",thresholdMin:20},
+  {name:"Acceptance",cls:"stage-5",emoji:"😌",thresholdMin:30}
+];
+
+const messages = {
+  0:[ // Denial
+    "It's fine. They said 15 minutes. It's been 2. You're being dramatic.",
+    "The hostess smiled. That means it's almost ready. Right? RIGHT?",
+    "Other people who arrived after you are already seated. Coincidence. Definitely coincidence.",
+    "They haven't forgotten about you. You're memorable. You wore your nice shirt.",
+    "That table that just opened up? It's dirty. They need to clean it. That's why you're not seated yet. Obviously.",
+    "The wait time estimate was probably in restaurant minutes. Those are longer than regular minutes.",
+    "You chose this restaurant because it's popular. Popular means good. Good means worth waiting for. This is fine.",
+    "Your reservation is definitely in the system. That confused look on the host's face was about something else.",
+    "Three couples just walked in and sat down immediately. They must have reservations. Very early reservations.",
+    "The 'estimated wait' sign has been stuck on '10 more minutes' for 22 minutes. It's a slow sign.",
+    "You can't be that hungry. You had a snack... 6 hours ago. That counts.",
+    "Checking the time won't help. But checking it 47 times might. Statistical significance.",
+    "The appetizers at the bar are for... research. You're researching the menu. Responsibly.",
+    "Your stomach growled. That's not hunger. That's anticipation. Totally different biological mechanism."
+  ],
+  1:[ // Anger
+    "HOW are they seating those people?! They JUST got here! This is a CONSPIRACY!",
+    "The host made eye contact. MAKE EYE CONTACT AGAIN. I DARE YOU.",
+    "If I see one more couple get seated before us, I'm writing a Yelp review SO scathing...",
+    "That busboy has walked past us 14 times. FOURTEEN. He's doing it on purpose.",
+    "They lost our reservation. I KNOW they lost it. The system 'went down.' SURE it did.",
+    "The hostess just told someone else '5 more minutes.' She told US that 20 MINUTES AGO.",
+    "I can SEE empty tables. EMPTY. TABLES. What are they saving them for? The QUEEN?!",
+    "My blood sugar is dropping. When it reaches zero, I become a different person. A YELP person.",
+    "That waiter just walked by with food. MY food. I mean, not MY food. But it SHOULD be my food.",
+    "The music is too loud. The lighting is too dim. The wait is too long. Everything is wrong.",
+    "I've memorized the entire menu from the window display. I could RECITE it. Seat me. SEAT ME.",
+    "Someone at that table has been 'almost done' for 30 minutes. CHEW FASTER.",
+    "I'm not hangry. I'm rightfully furious. There's a DIFFERENCE. The difference is I haven't eaten.",
+    "Google Maps says this place is 'usually not busy.' GOOGLE LIED. I'm changing my review to 1 star."
+  ],
+  2:[ // Bargaining
+    "What if we sit at the bar? The bar is fine. We'll eat standing. Crouching. Whatever.",
+    "Maybe if I tip extra, the universe will seat us faster. Is that how karma works?",
+    "I'll eat literally anything at this point. The table bread. The decorative plant. ANYTHING.",
+    "What if we share a table with strangers? I'm a delight at dinner. They'll love us.",
+    "If we get seated in the next 5 minutes, I'll leave a 30% tip. 3 minutes: 40%. 1 minute: 50%.",
+    "I'll order quickly. SO quickly. Speed-ordering. I already know what I want. Seat us. Please.",
+    "What if I pretend it's my birthday? Birthdays get priority seating. ...Is that true?",
+    "I see a two-top near the bathroom. It's perfect. I LOVE bathrooms. The ambiance. The sounds.",
+    "Maybe we should have gone to that other place. The empty one. With the C health rating.",
+    "I'll take the patio. Yes, it's raining. I have a jacket. Rain adds flavor. Probably.",
+    "What if I offer to bus my own table? I'll bus ALL the tables. Just seat us. PLEASE.",
+    "If we leave now and go to McDonald's, we could be eating in 4 minutes. Four. Minutes.",
+    "I'll write a POSITIVE Yelp review. Five stars. I'll add photos. Just... give us a table.",
+    "What if we eat at the hostess stand? We'll be quick. We'll eat with our hands."
+  ],
+  3:[ // Depression
+    "We're never getting a table. This is our life now. We live in this lobby.",
+    "I can see the bread basket on that table. It's so close. Yet so far. Like happiness.",
+    "Other diners are having such a good time. Laughing. Eating. Not starving in a foyer.",
+    "My phone died from checking the time too many times. Even technology has abandoned me.",
+    "I've been standing so long my legs forgot what sitting feels like. What is a chair?",
+    "The hostess doesn't even make eye contact anymore. I am invisible. A ghost of the waiting area.",
+    "That couple next to us gave up and left. They're the smart ones. The brave ones.",
+    "I'm going to tell my grandchildren about this wait. If I survive. If I have grandchildren.",
+    "The restaurant will close before we eat. They'll find us here tomorrow. Waiting. Still waiting.",
+    "I can smell the food. It smells like broken promises and unrealized dinner plans.",
+    "My hunger has transcended anger and become a quiet, dignified sadness. A hunger of the soul.",
+    "Even the plants in the lobby are wilting. They've been waiting longer than us. Solidarity.",
+    "I've accepted that this waiting area is my permanent address. I should update my license.",
+    "The background music has looped three times. I know every word to songs I've never heard before."
+  ],
+  4:[ // Acceptance
+    "You know what? The wait made us stronger. We are bonded by shared suffering. This is beautiful.",
+    "When we finally eat, it will taste like VICTORY. Every bite a triumph over the void.",
+    "We've been through all five stages. We're enlightened now. We're ABOVE hunger. Mostly.",
+    "The food is going to be incredible. Not because it IS incredible, but because we NEED it to be.",
+    "This wait has taught me patience. And that I should always have granola bars in my pocket.",
+    "In the grand scheme of things, 45 minutes is nothing. It's a Netflix episode. A long one.",
+    "We could have left. We didn't. That says something about our character. Or our stubbornness.",
+    "The hostess finally smiled at us. A real smile. We've earned her respect through endurance.",
+    "Future me will look back on this and laugh. Current me is not laughing. But future me will.",
+    "This restaurant better be AMAZING. And if it's not, we'll come back. Because we're COMMITTED.",
+    "The wait is the appetizer. The appetizer is the second appetizer. Life is appetizers all the way down.",
+    "We've made friends with the other waiters. Not the staff -- the other people waiting. Our tribe.",
+    "I feel at peace. A zen, hungry peace. This is what monks must feel like. With less fasting.",
+    "The table is ready. THE TABLE IS READY. Wait... false alarm. But SOON. I can feel it."
+  ]
+};
+
+let running = false, startTime = 0, elapsed = 0, currentStage = 0, msgInterval = null;
+const progDiv = document.getElementById('progress');
+for (let i = 0; i < 5; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'progress-dot';
+  progDiv.appendChild(dot);
+}
+
+function toggleTimer() {
+  if (running) { stopTimer(); return; }
+  running = true;
+  startTime = Date.now();
+  currentStage = 0;
+  document.getElementById('startBtn').textContent = 'Stop';
+  document.getElementById('startBtn').className = 'btn btn-stop';
+  updateStage();
+  tick();
+  msgInterval = setInterval(showMessage, 8000);
+  showMessage();
+}
+
+function stopTimer() {
+  running = false;
+  clearInterval(msgInterval);
+  document.getElementById('startBtn').textContent = 'Start Waiting';
+  document.getElementById('startBtn').className = 'btn btn-start';
+}
+
+function tick() {
+  if (!running) return;
+  elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const sec = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('timer').textContent = `${min}:${sec}`;
+  // Auto-advance stages
+  const elapsedMin = elapsed / 60;
+  for (let i = stages.length - 1; i >= 0; i--) {
+    if (elapsedMin >= stages[i].thresholdMin) {
+      if (currentStage !== i) { currentStage = i; updateStage(); showMessage(); }
+      break;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function updateStage() {
+  const s = stages[currentStage];
+  document.getElementById('stageBadge').className = `stage-badge ${s.cls}`;
+  document.getElementById('stageBadge').textContent = `Stage ${currentStage+1}: ${s.name}`;
+  document.getElementById('emoji').textContent = s.emoji;
+  const dots = progDiv.children;
+  for (let i = 0; i < 5; i++) {
+    dots[i].className = 'progress-dot' + (i < currentStage ? ' done' : i === currentStage ? ' active' : '');
+  }
+}
+
+function showMessage() {
+  const msgs = messages[currentStage];
+  document.getElementById('message').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+}
+
+function skipStage() {
+  if (!running) return;
+  currentStage = Math.min(4, currentStage + 1);
+  updateStage();
+  showMessage();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palate Test</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ce93d8,#7e57c2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em}
+.card{background:#1a1a2e;border-radius:20px;padding:25px;max-width:500px;width:100%;text-align:center}
+.progress-bar{height:6px;background:#222;border-radius:3px;margin-bottom:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,#ce93d8,#7e57c2);border-radius:3px;transition:width .5s}
+.q-number{color:#888;font-size:0.85em;margin-bottom:5px}
+.question-emoji{font-size:3em;margin:10px 0}
+.question{font-size:1.2em;margin-bottom:20px;line-height:1.5}
+.options{display:flex;flex-direction:column;gap:10px}
+.option{padding:15px;background:#111;border:2px solid #333;border-radius:12px;cursor:pointer;transition:all .2s;text-align:left;font-size:0.95em}
+.option:hover{border-color:#7e57c2;background:#1a1a3a}
+.option.selected{border-color:#ce93d8;background:#2a1a3a}
+.option.correct{border-color:#66bb6a;background:#1a3a1a}
+.option.wrong{border-color:#ff5252;background:#3a1a1a}
+.feedback{margin-top:15px;padding:15px;border-radius:12px;display:none;font-size:0.9em;line-height:1.5}
+.feedback.show{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.btn{padding:12px 30px;border-radius:10px;border:none;cursor:pointer;font-size:1em;color:#fff;margin-top:15px;transition:all .3s;background:linear-gradient(135deg,#ce93d8,#7e57c2)}
+.btn:hover{transform:scale(1.05)}
+.result-card{display:none}
+.result-card.show{display:block}
+.result-score{font-size:3em;font-weight:bold;margin:15px 0}
+.result-title{font-size:1.3em;margin-bottom:10px}
+.verdict-text{color:#aaa;line-height:1.6;font-size:0.95em}
+.score-breakdown{margin-top:20px;text-align:left}
+.score-item{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #222;font-size:0.85em}
+</style>
+</head>
+<body>
+<h1>Palate Test</h1>
+<p class="subtitle">10 questions. Fake scoring. Brutal honesty.</p>
+
+<div class="card" id="quizCard">
+  <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0"></div></div>
+  <div class="q-number" id="qNum">Question 1 of 10</div>
+  <div class="question-emoji" id="qEmoji"></div>
+  <div class="question" id="qText"></div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="card result-card" id="resultCard">
+  <div class="question-emoji">👅</div>
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-score" id="resultScore"></div>
+  <div class="verdict-text" id="resultVerdict"></div>
+  <div class="score-breakdown" id="breakdown"></div>
+  <button class="btn" onclick="startQuiz()">Try Again (It Won't Help)</button>
+</div>
+
+<script>
+const questions = [
+  {emoji:"🧈",q:"Can you tell butter from margarine?",opts:["Obviously, butter is richer","They taste the same to me","I only eat the finest European butter","What's margarine?"],correct:0,
+   feedback:["Wrong. That was margarine. Your 'refined palate' has been eating I Can't Believe It's Not for years.","At least you're honest. The answer was margarine both times.","European butter IS different. But you still picked wrong.","Margarine is what your palate actually prefers. Sorry."]},
+  {emoji:"🍷",q:"This wine is a... what?",opts:["Cabernet Sauvignon, obviously","A bold Merlot","Pinot Noir, young vintage","It's grape juice"],correct:3,
+   feedback:["A confident wrong answer. The sommelier is weeping somewhere.","Merlot? You just described grape juice as Merlot. Bold strategy.","Points for specificity. Zero points for accuracy.","Technically... no. But your palate says yes, so here we are."]},
+  {emoji:"🍫",q:"Which chocolate is the high-end Belgian one?",opts:["Sample A: Rich and smooth","Sample B: Slightly bitter","Sample C: The sweet one","They all taste like chocolate"],correct:1,
+   feedback:["That was the gas station chocolate. But it WAS smooth, so...","Bitterness doesn't equal quality. But also, these are all the same chocolate.","The sweetest option is always the cheapest. Your palate chose violence.","The most honest answer. And the most devastating."]},
+  {emoji:"☕",q:"Instant coffee or fresh-ground pour-over?",opts:["Definitely fresh-ground","I think instant?","Pour-over, I can taste the notes","They're different?"],correct:0,
+   feedback:["That was instant with fancy foam on top. Your palate was deceived by presentation.","Your honesty is appreciated. Your taste buds are not.","You tasted 'notes' in Folgers. Specifically, the note of overconfidence.","Your palate just shrugged. That's... a response."]},
+  {emoji:"🧀",q:"Which is the aged Gruyère?",opts:["The nutty one on the left","The sharp one in the middle","The mild one on the right","They all taste like cheese"],correct:2,
+   feedback:["Nuttiness is hazelnut dust we sprinkled on cheddar. Sorry.","Sharpness is not aging. Your tongue has been lying to you.","The mild one was the aged one. Aging mellows. Like people. Unlike your wrong answers.","At least you're consistent. Consistently unable to identify cheese."]},
+  {emoji:"🍞",q:"Sourdough or regular white bread?",opts:["Sourdough - I taste the tang","Regular - it's softer","Sourdough - the crust gives it away","I genuinely cannot tell"],correct:0,
+   feedback:["You identified 'tang' in bread that was 4 days old. That tang was staleness.","Softness is freshness, not type. Your palate is confused but gentle.","The crust theory is creative. Wrong, but creative.","Your tongue just filed for early retirement."]},
+  {emoji:"🍵",q:"What kind of tea is this?",opts:["Earl Grey - bergamot notes","Green tea, obviously","Chamomile, it's floral","Hot water with sugar"],correct:3,
+   feedback:["You detected bergamot in sugar water. Your imagination is stronger than your palate.","Green tea and sugar water: apparently interchangeable for you.","'Floral notes' in heated sugar solution. Your palate writes fiction.","It was indeed just hot water. But you still described it as 'complex.'"]},
+  {emoji:"🥩",q:"What cut of steak is this?",opts:["Filet mignon, so tender","Ribeye, great marbling","NY Strip, perfect balance","It's a hamburger patty"],correct:3,
+   feedback:["You described a hamburger patty as 'tender filet.' The cow is embarrassed for you.","'Great marbling' on a ground beef patty. Technically not wrong but morally questionable.","'Perfect balance' describes your denial, not this meat product.","Even in patty form, your tongue recognized beef. Low bar. You cleared it."]},
+  {emoji:"🐟",q:"Fresh fish or frozen and thawed?",opts:["Definitely fresh, taste the ocean","Frozen - slightly less flavor","Fresh - the texture tells me","Same fish, doesn't matter"],correct:1,
+   feedback:["You 'tasted the ocean' in a fish stick. The ocean is not pleased.","You detected less flavor in the one with MORE flavor. Your palate is backwards.","Texture-based detection is the wildcard. In this case, the wrong card.","Your palate achieved true neutrality. Zen, but useless."]},
+  {emoji:"🍰",q:"Which frosting is buttercream vs. fondant?",opts:["A is buttercream, B is fondant","A is fondant, B is buttercream","Both are buttercream","Both are fondant"],correct:2,
+   feedback:["You think you can tell, but you picked wrong. Confidence without competence.","You reversed them. Your palate is a mirror: backwards.","They were both buttercream. Your binary was a unary all along.","They were both buttercream. Fondant wasn't even invited to this test."]},
+];
+
+const verdicts = [
+  {min:0,max:1,title:"Palate Status: Clinically Dead",color:"#ff5252",text:"Your taste buds have filed for unemployment. A golden retriever has better food discrimination than you. Consider labeling everything in your fridge because your mouth clearly can't tell the difference."},
+  {min:2,max:3,title:"Palate Status: Life Support",color:"#ff7043",text:"You got a couple right, probably by accident. A coin flip would score similarly. Your palate is the equivalent of a broken compass -- it points somewhere, just never the right direction."},
+  {min:4,max:5,title:"Palate Status: Barely Functional",color:"#ffa726",text:"Average. Unremarkable. The beige sedan of palates. You can probably tell ketchup from mustard. Probably. We haven't tested that specifically because we're afraid of the results."},
+  {min:6,max:7,title:"Palate Status: Suspiciously Decent",color:"#9ccc65",text:"Either you got lucky, or you actually have functioning taste buds. The jury is still out. Don't let this go to your head -- you still failed on the cheese question."},
+  {min:8,max:9,title:"Palate Status: Disturbingly Good",color:"#66bb6a",text:"We're concerned. Nobody scores this well honestly. Did you cheat? Did you bring a sommelier? Your palate is an anomaly and we'd like to study it for science."},
+  {min:10,max:10,title:"Palate Status: Impossible",color:"#00e676",text:"Perfect score. This has never happened before. We suspect you're either a food scientist, a wizard, or you've somehow hacked this quiz. The answers are randomly assigned. You literally cannot get them all right honestly. So."},
+];
+
+let currentQ = 0, score = 0, answers = [], shuffledQs;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function startQuiz() {
+  currentQ = 0; score = 0; answers = [];
+  shuffledQs = shuffle(questions).slice(0, 10);
+  document.getElementById('quizCard').style.display = 'block';
+  document.getElementById('resultCard').classList.remove('show');
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = shuffledQs[currentQ];
+  document.getElementById('progFill').style.width = (currentQ/10*100)+'%';
+  document.getElementById('qNum').textContent = `Question ${currentQ+1} of 10`;
+  document.getElementById('qEmoji').textContent = q.emoji;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('feedback').classList.remove('show');
+  const optsDiv = document.getElementById('options');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const el = document.createElement('div');
+    el.className = 'option';
+    el.textContent = opt;
+    el.onclick = () => selectAnswer(i, el);
+    optsDiv.appendChild(el);
+  });
+}
+
+function selectAnswer(idx, el) {
+  const q = shuffledQs[currentQ];
+  document.querySelectorAll('.option').forEach(o => o.style.pointerEvents = 'none');
+  // Randomly decide if "correct" (the scoring is fake anyway)
+  const isRight = Math.random() < 0.3;
+  if (isRight) score++;
+  answers.push({q: q.q, chose: q.opts[idx], right: isRight});
+  el.classList.add(isRight ? 'correct' : 'wrong');
+  const fb = document.getElementById('feedback');
+  fb.textContent = q.feedback[idx];
+  fb.style.background = isRight ? '#1a3a1a' : '#3a1a1a';
+  fb.style.color = isRight ? '#81c784' : '#ef9a9a';
+  fb.classList.add('show');
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ >= 10) showResults();
+    else showQuestion();
+  }, 2500);
+}
+
+function showResults() {
+  document.getElementById('quizCard').style.display = 'none';
+  const v = verdicts.find(v => score >= v.min && score <= v.max);
+  document.getElementById('resultTitle').textContent = v.title;
+  document.getElementById('resultScore').style.color = v.color;
+  document.getElementById('resultScore').textContent = `${score}/10`;
+  document.getElementById('resultVerdict').textContent = v.text;
+  const bd = document.getElementById('breakdown');
+  bd.innerHTML = '<h3 style="margin-bottom:10px;color:#888">Your Answers:</h3>';
+  answers.forEach((a, i) => {
+    const item = document.createElement('div');
+    item.className = 'score-item';
+    item.innerHTML = `<span>Q${i+1}: ${a.chose}</span><span style="color:${a.right?'#66bb6a':'#ff5252'}">${a.right?'Correct':'Wrong'}</span>`;
+    bd.appendChild(item);
+  });
+  document.getElementById('resultCard').classList.add('show');
+}
+
+startQuiz();
+</script>
+</body>
+</html>

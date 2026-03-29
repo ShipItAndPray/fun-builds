@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tourist Exposure</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ffcc00,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.checklist{margin-bottom:16px}
+.checklist h2{font-size:1rem;color:#ffcc00;margin-bottom:12px}
+.cat-label{font-size:.8rem;color:#666;text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px;padding-bottom:4px;border-bottom:1px solid #222}
+.item{display:flex;align-items:center;padding:10px 14px;background:#111;border-radius:10px;margin-bottom:5px;cursor:pointer;transition:.2s;user-select:none}
+.item:hover{background:#1a1a0e}
+.item.checked{background:#1a1a0a;border:1px solid #ffcc00}
+.item .cb{width:20px;height:20px;border:2px solid #444;border-radius:4px;margin-right:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.item.checked .cb{background:#ffcc00;border-color:#ffcc00}
+.item.checked .cb::after{content:'\\2713';color:#000;font-size:.7rem;font-weight:700}
+.item .label{flex:1;font-size:.9rem}
+.item .pts{color:#ff8800;font-size:.75rem;margin-left:8px}
+.calc-btn{width:100%;padding:16px;background:linear-gradient(135deg,#ffcc00,#ff8800);border:none;border-radius:12px;color:#000;font-size:1.1rem;font-weight:700;cursor:pointer;margin:16px 0;transition:.3s}
+.calc-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(255,204,0,.4)}
+.result{background:#1a1a0e;border:2px solid #ffcc00;border-radius:16px;padding:24px;margin:16px 0;text-align:center;display:none;animation:fadeIn .5s}
+.result .score{font-size:3.5rem;font-weight:700}
+.result .pct{font-size:1rem;color:#888;margin-top:4px}
+.result .title{font-size:1.4rem;font-weight:700;margin:12px 0}
+.result .desc{color:#999;font-size:.9rem;line-height:1.5}
+.result .verdict{margin-top:16px;padding:12px;background:#111;border-radius:8px;font-size:.85rem;color:#ffaa44;line-height:1.5}
+.visibility-bar{margin:16px 0}
+.vis-bar{height:12px;background:#222;border-radius:6px;overflow:hidden}
+.vis-fill{height:100%;border-radius:6px;transition:width .8s}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Tourist Exposure</h1>
+<p class="subtitle">How visible are you as a tourist? Check all that apply.</p>
+<div class="checklist" id="checklist"></div>
+<button class="calc-btn" onclick="calculate()">Calculate Tourist Visibility Score</button>
+<div class="result" id="result"></div>
+</div>
+
+<script>
+const categories=[
+{name:"Wardrobe",items:[
+{text:"Wearing a fanny pack / bum bag",pts:8},
+{text:"Socks with sandals",pts:9},
+{text:"Cargo shorts with every pocket full",pts:7},
+{text:"Brand new hiking boots (still clean)",pts:5},
+{text:"Wearing the flag of your home country",pts:10},
+{text:"Hawaiian shirt (not in Hawaii)",pts:8},
+{text:"'I Heart [City]' t-shirt bought today",pts:10},
+{text:"Wearing athletic shoes with khakis",pts:5},
+{text:"Visor hat",pts:6},
+{text:"Matching outfits with your travel group",pts:9}
+]},
+{name:"Accessories",items:[
+{text:"DSLR camera around neck at all times",pts:8},
+{text:"Selfie stick deployed",pts:9},
+{text:"Paper map (unfolded, blocking sidewalk)",pts:10},
+{text:"Money belt visible above waistline",pts:7},
+{text:"Lanyard with hotel key card showing",pts:6},
+{text:"Wearing sunglasses indoors",pts:4},
+{text:"Guidebook clutched like a bible",pts:8},
+{text:"Oversized backpack in a restaurant",pts:6},
+{text:"Crossbody bag worn backwards 'for safety'",pts:5}
+]},
+{name:"Behavior",items:[
+{text:"Pointing at buildings and taking photos of everything",pts:7},
+{text:"Speaking your language LOUDER to be understood",pts:10},
+{text:"Stopping in the middle of a busy sidewalk",pts:8},
+{text:"Tipping wrong (too much or too little)",pts:5},
+{text:"Asking 'Do you speak English?' as an opener",pts:6},
+{text:"Eating at restaurants right next to tourist attractions",pts:7},
+{text:"Applauding when the plane lands",pts:9},
+{text:"Asking locals to take your photo (5 times for the right angle)",pts:6},
+{text:"Checking Google Maps every 30 seconds",pts:5},
+{text:"Trying to haggle at a fixed-price store",pts:8},
+{text:"Taking photos of your food at every meal",pts:5},
+{text:"Saying 'wow' at architecture that locals ignore",pts:4}
+]},
+{name:"Advanced Tourist Moves",items:[
+{text:"Wearing a travel pillow outside the airport",pts:10},
+{text:"Converting every price to your home currency out loud",pts:8},
+{text:"Buying souvenirs on day 1",pts:6},
+{text:"Asking 'Is this the real one?' at a landmark",pts:7},
+{text:"Complaining about the weather in someone else's country",pts:7},
+{text:"Taking a photo with a street performer without tipping",pts:8},
+{text:"Using Google Translate to order food (out loud)",pts:6},
+{text:"Posing with the 'holding up the tower' photo",pts:10},
+{text:"Wearing a money belt AND a fanny pack",pts:10}
+]}
+];
+
+const verdicts=[
+{max:20,title:"Incognito Traveler",color:"#00cc66",desc:"You blend in almost perfectly. Locals might even ask YOU for directions."},
+{max:40,title:"Casual Visitor",color:"#44aaff",desc:"A trained eye can spot you, but you're doing okay. Not embarrassing."},
+{max:60,title:"Obvious Tourist",color:"#ffcc00",desc:"Street vendors can spot you from 3 blocks away. You're their favorite customer."},
+{max:80,title:"Walking Tourist Stereotype",color:"#ff8800",desc:"You are the tourist that locals warn each other about. Pickpockets have you bookmarked."},
+{max:100,title:"Human Beacon",color:"#ff4444",desc:"You are visible from space. Tour guides use you as a landmark. 'Turn left at the really obvious tourist.'"},
+{max:999,title:"TOURIST SINGULARITY",color:"#ff0044",desc:"You have transcended tourism. You don't visit places; places endure you. Your tourist energy has its own gravitational field. Maps rearrange themselves around you."}
+];
+
+const extraVerdicts=[
+"Pickpockets are fighting over who gets to approach you first.",
+"The locals have started a betting pool on your nationality.",
+"You're so tourist-visible that Google Maps added you as a landmark.",
+"Travel bloggers are writing about you as a cautionary tale.",
+"Your tourist aura is affecting local wifi signals.",
+"A street vendor just named their most expensive item after you.",
+"Immigration wants to give you a frequent visitor discount. Out of pity.",
+"You have achieved a level of tourism that requires its own weather system.",
+"Your fanny pack has its own zip code now.",
+"The Leaning Tower of Pisa is embarrassed to be in your photos.",
+"You are the reason locals avoid their own downtown.",
+"Your tourist energy could power a small city.",
+"Even other tourists are pretending they don't know you.",
+"The city's tourism board just sent you a cease and desist.",
+"You're not visiting a country; you're invading it. Peacefully. But obviously.",
+"Your hotel concierge drew you a map with 'DON'T GO HERE' areas. It was the whole map.",
+"A documentary crew started following you. Working title: 'This Is Why They Hate Us.'",
+"Your guidebook is highlighted in so many colors it looks like a pride flag.",
+"You are single-handedly keeping the souvenir industry alive.",
+"Local children are doing impressions of you. They're very accurate.",
+"You've been featured in 14 stranger's Instagram stories today. None were flattering.",
+"The phrase 'ugly tourist' was redefined today. Specifically, for you.",
+"You exude such tourist energy that pigeons follow you expecting bread.",
+"A cabbie just charged you 10x the fare. You tipped him on top of it.",
+"Your travel photos look like a 'spot the tourist' puzzle. You're always the answer.",
+"Congratulations: you are the most photographed person at this landmark who isn't a statue.",
+"Local cats judge you. That's how bad it is.",
+"Your tourist glow is visible through walls.",
+"Airport security clocked you as a tourist before you even landed.",
+"You have achieved what scientists call 'peak tourist mass.'"
+];
+
+let allItems=[];
+let html='';
+let idx=0;
+categories.forEach(cat=>{
+html+=`<div class="cat-label">${cat.name}</div>`;
+cat.items.forEach(item=>{
+allItems.push({...item,idx});
+html+=`<div class="item" id="item${idx}" onclick="toggle(${idx})"><div class="cb"></div><span class="label">${item.text}</span><span class="pts">+${item.pts}</span></div>`;
+idx++;
+});
+});
+document.getElementById('checklist').innerHTML=html;
+
+function toggle(i){document.getElementById('item'+i).classList.toggle('checked')}
+
+function calculate(){
+let total=0;let count=0;
+allItems.forEach(item=>{
+if(document.getElementById('item'+item.idx).classList.contains('checked')){total+=item.pts;count++}
+});
+if(count===0){alert('Check at least one item!');return}
+const maxPossible=allItems.reduce((a,i)=>a+i.pts,0);
+const pct=Math.round(total/maxPossible*100);
+const v=verdicts.find(v=>total<=v.max)||verdicts[verdicts.length-1];
+const extra=extraVerdicts[Math.floor(Math.random()*extraVerdicts.length)];
+const el=document.getElementById('result');
+el.style.display='block';
+el.innerHTML=`
+<div class="score" style="color:${v.color}">${total}</div>
+<div class="pct">${pct}% Tourist Visibility | ${count} flags checked</div>
+<div class="visibility-bar"><div class="vis-bar"><div class="vis-fill" style="width:${pct}%;background:${v.color}"></div></div></div>
+<div class="title" style="color:${v.color}">${v.title}</div>
+<div class="desc">${v.desc}</div>
+<div class="verdict">${extra}</div>`;
+el.scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>

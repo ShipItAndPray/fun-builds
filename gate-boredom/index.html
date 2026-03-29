@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gate Boredom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#4488ff,#44ddff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.setup{background:#1a1a2e;border-radius:16px;padding:20px;margin-bottom:16px}
+.setup label{display:block;color:#888;font-size:.85rem;margin-bottom:6px}
+.setup input,.setup select{width:100%;padding:12px;background:#111;border:1px solid #333;border-radius:10px;color:#fff;font-size:1rem;margin-bottom:12px}
+.start-btn{width:100%;padding:14px;background:linear-gradient(135deg,#4488ff,#2266cc);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.3s}
+.start-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(68,136,255,.4)}
+.timer-display{text-align:center;margin:20px 0;display:none}
+.timer-display .remaining{font-size:3rem;font-weight:700;font-family:monospace;color:#4488ff}
+.timer-display .gate-info{color:#666;font-size:.85rem;margin-top:4px}
+.gate-change{background:#2a1a0a;border:2px solid #ff8800;border-radius:12px;padding:16px;margin:12px 0;text-align:center;display:none;animation:flash .5s 3}
+.gate-change h3{color:#ff8800}
+.gate-change p{color:#ffaa44;font-size:.9rem;margin-top:4px}
+.gate-change-btn{width:100%;padding:12px;background:linear-gradient(135deg,#ff8800,#cc6600);border:none;border-radius:12px;color:#fff;font-size:.9rem;font-weight:700;cursor:pointer;margin-top:16px;transition:.3s}
+.gate-change-btn:hover{box-shadow:0 0 10px rgba(255,136,0,.4)}
+.activities{margin-top:16px}
+.activities h2{font-size:1rem;color:#4488ff;margin-bottom:12px}
+.activity{display:flex;align-items:center;padding:12px 14px;background:#111;border-radius:10px;margin-bottom:6px;transition:.3s}
+.activity.doable{border-left:3px solid #00cc66}
+.activity.tight{border-left:3px solid #ff8800}
+.activity.nope{border-left:3px solid #ff4444;opacity:.5}
+.activity .emoji{font-size:1.3rem;margin-right:12px;min-width:30px;text-align:center}
+.activity .info{flex:1}
+.activity .name{font-size:.95rem;font-weight:600}
+.activity .desc{font-size:.75rem;color:#666;margin-top:2px}
+.activity .time-needed{font-size:.8rem;color:#888;margin-left:auto;white-space:nowrap;padding-left:10px}
+.activity .status{font-size:.7rem;padding:2px 8px;border-radius:10px;margin-left:8px;white-space:nowrap}
+.status.go{background:#0a2a0a;color:#00cc66}
+.status.maybe{background:#2a1a0a;color:#ff8800}
+.status.no{background:#2a0a0a;color:#ff4444}
+.boredom-meter{margin:16px 0;padding:15px;background:#1a1a2e;border-radius:12px;display:none}
+.boredom-bar{height:8px;background:#222;border-radius:4px;overflow:hidden}
+.boredom-fill{height:100%;border-radius:4px;transition:width 1s}
+.boredom-label{text-align:center;margin-top:8px;font-size:.85rem}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.5}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Gate Boredom</h1>
+<p class="subtitle">You're stuck at the gate. Let's make the most of it.</p>
+<div class="setup" id="setup">
+<label>Your Gate</label>
+<input type="text" id="gate" placeholder="e.g., B42" value="B42" />
+<label>Boarding Time</label>
+<input type="time" id="boardTime" />
+<label>Current Status</label>
+<select id="status">
+<option value="ontime">On Time</option>
+<option value="delayed30">Delayed 30 min</option>
+<option value="delayed60">Delayed 1 hour</option>
+<option value="delayed120">Delayed 2 hours</option>
+<option value="unknown">Delay Unknown (pain)</option>
+</select>
+<button class="start-btn" onclick="startTimer()">START GATE TIMER</button>
+</div>
+<div class="timer-display" id="timerDisplay"></div>
+<div class="boredom-meter" id="boredomMeter"></div>
+<button class="gate-change-btn" id="gateChangeBtn" onclick="gateChange()" style="display:none">Trigger Random Gate Change</button>
+<div class="gate-change" id="gateChangeAlert"></div>
+<div class="activities" id="activities" style="display:none"><h2>Activities Ranked by Time Available</h2><div id="actList"></div></div>
+</div>
+
+<script>
+const activities=[
+{name:"Check phone for the 47th time",time:1,desc:"You know nothing changed.",emoji:"📱",rating:2},
+{name:"People watch judgmentally",time:5,desc:"Rate outfits. Judge snacks. Feel superior.",emoji:"👀",rating:7},
+{name:"Walk to the bathroom and back",time:5,desc:"The journey of a lifetime. Through Terminal B.",emoji:"🚶",rating:3},
+{name:"Buy overpriced water",time:3,desc:"$8 for something that falls from the sky.",emoji:"💧",rating:2},
+{name:"Browse the duty-free shop",time:15,desc:"Touch expensive things. Buy nothing.",emoji:"🛍️",rating:5},
+{name:"Find a power outlet",time:10,desc:"The real airport game. PvP.",emoji:"🔌",rating:8},
+{name:"Eat airport sushi",time:20,desc:"Living dangerously.",emoji:"🍣",rating:4},
+{name:"Read 3 pages of your book",time:10,desc:"Then stare into space for 20 minutes.",emoji:"📖",rating:6},
+{name:"Reorganize your carry-on",time:8,desc:"Pretend you're being productive.",emoji:"🎒",rating:3},
+{name:"Count ceiling tiles",time:5,desc:"There are more than you think.",emoji:"🔢",rating:1},
+{name:"Listen to one podcast episode",time:30,desc:"Start one. Never finish it.",emoji:"🎧",rating:7},
+{name:"Do chair yoga stretches",time:10,desc:"Get weird looks. Worth it.",emoji:"🧘",rating:5},
+{name:"Call someone you haven't talked to in months",time:15,desc:"'Hey! Yeah, I'm at the airport...'",emoji:"📞",rating:6},
+{name:"Draft emails you'll never send",time:20,desc:"Passive-aggressive masterpieces.",emoji:"✉️",rating:4},
+{name:"Try to connect to airport WiFi",time:15,desc:"Enter your email. Watch an ad. Still no connection.",emoji:"📶",rating:2},
+{name:"Walk to your gate's Starbucks",time:10,desc:"It's always the farthest point from your gate.",emoji:"☕",rating:6},
+{name:"Nap sitting up",time:30,desc:"Wake up confused about what year it is.",emoji:"😴",rating:5},
+{name:"Play a mobile game",time:20,desc:"Suddenly it's been 2 hours.",emoji:"🎮",rating:7},
+{name:"Eavesdrop on strangers",time:10,desc:"Their drama is your entertainment.",emoji:"👂",rating:8},
+{name:"Write a review of this airport",time:10,desc:"2 stars. Generous.",emoji:"⭐",rating:4},
+{name:"Eat a second lunch",time:25,desc:"Airport rules: all meals are valid at all times.",emoji:"🍔",rating:6},
+{name:"Window shop at Hudson News",time:10,desc:"$15 for trail mix. Bold pricing strategy.",emoji:"🏪",rating:3},
+{name:"Watch planes take off",time:15,desc:"Pretend you're 5 years old again. It's better.",emoji:"✈️",rating:7},
+{name:"Walk laps around the terminal",time:20,desc:"10,000 steps but make it depressing.",emoji:"🏃",rating:5},
+{name:"Charge your devices at 1% battery",time:30,desc:"Sitting on the floor next to an outlet. Peak dignity.",emoji:"🔋",rating:3},
+{name:"Strike up conversation with a stranger",time:15,desc:"50/50 chance of interesting or restraining order.",emoji:"💬",rating:4},
+{name:"Study the departure board",time:5,desc:"Your flight: DELAYED. Everyone else: ON TIME. Cool.",emoji:"📋",rating:2},
+{name:"Find the 'quiet area'",time:10,desc:"Spoiler: it doesn't exist.",emoji:"🤫",rating:3},
+{name:"Take artistic airport photos",time:15,desc:"For the Instagram story no one asked for.",emoji:"📸",rating:5},
+{name:"Meditate",time:10,desc:"Close eyes. Think about everything wrong in your life.",emoji:"🧠",rating:6},
+{name:"Buy neck pillow, regret it immediately",time:5,desc:"You look like a human donut.",emoji:"🍩",rating:2},
+{name:"Watch a full movie on your phone",time:120,desc:"If you've got the time, you've got the sadness.",emoji:"🎬",rating:8},
+{name:"Plan your entire trip itinerary",time:45,desc:"You'll abandon this plan in 24 hours.",emoji:"🗺️",rating:6},
+{name:"Complain to airline staff (politely)",time:10,desc:"They can't help. But they'll listen.",emoji:"😤",rating:3},
+{name:"Calculate cost-per-minute of this delay",time:5,desc:"It's more than you want to know.",emoji:"💰",rating:4},
+{name:"Try on sunglasses at a kiosk",time:8,desc:"You can't afford them. Try them all anyway.",emoji:"🕶️",rating:5},
+{name:"Do actual work",time:60,desc:"Just kidding. Nobody works at airports.",emoji:"💼",rating:1},
+{name:"Scroll social media into oblivion",time:45,desc:"Enter the void. Emerge 45 minutes older.",emoji:"📲",rating:6},
+{name:"Have an existential crisis",time:15,desc:"Why are you going? What is travel? Who are you?",emoji:"🌀",rating:7},
+{name:"Rate airport carpet patterns",time:5,desc:"Some airports have WILD carpet. Respect the craft.",emoji:"🎨",rating:4},
+{name:"Befriend the gate agent",time:10,desc:"Upgrade chances: 0.001%. But never zero.",emoji:"🤝",rating:5}
+];
+
+let boardingTime,gate,interval;
+
+function startTimer(){
+const timeStr=document.getElementById('boardTime').value;
+if(!timeStr){alert('Set your boarding time!');return}
+gate=document.getElementById('gate').value||'B42';
+const status=document.getElementById('status').value;
+const[h,m]=timeStr.split(':').map(Number);
+boardingTime=new Date();
+boardingTime.setHours(h,m,0,0);
+if(boardingTime<new Date())boardingTime.setDate(boardingTime.getDate()+1);
+const delays={ontime:0,delayed30:30,delayed60:60,delayed120:120,unknown:90};
+boardingTime=new Date(boardingTime.getTime()+delays[status]*60000);
+document.getElementById('setup').style.display='none';
+document.getElementById('timerDisplay').style.display='block';
+document.getElementById('boredomMeter').style.display='block';
+document.getElementById('gateChangeBtn').style.display='block';
+document.getElementById('activities').style.display='block';
+updateTimer();
+interval=setInterval(updateTimer,1000);
+}
+
+function updateTimer(){
+const now=new Date();
+const diff=boardingTime-now;
+if(diff<=0){
+document.querySelector('.remaining').textContent='BOARDING';
+document.querySelector('.remaining').style.color='#00cc66';
+document.querySelector('.gate-info').textContent='GO GO GO!';
+clearInterval(interval);
+return;
+}
+const mins=Math.ceil(diff/60000);
+const h=Math.floor(mins/60);
+const m=mins%60;
+const color=mins<10?'#ff0044':mins<30?'#ff8800':'#4488ff';
+document.getElementById('timerDisplay').innerHTML=`<div class="remaining" style="color:${color}">${h>0?h+'h ':''}${m}m</div><div class="gate-info">Gate ${gate} | Boarding in ${mins} minutes</div>`;
+
+const boredom=Math.min(100,Math.max(0,100-mins));
+const bColor=boredom>70?'#ff0044':boredom>40?'#ff8800':'#4488ff';
+const bLabels=['Entertained','Slightly Bored','Very Bored','Losing It','Terminal Madness'];
+document.getElementById('boredomMeter').innerHTML=`<div class="boredom-bar"><div class="boredom-fill" style="width:${boredom}%;background:${bColor}"></div></div><div class="boredom-label" style="color:${bColor}">Boredom: ${bLabels[Math.min(Math.floor(boredom/25),4)]}</div>`;
+
+const sorted=[...activities].sort((a,b)=>{
+const aFit=a.time<=mins?1:0;const bFit=b.time<=mins?1:0;
+if(aFit!==bFit)return bFit-aFit;
+return b.rating-a.rating;
+});
+document.getElementById('actList').innerHTML=sorted.map(a=>{
+const fit=a.time<=mins;
+const tight=a.time>mins*0.8&&fit;
+const cls=fit?(tight?'tight':'doable'):'nope';
+const st=fit?(tight?'maybe':'go'):'no';
+const stLabel=fit?(tight?'TIGHT':'GO'):'NOPE';
+return `<div class="activity ${cls}"><span class="emoji">${a.emoji}</span><div class="info"><div class="name">${a.name}</div><div class="desc">${a.desc}</div></div><span class="time-needed">${a.time}m</span><span class="status ${st}">${stLabel}</span></div>`;
+}).join('');
+}
+
+function gateChange(){
+const gates=['A1','A22','B7','B35','C12','C44','D3','D19','E8','F1','G15'];
+const newGate=gates[Math.floor(Math.random()*gates.length)];
+const oldGate=gate;
+gate=newGate;
+const alert_el=document.getElementById('gateChangeAlert');
+alert_el.style.display='block';
+alert_el.innerHTML=`<h3>GATE CHANGE!</h3><p>${oldGate} --> ${newGate}<br>Good luck finding it. You have 3 minutes.</p>`;
+setTimeout(()=>alert_el.style.display='none',10000);
+updateTimer();
+}
+
+// Default boarding time to 1 hour from now
+const def=new Date(Date.now()+3600000);
+document.getElementById('boardTime').value=String(def.getHours()).padStart(2,'0')+':'+String(def.getMinutes()).padStart(2,'0');
+</script>
+</body>
+</html>
