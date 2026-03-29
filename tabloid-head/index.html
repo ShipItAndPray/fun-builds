@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE DAILY SCANDAL - Tabloid Headline Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Oswald:wght@400;700&family=Special+Elite&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+  }
+
+  .masthead {
+    background: linear-gradient(135deg, #8b0000, #cc0000, #8b0000);
+    text-align: center;
+    padding: 18px 10px 12px;
+    border-bottom: 4px solid #ffd700;
+    position: relative;
+    overflow: hidden;
+  }
+  .masthead::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 49.5%, rgba(0,0,0,0.1) 49.5%, rgba(0,0,0,0.1) 50.5%);
+  }
+  .masthead h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 7vw, 4rem);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000, 4px 4px 0 rgba(0,0,0,0.3);
+    letter-spacing: 4px;
+    position: relative;
+  }
+  .masthead .tagline {
+    font-family: 'Special Elite', cursive;
+    color: #ffd700;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  .edition-bar {
+    background: #111;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 16px;
+    font-size: 0.75rem;
+    color: #888;
+    border-bottom: 1px solid #333;
+    font-family: 'Special Elite', cursive;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .input-section {
+    background: #151515;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .input-section label {
+    display: block;
+    font-size: 0.9rem;
+    color: #cc0000;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .input-section textarea {
+    width: 100%;
+    background: #0a0a0a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    padding: 12px;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.3s;
+  }
+  .input-section textarea:focus {
+    outline: none;
+    border-color: #cc0000;
+  }
+  .input-section textarea::placeholder { color: #555; }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: linear-gradient(180deg, #cc0000, #8b0000);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(204,0,0,0.5); }
+  .btn:active { transform: translateY(0); }
+  .btn.secondary {
+    background: linear-gradient(180deg, #333, #222);
+    border: 1px solid #555;
+  }
+  .btn.secondary:hover { box-shadow: 0 4px 20px rgba(255,255,255,0.1); }
+
+  /* Newspaper output */
+  .newspaper {
+    display: none;
+    background: #f5f0e8;
+    color: #1a1a1a;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    animation: paperDrop 0.5s ease-out;
+  }
+  @keyframes paperDrop {
+    from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .newspaper.visible { display: block; }
+
+  .paper-header {
+    background: #1a1a1a;
+    padding: 16px 20px 10px;
+    text-align: center;
+    border-bottom: 4px double #cc0000;
+  }
+  .paper-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.4rem, 5vw, 2.2rem);
+    color: #fff;
+    letter-spacing: 3px;
+  }
+  .paper-header .paper-date {
+    font-family: 'Special Elite', cursive;
+    color: #999;
+    font-size: 0.75rem;
+    margin-top: 4px;
+  }
+
+  .paper-body {
+    padding: 20px;
+  }
+
+  .headline-main {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 6vw, 3rem);
+    font-weight: 900;
+    color: #1a1a1a;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    border-bottom: 3px solid #cc0000;
+    padding-bottom: 10px;
+  }
+
+  .subheadline {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+
+  .photo-placeholder {
+    background: #ddd;
+    border: 2px solid #bbb;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .photo-placeholder .photo-icon {
+    font-size: 3rem;
+    color: #999;
+  }
+  .photo-placeholder .photo-caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  .body-text {
+    font-family: Georgia, serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #333;
+    column-count: 2;
+    column-gap: 24px;
+    column-rule: 1px solid #ccc;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 500px) { .body-text { column-count: 1; } }
+
+  .scandal-meter {
+    background: #1a1a1a;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .scandal-meter .label {
+    font-family: 'Oswald', sans-serif;
+    color: #cc0000;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+  }
+  .meter-bar {
+    background: #333;
+    height: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 1s ease-out;
+    background: linear-gradient(90deg, #ffd700, #ff8c00, #cc0000, #8b0000);
+  }
+  .scandal-score {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #ffd700;
+  }
+  .scandal-verdict {
+    font-family: 'Special Elite', cursive;
+    color: #cc0000;
+    font-size: 1rem;
+    margin-top: 4px;
+  }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 16px 20px;
+    background: #eee8d8;
+    border-top: 1px solid #ccc;
+  }
+  .action-bar .btn {
+    font-size: 0.85rem;
+    padding: 8px 18px;
+  }
+
+  .examples {
+    margin-top: 20px;
+  }
+  .examples summary {
+    color: #cc0000;
+    cursor: pointer;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .chip {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #aaa;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Special Elite', cursive;
+  }
+  .chip:hover { border-color: #cc0000; color: #fff; }
+
+  .history-section {
+    margin-top: 30px;
+    border-top: 1px solid #333;
+    padding-top: 16px;
+  }
+  .history-section h3 {
+    color: #cc0000;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+  }
+  .history-item {
+    background: #151515;
+    border-left: 3px solid #cc0000;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 0.85rem;
+  }
+  .history-item:hover { background: #1f1f1f; }
+  .history-item .orig { color: #666; font-size: 0.75rem; }
+
+  .speaking { animation: pulse 0.6s infinite alternate; }
+  @keyframes pulse {
+    from { box-shadow: 0 0 0 rgba(204,0,0,0); }
+    to { box-shadow: 0 0 30px rgba(204,0,0,0.5); }
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #444;
+    font-size: 0.7rem;
+    font-family: 'Special Elite', cursive;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>THE DAILY SCANDAL</h1>
+  <div class="tagline">Where Boring News Goes to Get Sensational</div>
+</div>
+<div class="edition-bar">
+  <span id="editionDate"></span>
+  <span>SCANDAL EDITION</span>
+  <span>PRICE: YOUR DIGNITY</span>
+</div>
+
+<div class="container">
+  <div class="input-section">
+    <label>Feed Us Your Boring News</label>
+    <textarea id="boringInput" placeholder="e.g. Local council approves new parking regulations for the downtown area..."></textarea>
+    <div class="btn-row">
+      <button class="btn" onclick="tabloidify()">TABLOIDIFY!</button>
+      <button class="btn secondary" onclick="randomExample()">Random Example</button>
+      <button class="btn secondary" onclick="clearAll()">Clear</button>
+    </div>
+    <details class="examples">
+      <summary>Try These Boring Headlines</summary>
+      <div class="example-chips">
+        <span class="chip" onclick="useExample(this)">City council votes on new traffic light schedule</span>
+        <span class="chip" onclick="useExample(this)">Local bakery introduces gluten-free options</span>
+        <span class="chip" onclick="useExample(this)">Software update fixes minor bugs in email app</span>
+        <span class="chip" onclick="useExample(this)">School board discusses lunch menu changes</span>
+        <span class="chip" onclick="useExample(this)">Company reports quarterly earnings slightly above expectations</span>
+        <span class="chip" onclick="useExample(this)">New study finds that people prefer comfortable shoes</span>
+        <span class="chip" onclick="useExample(this)">Library extends weekend hours by one hour</span>
+        <span class="chip" onclick="useExample(this)">Neighbor installs new fence in backyard</span>
+      </div>
+    </details>
+  </div>
+
+  <div class="newspaper" id="newspaper">
+    <div class="paper-header">
+      <h2>THE DAILY SCANDAL</h2>
+      <div class="paper-date" id="paperDate"></div>
+    </div>
+    <div class="paper-body">
+      <div class="headline-main" id="mainHeadline"></div>
+      <div class="subheadline" id="subHeadline"></div>
+      <div class="photo-placeholder">
+        <div class="photo-icon">&#128247;</div>
+        <div class="photo-caption" id="photoCaption">EXCLUSIVE photo obtained by our undercover reporters</div>
+      </div>
+      <div class="body-text" id="bodyText"></div>
+      <div class="scandal-meter">
+        <div class="label">Scandal Score</div>
+        <div class="meter-bar"><div class="meter-fill" id="meterFill" style="width:0%"></div></div>
+        <div class="scandal-score" id="scandalScore">0</div>
+        <div class="scandal-verdict" id="scandalVerdict"></div>
+      </div>
+    </div>
+    <div class="action-bar">
+      <button class="btn" onclick="speakHeadline()">&#128266; Read Aloud</button>
+      <button class="btn secondary" onclick="shareHeadline()">&#128228; Share</button>
+      <button class="btn secondary" onclick="reroll()">&#127922; Re-roll</button>
+    </div>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <h3>Previous Scandals</h3>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<footer>DISCLAIMER: No actual scandals were harmed in the making of these headlines. All content is satirical and generated for entertainment purposes only.</footer>
+
+<script>
+const PREFIXES = [
+  'SHOCKING:', 'BREAKING:', 'EXPOSED:', 'SCANDAL:', 'EXCLUSIVE:', 'BOMBSHELL:',
+  'REVEALED:', 'OUTRAGE:', 'HORROR:', 'CHAOS:', 'FURY:', 'EXPLOSIVE:',
+  'DEVASTATING:', 'UNBELIEVABLE:', 'URGENT:', 'NIGHTMARE:', 'CRISIS:',
+  'ALERT:', 'DISGRACE:', 'MAYHEM:', 'SENSATION:', 'ALARMING:', 'DISTURBING:',
+  'TERRIFYING:', 'SINISTER:', 'BRAZEN:', 'SHAMELESS:', 'DAMNING:',
+  'EARTH-SHATTERING:', 'JAW-DROPPING:'
+];
+
+const DRAMATIC_ADJECTIVES = [
+  'catastrophic', 'devastating', 'explosive', 'mind-blowing', 'earth-shattering',
+  'bone-chilling', 'blood-curdling', 'gut-wrenching', 'heart-stopping', 'jaw-dropping',
+  'scandalous', 'outrageous', 'diabolical', 'sinister', 'nefarious',
+  'unprecedented', 'unthinkable', 'horrifying', 'terrifying', 'nightmarish',
+  'shocking', 'appalling', 'monstrous', 'ghastly', 'hideous'
+];
+
+const CELEB_CONNECTIONS = [
+  'Sources close to the Royal Family confirm',
+  'A-list celebrities REFUSE to comment on',
+  'Hollywood insiders PANICKING over',
+  'Billionaire tech moguls SECRETLY involved in',
+  'Reality TV stars linked to',
+  'Social media influencers EXPOSED in connection with',
+  'Unnamed political figures desperately covering up',
+  'Sports legends DRAGGED into',
+  'Pop stars caught up in',
+  'Silicon Valley elite TERRIFIED by'
+];
+
+const SUFFIXES = [
+  '- and you WON\'T BELIEVE what happens next',
+  '- experts say it\'s WORSE than we thought',
+  '- insiders reveal the TRUTH',
+  '- the story THEY don\'t want you to see',
+  '- and it gets WORSE',
+  '- this changes EVERYTHING',
+  '- the public is NOT prepared',
+  '- whistleblowers SPEAK OUT',
+  '- families left DEVASTATED',
+  '- authorities SCRAMBLE to respond',
+  '- MILLIONS affected, government SILENT',
+  '- coverup EXPOSED after decades',
+  '- the evidence is DAMNING',
+  '- neighbors say they ALWAYS knew',
+  '- investigators BAFFLED'
+];
+
+const SUBHEADLINE_TEMPLATES = [
+  '"I\'ve never seen anything like it," says {expert} who wished to remain anonymous',
+  'Government officials refuse to comment amid growing {adj} allegations',
+  'Social media ERUPTS as {adj} details emerge',
+  'Witnesses describe {adj} scenes as chaos unfolds',
+  'Exclusive investigation reveals {adj} chain of events spanning {time}',
+  'Multiple sources confirm {adj} coverup at highest levels',
+  'Public outcry intensifies as {adj} new evidence surfaces',
+  'Leaked documents paint {adj} picture of corruption',
+  'Experts warn of {adj} consequences for millions',
+  'Anonymous tip leads to {adj} discovery that rocks the establishment'
+];
+
+const EXPERTS = [
+  'a trembling forensic analyst', 'a visibly shaken insider', 'a deep-state whistleblower',
+  'a rogue scientist', 'an unnamed government operative', 'a shadowy figure from the intelligence community',
+  'a retired detective who can\'t sleep at night', 'a journalist who fears for their life',
+  'a former intern with a photographic memory', 'a cab driver who overheard everything'
+];
+
+const TIMES = [
+  'decades', 'three terrifying years', 'centuries', 'an entire generation',
+  'the last 48 white-knuckle hours', 'a blood-soaked weekend', 'six harrowing months'
+];
+
+const BODY_OPENERS = [
+  'In what can only be described as the most {adj} revelation of the century,',
+  'Our award-winning investigative team has uncovered {adj} evidence that',
+  'Sources deep within the establishment have revealed, in {adj} detail, that',
+  'What began as a routine inquiry has spiraled into a {adj} scandal as',
+  'Under cover of darkness, our reporters discovered the {adj} truth:'
+];
+
+const BODY_MIDDLES = [
+  'The implications are staggering. Industry insiders are calling this "the biggest {adj} bombshell since Watergate."',
+  'Multiple witnesses have come forward, each painting an increasingly {adj} picture of systematic deception.',
+  'Government databases, obtained through a {adj} midnight data leak, confirm what many have long suspected.',
+  'The trail of evidence leads from local community centers all the way to the corridors of power in a {adj} web of deceit.',
+  'Anonymous donors have funneled {adj} amounts of resources into suppressing this story for years.'
+];
+
+const BODY_CLOSERS = [
+  'Authorities are expected to make a {adj} announcement within hours. Stay tuned to The Daily Scandal for live updates.',
+  'As this paper goes to print, {adj} new developments continue to emerge. This story is far from over.',
+  'The public deserves answers. The Daily Scandal will not rest until every {adj} detail has been brought to light.',
+  'Our legal team has advised us that publishing more {adj} details could endanger ongoing investigations. For now.',
+  'We have secured the {adj} evidence in an undisclosed location. The truth cannot be silenced.'
+];
+
+const PHOTO_CAPTIONS = [
+  'EXCLUSIVE: Grainy surveillance footage obtained at great personal risk to our reporters',
+  'The {adj} scene as captured by a terrified bystander moments before authorities arrived',
+  'Artists have refused to reconstruct this {adj} scene. We don\'t blame them.',
+  'This photo was taken SECONDS before everything changed forever',
+  'The image that has sent shockwaves through the highest levels of government',
+  'CENSORED: The original photo was too {adj} to publish in full',
+  'Our photographer narrowly escaped after capturing this {adj} evidence',
+  'Stock photo. Real images too disturbing to print.'
+];
+
+const SCANDAL_VERDICTS = [
+  [0, 20, 'Mildly Spicy - Your grandma might raise an eyebrow'],
+  [20, 40, 'Eyebrow Raising - Co-workers will gossip about this at lunch'],
+  [40, 60, 'Full Tabloid - Checkout lane magazine worthy'],
+  [60, 75, 'Front Page Material - Editors are FIGHTING over this story'],
+  [75, 90, 'National Emergency - The president has been briefed'],
+  [90, 100, 'DEFCON 1 SCANDAL - Civilization as we know it hangs in the balance'],
+  [100, 101, 'OFF THE CHARTS - Reality itself is questioning its existence']
+];
+
+const WORD_REPLACEMENTS = {
+  'said': 'SCREAMED', 'says': 'DEMANDS', 'announced': 'CONFESSED',
+  'decided': 'PLOTTED', 'changed': 'DESTROYED', 'new': 'SINISTER NEW',
+  'small': 'SUSPICIOUSLY SMALL', 'large': 'GROTESQUELY MASSIVE',
+  'meeting': 'SECRET MIDNIGHT GATHERING', 'study': 'CLASSIFIED INVESTIGATION',
+  'report': 'LEAKED DOSSIER', 'plan': 'DARK CONSPIRACY',
+  'update': 'EMERGENCY OVERHAUL', 'fix': 'DESPERATE COVERUP ATTEMPT',
+  'issue': 'FULL-BLOWN CRISIS', 'problem': 'CATASTROPHIC FAILURE',
+  'discuss': 'FURIOUSLY DEBATE', 'approve': 'RUBBER-STAMP IN DEAD OF NIGHT',
+  'vote': 'SHAM VOTE', 'increase': 'ASTRONOMICAL SURGE',
+  'decrease': 'TERRIFYING PLUNGE', 'suggest': 'DEMAND',
+  'consider': 'FRANTICALLY SCRAMBLE TO ADDRESS', 'delay': 'SUSPICIOUSLY STALL',
+  'begin': 'UNLEASH', 'start': 'IGNITE', 'end': 'TERMINATE WITHOUT WARNING',
+  'introduce': 'FORCE UPON AN UNSUSPECTING PUBLIC', 'improve': 'RADICALLY OVERHAUL',
+  'minor': 'ALLEGEDLY MINOR', 'slightly': 'DISTURBINGLY',
+  'normal': 'SO-CALLED "NORMAL"', 'regular': 'DEEPLY IRREGULAR',
+  'comfortable': 'DANGEROUSLY ADDICTIVE', 'good': 'SUSPICIOUSLY GOOD',
+  'find': 'UNCOVER', 'found': 'UNEARTHED', 'prefer': 'DESPERATELY CRAVE',
+  'people': 'MILLIONS OF UNSUSPECTING CITIZENS', 'company': 'SHADOWY CORPORATION',
+  'local': 'EMBATTLED LOCAL', 'install': 'ERECT WITHOUT WARNING',
+  'extend': 'DRAMATICALLY EXPAND', 'options': 'CONTROVERSIAL OPTIONS',
+  'school': 'SCANDAL-PLAGUED SCHOOL', 'council': 'ROGUE COUNCIL'
+};
+
+let history = [];
+let lastInput = '';
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickAdj() { return pick(DRAMATIC_ADJECTIVES); }
+
+function replaceWords(text) {
+  let words = text.split(/\b/);
+  return words.map(w => {
+    let lower = w.toLowerCase();
+    if (WORD_REPLACEMENTS[lower]) {
+      return Math.random() > 0.3 ? WORD_REPLACEMENTS[lower] : w;
+    }
+    return w;
+  }).join('');
+}
+
+function generateHeadline(input) {
+  let core = replaceWords(input.trim().replace(/\.$/, ''));
+  let prefix = pick(PREFIXES);
+  let suffix = Math.random() > 0.3 ? ' ' + pick(SUFFIXES) : '';
+  let headline = `${prefix} ${core.toUpperCase()}${suffix}`;
+  return headline;
+}
+
+function generateSubheadline() {
+  let tmpl = pick(SUBHEADLINE_TEMPLATES);
+  return tmpl
+    .replace('{expert}', pick(EXPERTS))
+    .replace('{adj}', pickAdj())
+    .replace('{time}', pick(TIMES));
+}
+
+function generateBody(input) {
+  let a = pickAdj, t = (tmpl) => tmpl.replace(/\{adj\}/g, pickAdj());
+  let opener = t(pick(BODY_OPENERS));
+  let core = replaceWords(input.trim());
+  let celeb = pick(CELEB_CONNECTIONS);
+  let middle = t(pick(BODY_MIDDLES));
+  let closer = t(pick(BODY_CLOSERS));
+  return `${opener} ${core}. ${celeb} the unfolding situation. ${middle} ${closer}`;
+}
+
+function computeScandalScore(headline) {
+  let score = 30;
+  let upper = (headline.match(/[A-Z]{3,}/g) || []).length;
+  score += Math.min(upper * 3, 25);
+  let excl = (headline.match(/!/g) || []).length;
+  score += Math.min(excl * 5, 15);
+  if (/SHOCKING|BOMBSHELL|EXPLOSIVE|DEVASTATING|EARTH-SHATTERING/i.test(headline)) score += 10;
+  if (/EXPOSED|SCANDAL|COVERUP|CONSPIRACY/i.test(headline)) score += 8;
+  if (/WON'T BELIEVE|WORSE THAN|TRUTH|THEY DON'T WANT/i.test(headline)) score += 7;
+  score += Math.min(headline.length / 10, 10);
+  score = Math.min(Math.max(score, 15), 100);
+  return Math.round(score);
+}
+
+function getVerdict(score) {
+  for (let [lo, hi, v] of SCANDAL_VERDICTS) {
+    if (score >= lo && score < hi) return v;
+  }
+  return SCANDAL_VERDICTS[SCANDAL_VERDICTS.length - 1][2];
+}
+
+function tabloidify() {
+  let input = document.getElementById('boringInput').value.trim();
+  if (!input) return;
+  lastInput = input;
+
+  let headline = generateHeadline(input);
+  let sub = generateSubheadline();
+  let body = generateBody(input);
+  let caption = pick(PHOTO_CAPTIONS).replace('{adj}', pickAdj());
+  let score = computeScandalScore(headline);
+  let verdict = getVerdict(score);
+
+  document.getElementById('mainHeadline').textContent = headline;
+  document.getElementById('subHeadline').textContent = sub;
+  document.getElementById('bodyText').textContent = body;
+  document.getElementById('photoCaption').textContent = caption;
+  document.getElementById('scandalScore').textContent = score + '/100';
+  document.getElementById('scandalVerdict').textContent = verdict;
+
+  let fill = document.getElementById('meterFill');
+  fill.style.width = '0%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { fill.style.width = score + '%'; });
+  });
+
+  let paper = document.getElementById('newspaper');
+  paper.classList.remove('visible');
+  requestAnimationFrame(() => { paper.classList.add('visible'); });
+
+  let now = new Date();
+  document.getElementById('paperDate').textContent =
+    now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) +
+    ' | ' + now.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' }) + ' | EXTRA EXTRA EDITION';
+
+  // History
+  history.unshift({ original: input, headline, score });
+  if (history.length > 10) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  let sec = document.getElementById('historySection');
+  let list = document.getElementById('historyList');
+  if (history.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = history.map((h, i) =>
+    `<div class="history-item" onclick="replayHistory(${i})">
+      <div>${h.headline.substring(0, 80)}... <strong style="color:#ffd700">[${h.score}/100]</strong></div>
+      <div class="orig">Original: ${h.original}</div>
+    </div>`
+  ).join('');
+}
+
+function replayHistory(i) {
+  document.getElementById('boringInput').value = history[i].original;
+  tabloidify();
+}
+
+function reroll() {
+  if (lastInput) {
+    document.getElementById('boringInput').value = lastInput;
+    tabloidify();
+  }
+}
+
+function speakHeadline() {
+  if (!('speechSynthesis' in window)) { alert('Speech not supported in this browser'); return; }
+  speechSynthesis.cancel();
+
+  let headline = document.getElementById('mainHeadline').textContent;
+  let sub = document.getElementById('subHeadline').textContent;
+  let score = document.getElementById('scandalScore').textContent;
+  let verdict = document.getElementById('scandalVerdict').textContent;
+
+  let text = headline + '. ' + sub + '. Scandal Score: ' + score + '. ' + verdict;
+  let utter = new SpeechSynthesisUtterance(text);
+
+  // Dramatic voice settings
+  utter.rate = 0.85;
+  utter.pitch = 0.7;
+  utter.volume = 1;
+
+  // Try to pick a deep/dramatic voice
+  let voices = speechSynthesis.getVoices();
+  let preferred = voices.find(v => /Daniel|Alex|Tom|Google UK English Male/i.test(v.name));
+  if (preferred) utter.voice = preferred;
+
+  let paper = document.getElementById('newspaper');
+  utter.onstart = () => paper.classList.add('speaking');
+  utter.onend = () => paper.classList.remove('speaking');
+
+  speechSynthesis.speak(utter);
+}
+
+function shareHeadline() {
+  let headline = document.getElementById('mainHeadline').textContent;
+  let score = document.getElementById('scandalScore').textContent;
+  let text = headline + '\n\nScandal Score: ' + score + '\n\nGenerated by The Daily Scandal';
+
+  if (navigator.share) {
+    navigator.share({ title: 'THE DAILY SCANDAL', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      let btn = document.querySelector('.action-bar .btn.secondary');
+      let orig = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copied!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+  }
+}
+
+function useExample(el) {
+  document.getElementById('boringInput').value = el.textContent;
+  tabloidify();
+}
+
+function randomExample() {
+  let chips = document.querySelectorAll('.chip');
+  useExample(chips[Math.floor(Math.random() * chips.length)]);
+}
+
+function clearAll() {
+  document.getElementById('boringInput').value = '';
+  document.getElementById('newspaper').classList.remove('visible');
+  lastInput = '';
+}
+
+// Init
+document.getElementById('editionDate').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// Preload voices for speech
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// Enter key support
+document.getElementById('boringInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); tabloidify(); }
+});
+</script>
+</body>
+</html>

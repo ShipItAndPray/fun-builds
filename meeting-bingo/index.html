@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corporate Buzzword Bingo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.header {
+  text-align: center;
+  padding: 20px 10px 10px;
+}
+
+.header h1 {
+  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  background: linear-gradient(135deg, #e94560, #0f3460);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+
+.header .subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  flex-wrap: wrap;
+}
+
+.controls button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.controls button:active { transform: scale(0.95); }
+
+.btn-new {
+  background: linear-gradient(135deg, #e94560, #c23152);
+  color: white;
+  box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+}
+
+.btn-add {
+  background: linear-gradient(135deg, #0f3460, #16213e);
+  color: white;
+  box-shadow: 0 4px 15px rgba(15, 52, 96, 0.3);
+}
+
+.btn-sound {
+  background: #333;
+  color: #aaa;
+  font-size: 1.2rem;
+  padding: 10px 14px;
+}
+
+.btn-sound.on { color: #e94560; }
+
+.players-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px 10px 40px;
+}
+
+.player-card {
+  background: #16213e;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  width: min(95vw, 400px);
+}
+
+.player-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.player-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #e94560;
+  cursor: pointer;
+  border: 1px dashed transparent;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.player-name:hover {
+  border-color: #e94560;
+}
+
+.player-score {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.remove-player {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0 4px;
+}
+
+.remove-player:hover { color: #e94560; }
+
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.bingo-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: #1a1a2e;
+  border-radius: 8px;
+  font-size: clamp(0.55rem, 1.8vw, 0.75rem);
+  font-weight: 500;
+  padding: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+  line-height: 1.2;
+  word-break: break-word;
+  position: relative;
+  overflow: hidden;
+}
+
+.bingo-cell:hover {
+  background: #232946;
+}
+
+.bingo-cell.marked {
+  background: linear-gradient(135deg, #e94560, #c23152);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(233, 69, 96, 0.4);
+}
+
+.bingo-cell.free {
+  background: linear-gradient(135deg, #0f3460, #16213e);
+  color: #e94560;
+  font-weight: 800;
+  font-size: clamp(0.7rem, 2vw, 0.9rem);
+}
+
+.bingo-cell.bingo-highlight {
+  animation: bingoFlash 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes bingoFlash {
+  from { box-shadow: 0 0 12px rgba(233, 69, 96, 0.4); }
+  to { box-shadow: 0 0 24px rgba(233, 69, 96, 0.9), 0 0 48px rgba(233, 69, 96, 0.3); }
+}
+
+.bingo-banner {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(3rem, 15vw, 8rem);
+  font-weight: 900;
+  color: #e94560;
+  text-shadow: 0 0 40px rgba(233, 69, 96, 0.6), 0 0 80px rgba(233, 69, 96, 0.3);
+  z-index: 100;
+  pointer-events: none;
+  animation: bangIn 0.5s ease-out;
+  letter-spacing: 8px;
+}
+
+@keyframes bangIn {
+  0% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+  50% { transform: translate(-50%, -50%) scale(0.9); }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+.confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 99;
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e94560;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 200;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>CORPORATE BUZZWORD BINGO</h1>
+  <div class="subtitle">"Let's take this offline and circle back with aligned stakeholders"</div>
+</div>
+
+<div class="controls">
+  <button class="btn-new" onclick="newCards()">New Cards</button>
+  <button class="btn-add" onclick="addPlayer()">+ Player</button>
+  <button class="btn-sound on" id="soundBtn" onclick="toggleSound()">&#128264;</button>
+</div>
+
+<div class="players-container" id="players"></div>
+
+<div class="bingo-banner" id="bingoBanner">BINGO!</div>
+<canvas class="confetti-canvas" id="confetti"></canvas>
+
+<script>
+const BUZZWORDS = [
+  "Synergy", "Low-Hanging Fruit", "Circle Back", "Deep Dive", "Bandwidth",
+  "Pivot", "Leverage", "Stakeholders", "Move the Needle", "Actionable",
+  "Take This Offline", "Paradigm Shift", "Best Practice", "Bleeding Edge",
+  "Thought Leader", "Value-Add", "ROI", "Scalable", "Ecosystem", "Disruptive",
+  "Touch Base", "Drill Down", "Pain Point", "North Star", "Double Click",
+  "Unpack That", "Run It Up the Flagpole", "Boil the Ocean", "Table This",
+  "Lean In", "Optics", "Guardrails", "Alignment", "Net-Net", "Hard Stop",
+  "Cadence", "Swim Lane", "Deliverables", "KPI", "Bio Break",
+  "Parking Lot", "Open the Kimono", "Drink the Kool-Aid", "Socialize It",
+  "Tiger Team", "War Room", "Brain Dump", "Sunset", "Greenfield",
+  "Dogfooding", "Headwinds", "Tailwinds", "Ideation", "Synergize",
+  "Quick Win", "Game Changer", "Core Competency", "Mission Critical",
+  "Vertical Integration", "Cross-Pollinate", "Rubber Stamp", "Ducks in a Row",
+  "Move Fast", "Agile", "Sprint", "Retro", "Stand-Up", "Blockers",
+  "Scope Creep", "Ballpark Figure", "Ping Me", "Loop In", "On My Radar",
+  "Per My Last Email", "As Per", "Going Forward", "At the End of the Day",
+  "Let's Not Reinvent the Wheel", "Skin in the Game", "Boots on the Ground",
+  "30,000 Foot View", "In the Weeds", "Wheelhouse", "Bandwidth Check",
+  "Take a Step Back", "Close the Loop", "Peel the Onion", "Mindshare"
+];
+
+let players = [];
+let soundOn = true;
+let playerCounter = 0;
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function generateCard() {
+  const words = shuffle(BUZZWORDS).slice(0, 24);
+  words.splice(12, 0, "FREE SPACE");
+  return words;
+}
+
+function addPlayer() {
+  playerCounter++;
+  const player = {
+    id: Date.now(),
+    name: `Player ${playerCounter}`,
+    card: generateCard(),
+    marked: new Array(25).fill(false),
+    hasBingo: false
+  };
+  player.marked[12] = true; // free space
+  players.push(player);
+  render();
+}
+
+function removePlayer(id) {
+  if (players.length <= 1) {
+    showToast("Need at least one player!");
+    return;
+  }
+  players = players.filter(p => p.id !== id);
+  render();
+}
+
+function renamePlayer(id) {
+  const p = players.find(p => p.id === id);
+  if (!p) return;
+  const name = prompt("Enter player name:", p.name);
+  if (name && name.trim()) {
+    p.name = name.trim();
+    render();
+  }
+}
+
+function newCards() {
+  players.forEach(p => {
+    p.card = generateCard();
+    p.marked = new Array(25).fill(false);
+    p.marked[12] = true;
+    p.hasBingo = false;
+  });
+  hideBingoBanner();
+  render();
+}
+
+function toggleCell(playerId, idx) {
+  const p = players.find(p => p.id === playerId);
+  if (!p || idx === 12) return; // can't unmark free space
+  p.marked[idx] = !p.marked[idx];
+
+  if (p.marked[idx] && soundOn) playTap();
+
+  const bingo = checkBingo(p);
+  if (bingo && !p.hasBingo) {
+    p.hasBingo = true;
+    showBingo(p);
+  } else if (!bingo) {
+    p.hasBingo = false;
+  }
+
+  render();
+}
+
+function checkBingo(player) {
+  const m = player.marked;
+  // rows
+  for (let r = 0; r < 5; r++) {
+    if (m[r*5] && m[r*5+1] && m[r*5+2] && m[r*5+3] && m[r*5+4]) return getLine('row', r);
+  }
+  // cols
+  for (let c = 0; c < 5; c++) {
+    if (m[c] && m[c+5] && m[c+10] && m[c+15] && m[c+20]) return getLine('col', c);
+  }
+  // diagonals
+  if (m[0] && m[6] && m[12] && m[18] && m[24]) return getLine('diag', 0);
+  if (m[4] && m[8] && m[12] && m[16] && m[20]) return getLine('diag', 1);
+  return null;
+}
+
+function getLine(type, idx) {
+  if (type === 'row') return [idx*5, idx*5+1, idx*5+2, idx*5+3, idx*5+4];
+  if (type === 'col') return [idx, idx+5, idx+10, idx+15, idx+20];
+  if (type === 'diag' && idx === 0) return [0, 6, 12, 18, 24];
+  return [4, 8, 12, 16, 20];
+}
+
+function getBingoIndices(player) {
+  const m = player.marked;
+  let indices = new Set();
+  for (let r = 0; r < 5; r++) {
+    if (m[r*5] && m[r*5+1] && m[r*5+2] && m[r*5+3] && m[r*5+4])
+      [0,1,2,3,4].forEach(c => indices.add(r*5+c));
+  }
+  for (let c = 0; c < 5; c++) {
+    if (m[c] && m[c+5] && m[c+10] && m[c+15] && m[c+20])
+      [0,5,10,15,20].forEach(r => indices.add(c+r));
+  }
+  if (m[0] && m[6] && m[12] && m[18] && m[24])
+    [0,6,12,18,24].forEach(i => indices.add(i));
+  if (m[4] && m[8] && m[12] && m[16] && m[20])
+    [4,8,12,16,20].forEach(i => indices.add(i));
+  return indices;
+}
+
+function countMarked(player) {
+  return player.marked.filter(Boolean).length - 1; // minus free space
+}
+
+function showBingo(player) {
+  const banner = document.getElementById('bingoBanner');
+  banner.style.display = 'block';
+  if (soundOn) playAirHorn();
+  launchConfetti();
+  setTimeout(() => { banner.style.display = 'none'; }, 3000);
+}
+
+function hideBingoBanner() {
+  document.getElementById('bingoBanner').style.display = 'none';
+}
+
+function render() {
+  const container = document.getElementById('players');
+  container.innerHTML = players.map(p => {
+    const bingoIdx = getBingoIndices(p);
+    return `
+      <div class="player-card">
+        <div class="player-header">
+          <span class="player-name" onclick="renamePlayer(${p.id})">${p.name}</span>
+          <span class="player-score">${countMarked(p)}/24 marked${p.hasBingo ? ' | BINGO!' : ''}</span>
+          <button class="remove-player" onclick="removePlayer(${p.id})">&times;</button>
+        </div>
+        <div class="bingo-grid">
+          ${p.card.map((word, i) => {
+            const isFree = i === 12;
+            const isMarked = p.marked[i];
+            const isBingoLine = bingoIdx.has(i);
+            let cls = 'bingo-cell';
+            if (isFree) cls += ' free marked';
+            else if (isMarked) cls += ' marked';
+            if (isBingoLine && isMarked) cls += ' bingo-highlight';
+            return `<div class="${cls}" onclick="${isFree ? '' : `toggleCell(${p.id},${i})`}">${word}</div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// --- SOUND ---
+function playTap() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(800, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.05);
+    g.gain.setValueAtTime(0.15, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+function playAirHorn() {
+  try {
+    const ctx = getAudioCtx();
+    const duration = 1.5;
+    // layer multiple oscillators for that air horn sound
+    [280, 360, 480, 540].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(freq, ctx.currentTime);
+      o.frequency.linearRampToValueAtTime(freq * 1.02, ctx.currentTime + 0.1);
+      g.gain.setValueAtTime(0, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.05);
+      g.gain.setValueAtTime(0.12, ctx.currentTime + duration * 0.7);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime);
+      o.stop(ctx.currentTime + duration);
+    });
+    // distortion blast at start
+    const noise = ctx.createOscillator();
+    const ng = ctx.createGain();
+    noise.type = 'square';
+    noise.frequency.setValueAtTime(150, ctx.currentTime);
+    ng.gain.setValueAtTime(0.2, ctx.currentTime);
+    ng.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    noise.connect(ng).connect(ctx.destination);
+    noise.start(); noise.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  const btn = document.getElementById('soundBtn');
+  btn.textContent = soundOn ? '\u{1F50A}' : '\u{1F507}';
+  btn.classList.toggle('on', soundOn);
+}
+
+// --- CONFETTI ---
+function launchConfetti() {
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#e94560', '#0f3460', '#ffd700', '#00ff88', '#ff6b6b', '#4ecdc4', '#fff'];
+
+  for (let i = 0; i < 200; i++) {
+    pieces.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height - canvas.height,
+      w: Math.random() * 10 + 5,
+      h: Math.random() * 6 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vy: Math.random() * 4 + 2,
+      vx: Math.random() * 4 - 2,
+      rot: Math.random() * Math.PI * 2,
+      rv: (Math.random() - 0.5) * 0.2,
+      opacity: 1
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.rot += p.rv;
+      if (frame > 60) p.opacity -= 0.01;
+      if (p.opacity <= 0) return;
+      alive = true;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.opacity);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if (alive && frame < 200) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// init with 1 player
+addPlayer();
+</script>
+</body>
+</html>

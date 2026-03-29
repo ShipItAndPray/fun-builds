@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speed Dating Timer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #fff0f3;
+    --card: #ffffff;
+    --pink: #e91e63;
+    --pink-dark: #c2185b;
+    --pink-light: #fce4ec;
+    --red: #d32f2f;
+    --heart: #e91e63;
+    --text: #37474f;
+    --shadow: 0 4px 20px rgba(233,30,99,0.15);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    transition: background 1s;
+  }
+
+  body.desperate {
+    background: #ffcdd2;
+  }
+  body.very-desperate {
+    background: #ef9a9a;
+    animation: pulse-bg 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-bg {
+    to { background: #e57373; }
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    color: var(--pink);
+    margin: 8px 0 4px;
+    text-align: center;
+  }
+
+  h1 .heart { display: inline-block; animation: heartbeat 1s ease-in-out infinite; }
+  @keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+
+  .subtitle {
+    color: #e91e63aa;
+    font-size: 0.95rem;
+    margin-bottom: 16px;
+  }
+
+  /* Setup */
+  .setup {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+  }
+
+  .setup label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .setup input[type="range"] {
+    width: 100%;
+    accent-color: var(--pink);
+    margin-bottom: 4px;
+  }
+
+  .range-val {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--pink);
+    margin-bottom: 16px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 36px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    color: #fff;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn-start {
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    box-shadow: 0 4px 15px rgba(233,30,99,0.4);
+  }
+  .btn-match {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    box-shadow: 0 4px 12px rgba(76,175,80,0.4);
+  }
+  .btn-no {
+    background: linear-gradient(135deg, #9e9e9e, #616161);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  .btn-next {
+    background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+    box-shadow: 0 4px 12px rgba(233,30,99,0.3);
+    padding: 12px 28px;
+  }
+  .btn-end {
+    background: linear-gradient(135deg, #ff5722, #d84315);
+    box-shadow: 0 4px 12px rgba(255,87,34,0.3);
+    padding: 10px 24px;
+    font-size: 0.95rem;
+  }
+
+  /* Timer Area */
+  .timer-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+  }
+
+  .round-info {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--pink);
+    margin-bottom: 8px;
+  }
+
+  .timer-display {
+    font-size: clamp(5rem, 18vw, 9rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--pink-dark);
+    line-height: 1;
+    margin: 8px 0 12px;
+    transition: color 0.5s;
+  }
+
+  .timer-display.warning { color: #ff9800; }
+  .timer-display.danger { color: var(--red); animation: shake 0.3s infinite; }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--pink-light);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pink), var(--red));
+    transition: width 0.3s;
+    border-radius: 4px;
+  }
+
+  /* Conversation Starter */
+  .starter-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    text-align: center;
+    margin-bottom: 16px;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: border 0.3s;
+    border: 2px solid transparent;
+  }
+  .starter-card.level-mid { border-color: #ff9800; }
+  .starter-card.level-late { border-color: var(--red); }
+  .starter-card.level-desperate { border-color: #b71c1c; animation: card-pulse 0.6s infinite alternate; }
+
+  @keyframes card-pulse {
+    to { box-shadow: 0 0 20px rgba(183,28,28,0.4); }
+  }
+
+  .starter-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .starter-label.early { color: var(--pink); }
+  .starter-label.mid { color: #ff9800; }
+  .starter-label.late { color: var(--red); }
+  .starter-label.desperate { color: #b71c1c; }
+
+  .starter-text {
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .new-starter-btn {
+    background: none;
+    border: 1px solid var(--pink);
+    color: var(--pink);
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+
+  /* Match Buttons */
+  .match-area {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 8px;
+  }
+
+  .match-area .btn-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+  .match-area .btn-row .btn {
+    flex: 1;
+    font-size: 1.05rem;
+    padding: 16px 0;
+  }
+
+  /* Score Card */
+  .scorecard {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 500px;
+    margin-top: 16px;
+    display: none;
+  }
+
+  .scorecard h2 {
+    color: var(--pink);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .score-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 16px;
+  }
+
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 2.2rem;
+    font-weight: 800;
+  }
+  .stat-num.matches { color: #4caf50; }
+  .stat-num.nopes { color: #9e9e9e; }
+  .stat-label {
+    font-size: 0.85rem;
+    color: #888;
+  }
+
+  .score-list {
+    list-style: none;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .score-list li {
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+  }
+  .score-list li.match-yes { background: #e8f5e9; }
+  .score-list li.match-no { background: #f5f5f5; }
+
+  .controls-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .music-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: var(--card);
+    border: 2px solid var(--pink);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Between-rounds overlay */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 20;
+    justify-content: center;
+    align-items: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    max-width: 360px;
+    width: 90%;
+  }
+  .overlay-card h2 { color: var(--pink); margin-bottom: 8px; }
+  .overlay-card p { margin-bottom: 20px; color: #666; }
+
+  @media (max-width: 480px) {
+    body { padding: 10px; }
+    .setup, .starter-card, .scorecard { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<h1><span class="heart">&#x1F496;</span> Speed Dating Timer</h1>
+<p class="subtitle">Find love... or at least a decent conversation</p>
+
+<button class="music-toggle" id="musicBtn" title="Toggle Music">&#x1F50A;</button>
+
+<!-- SETUP SCREEN -->
+<div class="setup" id="setup">
+  <label for="roundLen">Round Length</label>
+  <input type="range" id="roundLen" min="3" max="10" value="5">
+  <div class="range-val"><span id="lenVal">5</span> min</div>
+  <button class="btn btn-start" id="startBtn">Start Speed Dating</button>
+</div>
+
+<!-- TIMER SCREEN -->
+<div class="timer-area" id="timerArea">
+  <div class="round-info">Round <span id="roundNum">1</span></div>
+  <div class="timer-display" id="timerDisplay">5:00</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div class="starter-card" id="starterCard">
+    <div class="starter-label early" id="starterLabel">Conversation Starter</div>
+    <div class="starter-text" id="starterText">Loading...</div>
+    <button class="new-starter-btn" id="newStarterBtn">Another one</button>
+  </div>
+
+  <!-- Match buttons (shown when round ends) -->
+  <div class="match-area" id="matchArea">
+    <p style="font-weight:700; font-size:1.1rem; color:var(--pink);">Was it a match?</p>
+    <div class="btn-row">
+      <button class="btn btn-match" id="yesBtn">&#x2764;&#xFE0F; Match!</button>
+      <button class="btn btn-no" id="noBtn">Nope</button>
+    </div>
+  </div>
+</div>
+
+<!-- BETWEEN ROUNDS OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="overlay-card">
+    <h2 id="overlayTitle">Next Round!</h2>
+    <p id="overlayMsg">Switch seats and get ready...</p>
+    <button class="btn btn-next" id="nextRoundBtn">Start Round</button>
+  </div>
+</div>
+
+<!-- SCORECARD -->
+<div class="scorecard" id="scorecard">
+  <h2>&#x1F4CB; Scorecard</h2>
+  <div class="score-stats">
+    <div class="stat"><div class="stat-num matches" id="matchCount">0</div><div class="stat-label">Matches</div></div>
+    <div class="stat"><div class="stat-num nopes" id="nopeCount">0</div><div class="stat-label">Nopes</div></div>
+  </div>
+  <ul class="score-list" id="scoreList"></ul>
+  <div class="controls-row">
+    <button class="btn btn-next" id="continueBtn">Keep Going</button>
+    <button class="btn btn-end" id="endBtn">End Session</button>
+  </div>
+</div>
+
+<script>
+// ---- CONVERSATION STARTERS (by desperation tier) ----
+const STARTERS = {
+  early: [
+    "So, what do you do?",
+    "Where are you from originally?",
+    "Been to any good restaurants lately?",
+    "What do you do for fun?",
+    "Are you a morning person or night owl?",
+    "What's been the highlight of your week?",
+    "Do you have any pets?",
+    "Seen any good shows or movies lately?",
+    "Coffee or tea?",
+    "What neighborhood do you live in?",
+    "How did you hear about this event?",
+    "Travel anywhere fun recently?",
+    "What kind of music are you into?",
+    "Do you cook or are you a takeout person?",
+    "What's your go-to weekend activity?"
+  ],
+  mid: [
+    "Do you also cry at Pixar movies?",
+    "What's your most embarrassing Spotify Wrapped genre?",
+    "If you could have dinner with anyone, dead or alive, who?",
+    "What's your love language? Mine is snacks.",
+    "Do you believe in astrology or just use it as a personality?",
+    "What's the weirdest thing in your fridge right now?",
+    "How many houseplants have you accidentally killed?",
+    "What's your toxic trait?",
+    "If we matched, what would our first date be?",
+    "What's your most controversial food opinion?",
+    "Would you survive a zombie apocalypse? Be honest.",
+    "What's a hill you'll die on?",
+    "Do you parallel park or just drive around the block?",
+    "What's the last thing you Googled? No lying.",
+    "Rate your dancing skills. One to ten. No lying."
+  ],
+  late: [
+    "I have health insurance AND a 401k.",
+    "I own a label maker and I use it regularly.",
+    "My credit score starts with a 7. Just putting that out there.",
+    "I can change a tire AND cook a risotto.",
+    "I'll watch whatever you want on Netflix. I mean it.",
+    "I have no student loans. Zero. None.",
+    "I will NEVER ask you 'what do you want to eat' without having a suggestion ready.",
+    "I unload the dishwasher without being asked.",
+    "My mom already likes you. I showed her your photo.",
+    "I know how to fold a fitted sheet. For real.",
+    "I will pretend to like your friends. All of them.",
+    "I own a vacuum AND I use it. Weekly.",
+    "I will never steal your fries. Okay maybe one.",
+    "My therapist says I'm making great progress.",
+    "I bring my own bags to the grocery store. Every time."
+  ],
+  desperate: [
+    "Please. I made a PowerPoint about why I'm dateable.",
+    "My cat needs a stepdad/stepmom. She's very judgmental but she'll warm up.",
+    "I have a shared Netflix AND Costco membership to offer.",
+    "I will literally move to your city. Just say the word.",
+    "My grandma keeps asking. PLEASE. Do it for Grandma.",
+    "I learned to make bread during the pandemic. The sourdough starter has a name.",
+    "I will assemble your IKEA furniture. With NO leftover screws.",
+    "I have SEVEN loyalty punch cards that are almost full.",
+    "I pre-game speed dating events with a motivational playlist.",
+    "I promise I won't make you take couple photos for Instagram. Okay maybe one.",
+    "I'll carry all the grocery bags in one trip. Both arms. Every time.",
+    "Do you want to just skip this and go get tacos?",
+    "I practiced my 'interested face' in the mirror before coming here.",
+    "I alphabetized my spice rack for you. For US.",
+    "I will be your plus-one to ANYTHING. Weddings. Funerals. DMV."
+  ]
+};
+
+// ---- STATE ----
+let roundLength = 5 * 60; // seconds
+let timeLeft = 0;
+let timerInterval = null;
+let currentRound = 0;
+let matches = [];
+let musicOn = true;
+let audioCtx = null;
+let musicNodes = {};
+let currentTempo = 120;
+let lastStarterTier = '';
+let lastStarterIdx = -1;
+
+// ---- DOM ----
+const $ = id => document.getElementById(id);
+const roundLenSlider = $('roundLen');
+const lenVal = $('lenVal');
+const setupEl = $('setup');
+const timerArea = $('timerArea');
+const timerDisplay = $('timerDisplay');
+const progressFill = $('progressFill');
+const roundNumEl = $('roundNum');
+const starterCard = $('starterCard');
+const starterLabel = $('starterLabel');
+const starterText = $('starterText');
+const matchArea = $('matchArea');
+const overlay = $('overlay');
+const scorecard = $('scorecard');
+const matchCountEl = $('matchCount');
+const nopeCountEl = $('nopeCount');
+const scoreList = $('scoreList');
+const musicBtn = $('musicBtn');
+
+// ---- SETUP ----
+roundLenSlider.addEventListener('input', () => {
+  lenVal.textContent = roundLenSlider.value;
+});
+
+$('startBtn').addEventListener('click', () => {
+  roundLength = parseInt(roundLenSlider.value) * 60;
+  currentRound = 0;
+  matches = [];
+  updateScorecard();
+  setupEl.classList.add('hidden');
+  timerArea.style.display = 'flex';
+  scorecard.style.display = 'block';
+  initAudio();
+  startNextRound();
+});
+
+// ---- TIMER ----
+function startNextRound() {
+  currentRound++;
+  roundNumEl.textContent = currentRound;
+  timeLeft = roundLength;
+  matchArea.style.display = 'none';
+  overlay.classList.remove('show');
+  body_update_desperation(1);
+  updateTimerDisplay();
+  showStarter();
+  startMusic();
+
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      clearInterval(timerInterval);
+      roundEnd();
+    }
+    updateTimerDisplay();
+    updateDesperation();
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const m = Math.floor(timeLeft / 60);
+  const s = timeLeft % 60;
+  timerDisplay.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+
+  const pct = 1 - (timeLeft / roundLength);
+  progressFill.style.width = (pct * 100) + '%';
+
+  timerDisplay.classList.remove('warning', 'danger');
+  if (pct > 0.75) timerDisplay.classList.add('danger');
+  else if (pct > 0.5) timerDisplay.classList.add('warning');
+}
+
+function updateDesperation() {
+  const pct = 1 - (timeLeft / roundLength);
+  const tier = getTier(pct);
+
+  body_update_desperation(pct);
+
+  // Update starter periodically at tier transitions
+  if (tier !== lastStarterTier) {
+    showStarter();
+  }
+
+  // Update music tempo
+  if (audioCtx && musicOn) {
+    const targetTempo = pct < 0.3 ? 120 : pct < 0.6 ? 150 : pct < 0.8 ? 190 : 240;
+    currentTempo = targetTempo;
+  }
+}
+
+function body_update_desperation(pct) {
+  document.body.classList.remove('desperate', 'very-desperate');
+  if (pct > 0.8) document.body.classList.add('very-desperate');
+  else if (pct > 0.6) document.body.classList.add('desperate');
+}
+
+function getTier(pct) {
+  if (pct < 0.3) return 'early';
+  if (pct < 0.6) return 'mid';
+  if (pct < 0.8) return 'late';
+  return 'desperate';
+}
+
+function showStarter() {
+  const pct = 1 - (timeLeft / roundLength);
+  const tier = getTier(pct);
+  lastStarterTier = tier;
+
+  const pool = STARTERS[tier];
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); } while (idx === lastStarterIdx && pool.length > 1);
+  lastStarterIdx = idx;
+
+  starterText.textContent = `"${pool[idx]}"`;
+
+  starterLabel.className = 'starter-label ' + tier;
+  starterLabel.textContent = tier === 'early' ? 'Conversation Starter' :
+    tier === 'mid' ? 'Getting Personal...' :
+    tier === 'late' ? 'Selling Yourself' : 'MAXIMUM DESPERATION';
+
+  starterCard.className = 'starter-card';
+  if (tier === 'mid') starterCard.classList.add('level-mid');
+  else if (tier === 'late') starterCard.classList.add('level-late');
+  else if (tier === 'desperate') starterCard.classList.add('level-desperate');
+}
+
+$('newStarterBtn').addEventListener('click', showStarter);
+
+// ---- ROUND END ----
+function roundEnd() {
+  stopMusic();
+  playBell();
+  matchArea.style.display = 'flex';
+}
+
+$('yesBtn').addEventListener('click', () => recordMatch(true));
+$('noBtn').addEventListener('click', () => recordMatch(false));
+
+function recordMatch(isMatch) {
+  matches.push({ round: currentRound, match: isMatch });
+  updateScorecard();
+  matchArea.style.display = 'none';
+
+  // Show overlay for next round
+  $('overlayTitle').textContent = isMatch ? '&#x1F389; It\'s a Match!' : 'On to the next!';
+  $('overlayMsg').textContent = isMatch
+    ? 'Nice! Switch seats for the next round.'
+    : 'No worries! Switch seats and try again.';
+  overlay.classList.add('show');
+  body_update_desperation(0);
+}
+
+$('nextRoundBtn').addEventListener('click', startNextRound);
+
+$('continueBtn').addEventListener('click', () => {
+  if (timerInterval) return; // already running
+  overlay.classList.add('show');
+});
+
+$('endBtn').addEventListener('click', () => {
+  clearInterval(timerInterval);
+  stopMusic();
+  timerArea.style.display = 'none';
+  overlay.classList.remove('show');
+  setupEl.classList.remove('hidden');
+  body_update_desperation(0);
+});
+
+function updateScorecard() {
+  const yes = matches.filter(m => m.match).length;
+  const no = matches.filter(m => !m.match).length;
+  matchCountEl.textContent = yes;
+  nopeCountEl.textContent = no;
+
+  scoreList.innerHTML = '';
+  matches.forEach(m => {
+    const li = document.createElement('li');
+    li.className = m.match ? 'match-yes' : 'match-no';
+    li.innerHTML = `<span>Round ${m.round}</span><span>${m.match ? '&#x2764;&#xFE0F; Match' : 'Nope'}</span>`;
+    scoreList.appendChild(li);
+  });
+}
+
+// ---- AUDIO ENGINE (Web Audio API) ----
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function startMusic() {
+  if (!audioCtx || !musicOn) return;
+  stopMusic();
+  currentTempo = 120;
+  playMusicLoop();
+}
+
+function playMusicLoop() {
+  if (!audioCtx || !musicOn) return;
+
+  const now = audioCtx.currentTime;
+  const beatLen = 60 / currentTempo;
+
+  // Simple bass-synth pattern
+  const bassNotes = [130.81, 146.83, 164.81, 146.83]; // C3 D3 E3 D3
+  const pattern = [0, 1, 2, 3, 0, 1, 2, 1];
+
+  pattern.forEach((noteIdx, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = bassNotes[noteIdx];
+    gain.gain.setValueAtTime(0.08, now + i * beatLen * 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * beatLen * 0.5 + beatLen * 0.45);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * beatLen * 0.5);
+    osc.stop(now + i * beatLen * 0.5 + beatLen * 0.5);
+  });
+
+  // Hi-hat-ish noise on off-beats
+  pattern.forEach((_, i) => {
+    if (i % 2 === 1) {
+      const bufSize = audioCtx.sampleRate * 0.03;
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let j = 0; j < bufSize; j++) data[j] = (Math.random() * 2 - 1) * 0.5;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buf;
+      const hpf = audioCtx.createBiquadFilter();
+      hpf.type = 'highpass';
+      hpf.frequency.value = 8000;
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(0.06, now + i * beatLen * 0.5);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i * beatLen * 0.5 + 0.05);
+      noise.connect(hpf);
+      hpf.connect(g);
+      g.connect(audioCtx.destination);
+      noise.start(now + i * beatLen * 0.5);
+    }
+  });
+
+  // Melody top line (gets more frantic with tempo)
+  const melodyNotes = [523.25, 587.33, 659.25, 698.46, 783.99]; // C5 D5 E5 F5 G5
+  const melodyPattern = currentTempo > 180
+    ? [0,2,4,3,1,4,2,0,3,1,4,2] // frantic
+    : currentTempo > 150
+    ? [0,2,4,2,0,4,2,0] // medium
+    : [0,2,4,2]; // chill
+
+  melodyPattern.forEach((noteIdx, i) => {
+    const mBeat = beatLen * 0.5;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = currentTempo > 180 ? 'sawtooth' : 'sine';
+    osc.frequency.value = melodyNotes[noteIdx];
+    // Add vibrato when desperate
+    if (currentTempo > 200) {
+      const vib = audioCtx.createOscillator();
+      const vibGain = audioCtx.createGain();
+      vib.frequency.value = 8;
+      vibGain.gain.value = 15;
+      vib.connect(vibGain);
+      vibGain.connect(osc.frequency);
+      vib.start(now + i * mBeat);
+      vib.stop(now + (i + 1) * mBeat);
+    }
+    const vol = currentTempo > 180 ? 0.04 : 0.03;
+    gain.gain.setValueAtTime(vol, now + i * mBeat);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (i + 1) * mBeat - 0.01);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * mBeat);
+    osc.stop(now + (i + 1) * mBeat);
+  });
+
+  const loopLen = pattern.length * beatLen * 0.5 * 1000;
+  musicNodes.timeout = setTimeout(() => {
+    if (musicOn && timeLeft > 0) playMusicLoop();
+  }, loopLen - 50);
+}
+
+function stopMusic() {
+  if (musicNodes.timeout) clearTimeout(musicNodes.timeout);
+  musicNodes = {};
+}
+
+function playBell() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  // Two-tone bell
+  [880, 1108.73].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, now + i * 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.8);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.15);
+    osc.stop(now + i * 0.15 + 1);
+  });
+}
+
+// Music toggle
+musicBtn.addEventListener('click', () => {
+  musicOn = !musicOn;
+  musicBtn.textContent = musicOn ? '\u{1F50A}' : '\u{1F507}';
+  if (!musicOn) stopMusic();
+  else if (timeLeft > 0 && timerInterval) { initAudio(); startMusic(); }
+});
+</script>
+</body>
+</html>

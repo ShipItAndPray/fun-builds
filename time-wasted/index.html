@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time Wasted Calculator - Where Did Your Life Go?</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a2e;--border:#2a2a3e;
+    --text:#e0e0e8;--muted:#8888aa;--accent:#ff6b35;--accent2:#ffd700;
+    --danger:#ff4444;--clock:#00e5ff;--glow:rgba(0,229,255,.15);
+  }
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  /* Ticking clock background */
+  .clock-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;opacity:.04}
+  .clock-bg::before{content:'';position:absolute;top:50%;left:50%;width:600px;height:600px;transform:translate(-50%,-50%);border:3px solid var(--clock);border-radius:50%}
+  .clock-bg::after{content:'';position:absolute;top:50%;left:50%;width:4px;height:200px;background:var(--clock);transform-origin:bottom center;animation:tick 60s linear infinite}
+  @keyframes tick{to{transform:rotate(360deg)}}
+
+  .container{max-width:800px;margin:0 auto;padding:20px;position:relative;z-index:1}
+
+  header{text-align:center;padding:40px 0 30px}
+  header h1{font-size:2.4em;font-weight:800;background:linear-gradient(135deg,var(--clock),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+  header p{color:var(--muted);font-size:1.1em;font-style:italic}
+
+  .age-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+  .age-section label{font-size:1em;color:var(--muted);display:block;margin-bottom:8px}
+  .age-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .age-row input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--text);font-size:1.1em;width:100px;text-align:center}
+  .age-row input:focus{outline:none;border-color:var(--clock);box-shadow:0 0 12px var(--glow)}
+  .age-row span{color:var(--muted);font-size:.95em}
+  .life-expectancy{color:var(--muted);font-size:.85em;margin-top:8px}
+
+  .habits-section{margin-bottom:24px}
+  .habits-section h2{font-size:1.3em;margin-bottom:16px;color:var(--clock)}
+
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .preset-btn{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:8px 16px;color:var(--text);cursor:pointer;font-size:.85em;transition:all .2s}
+  .preset-btn:hover{border-color:var(--clock);background:rgba(0,229,255,.08)}
+  .preset-btn.added{border-color:var(--accent);color:var(--accent);opacity:.5;cursor:default}
+
+  .habit-list{display:flex;flex-direction:column;gap:12px}
+  .habit-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:all .2s;animation:slideIn .3s ease}
+  .habit-card:hover{border-color:var(--border);box-shadow:0 2px 12px rgba(0,0,0,.3)}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+  .habit-icon{font-size:1.5em;width:40px;text-align:center;flex-shrink:0}
+  .habit-info{flex:1;min-width:0}
+  .habit-name{font-weight:600;font-size:.95em;margin-bottom:4px}
+  .habit-name input{background:transparent;border:none;color:var(--text);font-size:1em;font-weight:600;width:100%;padding:0}
+  .habit-name input:focus{outline:none;border-bottom:1px solid var(--clock)}
+  .habit-category{font-size:.75em;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+  .habit-time{display:flex;align-items:center;gap:8px;flex-shrink:0}
+  .habit-time input{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:1em;width:70px;text-align:center}
+  .habit-time input:focus{outline:none;border-color:var(--clock);box-shadow:0 0 8px var(--glow)}
+  .habit-time select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;color:var(--text);font-size:.9em}
+
+  .remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2em;padding:4px 8px;border-radius:4px;transition:all .2s}
+  .remove-btn:hover{color:var(--danger);background:rgba(255,68,68,.1)}
+
+  .add-custom{background:var(--surface);border:2px dashed var(--border);border-radius:12px;padding:16px;text-align:center;cursor:pointer;color:var(--muted);transition:all .2s;margin-top:8px}
+  .add-custom:hover{border-color:var(--clock);color:var(--clock)}
+
+  .calculate-btn{width:100%;padding:18px;background:linear-gradient(135deg,var(--accent),#ff8a50);border:none;border-radius:12px;color:#fff;font-size:1.3em;font-weight:700;cursor:pointer;transition:all .3s;margin:24px 0;text-transform:uppercase;letter-spacing:2px}
+  .calculate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,107,53,.3)}
+  .calculate-btn:active{transform:translateY(0)}
+
+  /* Results */
+  .results{display:none;margin-top:20px}
+  .results.visible{display:block}
+
+  .dramatic-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .5s}
+  .dramatic-overlay.active{opacity:1;pointer-events:all}
+  .dramatic-text{font-size:1.2em;color:var(--muted);margin-bottom:20px;opacity:0;transform:translateY(20px);transition:all .8s}
+  .dramatic-text.show{opacity:1;transform:translateY(0)}
+  .dramatic-number{font-size:5em;font-weight:900;background:linear-gradient(135deg,var(--danger),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;transform:scale(.5);transition:all 1s cubic-bezier(.17,.67,.35,1.5)}
+  .dramatic-number.show{opacity:1;transform:scale(1)}
+  .dramatic-unit{font-size:1.5em;color:var(--accent2);margin-top:8px;opacity:0;transition:all .8s .3s}
+  .dramatic-unit.show{opacity:1}
+  .dramatic-skip{position:absolute;bottom:40px;color:var(--muted);cursor:pointer;font-size:.9em;opacity:0;transition:all .5s 2s}
+  .dramatic-skip.show{opacity:1}
+
+  .result-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;opacity:0;transform:translateY(30px);transition:all .6s}
+  .result-card.reveal{opacity:1;transform:translateY(0)}
+
+  .total-time{text-align:center;padding:40px 20px}
+  .total-time .label{font-size:1em;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:2px}
+  .total-time .big-number{font-size:4em;font-weight:900;color:var(--danger);line-height:1;margin-bottom:4px}
+  .total-time .unit{font-size:1.2em;color:var(--accent2);font-weight:600}
+  .time-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px;text-align:center}
+  .time-breakdown .item .val{font-size:1.8em;font-weight:700;color:var(--clock)}
+  .time-breakdown .item .lbl{font-size:.8em;color:var(--muted);margin-top:2px}
+
+  .worst-habit{text-align:center;border-color:var(--danger)!important;background:linear-gradient(180deg,rgba(255,68,68,.05),var(--surface))}
+  .worst-habit .crown{font-size:3em;margin-bottom:8px}
+  .worst-habit h3{font-size:1.1em;color:var(--danger);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+  .worst-habit .worst-name{font-size:1.8em;font-weight:800;color:var(--text);margin-bottom:4px}
+  .worst-habit .worst-time{font-size:1em;color:var(--muted)}
+
+  .comparisons h3{font-size:1.1em;color:var(--clock);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+  .comparison-item{display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--border)}
+  .comparison-item:last-child{border-bottom:none}
+  .comparison-item .comp-icon{font-size:1.8em;width:50px;text-align:center;flex-shrink:0}
+  .comparison-item .comp-text{flex:1;font-size:.95em;line-height:1.4}
+  .comparison-item .comp-text strong{color:var(--accent2)}
+
+  .habit-breakdown h3{font-size:1.1em;color:var(--clock);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px}
+  .bar-chart{display:flex;flex-direction:column;gap:10px}
+  .bar-row{display:flex;align-items:center;gap:12px}
+  .bar-label{width:140px;font-size:.85em;color:var(--muted);text-align:right;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{flex:1;height:28px;background:var(--surface2);border-radius:6px;overflow:hidden;position:relative}
+  .bar-fill{height:100%;border-radius:6px;transition:width 1.5s cubic-bezier(.22,1,.36,1);display:flex;align-items:center;padding:0 10px;font-size:.75em;font-weight:600;color:#fff;white-space:nowrap}
+  .bar-value{font-size:.85em;color:var(--muted);width:80px;flex-shrink:0;text-align:right}
+
+  .category-breakdown{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+  .cat-card{background:var(--surface2);border-radius:10px;padding:16px;text-align:center}
+  .cat-card .cat-icon{font-size:2em;margin-bottom:6px}
+  .cat-card .cat-name{font-size:.75em;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+  .cat-card .cat-val{font-size:1.4em;font-weight:700;color:var(--accent2)}
+  .cat-card .cat-unit{font-size:.75em;color:var(--muted)}
+
+  .share-section{text-align:center;padding:20px}
+  .share-section h3{font-size:1.1em;color:var(--clock);margin-bottom:16px}
+  .share-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .share-btn{padding:12px 24px;border-radius:8px;border:none;font-size:.9em;font-weight:600;cursor:pointer;transition:all .2s}
+  .share-btn:hover{transform:translateY(-2px)}
+  .share-btn.twitter{background:#1da1f2;color:#fff}
+  .share-btn.copy{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .share-btn.copy:hover{border-color:var(--clock)}
+  .share-btn.reset{background:var(--surface2);color:var(--danger);border:1px solid var(--danger)}
+
+  .copied-toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--clock);color:var(--bg);padding:12px 24px;border-radius:8px;font-weight:600;transition:transform .3s;z-index:200}
+  .copied-toast.show{transform:translateX(-50%) translateY(0)}
+
+  .footer{text-align:center;padding:40px 0;color:var(--muted);font-size:.8em}
+  .footer a{color:var(--clock);text-decoration:none}
+
+  @media(max-width:600px){
+    header h1{font-size:1.7em}
+    .habit-card{flex-wrap:wrap;gap:10px}
+    .habit-time{width:100%;justify-content:flex-end}
+    .time-breakdown{grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .time-breakdown .item .val{font-size:1.3em}
+    .dramatic-number{font-size:3.5em}
+    .total-time .big-number{font-size:3em}
+    .bar-label{width:90px;font-size:.75em}
+    .bar-value{width:60px;font-size:.75em}
+    .comparison-item{gap:10px}
+    .age-row{flex-direction:column;align-items:flex-start;gap:8px}
+  }
+</style>
+</head>
+<body>
+
+<div class="clock-bg"></div>
+
+<div class="container">
+  <header>
+    <h1>Where Did Your Life Go?</h1>
+    <p>Calculate the total hours you'll lose to daily habits over a lifetime</p>
+  </header>
+
+  <div class="age-section">
+    <label>Your current age & expected lifespan</label>
+    <div class="age-row">
+      <input type="number" id="currentAge" value="30" min="1" max="120" aria-label="Current age">
+      <span>years old, expecting to live to</span>
+      <input type="number" id="lifeExpectancy" value="80" min="1" max="120" aria-label="Life expectancy">
+    </div>
+    <div class="life-expectancy">That's <strong id="remainingYears">50</strong> years of habits still ahead of you.</div>
+  </div>
+
+  <div class="habits-section">
+    <h2>Your Daily Habits</h2>
+    <div class="presets" id="presets"></div>
+    <div class="habit-list" id="habitList"></div>
+    <div class="add-custom" id="addCustom">+ Add Custom Habit</div>
+  </div>
+
+  <button class="calculate-btn" id="calculateBtn">Calculate My Wasted Time</button>
+
+  <div class="results" id="results">
+    <div class="result-card total-time" id="totalCard">
+      <div class="label">Total lifetime hours lost to habits</div>
+      <div class="big-number" id="totalYears">0</div>
+      <div class="unit" id="totalUnit">YEARS</div>
+      <div class="time-breakdown">
+        <div class="item"><div class="val" id="totalHours">0</div><div class="lbl">Hours</div></div>
+        <div class="item"><div class="val" id="totalDays">0</div><div class="lbl">Days</div></div>
+        <div class="item"><div class="val" id="totalWeeks">0</div><div class="lbl">Weeks</div></div>
+      </div>
+    </div>
+
+    <div class="result-card worst-habit" id="worstCard">
+      <div class="crown">&#128081;</div>
+      <h3>Your Biggest Time Thief</h3>
+      <div class="worst-name" id="worstName">-</div>
+      <div class="worst-time" id="worstTime">-</div>
+    </div>
+
+    <div class="result-card comparisons" id="compCard">
+      <h3>What You Could Have Done Instead</h3>
+      <div id="comparisonList"></div>
+    </div>
+
+    <div class="result-card habit-breakdown" id="breakdownCard">
+      <h3>Breakdown by Habit</h3>
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+
+    <div class="result-card" id="catCard">
+      <h3 style="font-size:1.1em;color:var(--clock);margin-bottom:16px;text-transform:uppercase;letter-spacing:1px">By Category</h3>
+      <div class="category-breakdown" id="categoryBreakdown"></div>
+    </div>
+
+    <div class="result-card share-section" id="shareCard">
+      <h3>Share Your Results</h3>
+      <div class="share-btns">
+        <button class="share-btn twitter" id="shareTwitter">Post on X</button>
+        <button class="share-btn copy" id="shareCopy">Copy Results</button>
+        <button class="share-btn reset" id="resetBtn">Start Over</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Time is the one thing you can never get back.</p>
+  </div>
+</div>
+
+<div class="dramatic-overlay" id="overlay">
+  <div class="dramatic-text" id="dText1">In your remaining lifetime, you will spend...</div>
+  <div class="dramatic-number" id="dNumber">0</div>
+  <div class="dramatic-unit" id="dUnit">YEARS</div>
+  <div class="dramatic-text" id="dText2" style="margin-top:20px">...on habits you might not even enjoy.</div>
+  <div class="dramatic-skip" id="dSkip">Click anywhere to see the full breakdown</div>
+</div>
+
+<div class="copied-toast" id="toast">Copied to clipboard!</div>
+
+<script>
+const PRESETS = [
+  {name:'Scrolling Social Media', icon:'&#128241;', time:120, unit:'min', category:'Screen Time'},
+  {name:'Watching Netflix/TV', icon:'&#128250;', time:90, unit:'min', category:'Screen Time'},
+  {name:'Waiting in Line', icon:'&#128676;', time:15, unit:'min', category:'Waiting'},
+  {name:'Looking for Keys/Phone', icon:'&#128273;', time:5, unit:'min', category:'Searching'},
+  {name:'Stuck in Traffic', icon:'&#128663;', time:40, unit:'min', category:'Commute'},
+  {name:'Snoozing Alarm', icon:'&#9200;', time:15, unit:'min', category:'Sleep'},
+  {name:'Deciding What to Eat', icon:'&#129300;', time:20, unit:'min', category:'Decisions'},
+  {name:'Mindless YouTube', icon:'&#9654;&#65039;', time:60, unit:'min', category:'Screen Time'},
+  {name:'Doom-scrolling News', icon:'&#128240;', time:30, unit:'min', category:'Screen Time'},
+  {name:'Waiting for Coffee', icon:'&#9749;', time:10, unit:'min', category:'Waiting'},
+  {name:'Unnecessary Meetings', icon:'&#128188;', time:45, unit:'min', category:'Work'},
+  {name:'Looking for Parking', icon:'&#127359;&#65039;', time:10, unit:'min', category:'Commute'},
+  {name:'On Hold (Phone)', icon:'&#128222;', time:8, unit:'min', category:'Waiting'},
+  {name:'Procrastinating', icon:'&#128564;', time:60, unit:'min', category:'Avoidance'},
+  {name:'Arguing Online', icon:'&#128293;', time:20, unit:'min', category:'Screen Time'},
+  {name:'Re-watching Shows', icon:'&#128257;', time:45, unit:'min', category:'Screen Time'},
+  {name:'Waiting for Laundry', icon:'&#128090;', time:10, unit:'min', category:'Chores'},
+  {name:'Playing Mobile Games', icon:'&#127918;', time:30, unit:'min', category:'Screen Time'},
+];
+
+const COMPARISONS = [
+  {icon:'&#127757;', text:(h)=>`You could have <strong>walked around the Earth ${(h/2000|0)||'almost once'} time${(h/2000|0)>1?'s':''}</strong> (at 3 mph, 8 hrs/day)`, min:500},
+  {icon:'&#127926;', text:(h)=>`You could have <strong>learned ${Math.max(1,h/2200|0)} musical instrument${(h/2200|0)>1?'s':''}</strong> to proficiency`, min:0},
+  {icon:'&#128218;', text:(h)=>`You could have <strong>read ${h/6|0} books</strong> (one every 6 hours)`, min:0},
+  {icon:'&#127760;', text:(h)=>`You could have <strong>learned ${Math.max(1,h/1100|0)} foreign language${(h/1100|0)>1?'s':''}</strong>`, min:0},
+  {icon:'&#128640;', text:(h)=>`You could have <strong>flown to the Moon ${(h*600/238900).toFixed(1)} times</strong> in a commercial jet`, min:1000},
+  {icon:'&#127891;', text:(h)=>`You could have <strong>earned ${Math.max(1,h/4800|0)} college degree${(h/4800|0)>1?'s':''}</strong>`, min:0},
+  {icon:'&#128170;', text:(h)=>`You could have <strong>completed ${h/1|0} one-hour workouts</strong>`, min:0},
+  {icon:'&#128176;', text:(h)=>`At $50/hr, that's <strong>$${(h*50).toLocaleString()}</strong> in potential earnings`, min:0},
+  {icon:'&#127758;', text:(h)=>`You could have <strong>visited ${Math.max(1,h/120|0)} countries</strong> spending a week in each`, min:0},
+  {icon:'&#9749;', text:(h)=>`That's <strong>${(h*60/4|0).toLocaleString()} cups of coffee</strong> you could have brewed and savored`, min:0},
+  {icon:'&#127912;', text:(h)=>`You could have <strong>painted ${h/40|0} masterpiece-level paintings</strong>`, min:200},
+  {icon:'&#128187;', text:(h)=>`You could have <strong>built ${Math.max(1,h/500|0)} full software product${(h/500|0)>1?'s':''}</strong>`, min:0},
+];
+
+let habits = [];
+let habitId = 0;
+
+function renderPresets(){
+  const c = document.getElementById('presets');
+  c.innerHTML = PRESETS.map((p,i)=>`<button class="preset-btn" data-idx="${i}">${p.icon} ${p.name}</button>`).join('');
+  c.addEventListener('click',e=>{
+    const btn=e.target.closest('.preset-btn');
+    if(!btn || btn.classList.contains('added'))return;
+    const p=PRESETS[+btn.dataset.idx];
+    addHabit(p.name,p.icon,p.time,p.unit,p.category);
+    btn.classList.add('added');
+  });
+}
+
+function addHabit(name,icon,time,unit,category){
+  const id=habitId++;
+  habits.push({id,name,icon,time,unit,category});
+  renderHabits();
+}
+
+function renderHabits(){
+  const c=document.getElementById('habitList');
+  c.innerHTML=habits.map(h=>`
+    <div class="habit-card" data-id="${h.id}">
+      <div class="habit-icon">${h.icon}</div>
+      <div class="habit-info">
+        <div class="habit-name"><input type="text" value="${h.name}" data-field="name" data-id="${h.id}"></div>
+        <div class="habit-category">${h.category}</div>
+      </div>
+      <div class="habit-time">
+        <input type="number" value="${h.time}" min="0" max="1440" data-field="time" data-id="${h.id}">
+        <select data-field="unit" data-id="${h.id}">
+          <option value="min"${h.unit==='min'?' selected':''}>min</option>
+          <option value="hr"${h.unit==='hr'?' selected':''}>hrs</option>
+        </select>
+      </div>
+      <button class="remove-btn" data-id="${h.id}">&times;</button>
+    </div>
+  `).join('');
+
+  c.querySelectorAll('input,select').forEach(el=>{
+    el.addEventListener('change',e=>{
+      const id=+e.target.dataset.id, field=e.target.dataset.field;
+      const h=habits.find(x=>x.id===id);
+      if(h){
+        if(field==='time')h.time=+e.target.value;
+        else if(field==='unit')h.unit=e.target.value;
+        else if(field==='name')h.name=e.target.value;
+      }
+    });
+  });
+
+  c.querySelectorAll('.remove-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=+btn.dataset.id;
+      habits=habits.filter(h=>h.id!==id);
+      // Un-grey the preset button if applicable
+      const removed=PRESETS.findIndex(p=>habits.every(h=>h.name!==p.name) && document.querySelector(`.preset-btn[data-idx="${PRESETS.indexOf(p)}"]`));
+      document.querySelectorAll('.preset-btn').forEach(pb=>{
+        const p=PRESETS[+pb.dataset.idx];
+        if(habits.every(h=>h.name!==p.name))pb.classList.remove('added');
+      });
+      renderHabits();
+    });
+  });
+}
+
+document.getElementById('addCustom').addEventListener('click',()=>{
+  addHabit('Custom Habit','&#128336;',15,'min','Custom');
+});
+
+// Update remaining years display
+['currentAge','lifeExpectancy'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    const rem=Math.max(0,+document.getElementById('lifeExpectancy').value - +document.getElementById('currentAge').value);
+    document.getElementById('remainingYears').textContent=rem;
+  });
+});
+
+function getMinutesPerDay(h){
+  return h.unit==='hr'? h.time*60 : h.time;
+}
+
+function calculate(){
+  if(habits.length===0){alert('Add at least one habit first!');return}
+
+  const age=+document.getElementById('currentAge').value;
+  const life=+document.getElementById('lifeExpectancy').value;
+  const remaining=Math.max(0,life-age);
+  const daysLeft=remaining*365.25;
+
+  // Per-habit calculations
+  const data=habits.map(h=>{
+    const mpd=getMinutesPerDay(h);
+    const totalMin=mpd*daysLeft;
+    const totalHrs=totalMin/60;
+    return{...h,minutesPerDay:mpd,totalHours:totalHrs,totalDays:totalHrs/24,totalYears:totalHrs/8760};
+  }).sort((a,b)=>b.totalHours-a.totalHours);
+
+  const totalHours=data.reduce((s,d)=>s+d.totalHours,0);
+  const totalDays=totalHours/24;
+  const totalWeeks=totalDays/7;
+  const totalYears=totalHours/8760;
+
+  // Dramatic overlay
+  showDramaticReveal(totalYears,totalHours,()=>{
+    showResults(data,totalHours,totalDays,totalWeeks,totalYears);
+  });
+}
+
+function showDramaticReveal(years,hours,cb){
+  const ov=document.getElementById('overlay');
+  const t1=document.getElementById('dText1');
+  const num=document.getElementById('dNumber');
+  const unit=document.getElementById('dUnit');
+  const t2=document.getElementById('dText2');
+  const skip=document.getElementById('dSkip');
+
+  ov.classList.add('active');
+  document.body.style.overflow='hidden';
+
+  setTimeout(()=>t1.classList.add('show'),300);
+  setTimeout(()=>{
+    num.textContent=years.toFixed(1);
+    num.classList.add('show');
+  },1200);
+  setTimeout(()=>unit.classList.add('show'),1800);
+  setTimeout(()=>t2.classList.add('show'),2500);
+  setTimeout(()=>skip.classList.add('show'),2000);
+
+  function dismiss(){
+    ov.classList.remove('active');
+    t1.classList.remove('show');
+    num.classList.remove('show');
+    unit.classList.remove('show');
+    t2.classList.remove('show');
+    skip.classList.remove('show');
+    document.body.style.overflow='';
+    ov.removeEventListener('click',dismiss);
+    cb();
+  }
+  ov.addEventListener('click',dismiss);
+}
+
+function showResults(data,totalHours,totalDays,totalWeeks,totalYears){
+  document.getElementById('results').classList.add('visible');
+  document.getElementById('totalYears').textContent=totalYears.toFixed(1);
+  document.getElementById('totalHours').textContent=Math.round(totalHours).toLocaleString();
+  document.getElementById('totalDays').textContent=Math.round(totalDays).toLocaleString();
+  document.getElementById('totalWeeks').textContent=Math.round(totalWeeks).toLocaleString();
+
+  // Worst habit
+  const worst=data[0];
+  document.getElementById('worstName').textContent=worst.name;
+  document.getElementById('worstTime').textContent=`${worst.totalYears.toFixed(1)} years (${Math.round(worst.totalHours).toLocaleString()} hours)`;
+
+  // Comparisons
+  const compDiv=document.getElementById('comparisonList');
+  const comps=COMPARISONS.filter(c=>totalHours>=c.min).slice(0,8);
+  compDiv.innerHTML=comps.map(c=>`
+    <div class="comparison-item">
+      <div class="comp-icon">${c.icon}</div>
+      <div class="comp-text">${c.text(totalHours)}</div>
+    </div>
+  `).join('');
+
+  // Bar chart
+  const maxH=data[0].totalHours;
+  document.getElementById('barChart').innerHTML=data.map(d=>{
+    const pct=Math.max(2,(d.totalHours/maxH*100));
+    const hue=120-(pct/100*120);
+    return`<div class="bar-row">
+      <div class="bar-label">${d.icon} ${d.name}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:0%;background:hsl(${hue},70%,45%)" data-width="${pct}%">${d.totalYears>=.1?d.totalYears.toFixed(1)+'y':Math.round(d.totalDays)+'d'}</div></div>
+      <div class="bar-value">${Math.round(d.totalHours).toLocaleString()}h</div>
+    </div>`;
+  }).join('');
+
+  // Category breakdown
+  const cats={};
+  data.forEach(d=>{
+    if(!cats[d.category])cats[d.category]={hours:0,icon:d.icon};
+    cats[d.category].hours+=d.totalHours;
+  });
+  const catIcons={
+    'Screen Time':'&#128241;','Waiting':'&#8987;','Searching':'&#128269;','Commute':'&#128663;',
+    'Sleep':'&#128164;','Decisions':'&#129300;','Work':'&#128188;','Avoidance':'&#128564;',
+    'Chores':'&#128090;','Custom':'&#128336;'
+  };
+  document.getElementById('categoryBreakdown').innerHTML=Object.entries(cats)
+    .sort((a,b)=>b[1].hours-a[1].hours)
+    .map(([name,{hours}])=>`
+      <div class="cat-card">
+        <div class="cat-icon">${catIcons[name]||'&#128336;'}</div>
+        <div class="cat-name">${name}</div>
+        <div class="cat-val">${(hours/8760).toFixed(1)}</div>
+        <div class="cat-unit">years</div>
+      </div>
+    `).join('');
+
+  // Staggered reveal
+  const cards=document.querySelectorAll('.result-card');
+  cards.forEach((c,i)=>setTimeout(()=>{
+    c.classList.add('reveal');
+    // Animate bars after breakdown card reveals
+    if(c.id==='breakdownCard'){
+      setTimeout(()=>{
+        c.querySelectorAll('.bar-fill').forEach(b=>{b.style.width=b.dataset.width});
+      },100);
+    }
+  },i*250));
+
+  // Scroll to results
+  setTimeout(()=>document.getElementById('results').scrollIntoView({behavior:'smooth'}),200);
+
+  // Store for sharing
+  window._lastResults={totalYears,totalHours,worst:worst.name,worstYears:worst.totalYears};
+}
+
+function getShareText(){
+  const r=window._lastResults;
+  if(!r)return'';
+  return`I'll spend ${r.totalYears.toFixed(1)} YEARS of my remaining life on daily habits. My biggest time thief: ${r.worst} (${r.worstYears.toFixed(1)} years). Calculate yours:`;
+}
+
+document.getElementById('shareTwitter').addEventListener('click',()=>{
+  const text=encodeURIComponent(getShareText());
+  window.open(`https://twitter.com/intent/tweet?text=${text}`,'_blank');
+});
+
+document.getElementById('shareCopy').addEventListener('click',()=>{
+  navigator.clipboard.writeText(getShareText()).then(()=>{
+    const t=document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'),2000);
+  });
+});
+
+document.getElementById('resetBtn').addEventListener('click',()=>{
+  document.getElementById('results').classList.remove('visible');
+  document.querySelectorAll('.result-card').forEach(c=>c.classList.remove('reveal'));
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+document.getElementById('calculateBtn').addEventListener('click',calculate);
+
+// Initialize
+renderPresets();
+// Add some defaults
+['Scrolling Social Media','Watching Netflix/TV','Waiting in Line','Looking for Keys/Phone','Stuck in Traffic'].forEach(name=>{
+  const p=PRESETS.find(x=>x.name===name);
+  if(p){
+    addHabit(p.name,p.icon,p.time,p.unit,p.category);
+    const idx=PRESETS.indexOf(p);
+    const btn=document.querySelector(`.preset-btn[data-idx="${idx}"]`);
+    if(btn)btn.classList.add('added');
+  }
+});
+</script>
+</body>
+</html>

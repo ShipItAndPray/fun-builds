@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Profiler // Who Are You Really?</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+:root{--bg:#0a0e14;--panel:#111820;--border:#1a2332;--green:#00ff9f;--dim:#3a4a5a;--text:#c5d0dc;--red:#ff3366;--yellow:#ffd700;--cyan:#00d4ff;--purple:#b088f9}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;overflow-x:hidden}
+.scanline{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,159,.015) 2px,rgba(0,255,159,.015) 4px)}
+.container{max-width:800px;margin:0 auto;padding:20px}
+header{text-align:center;padding:30px 0 20px;border-bottom:1px solid var(--border)}
+h1{font-size:clamp(1.2rem,4vw,1.8rem);color:var(--green);text-shadow:0 0 20px rgba(0,255,159,.3);letter-spacing:2px}
+.subtitle{color:var(--dim);font-size:.75rem;margin-top:8px;letter-spacing:4px;text-transform:uppercase}
+.phase{display:none}.phase.active{display:block}
+
+/* READY PHASE */
+.ready-screen{text-align:center;padding:60px 20px}
+.ready-screen p{color:var(--dim);margin:20px 0;font-size:.85rem;line-height:1.6}
+.start-btn{background:transparent;border:2px solid var(--green);color:var(--green);padding:16px 48px;font-family:inherit;font-size:1rem;cursor:pointer;letter-spacing:2px;transition:all .2s;text-transform:uppercase;margin-top:20px}
+.start-btn:hover{background:var(--green);color:var(--bg);box-shadow:0 0 30px rgba(0,255,159,.4)}
+.prompt-text{color:var(--dim);font-size:.7rem;margin-top:30px;font-style:italic}
+
+/* TYPING PHASE */
+.typing-area{margin-top:20px}
+.timer-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.timer{font-size:2rem;color:var(--green);font-weight:700;text-shadow:0 0 15px rgba(0,255,159,.5)}
+.timer.warning{color:var(--yellow)}
+.timer.critical{color:var(--red);animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.live-wpm{color:var(--dim);font-size:.8rem}
+.live-wpm span{color:var(--cyan)}
+.progress-track{width:100%;height:4px;background:var(--border);border-radius:2px;margin-bottom:16px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width .1s;border-radius:2px}
+#typingInput{width:100%;height:250px;background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:.9rem;padding:16px;resize:none;outline:none;border-radius:4px;line-height:1.7;transition:border-color .2s}
+#typingInput:focus{border-color:var(--green);box-shadow:0 0 15px rgba(0,255,159,.1)}
+#typingInput::placeholder{color:var(--dim)}
+.typing-prompt{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:12px 16px;margin-bottom:16px;font-size:.75rem;color:var(--dim);line-height:1.5}
+.typing-prompt strong{color:var(--cyan)}
+.live-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.live-stat{background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:8px;text-align:center}
+.live-stat .label{font-size:.55rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.live-stat .value{font-size:1.1rem;color:var(--green);margin-top:2px}
+
+/* RESULTS PHASE */
+.results{padding:20px 0}
+.profile-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:30px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden}
+.profile-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple))}
+.profile-type{font-size:clamp(1.2rem,5vw,1.6rem);color:var(--green);font-weight:700;text-shadow:0 0 20px rgba(0,255,159,.3);margin-bottom:8px}
+.profile-emoji{font-size:3rem;margin-bottom:12px}
+.profile-roast{color:var(--text);font-size:.8rem;line-height:1.7;max-width:550px;margin:0 auto;padding:0 10px}
+.famous-match{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.famous-match .label{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.famous-match .name{color:var(--cyan);font-size:.9rem}
+.famous-match .desc{color:var(--dim);font-size:.7rem;margin-top:4px}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:16px;text-align:center}
+.stat-card .stat-label{font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px}
+.stat-card .stat-value{font-size:1.5rem;font-weight:700;color:var(--green)}
+.stat-card .stat-sub{font-size:.65rem;color:var(--dim);margin-top:4px}
+.stat-card.highlight .stat-value{color:var(--cyan)}
+.stat-card.warn .stat-value{color:var(--yellow)}
+.stat-card.danger .stat-value{color:var(--red)}
+
+.trait-bar{margin-bottom:16px}
+.trait-header{display:flex;justify-content:space-between;margin-bottom:4px}
+.trait-name{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+.trait-pct{font-size:.7rem;color:var(--green)}
+.trait-track{width:100%;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.trait-fill{height:100%;border-radius:4px;transition:width 1s ease}
+
+.breakdown{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:24px}
+.breakdown h3{font-size:.75rem;color:var(--green);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+
+.share-section{text-align:center;margin:24px 0}
+.share-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:12px 24px;font-family:inherit;font-size:.75rem;cursor:pointer;letter-spacing:1px;transition:all .2s;margin:4px;border-radius:4px}
+.share-btn:hover{border-color:var(--green);color:var(--green)}
+.share-btn.copied{border-color:var(--green);color:var(--green);background:rgba(0,255,159,.1)}
+
+.retry-btn{background:var(--green);border:none;color:var(--bg);padding:14px 40px;font-family:inherit;font-size:.85rem;cursor:pointer;letter-spacing:2px;text-transform:uppercase;font-weight:700;border-radius:4px;transition:all .2s;display:block;margin:30px auto 0}
+.retry-btn:hover{box-shadow:0 0 25px rgba(0,255,159,.4);transform:translateY(-1px)}
+
+.heatmap{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.heat-cell{width:14px;height:14px;border-radius:2px;transition:all .3s}
+
+@media(max-width:600px){
+  .live-stats{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  #typingInput{height:180px;font-size:.8rem}
+  .container{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="container">
+<header>
+  <h1>&gt;_ TYPING PROFILER</h1>
+  <div class="subtitle">Your keystrokes betray you</div>
+</header>
+
+<!-- READY PHASE -->
+<div class="phase active" id="readyPhase">
+  <div class="ready-screen">
+    <p>Type freely for <strong style="color:var(--green)">30 seconds</strong>.<br>
+    We'll analyze your keystroke patterns and expose your true personality.</p>
+    <p style="font-size:.7rem">Every pause. Every backspace. Every hesitation. We see it all.</p>
+    <button class="start-btn" onclick="startTyping()">BEGIN ANALYSIS</button>
+    <p class="prompt-text">You'll get a topic prompt, but honestly, type whatever you want. We're not reading your words. We're reading <em>you</em>.</p>
+  </div>
+</div>
+
+<!-- TYPING PHASE -->
+<div class="phase" id="typingPhase">
+  <div class="typing-area">
+    <div class="timer-bar">
+      <div class="timer" id="timer">30</div>
+      <div class="live-wpm">WPM: <span id="liveWpm">0</span></div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="typing-prompt" id="topicPrompt"></div>
+    <textarea id="typingInput" placeholder="Start typing..." autofocus></textarea>
+    <div class="live-stats">
+      <div class="live-stat"><div class="label">Keystrokes</div><div class="value" id="liveKeys">0</div></div>
+      <div class="live-stat"><div class="label">Backspaces</div><div class="value" id="liveBs">0</div></div>
+      <div class="live-stat"><div class="label">Pauses</div><div class="value" id="livePauses">0</div></div>
+      <div class="live-stat"><div class="label">Bursts</div><div class="value" id="liveBursts">0</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS PHASE -->
+<div class="phase" id="resultsPhase">
+  <div class="results" id="resultsContent"></div>
+</div>
+</div>
+
+<script>
+const PROMPTS = [
+  "Explain why your most embarrassing moment actually built character.",
+  "Describe your morning routine as if it were a heist movie.",
+  "Convince an alien that humans are worth keeping around.",
+  "Write a review of your own life so far. Be honest.",
+  "Explain your job to a medieval peasant.",
+  "Describe your ideal weekend but make it sound like a villain monologue.",
+  "Write a letter to your future self. No sugarcoating.",
+  "Explain why your favorite food is objectively the best.",
+  "Describe what your browser history says about you as a person.",
+  "Write a TED talk about something utterly mundane.",
+  "Argue that your worst habit is actually a superpower.",
+  "Describe your hometown to someone who has never heard of Earth."
+];
+
+const PROFILES = [
+  // Fast typists
+  {id:"dangerous_confident",name:"The Dangerously Confident",emoji:"\u26a1",cond:d=>d.wpm>70&&d.bsRate<.08&&d.hesitation<25,
+   roast:"You type like you've never been wrong in your life. No backspaces? That's not confidence, that's clinical delusion. You fire off messages like missiles and let the recipients deal with the fallout. Your autocorrect has given up on you -- not because you're bad at spelling, but because you refuse to acknowledge the concept of mistakes.",
+   famous:"Ernest Hemingway",famousDesc:"First draft, final draft. Both trash, but confidently so."},
+  {id:"speed_demon",name:"The Speed Demon",emoji:"\ud83d\ude80",cond:d=>d.wpm>90&&d.bsRate<.15,
+   roast:"You type so fast you probably finish other people's sentences IRL too. Your keyboard sounds like a hailstorm and your coworkers definitely hate you. You're the person who sends 14 messages when one would do, because your fingers move faster than your thoughts. Which, based on this data, is saying something.",
+   famous:"Stella Pajunas-Garnand",famousDesc:"216 WPM world record holder. You wish."},
+  {id:"machine_gunner",name:"The Machine Gunner",emoji:"\ud83d\udd2b",cond:d=>d.wpm>60&&d.burstAvg>8&&d.pauseCount<5,
+   roast:"You type in long, uninterrupted bursts like you're afraid the keyboard will be taken away. No pauses to think? Either you're a genius or you've just stopped caring about quality entirely. Spoiler: it's the second one. Your typing pattern looks like a seismograph during an earthquake.",
+   famous:"Jack Kerouac",famousDesc:"Typed On the Road on a continuous scroll. No pauses. No edits. No plot."},
+
+  // Slow typists
+  {id:"overthinker",name:"The Overthinker",emoji:"\ud83e\udde0",cond:d=>d.wpm<30&&d.pauseCount>8&&d.hesitation>60,
+   roast:"You pause more than you type. Each keystroke is preceded by what appears to be a full existential crisis. Are you typing or composing a peace treaty? Your brain runs 47 parallel simulations of every possible word choice before settling on 'the.' You're the person who takes 20 minutes to text back 'ok.'",
+   famous:"Marcel Proust",famousDesc:"7 volumes about remembering a cookie. Peak overthinking."},
+  {id:"zen_monk",name:"The Zen Monk",emoji:"\ud83e\uddd8",cond:d=>d.wpm<25&&d.bsRate<.05&&d.pauseCount>6,
+   roast:"Slow, deliberate, and eerily accurate. You type like each word costs you a dollar. Is this mindfulness or are you just loading? Your typing speed suggests you might be carving each letter into stone. On the bright side, when you finally finish a sentence, it's probably spelled correctly. Small victories.",
+   famous:"J.R.R. Tolkien",famousDesc:"Took 12 years to write LOTR. Deliberate, but worth it. Unlike your emails."},
+  {id:"dial_up",name:"The Human Dial-Up",emoji:"\ud83d\udc22",cond:d=>d.wpm<20,
+   roast:"Congratulations, you type slower than the average person thinks. Watching you type is like watching paint dry, except paint eventually finishes. Your keyboard might actually be collecting dust between keystrokes. At this rate, you could've handwritten a letter, mailed it internationally, and it would arrive faster.",
+   famous:"A fax machine",famousDesc:"Technically a device, but types at the same speed."},
+
+  // High backspace
+  {id:"serial_second_guesser",name:"The Serial Second-Guesser",emoji:"\ud83d\udd04",cond:d=>d.bsRate>.25&&d.wpm<50,
+   roast:"You've deleted more than you've written. That's not editing, that's performance art. Every sentence is a crime scene of abandoned thoughts. You type a word, stare at it, decide it's wrong, delete it, type the same word again, then delete that too. Your backspace key is filing for workers' comp.",
+   famous:"Sylvia Plath",famousDesc:"Rewrote The Bell Jar obsessively. At least she finished hers."},
+  {id:"perfectionist",name:"The Unhinged Perfectionist",emoji:"\ud83d\udd0d",cond:d=>d.bsRate>.20&&d.wpm>40,
+   roast:"Fast but chaotic. You barrel forward then slam the brakes to fix every tiny imperfection. Your typing pattern looks like a drunk driver -- swerving between confidence and panic. You're the person who sends a message, immediately deletes it, rewrites it, sends it, then sends a correction anyway.",
+   famous:"Stanley Kubrick",famousDesc:"127 takes for one scene. You'd do 127 takes for one tweet."},
+  {id:"backspace_addict",name:"The Backspace Addict",emoji:"\u232b",cond:d=>d.bsRate>.30,
+   roast:"At this point, your backspace key has more mileage than all the other keys combined. You're not writing -- you're playing keyboard whack-a-mole with your own thoughts. Each character you type has a 1-in-3 chance of survival. This isn't typing. This is natural selection.",
+   famous:"George R.R. Martin",famousDesc:"Still editing. Always editing. Never finishing."},
+
+  // Burst patterns
+  {id:"burst_thinker",name:"The Burst Thinker",emoji:"\ud83d\udca5",cond:d=>d.burstVariance>3&&d.pauseCount>5,
+   roast:"You alternate between furious typing explosions and long, ominous silences. It's like watching a geyser -- nothing, nothing, nothing, BOOM. Your brain apparently works in batches, loading up thoughts then dumping them all at once. Chaotic? Absolutely. Effective? ...we'll get back to you.",
+   famous:"Hunter S. Thompson",famousDesc:"Typed in manic bursts fueled by substances we won't name here."},
+  {id:"jazz_improviser",name:"The Jazz Improviser",emoji:"\ud83c\udfb7",cond:d=>d.burstVariance>4&&d.wpm>40,
+   roast:"Your typing has no rhythm, no pattern, no predictability. It's jazz -- chaotic, occasionally brilliant, mostly just confusing to everyone around you. You speed up and slow down at random like a car with a faulty transmission. Your typing pattern is abstract art. And not the good kind.",
+   famous:"Thelonious Monk",famousDesc:"Made beautiful chaos. You just make chaos."},
+
+  // Capitalization habits
+  {id:"capslock_warrior",name:"The Caps Lock Warrior",emoji:"\ud83d\udce2",cond:d=>d.capsRate>.15,
+   roast:"WHY ARE YOU YELLING? Your excessive capitalization suggests you either think everything is EXTREMELY IMPORTANT or your pinky is glued to the shift key. In the typing world, you're the equivalent of that person who won't stop honking in traffic. We get it. You have feelings. Calm down.",
+   famous:"Donald Trump (on Twitter)",famousDesc:"CAPS FOR EMPHASIS. ALWAYS."},
+  {id:"lowercase_rebel",name:"The Lowercase Rebel",emoji:"\ud83e\udd37",cond:d=>d.capsRate<.01&&d.totalChars>50,
+   roast:"not a single capital letter. are you e.e. cummings or just lazy? you've made a lifestyle choice to reject the shift key and honestly, we respect the commitment even if your english teacher wouldn't. every sentence starts with the typographic equivalent of a shrug.",
+   famous:"e.e. cummings",famousDesc:"made lowercase a whole brand. you're just copying homework."},
+
+  // Combo patterns
+  {id:"caffeinated_chaos",name:"Caffeinated Chaos Agent",emoji:"\u2615",cond:d=>d.wpm>50&&d.bsRate>.15&&d.burstVariance>2,
+   roast:"Fast, erratic, and riddled with corrections. You type like someone who's had six espressos and a deadline. Your fingers are running a marathon while your brain is still tying its shoes. The result? A furious storm of keystrokes, half of which get immediately deleted. You're a one-person typing tornado.",
+   famous:"Balzac",famousDesc:"Drank 50 cups of coffee daily. Wrote 85 novels. Died at 51. Worth it?"},
+  {id:"methodical_machine",name:"The Methodical Machine",emoji:"\u2699\ufe0f",cond:d=>d.wpm>=30&&d.wpm<=60&&d.bsRate<.10&&d.hesitation<40&&d.burstVariance<2,
+   roast:"Steady, consistent, boring. You type like a metronome -- no surprises, no excitement, no personality. Every word arrives at exactly the same pace. Are you a human or a very convincing typing bot? Your efficiency is admirable and your predictability is terrifying. You probably also eat the same lunch every day.",
+   famous:"Isaac Asimov",famousDesc:"500+ books with robotic consistency. Fitting."},
+  {id:"stuttering_genius",name:"The Stuttering Genius",emoji:"\ud83d\udca1",cond:d=>d.wpm>35&&d.pauseCount>8&&d.bsRate<.12,
+   roast:"You pause frequently but rarely delete. Which means you're actually thinking before you type, you absolute weirdo. In a world of impulsive typers, you're the one who waits, considers, then commits. It's either wisdom or really bad latency. Your pauses contain more thought than most people's paragraphs.",
+   famous:"Albert Einstein",famousDesc:"Paused. Thought. Changed physics. You paused. Thought. Typed 'lol.'"},
+  {id:"ghost_writer",name:"The Ghost Writer",emoji:"\ud83d\udc7b",cond:d=>d.totalChars<30,
+   roast:"You barely typed anything. 30 seconds and that's all you've got? Either you're the strong silent type or you forgot this wasn't a staring contest. Your keyboard is probably wondering if you're okay. This is the typing equivalent of showing up to a marathon and walking to the water station.",
+   famous:"Thomas Pynchon",famousDesc:"Famously reclusive. Rarely seen. Apparently rarely types too."},
+  {id:"comma_hoarder",name:"The Punctuation Hoarder",emoji:"\u2757",cond:d=>d.punctRate>.12,
+   roast:"You use more punctuation than actual words. Commas, periods, semicolons -- you've got them all, and you're not afraid to use them. Your typing reads like Morse code with opinions. Every thought needs three commas, a semicolon, and an em-dash to feel complete. Grammarly would have a seizure.",
+   famous:"Emily Dickinson",famousDesc:"Famous for -- her dashes -- everywhere --"},
+
+  // More combos
+  {id:"nervous_typist",name:"The Nervous Typist",emoji:"\ud83d\ude30",cond:d=>d.hesitation>50&&d.bsRate>.15,
+   roast:"High hesitation AND high backspace rate? You're typing scared. Every keystroke is a leap of faith that you immediately regret. Your typing pattern reads like anxiety in data form. You approach the keyboard like it might bite you, and honestly, based on your accuracy, it should.",
+   famous:"Woody Allen",famousDesc:"Nervous energy made into art. Yours is just... nervous."},
+  {id:"stream_of_consciousness",name:"The Stream of Consciousness",emoji:"\ud83c\udf0a",cond:d=>d.wpm>45&&d.pauseCount<4&&d.bsRate<.10,
+   roast:"You just... go. No pauses, no corrections, just pure unfiltered thought-to-keyboard transmission. Either your brain and fingers are perfectly synchronized or you've simply disconnected your quality filter. Reading your output is like drinking from a fire hose -- there's a lot of it and most of it gets wasted.",
+   famous:"Virginia Woolf",famousDesc:"Stream of consciousness pioneer. At least hers was intentional."},
+  {id:"surgeon",name:"The Keyboard Surgeon",emoji:"\ud83e\ude78",cond:d=>d.wpm>=25&&d.wpm<=45&&d.bsRate<.06&&d.hesitation<35,
+   roast:"Precise. Calculated. Slightly unsettling. You type with surgical precision -- every key deliberate, every word intentional. No wasted keystrokes, no unnecessary corrections. You're either incredibly focused or incredibly boring. Your typing pattern suggests you also fold your underwear and alphabetize your spice rack.",
+   famous:"Agatha Christie",famousDesc:"Methodical, precise, and always knew the ending before starting."},
+  {id:"rage_typist",name:"The Rage Typist",emoji:"\ud83d\udd25",cond:d=>d.wpm>55&&d.capsRate>.08&&d.bsRate>.12,
+   roast:"Fast, aggressive, and full of capitals. You type like you're arguing with the keyboard. Each keystroke is a tiny act of violence. Your neighbors can probably hear you typing through the walls. You don't type messages, you assault them into existence. The keyboard is not your enemy. ...Or is it?",
+   famous:"Mark Twain",famousDesc:"\"I didn't have time to write a short letter, so I wrote a long angry one.\""},
+
+  // Edge cases and more
+  {id:"one_finger_warrior",name:"The One-Finger Warrior",emoji:"\u261d\ufe0f",cond:d=>d.wpm<15&&d.hesitation>50,
+   roast:"Based on your speed and pause pattern, you might be typing with a single finger. Or possibly a carrot. Hunt-and-peck isn't a typing style, it's a cry for help. Somewhere, a typing tutor is weeping. You approach each key like it's a Where's Waldo puzzle. At this rate, carrier pigeons are faster.",
+   famous:"Your grandparent",famousDesc:"One finger. Maximum concentration. Zero WPM, infinite love."},
+  {id:"chaotic_neutral",name:"Chaotic Neutral Typist",emoji:"\ud83c\udfb2",cond:d=>d.burstVariance>2.5&&d.bsRate>.10&&d.bsRate<.25,
+   roast:"You follow no rules, no patterns, no logic. Your typing is pure entropy. Sometimes fast, sometimes slow, sometimes accurate, sometimes catastrophic. You're the dice roll of typists -- nobody, including you, knows what's going to come out next. Your typing pattern is clinically unpredictable.",
+   famous:"Douglas Adams",famousDesc:"Famously hated deadlines. Your typing hates consistency."},
+  {id:"minimalist",name:"The Digital Minimalist",emoji:"\ud83e\udeb6",cond:d=>d.totalChars>30&&d.totalChars<80&&d.bsRate<.10,
+   roast:"You said what you needed to say and stopped. In a world of verbal diarrhea, you're the constipated poet. Each word was carefully selected from a very small vocabulary. Brevity is the soul of wit, but this might just be the soul of 'I don't want to be here.' Respect, though.",
+   famous:"Ernest Hemingway",famousDesc:"\"For sale: baby shoes, never worn.\" Six words. Done."},
+  {id:"essay_writer",name:"The Accidental Novelist",emoji:"\ud83d\udcda",cond:d=>d.totalChars>300&&d.wpm>50,
+   roast:"You wrote a NOVEL in 30 seconds. Nobody asked for this much. You were given a text box and treated it like a therapy session. Your typing volume suggests either hypergraphia or a desperate need to be heard. Most people write tweets. You write manifestos. Please seek help (or a publishing deal).",
+   famous:"Stephen King",famousDesc:"2000 words/day minimum. You hit that in 30 seconds. Seek help."},
+
+  // More personality combos
+  {id:"careful_editor",name:"The Careful Editor",emoji:"\ud83d\udcdd",cond:d=>d.wpm>=25&&d.wpm<=50&&d.bsRate>.12&&d.bsRate<.22&&d.pauseCount>4,
+   roast:"You write, pause, reconsider, edit. It's not typing -- it's a negotiation between your brain and your fingers, and neither side is winning. You treat every sentence like it's going on your tombstone. News flash: it's a text box on the internet. Nobody's grading this. Except us. And you failed.",
+   famous:"F. Scott Fitzgerald",famousDesc:"Revised Gatsby endlessly. You revised a text box."},
+  {id:"shotgunner",name:"The Shotgunner",emoji:"\ud83c\udfaf",cond:d=>d.wpm>60&&d.bsRate>.10&&d.bsRate<.20&&d.pauseCount<5,
+   roast:"You spray words at the screen hoping some of them land. Accuracy is an afterthought -- volume is the strategy. You're the email equivalent of someone who throws spaghetti at the wall. Some sticks, most doesn't, and the wall needs cleaning. But hey, you're fast about it.",
+   famous:"Charles Bukowski",famousDesc:"Wrote fast, edited never, published anyway."},
+  {id:"heartbeat_typist",name:"The Heartbeat Typist",emoji:"\ud83d\udc93",cond:d=>d.burstVariance<1.5&&d.wpm>=30&&d.wpm<=55,
+   roast:"Your typing has a rhythm -- a steady, predictable, almost biological rhythm. Like a heartbeat. Or a ticking clock. Or a dripping faucet. It's consistent to the point of being eerie. Are you sure you're not a robot? Blink twice if you need help. Actually, don't blink -- keep typing at exactly this pace forever.",
+   famous:"Philip Glass",famousDesc:"Repetitive, rhythmic, hypnotic. His music, and your typing."},
+
+  // Fallbacks at the bottom
+  {id:"normie",name:"The Statistical Average",emoji:"\ud83d\udcc8",cond:d=>d.wpm>=30&&d.wpm<=55&&d.bsRate>=.06&&d.bsRate<=.18,
+   roast:"Congratulations, you are aggressively average. Not too fast, not too slow. Not too many backspaces, not too few. You are the Honda Civic of typists. Reliable, unremarkable, and destined to be forgotten. In a world of keyboard warriors and hunt-and-peck heroes, you chose the middle. How inspiring.",
+   famous:"The average office worker",famousDesc:"40 WPM, mild disappointment, adequate performance reviews."},
+  {id:"wildcard",name:"The Unclassifiable",emoji:"\ud83c\udf00",cond:()=>true,
+   roast:"Your typing pattern defies categorization. We ran it through 40+ personality templates and you matched none of them. You're either a unique snowflake or our algorithm had a stroke. Your keystroke data looks like abstract art painted by a cat walking on a keyboard. You broke the profiler. Congratulations?",
+   famous:"David Lynch",famousDesc:"Nobody understands his work either."}
+];
+
+let state = {
+  startTime: null, endTime: null, duration: 30000,
+  keystrokes: [], backspaces: 0, totalKeys: 0,
+  intervals: [], pauses: [], bursts: [],
+  capsCount: 0, punctCount: 0, charCount: 0,
+  timerInterval: null, lastKeyTime: null,
+  currentBurstLen: 0
+};
+
+function startTyping() {
+  document.getElementById('readyPhase').classList.remove('active');
+  document.getElementById('typingPhase').classList.add('active');
+  const prompt = PROMPTS[Math.floor(Math.random()*PROMPTS.length)];
+  document.getElementById('topicPrompt').innerHTML = `<strong>PROMPT:</strong> ${prompt}`;
+  const input = document.getElementById('typingInput');
+  input.value = '';
+  input.focus();
+  state = {startTime:null,endTime:null,duration:30000,keystrokes:[],backspaces:0,totalKeys:0,intervals:[],pauses:[],bursts:[],capsCount:0,punctCount:0,charCount:0,timerInterval:null,lastKeyTime:null,currentBurstLen:0};
+  input.addEventListener('keydown', onKeyDown);
+}
+
+function onKeyDown(e) {
+  const now = performance.now();
+  if (!state.startTime) {
+    state.startTime = now;
+    state.timerInterval = setInterval(updateTimer, 100);
+  }
+  const elapsed = now - state.startTime;
+  if (elapsed >= state.duration) return finishTyping();
+
+  state.totalKeys++;
+  state.keystrokes.push({time:now,key:e.key,elapsed});
+
+  if (state.lastKeyTime) {
+    const gap = now - state.lastKeyTime;
+    state.intervals.push(gap);
+    if (gap > 800) {
+      state.pauses.push(gap);
+      if (state.currentBurstLen > 0) state.bursts.push(state.currentBurstLen);
+      state.currentBurstLen = 0;
+    } else {
+      state.currentBurstLen++;
+    }
+  }
+  state.lastKeyTime = now;
+
+  if (e.key === 'Backspace') state.backspaces++;
+  else if (e.key.length === 1) {
+    state.charCount++;
+    if (e.key >= 'A' && e.key <= 'Z') state.capsCount++;
+    if (/[.,;:!?'"()\-\/]/.test(e.key)) state.punctCount++;
+  }
+
+  document.getElementById('liveKeys').textContent = state.totalKeys;
+  document.getElementById('liveBs').textContent = state.backspaces;
+  document.getElementById('livePauses').textContent = state.pauses.length;
+  document.getElementById('liveBursts').textContent = state.bursts.length;
+
+  const input = document.getElementById('typingInput');
+  const words = input.value.trim().split(/\s+/).filter(w=>w);
+  const mins = elapsed / 60000;
+  const wpm = mins > 0 ? Math.round(words.length / mins) : 0;
+  document.getElementById('liveWpm').textContent = wpm;
+}
+
+function updateTimer() {
+  if (!state.startTime) return;
+  const elapsed = performance.now() - state.startTime;
+  const remaining = Math.max(0, Math.ceil((state.duration - elapsed) / 1000));
+  const timerEl = document.getElementById('timer');
+  timerEl.textContent = remaining;
+  timerEl.className = 'timer' + (remaining<=5?' critical':remaining<=10?' warning':'');
+  document.getElementById('progressFill').style.width = Math.min(100, (elapsed/state.duration)*100)+'%';
+  if (remaining <= 0) finishTyping();
+}
+
+function finishTyping() {
+  clearInterval(state.timerInterval);
+  const input = document.getElementById('typingInput');
+  input.removeEventListener('keydown', onKeyDown);
+  input.disabled = true;
+  if (state.currentBurstLen > 0) state.bursts.push(state.currentBurstLen);
+  state.finalText = input.value;
+  setTimeout(()=>showResults(), 500);
+}
+
+function computeMetrics() {
+  const text = state.finalText || '';
+  const words = text.trim().split(/\s+/).filter(w=>w).length;
+  const elapsed = Math.min(state.duration, (state.keystrokes.length>0 ? state.keystrokes[state.keystrokes.length-1].elapsed : state.duration));
+  const mins = elapsed / 60000;
+  const wpm = mins > 0 ? Math.round(words / mins) : 0;
+  const bsRate = state.totalKeys > 0 ? state.backspaces / state.totalKeys : 0;
+  const capsRate = state.charCount > 0 ? state.capsCount / state.charCount : 0;
+  const punctRate = state.charCount > 0 ? state.punctCount / state.charCount : 0;
+  const avgInterval = state.intervals.length > 0 ? state.intervals.reduce((a,b)=>a+b,0)/state.intervals.length : 0;
+  const hesitation = state.intervals.length > 0 ? (state.pauses.length / state.intervals.length) * 100 : 0;
+  const burstAvg = state.bursts.length > 0 ? state.bursts.reduce((a,b)=>a+b,0)/state.bursts.length : 0;
+  const burstVariance = state.bursts.length > 1 ? Math.sqrt(state.bursts.reduce((s,b)=>s+Math.pow(b-burstAvg,2),0)/state.bursts.length) : 0;
+  const pauseCount = state.pauses.length;
+  const totalChars = state.charCount;
+  const accuracy = state.totalKeys > 0 ? Math.round(((state.totalKeys - state.backspaces) / state.totalKeys) * 100) : 100;
+  return {wpm,bsRate,capsRate,punctRate,avgInterval,hesitation,burstAvg,burstVariance,pauseCount,totalChars,accuracy,words,totalKeys:state.totalKeys,backspaces:state.backspaces};
+}
+
+function getProfile(m) {
+  for (const p of PROFILES) { if (p.cond(m)) return p; }
+  return PROFILES[PROFILES.length-1];
+}
+
+function showResults() {
+  document.getElementById('typingPhase').classList.remove('active');
+  document.getElementById('resultsPhase').classList.add('active');
+  const m = computeMetrics();
+  const p = getProfile(m);
+
+  // Heatmap data: interval buckets
+  const heatData = [];
+  const bucketSize = Math.max(1, Math.floor(state.intervals.length / 30));
+  for (let i = 0; i < state.intervals.length; i += bucketSize) {
+    const slice = state.intervals.slice(i, i + bucketSize);
+    const avg = slice.reduce((a,b)=>a+b,0)/slice.length;
+    heatData.push(avg);
+  }
+  const maxHeat = Math.max(...heatData, 1);
+
+  function heatColor(v) {
+    const ratio = Math.min(v / maxHeat, 1);
+    if (ratio < 0.3) return 'rgba(0,255,159,.8)';
+    if (ratio < 0.6) return 'rgba(0,212,255,.7)';
+    if (ratio < 0.8) return 'rgba(255,215,0,.7)';
+    return 'rgba(255,51,102,.7)';
+  }
+
+  const heatmapHTML = heatData.map(v => `<div class="heat-cell" style="background:${heatColor(v)}" title="${Math.round(v)}ms"></div>`).join('');
+
+  // Trait bars
+  const speedPct = Math.min(100, Math.round((m.wpm / 120) * 100));
+  const accuracyPct = m.accuracy;
+  const confidencePct = Math.max(0, 100 - Math.round(m.bsRate * 300));
+  const steadinessPct = Math.max(0, 100 - Math.round(m.hesitation * 1.5));
+  const impulsePct = Math.min(100, Math.round((m.burstAvg / 15) * 100));
+
+  function barColor(pct) {
+    if (pct > 70) return 'var(--green)';
+    if (pct > 40) return 'var(--yellow)';
+    return 'var(--red)';
+  }
+
+  function statClass(val, good, bad) {
+    if (typeof good === 'function') return good(val) ? 'highlight' : (bad(val) ? 'danger' : '');
+    return '';
+  }
+
+  const shareText = `My Typing Personality: ${p.name} ${p.emoji}\nWPM: ${m.wpm} | Accuracy: ${m.accuracy}% | Hesitation: ${Math.round(m.hesitation)}%\n\n"${p.roast.slice(0,100)}..."\n\nTake the test: `;
+
+  document.getElementById('resultsContent').innerHTML = `
+    <div class="profile-card">
+      <div class="profile-emoji">${p.emoji}</div>
+      <div class="profile-type">${p.name}</div>
+      <div class="profile-roast">${p.roast}</div>
+      <div class="famous-match">
+        <div class="label">Your Famous Typing Twin</div>
+        <div class="name">${p.famous}</div>
+        <div class="desc">${p.famousDesc}</div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card ${m.wpm>60?'highlight':m.wpm<25?'danger':''}">
+        <div class="stat-label">WPM</div>
+        <div class="stat-value">${m.wpm}</div>
+        <div class="stat-sub">${m.wpm>80?'Blazing':m.wpm>60?'Fast':m.wpm>40?'Average':m.wpm>25?'Slow':'Glacial'}</div>
+      </div>
+      <div class="stat-card ${m.accuracy>92?'highlight':m.accuracy<75?'danger':'warn'}">
+        <div class="stat-label">Accuracy</div>
+        <div class="stat-value">${m.accuracy}%</div>
+        <div class="stat-sub">${m.accuracy>95?'Surgical':m.accuracy>85?'Clean':m.accuracy>75?'Messy':'Chaotic'}</div>
+      </div>
+      <div class="stat-card ${m.hesitation<20?'highlight':m.hesitation>50?'danger':'warn'}">
+        <div class="stat-label">Hesitation</div>
+        <div class="stat-value">${Math.round(m.hesitation)}%</div>
+        <div class="stat-sub">${m.hesitation<15?'Fearless':m.hesitation<30?'Steady':m.hesitation<50?'Cautious':'Paralyzed'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Keystrokes</div>
+        <div class="stat-value">${m.totalKeys}</div>
+        <div class="stat-sub">${m.backspaces} deleted (${Math.round(m.bsRate*100)}%)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Words</div>
+        <div class="stat-value">${m.words}</div>
+        <div class="stat-sub">${m.words>80?'Verbose':m.words>40?'Normal':m.words>15?'Brief':'Silent'}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Gap</div>
+        <div class="stat-value">${Math.round(m.avgInterval)}ms</div>
+        <div class="stat-sub">Between keystrokes</div>
+      </div>
+    </div>
+
+    <div class="breakdown">
+      <h3>Personality Traits</h3>
+      <div class="trait-bar">
+        <div class="trait-header"><span class="trait-name">Speed</span><span class="trait-pct">${speedPct}%</span></div>
+        <div class="trait-track"><div class="trait-fill" style="width:${speedPct}%;background:${barColor(speedPct)}"></div></div>
+      </div>
+      <div class="trait-bar">
+        <div class="trait-header"><span class="trait-name">Accuracy</span><span class="trait-pct">${accuracyPct}%</span></div>
+        <div class="trait-track"><div class="trait-fill" style="width:${accuracyPct}%;background:${barColor(accuracyPct)}"></div></div>
+      </div>
+      <div class="trait-bar">
+        <div class="trait-header"><span class="trait-name">Confidence</span><span class="trait-pct">${confidencePct}%</span></div>
+        <div class="trait-track"><div class="trait-fill" style="width:${confidencePct}%;background:${barColor(confidencePct)}"></div></div>
+      </div>
+      <div class="trait-bar">
+        <div class="trait-header"><span class="trait-name">Steadiness</span><span class="trait-pct">${steadinessPct}%</span></div>
+        <div class="trait-track"><div class="trait-fill" style="width:${steadinessPct}%;background:${barColor(steadinessPct)}"></div></div>
+      </div>
+      <div class="trait-bar">
+        <div class="trait-header"><span class="trait-name">Impulse</span><span class="trait-pct">${impulsePct}%</span></div>
+        <div class="trait-track"><div class="trait-fill" style="width:${impulsePct}%;background:${barColor(impulsePct)}"></div></div>
+      </div>
+    </div>
+
+    <div class="breakdown">
+      <h3>Rhythm Heatmap</h3>
+      <p style="font-size:.65rem;color:var(--dim);margin-bottom:10px">Green = fast keystrokes | Red = long pauses</p>
+      <div class="heatmap">${heatmapHTML}</div>
+    </div>
+
+    <div class="share-section">
+      <button class="share-btn" onclick="copyShare(this)">Copy Profile to Clipboard</button>
+      <button class="share-btn" onclick="tweetShare()">Share on X</button>
+    </div>
+    <button class="retry-btn" onclick="retry()">ANALYZE AGAIN</button>
+  `;
+
+  // Store for sharing
+  window._shareText = shareText;
+}
+
+function copyShare(btn) {
+  navigator.clipboard.writeText(window._shareText).then(()=>{
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='Copy Profile to Clipboard';btn.classList.remove('copied')},2000);
+  });
+}
+
+function tweetShare() {
+  const url = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(window._shareText);
+  window.open(url, '_blank');
+}
+
+function retry() {
+  document.getElementById('resultsPhase').classList.remove('active');
+  document.getElementById('readyPhase').classList.add('active');
+  document.getElementById('typingInput').disabled = false;
+  document.getElementById('typingInput').value = '';
+  document.getElementById('timer').textContent = '30';
+  document.getElementById('timer').className = 'timer';
+  document.getElementById('progressFill').style.width = '0%';
+}
+</script>
+</body>
+</html>

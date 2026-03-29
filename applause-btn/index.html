@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Applause Button</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at center, #2a1a0a 0%, #1a0a00 50%, #0d0500 100%);
+    color: #f5e6d0;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* Theater curtain top border */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, #8B0000, #DAA520, #8B0000, #DAA520, #8B0000);
+    z-index: 100;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    text-align: center;
+    margin: 2rem 1rem 0.5rem;
+    background: linear-gradient(135deg, #DAA520, #FFD700, #DAA520);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 2px 4px rgba(218,165,32,0.3));
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #b89860;
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  /* Applause For field */
+  .applause-for {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+    max-width: 500px;
+    width: 100%;
+  }
+
+  .applause-for label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: #DAA520;
+    white-space: nowrap;
+  }
+
+  .applause-for input {
+    flex: 1;
+    background: rgba(218,165,32,0.08);
+    border: 2px solid rgba(218,165,32,0.3);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: #f5e6d0;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .applause-for input:focus {
+    border-color: #DAA520;
+  }
+
+  .applause-for input::placeholder {
+    color: rgba(245,230,208,0.3);
+  }
+
+  /* Mode selector */
+  .modes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+    max-width: 600px;
+  }
+
+  .mode-btn {
+    background: rgba(139,0,0,0.2);
+    border: 1.5px solid rgba(218,165,32,0.3);
+    color: #b89860;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    transition: all 0.3s;
+    user-select: none;
+  }
+
+  .mode-btn:hover {
+    background: rgba(139,0,0,0.4);
+    border-color: #DAA520;
+    color: #DAA520;
+  }
+
+  .mode-btn.active {
+    background: linear-gradient(135deg, #8B0000, #a01010);
+    border-color: #DAA520;
+    color: #FFD700;
+    box-shadow: 0 0 15px rgba(139,0,0,0.5);
+  }
+
+  /* THE BUTTON */
+  .button-area {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+
+  #applause-btn {
+    width: clamp(200px, 50vw, 300px);
+    height: clamp(200px, 50vw, 300px);
+    border-radius: 50%;
+    border: 4px solid #DAA520;
+    background: radial-gradient(circle at 35% 35%, #c41020, #8B0000 50%, #5a0010 100%);
+    color: #FFD700;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+    font-weight: 900;
+    cursor: pointer;
+    position: relative;
+    box-shadow:
+      0 0 30px rgba(139,0,0,0.6),
+      0 0 60px rgba(139,0,0,0.3),
+      inset 0 -4px 10px rgba(0,0,0,0.3),
+      inset 0 4px 10px rgba(255,255,255,0.1);
+    transition: transform 0.1s, box-shadow 0.2s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 0.05em;
+  }
+
+  #applause-btn::after {
+    content: '';
+    position: absolute;
+    top: 8%; left: 15%; right: 50%; bottom: 60%;
+    background: radial-gradient(ellipse, rgba(255,255,255,0.2), transparent);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  #applause-btn:hover {
+    box-shadow:
+      0 0 40px rgba(139,0,0,0.8),
+      0 0 80px rgba(139,0,0,0.4),
+      0 0 10px rgba(218,165,32,0.5),
+      inset 0 -4px 10px rgba(0,0,0,0.3),
+      inset 0 4px 10px rgba(255,255,255,0.1);
+  }
+
+  #applause-btn:active {
+    transform: scale(0.95);
+    box-shadow:
+      0 0 20px rgba(139,0,0,0.9),
+      0 0 40px rgba(218,165,32,0.3),
+      inset 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+  #applause-btn.playing {
+    animation: pulse 0.4s ease-in-out;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  /* Counter */
+  .counter {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .counter .number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 0 0 20px rgba(218,165,32,0.4);
+  }
+
+  .counter .label {
+    font-size: 0.8rem;
+    color: #b89860;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+  }
+
+  /* Share button */
+  .share-btn {
+    background: rgba(218,165,32,0.15);
+    border: 1.5px solid rgba(218,165,32,0.4);
+    color: #DAA520;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 2rem;
+    transition: all 0.3s;
+  }
+
+  .share-btn:hover {
+    background: rgba(218,165,32,0.25);
+    border-color: #FFD700;
+  }
+
+  .share-btn.copied {
+    background: rgba(34,139,34,0.3);
+    border-color: #228B22;
+    color: #90EE90;
+  }
+
+  /* History */
+  .history {
+    width: 100%;
+    max-width: 500px;
+    padding: 0 1rem 2rem;
+  }
+
+  .history h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: #DAA520;
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  .history-list {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: rgba(218,165,32,0.3); border-radius: 2px; }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid rgba(218,165,32,0.1);
+    animation: fadeIn 0.3s ease;
+  }
+
+  .history-item .what {
+    flex: 1;
+    color: #f5e6d0;
+    font-size: 0.9rem;
+  }
+
+  .history-item .mode-tag {
+    font-size: 0.7rem;
+    color: #8B0000;
+    background: rgba(218,165,32,0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+  }
+
+  .history-item .time {
+    font-size: 0.7rem;
+    color: #b89860;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .empty-history {
+    text-align: center;
+    color: rgba(184,152,96,0.5);
+    font-style: italic;
+    padding: 1rem;
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  /* Volume indicator */
+  .volume-bars {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 30px;
+    margin-bottom: 0.5rem;
+    justify-content: center;
+  }
+
+  .volume-bars .bar {
+    width: 6px;
+    background: linear-gradient(to top, #8B0000, #DAA520);
+    border-radius: 2px;
+    transition: height 0.05s;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<h1>The Applause Button</h1>
+<p class="subtitle">Everything deserves applause</p>
+
+<div class="applause-for">
+  <label for="applause-target">Applause for:</label>
+  <input type="text" id="applause-target" placeholder="your morning coffee..." maxlength="100">
+</div>
+
+<div class="modes" id="modes">
+  <button class="mode-btn" data-mode="golf">Golf Clap</button>
+  <button class="mode-btn" data-mode="polite">Polite Applause</button>
+  <button class="mode-btn active" data-mode="standing">Standing Ovation</button>
+  <button class="mode-btn" data-mode="stadium">Stadium Roar</button>
+  <button class="mode-btn" data-mode="slow">Slow Clap</button>
+</div>
+
+<div class="volume-bars" id="volume-bars">
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+  <div class="bar" style="height:4px"></div>
+</div>
+
+<div class="button-area">
+  <button id="applause-btn">APPLAUD</button>
+</div>
+
+<div class="counter">
+  <div class="number" id="counter">0</div>
+  <div class="label">Total Ovations</div>
+</div>
+
+<button class="share-btn" id="share-btn">Share What You Applauded</button>
+
+<div class="history">
+  <h2>Hall of Applause</h2>
+  <ul class="history-list" id="history-list">
+    <li class="empty-history">Nothing applauded yet. Press the button!</li>
+  </ul>
+</div>
+
+<script>
+// ---- Web Audio Applause Engine ----
+let audioCtx = null;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Generate shaped noise that sounds like applause/clapping
+function playApplause(mode) {
+  const ctx = getCtx();
+  const configs = {
+    golf:     { duration: 1.5, density: 0.15, maxGain: 0.08, clapRate: 3,  filterFreq: 2000, resonance: 0.5, whoosh: false },
+    polite:   { duration: 3.0, density: 0.5,  maxGain: 0.20, clapRate: 8,  filterFreq: 3500, resonance: 1,   whoosh: false },
+    standing: { duration: 5.0, density: 0.85, maxGain: 0.40, clapRate: 20, filterFreq: 5000, resonance: 2,   whoosh: true },
+    stadium:  { duration: 7.0, density: 1.0,  maxGain: 0.55, clapRate: 40, filterFreq: 6000, resonance: 3,   whoosh: true },
+    slow:     { duration: 6.0, density: 0.1,  maxGain: 0.25, clapRate: 1.5,filterFreq: 2500, resonance: 1,   whoosh: false },
+  };
+  const c = configs[mode] || configs.standing;
+  const now = ctx.currentTime;
+
+  // Crowd noise: filtered white noise with envelope
+  const bufferSize = ctx.sampleRate * c.duration;
+  const noiseBuffer = ctx.createBuffer(2, bufferSize, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = noiseBuffer.getChannelData(ch);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * c.density;
+    }
+  }
+
+  const noiseSource = ctx.createBufferSource();
+  noiseSource.buffer = noiseBuffer;
+
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'bandpass';
+  noiseFilter.frequency.value = c.filterFreq;
+  noiseFilter.Q.value = c.resonance;
+
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0, now);
+  noiseGain.gain.linearRampToValueAtTime(c.maxGain * 0.6, now + c.duration * 0.15);
+  noiseGain.gain.setValueAtTime(c.maxGain * 0.6, now + c.duration * 0.6);
+  noiseGain.gain.linearRampToValueAtTime(0, now + c.duration);
+
+  noiseSource.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noiseSource.start(now);
+  noiseSource.stop(now + c.duration);
+
+  // Individual claps: short burst noise impulses
+  const clapCount = Math.floor(c.clapRate * c.duration);
+  for (let i = 0; i < clapCount; i++) {
+    const clapTime = now + (mode === 'slow'
+      ? (i / c.clapRate) + Math.random() * 0.1
+      : Math.random() * c.duration * 0.85 + c.duration * 0.05);
+
+    const clapLen = mode === 'slow' ? 0.08 : 0.02 + Math.random() * 0.03;
+    const clapSamples = Math.floor(ctx.sampleRate * clapLen);
+    const clapBuffer = ctx.createBuffer(1, clapSamples, ctx.sampleRate);
+    const clapData = clapBuffer.getChannelData(0);
+    for (let j = 0; j < clapSamples; j++) {
+      const env = Math.exp(-j / (clapSamples * 0.15));
+      clapData[j] = (Math.random() * 2 - 1) * env;
+    }
+
+    const clapSource = ctx.createBufferSource();
+    clapSource.buffer = clapBuffer;
+
+    const clapFilter = ctx.createBiquadFilter();
+    clapFilter.type = 'highpass';
+    clapFilter.frequency.value = 1000 + Math.random() * 3000;
+
+    const clapGainNode = ctx.createGain();
+    clapGainNode.gain.value = c.maxGain * (0.3 + Math.random() * 0.7);
+
+    const panner = ctx.createStereoPanner();
+    panner.pan.value = Math.random() * 2 - 1;
+
+    clapSource.connect(clapFilter);
+    clapFilter.connect(clapGainNode);
+    clapGainNode.connect(panner);
+    panner.connect(ctx.destination);
+    clapSource.start(clapTime);
+    clapSource.stop(clapTime + clapLen);
+  }
+
+  // Whoosh/roar for big modes
+  if (c.whoosh) {
+    const whooshLen = c.duration * 0.8;
+    const whooshSamples = Math.floor(ctx.sampleRate * whooshLen);
+    const whooshBuffer = ctx.createBuffer(2, whooshSamples, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = whooshBuffer.getChannelData(ch);
+      for (let i = 0; i < whooshSamples; i++) {
+        const t = i / whooshSamples;
+        const env = Math.sin(t * Math.PI) * 0.5;
+        data[i] = (Math.random() * 2 - 1) * env;
+      }
+    }
+    const whooshSource = ctx.createBufferSource();
+    whooshSource.buffer = whooshBuffer;
+
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 800;
+
+    const whooshGain = ctx.createGain();
+    whooshGain.gain.value = c.maxGain * 0.4;
+
+    whooshSource.connect(lp);
+    lp.connect(whooshGain);
+    whooshGain.connect(ctx.destination);
+    whooshSource.start(now + c.duration * 0.1);
+    whooshSource.stop(now + c.duration * 0.1 + whooshLen);
+  }
+
+  // Animate volume bars
+  animateVolumeBars(c.duration, c.maxGain);
+
+  return c.duration;
+}
+
+// ---- Volume Bars Animation ----
+function animateVolumeBars(duration, intensity) {
+  const bars = document.querySelectorAll('#volume-bars .bar');
+  const start = performance.now();
+  const durationMs = duration * 1000;
+
+  function frame() {
+    const elapsed = performance.now() - start;
+    const t = elapsed / durationMs;
+    if (t >= 1) {
+      bars.forEach(b => b.style.height = '4px');
+      return;
+    }
+    const env = t < 0.15 ? t / 0.15 : t > 0.6 ? (1 - t) / 0.4 : 1;
+    bars.forEach(b => {
+      const h = 4 + Math.random() * 26 * env * intensity * 2;
+      b.style.height = h + 'px';
+    });
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---- Confetti ----
+const confettiCanvas = document.getElementById('confetti-canvas');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettiPieces = [];
+let confettiRunning = false;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+resizeConfetti();
+window.addEventListener('resize', resizeConfetti);
+
+function launchConfetti() {
+  const colors = ['#FFD700', '#DAA520', '#8B0000', '#FF4444', '#FF6600', '#FFFFFF', '#FF1493'];
+  for (let i = 0; i < 150; i++) {
+    confettiPieces.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -20 - Math.random() * 200,
+      w: 6 + Math.random() * 8,
+      h: 4 + Math.random() * 6,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 4,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1,
+    });
+  }
+  if (!confettiRunning) {
+    confettiRunning = true;
+    animateConfetti();
+  }
+}
+
+function animateConfetti() {
+  confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+  confettiPieces = confettiPieces.filter(p => p.opacity > 0.01);
+  if (confettiPieces.length === 0) {
+    confettiRunning = false;
+    return;
+  }
+  confettiPieces.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.05;
+    p.rotation += p.rotSpeed;
+    if (p.y > confettiCanvas.height - 50) p.opacity -= 0.02;
+
+    confettiCtx.save();
+    confettiCtx.translate(p.x, p.y);
+    confettiCtx.rotate(p.rotation * Math.PI / 180);
+    confettiCtx.globalAlpha = p.opacity;
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+    confettiCtx.restore();
+  });
+  requestAnimationFrame(animateConfetti);
+}
+
+// ---- State ----
+let currentMode = 'standing';
+let totalCount = parseInt(localStorage.getItem('applause-count') || '0');
+let history = JSON.parse(localStorage.getItem('applause-history') || '[]');
+
+const counterEl = document.getElementById('counter');
+const historyList = document.getElementById('history-list');
+const btn = document.getElementById('applause-btn');
+const targetInput = document.getElementById('applause-target');
+const shareBtn = document.getElementById('share-btn');
+
+counterEl.textContent = totalCount;
+renderHistory();
+
+// Mode labels for display
+const modeLabels = {
+  golf: 'Golf Clap',
+  polite: 'Polite Applause',
+  standing: 'Standing Ovation',
+  stadium: 'Stadium Roar',
+  slow: 'Slow Clap',
+};
+
+// Mode button emojis on the main button
+const modeEmoji = {
+  golf: 'GOLF\nCLAP',
+  polite: 'POLITE\nAPPLAUSE',
+  standing: 'STANDING\nOVATION',
+  stadium: 'STADIUM\nROAR',
+  slow: 'SLOW\nCLAP',
+};
+
+function updateButtonText() {
+  btn.innerText = modeEmoji[currentMode] || 'APPLAUD';
+}
+updateButtonText();
+
+// ---- Mode Selection ----
+document.querySelectorAll('.mode-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    currentMode = b.dataset.mode;
+    updateButtonText();
+  });
+});
+
+// ---- The Big Button ----
+let isPlaying = false;
+
+btn.addEventListener('click', () => {
+  if (isPlaying) return;
+  isPlaying = true;
+
+  btn.classList.add('playing');
+  const duration = playApplause(currentMode);
+
+  // Confetti on Standing Ovation and Stadium Roar
+  if (currentMode === 'standing' || currentMode === 'stadium') {
+    launchConfetti();
+  }
+
+  // Update counter
+  totalCount++;
+  counterEl.textContent = totalCount;
+  localStorage.setItem('applause-count', totalCount);
+
+  // Add to history
+  const target = targetInput.value.trim() || 'Something wonderful';
+  const entry = {
+    what: target,
+    mode: currentMode,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  };
+  history.unshift(entry);
+  if (history.length > 50) history.pop();
+  localStorage.setItem('applause-history', JSON.stringify(history));
+  renderHistory();
+
+  setTimeout(() => {
+    btn.classList.remove('playing');
+    isPlaying = false;
+  }, Math.min(duration * 1000, 1500));
+});
+
+// ---- Render History ----
+function renderHistory() {
+  if (history.length === 0) {
+    historyList.innerHTML = '<li class="empty-history">Nothing applauded yet. Press the button!</li>';
+    return;
+  }
+  historyList.innerHTML = history.map(h => `
+    <li class="history-item">
+      <span class="what">${escHtml(h.what)}</span>
+      <span class="mode-tag">${modeLabels[h.mode] || h.mode}</span>
+      <span class="time">${h.time}</span>
+    </li>
+  `).join('');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ---- Share ----
+shareBtn.addEventListener('click', async () => {
+  const target = targetInput.value.trim() || 'Something wonderful';
+  const text = `I gave a ${modeLabels[currentMode]} for "${target}"! (${totalCount} total ovations)`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'The Applause Button', text });
+    } catch(e) { /* user cancelled */ }
+  } else if (navigator.clipboard) {
+    await navigator.clipboard.writeText(text);
+    shareBtn.textContent = 'Copied!';
+    shareBtn.classList.add('copied');
+    setTimeout(() => {
+      shareBtn.textContent = 'Share What You Applauded';
+      shareBtn.classList.remove('copied');
+    }, 2000);
+  }
+});
+
+// ---- Keyboard shortcut: Space to applaud ----
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && document.activeElement !== targetInput) {
+    e.preventDefault();
+    btn.click();
+  }
+});
+</script>
+</body>
+</html>

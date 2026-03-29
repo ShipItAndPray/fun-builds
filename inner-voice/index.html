@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inner Voice - Your Anxious Internal Monologue</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@300;400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0a14;
+    --surface: #1a1225;
+    --surface2: #241a33;
+    --purple: #9b59b6;
+    --purple-light: #c39bd3;
+    --purple-dark: #6c3483;
+    --purple-glow: rgba(155, 89, 182, 0.3);
+    --text: #e8daf0;
+    --text-dim: #8a7a96;
+    --panic-low: #7d6b91;
+    --panic-mid: #b455a0;
+    --panic-high: #e74c3c;
+    --panic-max: #ff1744;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: 2.2rem;
+    color: var(--purple-light);
+    text-shadow: 0 0 30px var(--purple-glow);
+    letter-spacing: 2px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Input area */
+  .input-area {
+    margin: 20px 0;
+  }
+
+  .input-area label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .input-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--purple-dark);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .input-row input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 12px var(--purple-glow);
+  }
+
+  .input-row input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn {
+    background: var(--purple-dark);
+    color: var(--text);
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--purple); transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  /* Panic meter */
+  .panic-section {
+    margin: 16px 0;
+    display: none;
+  }
+
+  .panic-section.visible { display: block; }
+
+  .panic-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .panic-label span {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  .panic-level-text {
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: color 0.3s;
+  }
+
+  .panic-bar-bg {
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panic-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.4s ease, background 0.4s ease;
+    position: relative;
+  }
+
+  .panic-bar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -4px;
+    bottom: -4px;
+    width: 16px;
+    border-radius: 50%;
+    filter: blur(6px);
+    background: inherit;
+    opacity: 0.6;
+  }
+
+  /* Thought stream */
+  .thought-stream {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0 20px;
+    display: none;
+    scrollbar-width: thin;
+    scrollbar-color: var(--purple-dark) transparent;
+  }
+
+  .thought-stream.visible { display: block; }
+
+  .thought-stream::-webkit-scrollbar { width: 4px; }
+  .thought-stream::-webkit-scrollbar-track { background: transparent; }
+  .thought-stream::-webkit-scrollbar-thumb { background: var(--purple-dark); border-radius: 2px; }
+
+  .thought {
+    font-family: 'Special Elite', cursive;
+    padding: 8px 14px;
+    margin: 4px 0;
+    border-left: 2px solid transparent;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateX(-8px);
+    animation: thoughtIn 0.3s ease forwards;
+    color: var(--text);
+  }
+
+  .thought.mild { border-left-color: var(--panic-low); color: #c4b5d0; }
+  .thought.moderate { border-left-color: var(--panic-mid); color: #d4a0c8; }
+  .thought.severe { border-left-color: var(--panic-high); color: #e88; font-size: 1.1rem; }
+  .thought.critical {
+    border-left-color: var(--panic-max);
+    color: #ff6b6b;
+    font-size: 1.15rem;
+    animation: thoughtIn 0.3s ease forwards, tremble 0.15s ease-in-out infinite;
+  }
+
+  .thought .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--purple-light);
+    margin-left: 2px;
+    animation: blink 0.6s step-end infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes thoughtIn {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  @keyframes tremble {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-1px); }
+    75% { transform: translateX(1px); }
+  }
+
+  /* Controls */
+  .controls {
+    display: none;
+    gap: 10px;
+    padding: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .controls.visible { display: flex; }
+
+  .btn-reality {
+    flex: 1;
+    min-width: 140px;
+    background: linear-gradient(135deg, #2d8659, #27ae60);
+    font-size: 0.95rem;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  .btn-reality:hover { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+
+  .btn-share {
+    background: var(--surface2);
+    border: 1px solid var(--purple-dark);
+    min-width: 100px;
+  }
+
+  .btn-share:hover { background: var(--purple-dark); }
+
+  .btn-stop {
+    background: var(--surface2);
+    border: 1px solid #666;
+    min-width: 70px;
+  }
+
+  .btn-whisper {
+    background: var(--surface2);
+    border: 1px solid var(--purple-dark);
+    min-width: 70px;
+    font-size: 0.8rem;
+  }
+
+  /* Reality check overlay */
+  .reality-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .reality-overlay.visible { display: flex; }
+
+  .reality-card {
+    background: var(--surface);
+    border: 2px solid #27ae60;
+    border-radius: 16px;
+    padding: 40px 32px;
+    max-width: 420px;
+    text-align: center;
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .reality-card h2 {
+    font-size: 1.8rem;
+    color: #2ecc71;
+    margin-bottom: 16px;
+  }
+
+  .reality-card p {
+    color: var(--text);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  .reality-card .reassurance {
+    font-family: 'Special Elite', cursive;
+    color: var(--purple-light);
+    font-size: 1.1rem;
+    margin: 20px 0;
+    font-style: italic;
+  }
+
+  .reality-card .btn {
+    margin-top: 16px;
+    background: #27ae60;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.01); box-shadow: 0 0 40px rgba(46, 204, 113, 0.15); }
+  }
+
+  /* Share modal */
+  .share-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .share-overlay.visible { display: flex; }
+
+  .share-card {
+    background: var(--surface);
+    border: 1px solid var(--purple-dark);
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 480px;
+    width: 90%;
+  }
+
+  .share-card h3 {
+    color: var(--purple-light);
+    margin-bottom: 12px;
+  }
+
+  .share-card textarea {
+    width: 100%;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--purple-dark);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 160px;
+    outline: none;
+  }
+
+  .share-card .share-btns {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Background pulse when panicking */
+  body.panicking {
+    animation: bgPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes bgPulse {
+    0%, 100% { background: var(--bg); }
+    50% { background: #120a18; }
+  }
+
+  /* Presets */
+  .presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .preset {
+    background: var(--surface2);
+    border: 1px solid var(--purple-dark);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .preset:hover {
+    background: var(--purple-dark);
+    color: var(--text);
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.6rem; }
+    .thought { font-size: 0.95rem; }
+    .reality-card { padding: 28px 20px; margin: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>The Inner Voice</h1>
+    <p>narrating your anxiety since... always</p>
+  </header>
+
+  <div class="input-area">
+    <label>What social situation are you walking into?</label>
+    <div class="input-row">
+      <input type="text" id="situationInput" placeholder="Walking into a party alone..." value="Walking into a party alone.">
+      <button class="btn" id="startBtn" onclick="startSpiral()">Spiral</button>
+    </div>
+    <div class="presets">
+      <span class="preset" onclick="setSituation('Walking into a party alone.')">party alone</span>
+      <span class="preset" onclick="setSituation('Sending a risky text.')">risky text</span>
+      <span class="preset" onclick="setSituation('Eating alone at a restaurant.')">eating alone</span>
+      <span class="preset" onclick="setSituation('Job interview in 5 minutes.')">job interview</span>
+      <span class="preset" onclick="setSituation('Running into your ex.')">running into ex</span>
+      <span class="preset" onclick="setSituation('Presenting to the whole team.')">presenting</span>
+      <span class="preset" onclick="setSituation('First day at a new job.')">new job</span>
+      <span class="preset" onclick="setSituation('Waving at someone who wasn\\'t waving at you.')">wrong wave</span>
+    </div>
+  </div>
+
+  <div class="panic-section" id="panicSection">
+    <div class="panic-label">
+      <span>Panic Level</span>
+      <span class="panic-level-text" id="panicText">calm-ish</span>
+    </div>
+    <div class="panic-bar-bg">
+      <div class="panic-bar" id="panicBar"></div>
+    </div>
+  </div>
+
+  <div class="thought-stream" id="thoughtStream"></div>
+
+  <div class="controls" id="controls">
+    <button class="btn btn-reality" onclick="realityCheck()">You're Actually Fine</button>
+    <button class="btn btn-whisper" id="whisperBtn" onclick="toggleWhisper()">Whisper</button>
+    <button class="btn btn-share" onclick="shareSpiral()">Share Spiral</button>
+    <button class="btn btn-stop" onclick="stopSpiral()">Stop</button>
+  </div>
+</div>
+
+<!-- Reality check overlay -->
+<div class="reality-overlay" id="realityOverlay">
+  <div class="reality-card">
+    <h2>Hey.</h2>
+    <p>Take a breath. In... and out.</p>
+    <p class="reassurance" id="reassuranceText"></p>
+    <p>Nobody is scrutinizing you the way you think they are. They're too busy worrying about themselves.</p>
+    <button class="btn" onclick="closeReality()">Okay... I guess</button>
+  </div>
+</div>
+
+<!-- Share overlay -->
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-card">
+    <h3>Share Your Anxiety Spiral</h3>
+    <textarea id="shareText" readonly></textarea>
+    <div class="share-btns">
+      <button class="btn" onclick="copySpiral()">Copy</button>
+      <button class="btn btn-stop" onclick="closeShare()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 60+ thought templates organized by panic level
+const templates = {
+  // Level 0-25: Mild unease
+  mild: [
+    "Okay. Here we go. This is fine.",
+    "I mean, people do this all the time. Right?",
+    "Just act natural. What does natural even look like?",
+    "Deep breath. Okay. Another one.",
+    "I practiced this in the mirror. I've got this.",
+    "Just smile. Not too much though. A normal amount of smile.",
+    "Where do I look? The floor? No. Too sad. The ceiling? No. Weird.",
+    "I should have stayed home. No. Growth. This is growth.",
+    "Okay, nobody's noticed me yet. Good? Bad? I can't tell.",
+    "Why did I wear this? Is this what people wear?",
+    "I'll just find a spot and stand there. Casually. Like a human.",
+    "Phone. I'll check my phone. That's what normal people do.",
+    "Maybe I should get a drink first. Something to hold.",
+    "I rehearsed three conversation starters. I can't remember any of them.",
+    "Just be yourself. But which self? The anxious one? Great.",
+  ],
+
+  // Level 25-50: Growing anxiety
+  moderate: [
+    "Everyone is looking at me. Are they? No. Wait, yes they are.",
+    "My hands -- where do I put my hands?",
+    "I'm smiling too much. I look unhinged.",
+    "That person glanced at me. What did that glance mean??",
+    "Was that a whisper? Are they whispering about me?",
+    "I can feel my heartbeat in my teeth. Is that normal?",
+    "Why is my mouth so dry? And my palms so wet? Body, pick ONE.",
+    "I should say something. Anything. What do words sound like again?",
+    "They're all having fun. I'm performing an impression of fun.",
+    "That laugh was too loud. Everyone heard. Everyone judged.",
+    "I wonder if I can leave without anyone noticing.",
+    "Someone's walking towards me. Oh no. Oh no oh no.",
+    "I've been standing here for 45 seconds and it feels like 3 hours.",
+    "My voice is going to crack if I speak. I just know it.",
+    "Did I put on deodorant? I can't remember. I can smell... something.",
+    "What if someone asks me a question and my mind goes blank?",
+    "I'm blinking too much. Or not enough. What's the normal rate?",
+  ],
+
+  // Level 50-75: Escalating panic
+  severe: [
+    "EVERYONE CAN TELL. They can see the panic on my face.",
+    "This was a mistake. This was objectively, measurably a mistake.",
+    "I forgot how to stand. How have I been standing my entire life?",
+    "My legs feel like they're made of pudding. Anxious pudding.",
+    "They definitely hate me. It's unanimous. They had a meeting about it.",
+    "I am the MOST awkward person who has ever existed in any timeline.",
+    "Someone smiled at me and I panicked and looked at my shoes.",
+    "I tried to say 'hey' and it came out as a wheeze.",
+    "The silence is deafening. The noise is also deafening. Everything is deafening.",
+    "I need to leave. But the exit is so far away. And people are NEAR it.",
+    "What if I trip? What if I trip and everyone sees?",
+    "My face is hot. I'm definitely red. I look like a tomato at a party.",
+    "They're going to remember me as That Weird Person. Forever.",
+    "Why am I sweating? I'm INDOORS. In AIR CONDITIONING.",
+    "I've been holding this drink for 20 minutes and haven't taken a sip.",
+  ],
+
+  // Level 75-100: Full spiral
+  critical: [
+    "THIS IS CODE RED. CODE ABSOLUTE RED.",
+    "I have forgotten my own name. What IS my name??",
+    "The walls are closing in. Not literally. But EMOTIONALLY.",
+    "Everyone in this room is a social butterfly and I am a social moth. Drawn to the light. Burning.",
+    "I'm going to think about this moment at 3am for the next DECADE.",
+    "My internal monologue is screaming. You can probably hear it.",
+    "I have made eye contact with a stranger and now we're BONDED. Reluctantly.",
+    "Help. Help. Help. Help. Help.",
+    "I'm one awkward silence away from a full existential crisis.",
+    "This is it. This is how I become a cautionary tale.",
+    "My brain has left the chat. My body is running on pure panic.",
+    "I want to be ANYWHERE else. A dentist. A DMV. ANYWHERE.",
+    "I can feel every individual pore on my face producing anxiety sweat.",
+    "WHO THOUGHT SOCIAL SITUATIONS WERE A GOOD IDEA?? WHO??",
+    "The concept of 'chill' has filed a restraining order against me.",
+    "I am speed-running every embarrassing moment of my life simultaneously.",
+  ]
+};
+
+// Situation-adaptive thoughts
+const situationAdaptors = {
+  'party': [
+    "Everyone already has their friend groups. I am a group of one.",
+    "The music is too loud to talk but too quiet to dance. Nightmare.",
+    "Someone asked 'how do you know the host?' and I blanked.",
+  ],
+  'text': [
+    "They're typing... no they stopped. They STOPPED.",
+    "Read at 9:47. It's 9:48. WHY HAVEN'T THEY REPLIED.",
+    "I should not have used that emoji. That emoji was too much.",
+  ],
+  'eating': [
+    "The waiter asked if I'm waiting for someone. NO. Just me. ALONE.",
+    "Everyone thinks I got stood up. I didn't. This is BY CHOICE. CHOICE.",
+    "I'm chewing too loudly. The whole restaurant can hear me.",
+  ],
+  'interview': [
+    "'Tell me about yourself.' I am a collection of anxiety wearing a blazer.",
+    "My handshake was weird. Too sweaty. Too firm. Too everything.",
+    "They asked about my weaknesses. I have a PowerPoint.",
+  ],
+  'ex': [
+    "Do I wave? Ignore? Spontaneously combust? All valid options.",
+    "They look good. Why do they look good? This is UNFAIR.",
+    "Pretend to be on the phone. Pretend to be on the phone. Too late. Eye contact.",
+  ],
+  'presenting': [
+    "My slide is upside down. Wait no it's not. Wait. Is it?",
+    "I can see everyone's faces. They're... judging. The judging is PALPABLE.",
+    "'Any questions?' Please no. Please please please no.",
+  ],
+  'new job': [
+    "I don't know where the bathroom is and I'm afraid to ask.",
+    "Everyone has inside jokes. I am outside ALL the jokes.",
+    "They said 'make yourself at home.' I don't even feel at home at HOME.",
+  ],
+  'waving': [
+    "They weren't waving at me. The person BEHIND me. I want to evaporate.",
+    "I committed to the wave. Full arm extension. No taking it back.",
+    "That person saw me wave at nobody. We both know what happened.",
+  ],
+};
+
+// Reality check reassurances
+const reassurances = [
+  "Nobody is thinking about you as much as you're thinking about you.",
+  "That embarrassing thing? Nobody remembers it. Literally nobody.",
+  "You've survived 100% of your worst moments so far. Pretty good track record.",
+  "Everyone else is too busy worrying about themselves to notice you.",
+  "The awkwardness is 90% in your head. The other 10% is kind of charming.",
+  "Five years from now, this won't even be a footnote in your memory.",
+  "You're doing better than you think. Your brain is just being dramatic.",
+  "Plot twist: most people actually want you to succeed.",
+  "Your anxiety is lying to you. It's really good at it, but it's still lying.",
+  "Remember: even the most confident person in the room has had this exact monologue.",
+];
+
+let spiralInterval = null;
+let panicLevel = 0;
+let thoughtCount = 0;
+let isRunning = false;
+let isWhispering = false;
+let usedThoughts = new Set();
+let allThoughts = [];
+let synth = window.speechSynthesis;
+let currentSituation = '';
+
+function setSituation(text) {
+  document.getElementById('situationInput').value = text;
+}
+
+function getSituationKeywords(situation) {
+  const lower = situation.toLowerCase();
+  const matches = [];
+  for (const key of Object.keys(situationAdaptors)) {
+    if (lower.includes(key)) matches.push(key);
+  }
+  return matches;
+}
+
+function getThought() {
+  let pool;
+  if (panicLevel < 25) pool = 'mild';
+  else if (panicLevel < 50) pool = 'moderate';
+  else if (panicLevel < 75) pool = 'severe';
+  else pool = 'critical';
+
+  // Build available thoughts
+  let available = [...templates[pool]];
+
+  // Add situation-specific thoughts
+  const keywords = getSituationKeywords(currentSituation);
+  for (const kw of keywords) {
+    available.push(...situationAdaptors[kw]);
+  }
+
+  // Filter out used
+  let unused = available.filter(t => !usedThoughts.has(t));
+  if (unused.length === 0) {
+    usedThoughts.clear();
+    unused = available;
+  }
+
+  const thought = unused[Math.floor(Math.random() * unused.length)];
+  usedThoughts.add(thought);
+  return thought;
+}
+
+function typewriterThought(text) {
+  const stream = document.getElementById('thoughtStream');
+  const div = document.createElement('div');
+
+  let severity;
+  if (panicLevel < 25) severity = 'mild';
+  else if (panicLevel < 50) severity = 'moderate';
+  else if (panicLevel < 75) severity = 'severe';
+  else severity = 'critical';
+
+  div.className = `thought ${severity}`;
+
+  const textSpan = document.createElement('span');
+  const cursorSpan = document.createElement('span');
+  cursorSpan.className = 'cursor';
+  div.appendChild(textSpan);
+  div.appendChild(cursorSpan);
+  stream.appendChild(div);
+
+  // Auto-scroll
+  stream.scrollTop = stream.scrollHeight;
+
+  let i = 0;
+  const speed = Math.max(15, 45 - panicLevel * 0.3); // Faster as panic rises
+
+  const typeInterval = setInterval(() => {
+    if (i < text.length) {
+      textSpan.textContent += text[i];
+      i++;
+      stream.scrollTop = stream.scrollHeight;
+    } else {
+      clearInterval(typeInterval);
+      cursorSpan.remove();
+      allThoughts.push(text);
+
+      // Whisper if enabled
+      if (isWhispering && synth) {
+        whisperThought(text);
+      }
+    }
+  }, speed);
+}
+
+function whisperThought(text) {
+  if (!synth) return;
+  synth.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.volume = 0.25;
+  utter.rate = 0.75 + (panicLevel / 200); // Faster as panic rises
+  utter.pitch = 0.7;
+
+  // Try to find a whispery voice
+  const voices = synth.getVoices();
+  const whisperVoice = voices.find(v => /whisper|soft/i.test(v.name))
+    || voices.find(v => /samantha|karen|moira|fiona/i.test(v.name))
+    || voices[0];
+  if (whisperVoice) utter.voice = whisperVoice;
+
+  synth.speak(utter);
+}
+
+function updatePanic() {
+  const bar = document.getElementById('panicBar');
+  const text = document.getElementById('panicText');
+
+  const clamped = Math.min(100, panicLevel);
+  bar.style.width = clamped + '%';
+
+  let label, color;
+  if (clamped < 20) { label = 'calm-ish'; color = 'var(--panic-low)'; }
+  else if (clamped < 40) { label = 'slightly spiraling'; color = '#a37fbf'; }
+  else if (clamped < 55) { label = 'noticeably anxious'; color = 'var(--panic-mid)'; }
+  else if (clamped < 70) { label = 'full spiral'; color = '#d35400'; }
+  else if (clamped < 85) { label = 'existential dread'; color = 'var(--panic-high)'; }
+  else if (clamped < 95) { label = 'DEFCON 1'; color = '#e74c3c'; }
+  else { label = 'MAXIMUM OVERTHINK'; color = 'var(--panic-max)'; }
+
+  text.textContent = label;
+  text.style.color = color;
+  bar.style.background = `linear-gradient(90deg, var(--purple-dark), ${color})`;
+
+  if (clamped > 70) {
+    document.body.classList.add('panicking');
+  } else {
+    document.body.classList.remove('panicking');
+  }
+}
+
+function startSpiral() {
+  const situation = document.getElementById('situationInput').value.trim();
+  if (!situation) return;
+
+  currentSituation = situation;
+  panicLevel = 5;
+  thoughtCount = 0;
+  allThoughts = [];
+  usedThoughts.clear();
+  isRunning = true;
+
+  const stream = document.getElementById('thoughtStream');
+  stream.innerHTML = '';
+
+  document.getElementById('panicSection').classList.add('visible');
+  stream.classList.add('visible');
+  document.getElementById('controls').classList.add('visible');
+  document.getElementById('startBtn').textContent = 'Restart';
+
+  updatePanic();
+
+  // First thought is always situation-aware
+  typewriterThought(`Okay so... ${situation.replace(/\.$/, '')}. Here we go.`);
+  allThoughts.push(`Okay so... ${situation.replace(/\.$/, '')}. Here we go.`);
+
+  // Thoughts come faster and faster
+  scheduleNext();
+}
+
+function scheduleNext() {
+  if (!isRunning) return;
+
+  // Interval decreases as panic rises: 3s down to 1s
+  const delay = Math.max(1000, 3000 - panicLevel * 20);
+
+  spiralInterval = setTimeout(() => {
+    if (!isRunning) return;
+
+    thoughtCount++;
+    panicLevel = Math.min(100, panicLevel + 2.5 + Math.random() * 3);
+    updatePanic();
+
+    const thought = getThought();
+    typewriterThought(thought);
+
+    // Keep going
+    if (panicLevel < 100) {
+      scheduleNext();
+    } else {
+      // At max panic, keep going but slower
+      setTimeout(() => {
+        if (isRunning) {
+          typewriterThought(getThought());
+          scheduleNext();
+        }
+      }, 2000);
+    }
+  }, delay);
+}
+
+function stopSpiral() {
+  isRunning = false;
+  clearTimeout(spiralInterval);
+  document.body.classList.remove('panicking');
+  if (synth) synth.cancel();
+  document.getElementById('startBtn').textContent = 'Spiral';
+}
+
+function realityCheck() {
+  stopSpiral();
+  const overlay = document.getElementById('realityOverlay');
+  const text = document.getElementById('reassuranceText');
+  text.textContent = `"${reassurances[Math.floor(Math.random() * reassurances.length)]}"`;
+  overlay.classList.add('visible');
+}
+
+function closeReality() {
+  document.getElementById('realityOverlay').classList.remove('visible');
+}
+
+function shareSpiral() {
+  const overlay = document.getElementById('shareOverlay');
+  const textarea = document.getElementById('shareText');
+
+  let text = `My anxiety spiral for: "${currentSituation}"\n`;
+  text += `Peak panic level: ${Math.round(panicLevel)}%\n\n`;
+  allThoughts.forEach((t, i) => {
+    text += `${t}\n`;
+  });
+  text += `\n--- generated by The Inner Voice ---`;
+
+  textarea.value = text;
+  overlay.classList.add('visible');
+}
+
+function copySpiral() {
+  const textarea = document.getElementById('shareText');
+  textarea.select();
+  navigator.clipboard.writeText(textarea.value).then(() => {
+    const btn = event.target;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+function closeShare() {
+  document.getElementById('shareOverlay').classList.remove('visible');
+}
+
+function toggleWhisper() {
+  isWhispering = !isWhispering;
+  const btn = document.getElementById('whisperBtn');
+  btn.textContent = isWhispering ? 'Shh...' : 'Whisper';
+  btn.style.borderColor = isWhispering ? 'var(--purple)' : 'var(--purple-dark)';
+  btn.style.color = isWhispering ? 'var(--purple-light)' : 'var(--text)';
+
+  // Load voices
+  if (isWhispering && synth) {
+    synth.getVoices();
+  }
+}
+
+// Enter key starts spiral
+document.getElementById('situationInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') startSpiral();
+});
+
+// Close overlays on escape
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeReality();
+    closeShare();
+  }
+});
+
+// Preload voices
+if (synth) {
+  synth.getVoices();
+  speechSynthesis.onvoiceschanged = () => synth.getVoices();
+}
+</script>
+
+</body>
+</html>

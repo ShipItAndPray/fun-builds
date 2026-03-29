@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redemption Arc Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#d4a017;--warm:#f5e6c8;--dark:#1a1a2e;--darker:#0f0f1a;
+  --crimson:#8b0000;--hope:#2e7d32;--glow:rgba(212,160,23,0.3);
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes tearDrop{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(60px)}}
+@keyframes villainGlow{0%{box-shadow:0 0 20px var(--crimson)}50%{box-shadow:0 0 40px var(--gold)}100%{box-shadow:0 0 20px var(--hope)}}
+@keyframes typewriter{from{width:0}to{width:100%}}
+@keyframes evilFlash{0%,100%{background:var(--darker)}50%{background:#2a0000}}
+@keyframes heroRise{0%{transform:rotate(180deg) scale(0.5);filter:hue-rotate(0deg)}100%{transform:rotate(0deg) scale(1);filter:hue-rotate(360deg)}}
+@keyframes sparkle{0%,100%{opacity:0}50%{opacity:1}}
+
+body{
+  font-family:'Georgia',serif;
+  background:var(--darker);
+  color:var(--warm);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.container{max-width:800px;margin:0 auto;padding:20px}
+
+/* HEADER */
+header{text-align:center;padding:40px 20px 20px}
+header h1{
+  font-size:clamp(2rem,6vw,3.5rem);
+  background:linear-gradient(90deg,var(--crimson),var(--gold),var(--hope));
+  background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:shimmer 4s linear infinite;
+  margin-bottom:8px;
+}
+header p{font-size:1.1rem;opacity:0.7;font-style:italic}
+
+/* INPUT */
+.input-section{
+  text-align:center;padding:30px 20px;
+}
+.input-section input{
+  width:min(100%,500px);padding:16px 24px;
+  font-size:1.2rem;font-family:Georgia,serif;
+  background:rgba(255,255,255,0.05);
+  border:2px solid var(--gold);border-radius:50px;
+  color:var(--warm);outline:none;
+  transition:all 0.3s;
+}
+.input-section input:focus{
+  box-shadow:0 0 20px var(--glow);
+  border-color:#fff;
+}
+.input-section input::placeholder{color:rgba(245,230,200,0.4)}
+.btn{
+  display:inline-block;margin:16px 8px 0;padding:14px 32px;
+  font-size:1.1rem;font-family:Georgia,serif;
+  border:none;border-radius:50px;cursor:pointer;
+  transition:all 0.3s;font-weight:bold;
+}
+.btn-redeem{
+  background:linear-gradient(135deg,var(--crimson),var(--gold));
+  color:#fff;
+}
+.btn-redeem:hover{transform:scale(1.05);box-shadow:0 0 25px var(--glow)}
+.btn-evil{
+  background:transparent;border:2px solid var(--crimson);
+  color:var(--crimson);
+}
+.btn-evil:hover{background:var(--crimson);color:#fff}
+.btn-share{
+  background:linear-gradient(135deg,var(--hope),#4caf50);
+  color:#fff;
+}
+.btn-share:hover{transform:scale(1.05)}
+.btn-narrate{
+  background:linear-gradient(135deg,#1565c0,#42a5f5);
+  color:#fff;
+}
+.btn-narrate:hover{transform:scale(1.05)}
+.btn-restart{
+  background:transparent;border:2px solid var(--gold);
+  color:var(--gold);margin-top:20px;
+}
+.btn-restart:hover{background:var(--gold);color:var(--darker)}
+.presets{margin-top:16px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.preset{
+  padding:6px 16px;border-radius:20px;font-size:0.85rem;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(212,160,23,0.3);
+  color:var(--warm);cursor:pointer;transition:all 0.2s;
+}
+.preset:hover{background:var(--gold);color:var(--darker)}
+
+/* STORY */
+.story-section{display:none}
+.act{
+  margin:24px 0;padding:24px;
+  border-radius:16px;
+  background:rgba(255,255,255,0.03);
+  border-left:4px solid var(--gold);
+  animation:fadeIn 0.8s ease forwards;
+  opacity:0;
+}
+.act-number{
+  font-size:0.8rem;text-transform:uppercase;letter-spacing:3px;
+  color:var(--gold);margin-bottom:4px;
+}
+.act-title{font-size:1.5rem;margin-bottom:12px;color:#fff}
+.act-text{line-height:1.8;font-size:1.05rem}
+.act-1{border-left-color:var(--crimson)}
+.act-2{border-left-color:#b8860b}
+.act-3{border-left-color:var(--gold)}
+.act-4{border-left-color:#daa520}
+.act-5{border-left-color:var(--hope)}
+
+/* TEARS METER */
+.tears-container{
+  text-align:center;margin:30px 0;
+  animation:fadeIn 1s ease 0.5s forwards;opacity:0;
+}
+.tears-label{font-size:1.2rem;margin-bottom:10px;color:var(--gold)}
+.tears-bar{
+  width:min(100%,400px);height:30px;
+  background:rgba(255,255,255,0.1);border-radius:15px;
+  margin:0 auto;overflow:hidden;position:relative;
+}
+.tears-fill{
+  height:100%;border-radius:15px;
+  background:linear-gradient(90deg,#64b5f6,#1976d2,#0d47a1);
+  transition:width 2s ease;width:0;
+  position:relative;
+}
+.tears-fill::after{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  animation:shimmer 2s linear infinite;background-size:200% 100%;
+}
+.tears-value{
+  font-size:2rem;font-weight:bold;margin-top:8px;
+  color:#64b5f6;
+}
+.tear-drops{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99}
+.tear{
+  position:absolute;font-size:1.5rem;
+  animation:tearDrop 2s ease forwards;
+}
+
+/* TRANSFORMATION */
+.transformation{
+  text-align:center;margin:30px 0;padding:30px;
+  border-radius:16px;
+  background:radial-gradient(circle,rgba(212,160,23,0.1),transparent);
+  animation:fadeIn 1s ease forwards;opacity:0;
+}
+.villain-icon,.hero-icon{font-size:4rem;display:inline-block}
+.villain-icon{animation:villainGlow 3s ease infinite}
+.transform-arrow{
+  font-size:2rem;margin:0 20px;
+  color:var(--gold);vertical-align:middle;
+}
+.hero-icon{animation:heroRise 2s ease forwards}
+
+/* EVIL ENDING */
+.evil-ending{
+  display:none;margin:24px 0;padding:24px;
+  border-radius:16px;
+  background:rgba(139,0,0,0.1);
+  border:2px solid var(--crimson);
+  animation:evilFlash 2s ease 2;
+}
+.evil-ending h3{color:var(--crimson);margin-bottom:12px;font-size:1.4rem}
+.evil-ending p{line-height:1.8}
+
+/* CONTROLS */
+.controls{text-align:center;padding:20px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+
+/* SPARKLES */
+.sparkle-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:98}
+.sparkle{
+  position:absolute;width:4px;height:4px;
+  background:var(--gold);border-radius:50%;
+  animation:sparkle 1.5s ease infinite;
+}
+
+/* Mobile */
+@media(max-width:600px){
+  .container{padding:12px}
+  .act{padding:16px}
+  header{padding:20px 12px 10px}
+  .villain-icon,.hero-icon{font-size:3rem}
+  .transform-arrow{margin:0 10px;font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+
+<div class="sparkle-container" id="sparkles"></div>
+<div class="tear-drops" id="tearDrops"></div>
+
+<header>
+  <h1>The Redemption Arc</h1>
+  <p>Every villain deserves a second act</p>
+</header>
+
+<div class="container">
+  <div class="input-section" id="inputSection">
+    <input type="text" id="villainInput" placeholder="Enter any villain..." autofocus>
+    <br>
+    <button class="btn btn-redeem" onclick="generateRedemption()">Begin the Redemption</button>
+    <div class="presets">
+      <span class="preset" onclick="setVillain('Darth Vader')">Darth Vader</span>
+      <span class="preset" onclick="setVillain('Thanos')">Thanos</span>
+      <span class="preset" onclick="setVillain('my boss')">My Boss</span>
+      <span class="preset" onclick="setVillain('Voldemort')">Voldemort</span>
+      <span class="preset" onclick="setVillain('Scar')">Scar</span>
+      <span class="preset" onclick="setVillain('The Joker')">The Joker</span>
+      <span class="preset" onclick="setVillain('Loki')">Loki</span>
+      <span class="preset" onclick="setVillain('Magneto')">Magneto</span>
+      <span class="preset" onclick="setVillain('my ex')">My Ex</span>
+      <span class="preset" onclick="setVillain('Monday mornings')">Monday Mornings</span>
+    </div>
+  </div>
+
+  <div class="story-section" id="storySection">
+    <div class="transformation" id="transformation">
+      <span class="villain-icon" id="villainEmoji"></span>
+      <span class="transform-arrow">---></span>
+      <span class="hero-icon" id="heroEmoji"></span>
+    </div>
+
+    <div id="actsContainer"></div>
+
+    <div class="tears-container" id="tearsContainer">
+      <div class="tears-label" id="tearsLabel">Audience Tears</div>
+      <div class="tears-bar"><div class="tears-fill" id="tearsFill"></div></div>
+      <div class="tears-value" id="tearsValue">0%</div>
+    </div>
+
+    <div class="evil-ending" id="evilEnding"></div>
+
+    <div class="controls" id="controls">
+      <button class="btn btn-narrate" onclick="narrateStory()">Narrate Dramatically</button>
+      <button class="btn btn-evil" onclick="stayEvil()">Actually Stayed Evil</button>
+      <button class="btn btn-share" onclick="shareStory()">Share Redemption</button>
+      <button class="btn btn-restart" onclick="restart()">Redeem Another Villain</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 50+ template fragments per act, mixed and matched
+const TEMPLATES = {
+  fall: {
+    openings: [
+      "It began, as all great tragedies do, with a choice.",
+      "Nobody is born a villain. But {V} came close.",
+      "The world remembers the darkness of {V}, but few remember the light that came before.",
+      "Once upon a time, {V} stood at a crossroads. They chose... poorly.",
+      "History would record {V} as a monster. History was not entirely wrong.",
+      "Before the infamy, before the fear, {V} was just someone who wanted to matter.",
+      "The fall of {V} didn't happen overnight. It was a slow descent, like a sunset bleeding into darkness.",
+      "They say the road to hell is paved with good intentions. {V} paved an eight-lane highway.",
+      "In a different story, {V} might have been the hero. But this is not that story. Not yet.",
+      "The first act of villainy was small. A whispered lie. A stolen moment. {V} barely noticed the line being crossed.",
+    ],
+    middles: [
+      "Power became a drug, and {V} was hopelessly addicted.",
+      "{V} built an empire of fear, brick by brick, soul by soul.",
+      "Every betrayal came easier than the last. Every mercy was seen as weakness.",
+      "The mirror stopped reflecting a person and started reflecting a purpose.",
+      "{V} forgot what it felt like to be afraid. Then forgot what it felt like to feel anything at all.",
+      "Allies became pawns. Friends became liabilities. Love became a memory filed under 'weakness.'",
+      "The throne was made of the wreckage of every relationship {V} had ever destroyed.",
+      "{V} told themselves it was necessary. That the ends justified the means. The lie tasted almost like truth.",
+    ],
+    closings: [
+      "And so {V} stood alone at the top, ruler of nothing that mattered.",
+      "The world trembled. And {V} mistook that trembling for respect.",
+      "They had everything they ever wanted. It wasn't enough. It was never going to be enough.",
+      "The darkness was complete. Or so it seemed.",
+    ]
+  },
+  realization: {
+    openings: [
+      "The crack appeared on an ordinary Tuesday.",
+      "It was a child's question that started it: 'Why are you so sad?'",
+      "The moment of clarity came uninvited, like a ray of light through prison bars.",
+      "Sometimes the universe sends a messenger. For {V}, it came in the most unexpected form.",
+      "{V} caught their own reflection and, for the first time in years, actually looked.",
+      "The nightmare was always the same: {V} was alone. Truly, cosmically, irreversibly alone.",
+      "It started with a memory. An old kindness, buried so deep {V} had forgotten it existed.",
+      "A former ally, broken and defeated, looked up and said: 'I remember who you used to be.'",
+    ],
+    middles: [
+      "The realization hit like a physical blow: every person {V} had hurt had a story, a family, a dream.",
+      "For the first time, {V} saw the full weight of the wreckage. It was staggering.",
+      "{V} tried to push the feeling away, to bury it under anger and justification. But it wouldn't stay buried.",
+      "The armor of certainty, so carefully maintained, developed a crack that spread with every heartbeat.",
+      "They remembered a laugh -- their own laugh -- from a time before the darkness. It sounded like a stranger's.",
+      "The question that haunted {V} was devastatingly simple: 'Was it worth it?'",
+      "Sleep became impossible. Every closed eye brought faces. Every silence brought echoes.",
+    ],
+    closings: [
+      "And in that terrible, beautiful moment, {V} felt something they hadn't felt in years: shame.",
+      "The walls didn't crumble all at once. But the first stone had fallen.",
+      "It wasn't redemption. Not yet. It was something more fragile: doubt.",
+      "For the first time, {V} didn't want to be {V} anymore.",
+    ]
+  },
+  turning: {
+    openings: [
+      "The turning point came with three words: 'I am sorry.'",
+      "It wasn't grand. It wasn't dramatic. {V} simply stopped.",
+      "They found the one person they'd hurt the most and stood before them, defenseless.",
+      "{V} did the hardest thing a villain can do: asked for nothing.",
+      "The old {V} would have called it weakness. The new {V} didn't have a word for it yet.",
+      "It started small. A single act of kindness, given without expectation.",
+      "The world didn't trust it. Why would they? {V} didn't trust it either.",
+    ],
+    middles: [
+      "{V} began the long, unglamorous work of making amends. No cape. No fanfare. Just showing up.",
+      "Every day was a battle against the old instincts. The urge to dominate, to control, to destroy.",
+      "People laughed. People doubted. People said it was a trick. {V} kept going anyway.",
+      "The path of redemption, {V} discovered, was not a straight line. It was a spiral, revisiting old wounds with new eyes.",
+      "Former enemies watched with suspicion. Former allies watched with confusion. {V} watched themselves with terror.",
+      "There were setbacks. Dark nights when the old voice whispered: 'This is who you really are.' {V} learned to whisper back: 'Not anymore.'",
+    ],
+    closings: [
+      "Slowly, imperceptibly, the world began to notice that {V} was not the same.",
+      "Trust, once shattered, rebuilds one grain of sand at a time. {V} became patient for the first time.",
+      "The turn was not a moment. It was a thousand moments, each one chosen.",
+    ]
+  },
+  sacrifice: {
+    openings: [
+      "When the moment came, {V} didn't hesitate.",
+      "The old threat returned, greater than ever. And everyone looked to the last person they expected.",
+      "It would cost everything. {V} had already decided.",
+      "{V} stood between the world and destruction, and for the first time, stood on the right side.",
+      "The sacrifice wasn't dying. The sacrifice was living with what they'd done and choosing to do better anyway.",
+    ],
+    middles: [
+      "{V} gave up the one thing they'd clung to through everything: their pride.",
+      "The power that once corrupted was now wielded in service. Every ounce of it spent protecting those who feared them.",
+      "It wasn't heroic in the way stories tell it. It was painful, ungraceful, and deeply human.",
+      "{V} took the blow meant for someone else. Someone who had every reason to hate them.",
+      "They chose vulnerability in a moment where strength would have been so much easier.",
+      "'You don't have to do this,' someone said. {V} smiled for the first time in years. 'I know. That's why I'm doing it.'",
+    ],
+    closings: [
+      "When it was over, {V} lay broken but whole in a way they'd never been before.",
+      "The cost was immeasurable. The value was beyond calculation.",
+      "And in that act of sacrifice, the villain became something else entirely.",
+    ]
+  },
+  redemption: {
+    openings: [
+      "The world did not forgive easily. {V} did not ask it to.",
+      "Redemption, {V} learned, is not a destination. It is a daily practice.",
+      "The story doesn't end with a parade. It ends with a quiet morning and a choice to be better.",
+      "They were not the hero. They would never be the hero. But they were no longer the villain.",
+    ],
+    middles: [
+      "The scars remained. The memories remained. But they became teachers instead of tormentors.",
+      "{V} found purpose not in power, but in service. Not in fear, but in small, stubborn acts of love.",
+      "Children who once ran from {V} now ran toward them. That was worth more than any empire.",
+      "The old enemies became, if not friends, then something close: people who understood the weight of change.",
+      "Every morning, {V} made the same choice. And every morning, it got a little easier.",
+      "The world slowly accepted that people can change. That darkness is not destiny. That redemption, while rare, is real.",
+    ],
+    closings: [
+      "And so {V}, who once sought to rule the world, found something far more powerful: a reason to be part of it.",
+      "The redemption of {V} was not a fairy tale. It was better. It was earned.",
+      "This is not the story of how {V} became good. It is the story of how {V} became human.",
+      "And somewhere, in a quiet moment, {V} finally understood: the greatest power is the power to change.",
+      "The arc bent toward justice. And for once, {V} was bending with it.",
+    ]
+  }
+};
+
+const EVIL_TEMPLATES = [
+  "JUST KIDDING. {V} looked at all that redemption stuff, laughed maniacally, and went right back to being terrible. 'Character growth? In THIS economy?' {V} cackled, adjusting their evil cape. The therapist quit. The cat ran away. The motivational posters on the wall caught fire spontaneously. {V} was back, baby, and worse than ever. The end credits roll in Comic Sans, because even the font has given up.",
+  "PSYCH! {V} faked the whole thing. The tears? Onion juice. The sacrifice? A body double. The heartfelt apology? Written by ChatGPT. {V} used the goodwill to build an even MORE evil empire, this time with a better PR team. 'Fool me once,' the world said. 'I KNOW, RIGHT?' {V} replied from their new volcano lair.",
+  "NOPE. Turns out {V} was just doing it for the tax write-off. 'Redemption counts as charitable giving, right?' {V} asked their accountant, who had already fled the country. The villain-to-hero pipeline had a leak, and that leak was {V}'s complete inability to stop being the worst. At least they're consistent.",
+  "SIKE! {V} attended exactly one therapy session, said 'I think I'm fixed,' and immediately went back to scheming. The therapist's notes simply read: 'Absolutely not.' {V} now runs a podcast called 'Unapologetically Evil' and it has 2 million subscribers. The villain arc continues, now with merch.",
+  "ACTUALLY NO. {V} tried being good for exactly 47 minutes before getting bored. 'Being nice is SO tedious,' {V} muttered while shredding their apology letters. They returned to villainy with renewed enthusiasm and a new business card that reads: 'Tried redemption. Hated it. Back at it.' The font? Papyrus. Because some villains just want to watch the world burn.",
+];
+
+const VILLAIN_EMOJIS = {
+  'darth vader':'#1a1a1a','thanos':'#6a0dad','voldemort':'#2d2d2d','scar':'#8B4513',
+  'the joker':'#00ff00','loki':'#006400','magneto':'#8b0000','my boss':'#333',
+  'my ex':'#660033','monday mornings':'#1a237e'
+};
+
+let currentVillain = '';
+let currentStory = [];
+let isNarrating = false;
+let synth = window.speechSynthesis;
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function setVillain(v) {
+  document.getElementById('villainInput').value = v;
+  generateRedemption();
+}
+
+function generateAct(templates, villain) {
+  let text = pick(templates.openings).replace(/\{V\}/g, villain) + ' ' +
+             pick(templates.middles).replace(/\{V\}/g, villain) + ' ' +
+             pick(templates.closings).replace(/\{V\}/g, villain);
+  return text;
+}
+
+function generateRedemption() {
+  const input = document.getElementById('villainInput').value.trim();
+  if (!input) return;
+  currentVillain = input;
+
+  const acts = [
+    { num: 'Act I', title: 'The Fall', text: generateAct(TEMPLATES.fall, input), cls: 'act-1' },
+    { num: 'Act II', title: 'The Realization', text: generateAct(TEMPLATES.realization, input), cls: 'act-2' },
+    { num: 'Act III', title: 'The Turning Point', text: generateAct(TEMPLATES.turning, input), cls: 'act-3' },
+    { num: 'Act IV', title: 'The Sacrifice', text: generateAct(TEMPLATES.sacrifice, input), cls: 'act-4' },
+    { num: 'Act V', title: 'The Redemption', text: generateAct(TEMPLATES.redemption, input), cls: 'act-5' },
+  ];
+  currentStory = acts;
+
+  document.getElementById('inputSection').style.display = 'none';
+  const storySection = document.getElementById('storySection');
+  storySection.style.display = 'block';
+
+  // Transformation icons
+  document.getElementById('villainEmoji').textContent = '\uD83D\uDC79';
+  document.getElementById('heroEmoji').textContent = '\u2728\uD83E\uDDB8\u2728';
+
+  // Render acts with staggered animation
+  const container = document.getElementById('actsContainer');
+  container.innerHTML = '';
+  acts.forEach((act, i) => {
+    const div = document.createElement('div');
+    div.className = `act ${act.cls}`;
+    div.style.animationDelay = `${i * 0.6}s`;
+    div.innerHTML = `
+      <div class="act-number">${act.num}</div>
+      <div class="act-title">${act.title}</div>
+      <div class="act-text">${act.text}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Hide evil ending if visible
+  document.getElementById('evilEnding').style.display = 'none';
+
+  // Tears meter
+  const tears = Math.floor(Math.random() * 25) + 75; // 75-99%
+  setTimeout(() => {
+    document.getElementById('tearsFill').style.width = tears + '%';
+    animateCounter('tearsValue', 0, tears, '%');
+    const label = tears >= 95 ? 'Audience Tears: UGLY CRYING' :
+                  tears >= 85 ? 'Audience Tears: Sobbing Uncontrollably' :
+                  'Audience Tears: Misty-Eyed & Emotional';
+    document.getElementById('tearsLabel').textContent = label;
+  }, 500);
+
+  // Sparkles
+  spawnSparkles();
+  // Rain tears
+  setTimeout(() => rainTears(8), 2000);
+}
+
+function animateCounter(id, start, end, suffix) {
+  const el = document.getElementById(id);
+  const duration = 2000;
+  const startTime = Date.now();
+  function update() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.floor(start + (end - start) * eased) + suffix;
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  update();
+}
+
+function spawnSparkles() {
+  const container = document.getElementById('sparkles');
+  container.innerHTML = '';
+  for (let i = 0; i < 30; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    s.style.animationDuration = (1 + Math.random() * 2) + 's';
+    container.appendChild(s);
+  }
+}
+
+function rainTears(count) {
+  const container = document.getElementById('tearDrops');
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const tear = document.createElement('div');
+      tear.className = 'tear';
+      tear.textContent = '\uD83D\uDCA7';
+      tear.style.left = (10 + Math.random() * 80) + '%';
+      tear.style.top = '-20px';
+      container.appendChild(tear);
+      setTimeout(() => tear.remove(), 2000);
+    }, i * 300);
+  }
+}
+
+function stayEvil() {
+  const el = document.getElementById('evilEnding');
+  const text = pick(EVIL_TEMPLATES).replace(/\{V\}/g, currentVillain);
+  el.innerHTML = `<h3>ALTERNATIVE ENDING: Actually Stayed Evil</h3><p>${text}</p>`;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth' });
+  // Dark flash
+  document.body.style.animation = 'evilFlash 0.5s ease 3';
+  setTimeout(() => document.body.style.animation = '', 1500);
+}
+
+function narrateStory() {
+  if (isNarrating) { synth.cancel(); isNarrating = false; return; }
+  if (!synth) return;
+  isNarrating = true;
+
+  const fullText = currentStory.map(a => `${a.num}. ${a.title}. ${a.text}`).join(' ... ');
+  const chunks = fullText.match(/.{1,200}(?:\s|$)/g) || [fullText];
+
+  let i = 0;
+  function speakNext() {
+    if (i >= chunks.length || !isNarrating) { isNarrating = false; return; }
+    const utter = new SpeechSynthesisUtterance(chunks[i]);
+    utter.rate = 0.85;
+    utter.pitch = 0.8;
+    // Try to find a dramatic voice
+    const voices = synth.getVoices();
+    const preferred = voices.find(v => /Daniel|Aaron|Samantha|Karen|Alex/i.test(v.name));
+    if (preferred) utter.voice = preferred;
+    utter.onend = () => { i++; speakNext(); };
+    synth.speak(utter);
+  }
+  // Load voices if needed
+  if (synth.getVoices().length === 0) {
+    synth.onvoiceschanged = () => speakNext();
+  } else {
+    speakNext();
+  }
+}
+
+function shareStory() {
+  const text = `THE REDEMPTION OF ${currentVillain.toUpperCase()}\n\n` +
+    currentStory.map(a => `--- ${a.num}: ${a.title} ---\n${a.text}`).join('\n\n') +
+    '\n\n-- Generated at The Redemption Arc Generator --';
+
+  if (navigator.share) {
+    navigator.share({ title: `The Redemption of ${currentVillain}`, text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-share');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied to Clipboard!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+}
+
+function restart() {
+  synth.cancel();
+  isNarrating = false;
+  document.getElementById('storySection').style.display = 'none';
+  document.getElementById('inputSection').style.display = 'block';
+  document.getElementById('villainInput').value = '';
+  document.getElementById('villainInput').focus();
+  document.getElementById('sparkles').innerHTML = '';
+  document.getElementById('tearsFill').style.width = '0';
+}
+
+// Enter key
+document.getElementById('villainInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generateRedemption();
+});
+</script>
+</body>
+</html>

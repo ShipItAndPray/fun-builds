@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLIFFHANGER - Turn Any Boring Story Into a Thriller</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a2e;
+    --accent: #e63946;
+    --accent2: #ff6b6b;
+    --gold: #f4a261;
+    --text: #e0e0e0;
+    --muted: #6c6c8a;
+    --border: #2a2a3e;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  header h1 {
+    font-size: 2.8rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--accent), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    position: relative;
+  }
+
+  header h1::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: var(--accent);
+    margin: 12px auto 0;
+    border-radius: 2px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* Input area */
+  .input-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    color: var(--text);
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* Intensity slider */
+  .slider-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .slider-header label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .intensity-label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    transition: all 0.3s;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+    transition: box-shadow 0.3s;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 20px rgba(230, 57, 70, 0.8);
+  }
+
+  /* Main button */
+  .btn-cliffhanger {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .btn-cliffhanger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(230, 57, 70, 0.4);
+  }
+
+  .btn-cliffhanger:active {
+    transform: translateY(0);
+  }
+
+  .btn-cliffhanger::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .btn-cliffhanger:hover::before {
+    opacity: 1;
+  }
+
+  /* Result area */
+  .result-section {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 20px;
+    position: relative;
+    animation: fadeSlideIn 0.6s ease-out;
+  }
+
+  .result-section.visible { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-label {
+    font-size: 0.75rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+
+  .original-text {
+    color: var(--text);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+
+  .cliffhanger-text {
+    color: var(--accent2);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    display: inline;
+  }
+
+  .cliffhanger-text.typing {
+    border-right: 2px solid var(--accent);
+    animation: blink 0.7s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { border-color: transparent; }
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .btn-action {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .btn-action:hover {
+    border-color: var(--accent);
+    background: rgba(230, 57, 70, 0.1);
+  }
+
+  .btn-action.speaking {
+    border-color: var(--gold);
+    background: rgba(244, 162, 97, 0.15);
+    color: var(--gold);
+  }
+
+  /* Screen flash */
+  .flash-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: var(--accent);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.08s;
+  }
+
+  .flash-overlay.active {
+    opacity: 0.3;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease-out;
+    z-index: 100;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    header h1 { font-size: 2rem; letter-spacing: 4px; }
+    .container { padding: 14px; }
+    .input-section, .slider-section, .result-section { padding: 18px; }
+    .btn-cliffhanger { font-size: 1rem; padding: 16px; }
+    .actions { flex-direction: column; }
+    .btn-action { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<div class="container">
+  <header>
+    <h1>Cliffhanger</h1>
+    <p class="subtitle">Turn any boring story into a nail-biting thriller</p>
+  </header>
+
+  <div class="input-section">
+    <label>Your Boring Story</label>
+    <textarea id="storyInput" placeholder="I went to get groceries today. The store was pretty empty. I bought some milk and eggs..."></textarea>
+  </div>
+
+  <div class="slider-section">
+    <div class="slider-header">
+      <label>Cliffhanger Intensity</label>
+      <span class="intensity-label" id="intensityLabel">Unsettling</span>
+    </div>
+    <input type="range" id="intensitySlider" min="1" max="5" value="3">
+  </div>
+
+  <button class="btn-cliffhanger" id="addCliffhanger" onclick="addCliffhanger()">
+    Add Cliffhanger
+  </button>
+
+  <div class="result-section" id="resultSection">
+    <div class="result-label">Enhanced Story</div>
+    <p>
+      <span class="original-text" id="originalDisplay"></span>
+      <span class="cliffhanger-text" id="cliffhangerDisplay"></span>
+    </p>
+    <div class="actions">
+      <button class="btn-action" onclick="readDramatically()">Dramatic Reading</button>
+      <button class="btn-action" onclick="addAnother()">+ Another Twist</button>
+      <button class="btn-action" onclick="shareStory()">Copy to Share</button>
+      <button class="btn-action" onclick="reroll()">Re-roll</button>
+    </div>
+  </div>
+
+  <footer>Every story deserves a twist it never asked for.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- 65 Cliffhanger Templates (organized by intensity) ----
+const templates = {
+  1: [ // Mildly unsettling
+    "...but something about it felt slightly off, like a picture frame hanging one degree crooked.",
+    "...and yet, for some reason, they couldn't shake the feeling they'd done all this before.",
+    "...but when they got home, there was one extra bag they didn't remember packing.",
+    "...except the front door was already unlocked. They always lock the door.",
+    "...and that's when they noticed the neighbor's dog was staring at them. It hadn't blinked once.",
+    "...but later that night, they found a sticky note in their pocket that just said 'SOON.'",
+    "...only to realize the voicemail they'd been ignoring was from their own number.",
+    "...but the receipt had an item on it they definitely didn't buy: a shovel.",
+    "...and as they turned around, they caught their own reflection moving a half-second too late.",
+    "...but the calendar on the wall showed a date that hadn't happened yet.",
+    "...and for a brief moment, they could have sworn the shadows in the room didn't match the furniture.",
+    "...but the street they walked down every day? It had one extra house now.",
+    "...and that faint humming sound? Nobody else seemed to hear it.",
+  ],
+  2: [ // Suspicious
+    "...but the cashier whispered 'good luck tonight' as they left. They'd never met before.",
+    "...and when they checked their phone, there were 47 missed calls from a number that was all zeros.",
+    "...but the milk they bought? The expiration date read January 1st, 1900.",
+    "...only to find that every photo on their phone had been replaced with pictures of an empty chair.",
+    "...and that's when the streetlights went out, one by one, starting from the one closest to them.",
+    "...but when they looked at the grocery list again, at the bottom, in handwriting that wasn't theirs, it said: 'Don't go home.'",
+    "...and the car radio, which had been off, suddenly said their name.",
+    "...but the store's security footage, when reviewed later, showed them entering the store twice.",
+    "...and their watch had stopped at exactly 3:33 AM, even though it was a digital watch.",
+    "...but the eggs they bought? When they opened the carton at home, one of them was black.",
+    "...and the parking lot was completely empty. But they could hear footsteps right behind them.",
+    "...but their phone autocorrected 'home' to 'run' three times in a row.",
+    "...and that's when they realized the background music in the store had been playing their name on repeat.",
+  ],
+  3: [ // Alarming
+    "...and that's when they noticed the receipt had tomorrow's date on it.",
+    "...but little did they know, the milk they bought was from a cow that didn't exist.",
+    "...but when they got to the car, someone had left a note: 'I know what you're going to do next.'",
+    "...and the last text they ever sent was just the word 'FOUND.'",
+    "...but the store they'd just walked out of? It had been closed for seven years.",
+    "...and that's the last time anyone saw them act... normal.",
+    "...but the security camera footage would later reveal there were two of them in the store.",
+    "...and no one could explain why every clock in the building had stopped at the exact moment they walked in.",
+    "...but the person behind them in line had the exact same shopping list. Word for word.",
+    "...and the ground shook. Just once. But only they felt it.",
+    "...and when the police found the grocery bag later, it was empty. But it weighed exactly 47 pounds.",
+    "...but three different witnesses would later describe seeing them in three different cities at the same time.",
+    "...and that song stuck in their head? It wouldn't be written for another six years.",
+  ],
+  4: [ // Terrifying
+    "...and they were never seen again. The groceries were found arranged in a perfect circle in the parking lot.",
+    "...but the store's entire staff would later deny ever having worked there. The building was condemned.",
+    "...and the DNA on the receipt matched someone who'd been dead for twelve years. It was their own.",
+    "...but the 911 call that came in that night was made in their voice. They never dialed.",
+    "...and the only evidence they'd ever existed was a single grocery list, found nailed to their front door from the inside.",
+    "...but when investigators pulled the surveillance tape, the timestamp showed a date in 2089.",
+    "...and the scratching sound from inside the walls started exactly 24 hours later. It hasn't stopped since.",
+    "...and the cashier's employee records showed they'd been hired the exact day our storyteller was born. And fired the day of this visit. The reason listed: 'Purpose fulfilled.'",
+    "...but the milk carton had a missing person photo on it. It was them. The date of disappearance was tomorrow.",
+    "...and the handwriting in their journal that night wasn't theirs. It simply read: 'You weren't supposed to come back.'",
+    "...and that was the day gravity stopped working in aisle seven. Just aisle seven. Just for them.",
+    "...but the eggs hatched that night. What came out wasn't a bird.",
+    "...and every mirror in their house now showed a room that was almost identical. Almost.",
+  ],
+  5: [ // Reality-breaking
+    "...and the universe quietly began to unravel, starting with the barcode on a can of soup that, when scanned, played a sound no human ear should ever hear.",
+    "...but time itself disagreed. The store would exist yesterday. The groceries would unbuy themselves. And the storyteller would forget everything. Almost everything.",
+    "...and what they found inside the cereal box would rewrite the fundamental laws of physics. The Nobel committee still hasn't stopped screaming.",
+    "...but that was the day the simulation crashed. And for exactly one-sixteenth of a second, they saw the source code. Their name was in the comments.",
+    "...and then the sky blinked. Not flickered. Blinked. Like an eye. And it was looking directly at them.",
+    "...and the thing that crawled out of the grocery bag that night would take seventeen governments, four religions, and one very confused physicist to explain. None of them succeeded.",
+    "...but reality had already begun to fold. The grocery store was now inside their kitchen. Their kitchen was now inside the grocery store. And they were in both, watching themselves.",
+    "...and the atoms in the milk began vibrating at a frequency that matched the background radiation of the universe. The milk was trying to communicate. And it was afraid.",
+    "...and that's when they realized they'd been dead for three years. The groceries had been buying them.",
+    "...but the real twist? This story you just read? Check your own grocery receipt. Look at the bottom. I'll wait.",
+    "...and the last page of every book in their house now ended with this exact sentence. Including this one.",
+    "...and somewhere, in a dimension folded eleven times into itself, something that used to be human finished reading this story and finally understood why it had been afraid of grocery stores.",
+    "...and as the words of this story settle into your memory, you'll notice something: you can't quite remember what you were doing before you started reading. Can you?",
+  ],
+};
+
+const intensityNames = {
+  1: 'Mildly Unsettling',
+  2: 'Suspicious',
+  3: 'Alarming',
+  4: 'Terrifying',
+  5: 'Reality-Breaking'
+};
+
+const intensityColors = {
+  1: '#6c8a6c',
+  2: '#a08c4a',
+  3: '#e6a23c',
+  4: '#e65c3c',
+  5: '#e63946'
+};
+
+// ---- State ----
+let currentCliffhanger = '';
+let usedTemplates = new Set();
+let audioCtx = null;
+let isSpeaking = false;
+
+// ---- Intensity Slider ----
+const slider = document.getElementById('intensitySlider');
+const intensityLabel = document.getElementById('intensityLabel');
+
+slider.addEventListener('input', () => {
+  const val = parseInt(slider.value);
+  intensityLabel.textContent = intensityNames[val];
+  intensityLabel.style.color = intensityColors[val];
+  intensityLabel.style.background = intensityColors[val] + '18';
+});
+// Init
+intensityLabel.style.color = intensityColors[3];
+intensityLabel.style.background = intensityColors[3] + '18';
+
+// ---- Audio Engine (Web Audio dramatic sting) ----
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playDramaticSting(intensity) {
+  initAudio();
+  const now = audioCtx.currentTime;
+  const level = intensity / 5;
+
+  // Low rumble
+  const rumble = audioCtx.createOscillator();
+  const rumbleGain = audioCtx.createGain();
+  rumble.type = 'sawtooth';
+  rumble.frequency.setValueAtTime(40 + intensity * 5, now);
+  rumble.frequency.exponentialRampToValueAtTime(25, now + 1.5);
+  rumbleGain.gain.setValueAtTime(0.15 * level, now);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2);
+  rumble.connect(rumbleGain).connect(audioCtx.destination);
+  rumble.start(now);
+  rumble.stop(now + 2);
+
+  // Impact hit
+  const hit = audioCtx.createOscillator();
+  const hitGain = audioCtx.createGain();
+  hit.type = 'sine';
+  hit.frequency.setValueAtTime(150 * intensity, now);
+  hit.frequency.exponentialRampToValueAtTime(30, now + 0.8);
+  hitGain.gain.setValueAtTime(0.3 * level, now);
+  hitGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  hit.connect(hitGain).connect(audioCtx.destination);
+  hit.start(now);
+  hit.stop(now + 0.8);
+
+  // Noise burst for high intensity
+  if (intensity >= 3) {
+    const bufferSize = audioCtx.sampleRate * 0.3;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+    }
+    const noise = audioCtx.createBufferSource();
+    const noiseGain = audioCtx.createGain();
+    const noiseFilter = audioCtx.createBiquadFilter();
+    noise.buffer = buffer;
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.value = 800;
+    noiseGain.gain.setValueAtTime(0.2 * level, now + 0.05);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    noise.connect(noiseFilter).connect(noiseGain).connect(audioCtx.destination);
+    noise.start(now + 0.05);
+  }
+
+  // Dissonant chord for intensity 4-5
+  if (intensity >= 4) {
+    const freqs = [110, 116.54, 155.56, 185]; // dissonant cluster
+    freqs.forEach((f, i) => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.08, now + 0.1);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(now + 0.1);
+      osc.stop(now + 2.5);
+    });
+  }
+}
+
+function flashScreen() {
+  const overlay = document.getElementById('flashOverlay');
+  overlay.classList.add('active');
+  setTimeout(() => overlay.classList.remove('active'), 120);
+}
+
+// ---- Cliffhanger Logic ----
+function pickCliffhanger(intensity) {
+  const pool = templates[intensity];
+  // filter out used ones
+  const available = pool.filter(t => !usedTemplates.has(t));
+  const source = available.length > 0 ? available : pool;
+  const pick = source[Math.floor(Math.random() * source.length)];
+  usedTemplates.add(pick);
+  return pick;
+}
+
+function typeText(element, text, speed, callback) {
+  element.textContent = '';
+  element.classList.add('typing');
+  let i = 0;
+  const interval = setInterval(() => {
+    element.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(interval);
+      element.classList.remove('typing');
+      if (callback) callback();
+    }
+  }, speed);
+}
+
+function addCliffhanger() {
+  const story = document.getElementById('storyInput').value.trim();
+  if (!story) {
+    showToast('Write a boring story first!');
+    return;
+  }
+
+  const intensity = parseInt(slider.value);
+  currentCliffhanger = pickCliffhanger(intensity);
+
+  // Play sting + flash
+  playDramaticSting(intensity);
+  if (intensity >= 3) flashScreen();
+
+  // Show result
+  const section = document.getElementById('resultSection');
+  const originalDisplay = document.getElementById('originalDisplay');
+  const cliffhangerDisplay = document.getElementById('cliffhangerDisplay');
+
+  originalDisplay.textContent = story + ' ';
+  cliffhangerDisplay.textContent = '';
+  section.classList.add('visible');
+
+  // Scroll to result
+  setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+
+  // Type out cliffhanger
+  const typeSpeed = Math.max(20, 60 - intensity * 8);
+  typeText(cliffhangerDisplay, currentCliffhanger, typeSpeed);
+}
+
+function addAnother() {
+  const intensity = parseInt(slider.value);
+  const newTwist = pickCliffhanger(intensity);
+  currentCliffhanger += ' ' + newTwist;
+
+  playDramaticSting(intensity);
+  if (intensity >= 3) flashScreen();
+
+  const cliffhangerDisplay = document.getElementById('cliffhangerDisplay');
+  const existing = cliffhangerDisplay.textContent;
+  cliffhangerDisplay.textContent = existing + ' ';
+
+  const typeSpeed = Math.max(20, 60 - intensity * 8);
+  // Type just the new part
+  let i = 0;
+  cliffhangerDisplay.classList.add('typing');
+  const interval = setInterval(() => {
+    cliffhangerDisplay.textContent += newTwist[i];
+    i++;
+    if (i >= newTwist.length) {
+      clearInterval(interval);
+      cliffhangerDisplay.classList.remove('typing');
+    }
+  }, typeSpeed);
+}
+
+function reroll() {
+  const intensity = parseInt(slider.value);
+  currentCliffhanger = pickCliffhanger(intensity);
+
+  playDramaticSting(intensity);
+  if (intensity >= 2) flashScreen();
+
+  const cliffhangerDisplay = document.getElementById('cliffhangerDisplay');
+  const typeSpeed = Math.max(20, 60 - intensity * 8);
+  typeText(cliffhangerDisplay, currentCliffhanger, typeSpeed);
+}
+
+// ---- Dramatic Reading (SpeechSynthesis) ----
+function readDramatically() {
+  if (!('speechSynthesis' in window)) {
+    showToast('Speech synthesis not supported in this browser');
+    return;
+  }
+
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    document.querySelectorAll('.btn-action').forEach(b => b.classList.remove('speaking'));
+    return;
+  }
+
+  const story = document.getElementById('originalDisplay').textContent;
+  const twist = document.getElementById('cliffhangerDisplay').textContent;
+
+  if (!twist) {
+    showToast('Add a cliffhanger first!');
+    return;
+  }
+
+  // Speak the story normally
+  const storyUtterance = new SpeechSynthesisUtterance(story);
+  storyUtterance.rate = 0.95;
+  storyUtterance.pitch = 1;
+
+  // Speak the cliffhanger dramatically
+  const twistUtterance = new SpeechSynthesisUtterance(twist);
+  const intensity = parseInt(slider.value);
+  twistUtterance.rate = 0.7 - (intensity * 0.05);
+  twistUtterance.pitch = 0.6;
+  twistUtterance.volume = 1;
+
+  isSpeaking = true;
+  const speakBtn = document.querySelector('.btn-action');
+  speakBtn.classList.add('speaking');
+  speakBtn.textContent = 'Stop Reading';
+
+  storyUtterance.onend = () => {
+    // Dramatic pause before cliffhanger
+    setTimeout(() => {
+      playDramaticSting(intensity);
+      speechSynthesis.speak(twistUtterance);
+    }, 800);
+  };
+
+  twistUtterance.onend = () => {
+    isSpeaking = false;
+    speakBtn.classList.remove('speaking');
+    speakBtn.textContent = 'Dramatic Reading';
+  };
+
+  speechSynthesis.speak(storyUtterance);
+}
+
+// ---- Share ----
+function shareStory() {
+  const story = document.getElementById('originalDisplay').textContent;
+  const twist = document.getElementById('cliffhangerDisplay').textContent;
+  const fullText = story + twist;
+
+  if (!twist) {
+    showToast('Add a cliffhanger first!');
+    return;
+  }
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'CLIFFHANGER',
+      text: fullText,
+    }).catch(() => fallbackCopy(fullText));
+  } else {
+    fallbackCopy(fullText);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied to clipboard!');
+  }).catch(() => {
+    showToast('Could not copy text');
+  });
+}
+
+// ---- Toast ----
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

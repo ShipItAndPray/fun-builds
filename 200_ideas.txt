@@ -1,0 +1,109 @@
+101. **Fantasy Draft Roaster** | fantasy-draft-roaster | Brutally roasts every pick in your fantasy sports draft with sports analytics shade | text
+102. **Ref Rage** | ref-rage | Scream at a virtual referee who makes increasingly terrible calls against you | mic/audio
+103. **Coach Speak Translator** | coach-speak-translator | Decodes motivational coach clichés into what they actually mean | text
+104. **Stat Padder** | stat-padder | Turns your mundane daily activities into absurd ESPN-style sports analytics | text
+105. **Sports Alibi Machine** | sports-alibi | Generates elaborate excuses for why your team lost that blame everything but them | text
+106. **Instant Replay Judge** | instant-replay-judge | Slow-mo replay any life moment with dramatic sports commentator verdict | camera/audio
+107. **Draft Day Regret** | draft-day-regret | Calculates the cumulative emotional cost of your worst fantasy draft decisions | text
+108. **Workout Excuse Generator** | workout-excuse | Produces increasingly creative and medically-plausible reasons to skip the gym | text
+109. **Scoreboard Simulator** | scoreboard-sim | Live broadcast-style scoreboard for completely fake personal life competitions | text/timer
+110. **Fan Cam Reactor** | fan-cam-reactor | Puts your face on a jumbotron and reacts to your expressions like a stadium crowd | camera/audio
+
+111. **Air Guitar Judge** | air-guitar-judge | Rates your air guitar shredding via motion analysis with rock critic commentary | camera/motion
+112. **Remix Roulette** | remix-roulette | Records a sound clip and remixes it into a random genre banger | mic/audio
+113. **Genre Identity Crisis** | genre-identity-crisis | Diagnoses your musical personality disorder based on genres you claim to hate | text
+114. **Worst Rhyme Finder** | worst-rhyme-finder | Completes any song lyric with the most painful possible rhyme | text
+115. **Playlist Therapist** | playlist-therapist | Psychoanalyzes your mental state from your most-played songs | text
+116. **Concert Survival Kit** | concert-survival-kit | Real-time situation-specific survival guide for live music chaos | text/mixed
+117. **Off-Key Duet** | off-key-duet | Sing along while a virtual partner harmonizes catastrophically wrong | mic/audio
+118. **Body Beat Box** | body-beat-box | Tap your desk in a rhythm and watch it auto-produce a full beat | touch/audio
+119. **Hum Detective** | hum-detective | Identify the song you're humming with a brutally honest accuracy score | mic/audio
+120. **Jazz Critic** | jazz-critic | Record any improv and receive withering jazz musician feedback | mic/audio
+
+121. **Recipe Roulette** | recipe-roulette | Spins a wheel of chaos ingredients and generates an actual recipe | text
+122. **Diet Saboteur** | diet-saboteur | Tempts you off your diet with poetic, sensory food descriptions at your weakest moments | timer/text
+123. **Wait Time Therapist** | wait-time-therapist | Guides you through the five stages of grief during a 45-minute restaurant wait | timer/text
+124. **Cooking Chaos Controller** | cooking-chaos | Manages simultaneous dish timers so nothing burns while you panic | timer/audio
+125. **Palate Sophistication Test** | palate-test | Blind taste quiz that determines if you actually have refined taste or just pretend | text
+126. **Allergy Russian Roulette** | allergy-roulette | Dramatically reveals which menu items will ruin your evening | text
+127. **Meal Prep Procrastinator** | meal-prep-procrastinator | Plans Sunday meal prep then helps you rationalize doing it next Sunday | text
+128. **Midnight Snack Intervention** | midnight-snack | Confronts your late-night refrigerator habits with timestamped emotional evidence | timer/text
+129. **Nutrition Label Truth Serum** | nutrition-truth | Translates nutrition label marketing speak into uncomfortable honesty | camera/text
+130. **Gordon Mode** | gordon-mode | Takes a photo of your cooking and delivers chef-level devastation | camera/text
+
+131. **Packing Panic Clock** | packing-panic | Generates increasingly catastrophic packing lists as departure time approaches | timer/text
+132. **Gate Boredom Buster** | gate-boredom | Ranks activities by how many minutes of gate time you have remaining | timer/text
+133. **Hotel Red Flag Rater** | hotel-red-flag | Point camera at your hotel room and get a dramatic safety score | camera/text
+134. **Tourist Exposure Index** | tourist-exposure | Calculates exactly how obviously tourist you look based on your described behavior | text
+135. **Accidental Offender** | accidental-offender | Warns you which innocent phrases are deeply rude in your destination country | text
+136. **Rip-Off Detector** | rip-off-detector | Converts prices to your home currency then judges whether you're being scammed | text
+137. **Jet Lag Dread Calculator** | jet-lag-dread | Shows exactly how destroyed your sleep will be with a suffering timeline | text/timer
+138. **Souvenir Shame Judge** | souvenir-shame | Photographs your souvenir purchases and rates them from "meaningful" to "landfill" | camera/text
+139. **Jet Lag Drill Sergeant** | jet-lag-drill | Aggressively shouts recovery orders at you to fix your body clock | timer/audio
+140. **Road Trip Vibe Setter** | road-trip-vibe | Generates a perfect playlist and snack strategy based on trip mood and hours remaining | text/audio
+
+141. **Resume Lie Spotter** | resume-lie-spotter | Highlights the most obvious exaggerations on a resume with probability scores | text
+142. **Interview Anxiety Meter** | interview-anxiety | Analyzes your voice for stress tells during mock interview practice | mic/text
+143. **Email Tone Sanitizer** | email-tone-sanitizer | Detects passive aggression in your draft emails and rewrites them professionally | text
+144. **Slack Subtext Decoder** | slack-subtext | Translates what your coworkers' Slack messages actually mean | text
+145. **Meeting Escape Artist** | meeting-escape | Generates legitimate-sounding excuses to exit any type of meeting immediately | text
+146. **Deadline Dread Timer** | deadline-dread | Countdown to your deadline with escalating panic animations and denial phases | timer/text
+147. **Boss Mood Forecaster** | boss-mood-forecast | Analyzes recent message patterns to predict today's boss danger level | text
+148. **Coworker Chaos Classifier** | coworker-chaos | Sorts your coworkers into their true office archetype with diagnostic questions | text
+149. **Promotion Probability Engine** | promotion-prob | Calculates your actual promotion odds with brutal statistical transparency | text
+150. **Quit-O-Meter** | quit-o-meter | Real-time gauge tracking how close you are to rage-quitting today | text/mixed
+
+151. **Dating Profile Autopsy** | dating-profile-autopsy | Performs a forensic analysis of why your dating profile isn't working | text/camera
+152. **Breakup Text Grader** | breakup-text-grader | Grades breakup texts on a cruelty, cowardice, and clarity rubric | text
+153. **Anniversary Emergency Kit** | anniversary-emergency | Generates last-minute gift ideas with a countdown to the exact deadline | timer/text
+154. **Flirt Style Decoder** | flirt-style-decoder | Translates someone's flirting behavior into what they actually want | text
+155. **Crush Probability Calculator** | crush-calculator | Computes with fake scientific precision whether your crush likes you back | text
+156. **Friendzone GPS** | friendzone-gps | Maps your exact location in the relationship zone spectrum with coordinates | text
+157. **Ex Photo Folder Audit** | ex-photo-audit | Judges how many photos of your ex you're still holding onto | text/mixed
+158. **Love Language Diagnostic** | love-language-diagnostic | Identifies your love language from surprisingly specific behavioral quirks | text
+159. **Wedding Budget Grief Counselor** | wedding-budget-grief | Shows real wedding costs then guides you through financial mourning | text
+160. **Thriving Single Score** | thriving-single | Honest assessment of how well you're actually handling being single | text
+
+161. **Sleep Schedule Shame Spiral** | sleep-shame-spiral | Judges your sleep times against science with escalating disapproval | text/timer
+162. **Workout Excuse Bingo** | workout-excuse-bingo | Bingo card that fills itself as you give reasons to skip exercise | text/touch
+163. **Posture Police** | posture-police | Camera watches your posture in real-time and issues citations | camera/text
+164. **Hydration Bully** | hydration-bully | Progressively threatening water reminders that escalate from gentle to unhinged | timer/audio
+165. **Screen Time Confessional** | screen-time-confessional | Confess your daily screen time to a horrified virtual priest | text
+166. **Step Honesty Counter** | step-honesty | Converts your daily step count into how embarrassingly little ground you covered | motion/text
+167. **Desk Stretch Sergeant** | desk-stretch-sergeant | Barks stretch commands at you with military intensity every hour | timer/camera
+168. **Breathing Critic** | breathing-critic | Overbearing coach who judges the quality of every breath you take | mic/audio
+169. **Heart Rate Dramatist** | heart-rate-dramatist | You input your heart rate and it narrates what that means about your life | text
+170. **Stress Face Scanner** | stress-face-scanner | Analyzes your face and reports your visible stress level back to you | camera/text
+
+171. **Cleaning Hype Coach** | cleaning-hype-coach | Delivers increasingly unhinged motivational speeches to make you clean your room | text/audio
+172. **Junk Drawer Oracle** | junk-drawer-oracle | You describe items in your junk drawer and it reveals your true personality | text
+173. **Laundry Delay Justifier** | laundry-delay | Generates airtight logical reasons why laundry can definitely wait one more day | text
+174. **Cursed Ingredient Substituter** | cursed-substituter | Suggests technically valid but deeply questionable cooking substitutions | text
+175. **Roommate Complaint Formalizer** | roommate-formalizer | Converts passive-aggressive sticky notes into formal legal-sounding grievances | text
+176. **Neighbor Noise Court** | neighbor-noise-court | Records upstairs neighbor noise and classifies it on a legal disturbance scale | mic/audio
+177. **Rent Rationalization Engine** | rent-rationalization | Helps you convince yourself your rent is actually a bargain | text
+178. **Moving Day Trauma Log** | moving-day-trauma | Documents your moving day emotional breakdown milestones in real-time | text/timer
+179. **Interior Design Roast** | interior-design-roast | Camera scan of your room produces scathing designer commentary | camera/text
+180. **DIY Disaster Predictor** | diy-disaster-predictor | Input your DIY project details and get a probability of catastrophic failure | text
+
+181. **Homework Procrastination Timer** | homework-procras-timer | Tracks how long you've been "about to start" homework with guilt accumulation | timer/text
+182. **Exam Panic Simulator** | exam-panic-sim | Recreates test anxiety with questions from subjects you clearly didn't study | text/timer
+183. **Teacher's Pet Identifier** | teachers-pet-id | Diagnoses which students in a described class are obvious favorites | text
+184. **Filler Word Counter** | filler-word-counter | Counts your "um"s, "uh"s, and "like"s during presentation practice | mic/audio
+185. **Group Project Blame Allocator** | group-blame-allocator | Scientifically distributes blame across group members when the project fails | text
+186. **Final Exam Grade Calculator** | final-grade-crier | Calculates the score you need on the final then reacts with appropriate despair | text
+187. **Smart Question Faker** | smart-question-faker | Generates impressive-sounding class participation questions about topics you don't know | text
+188. **Highlight Overkill Analyzer** | highlight-overkill | Camera scans a textbook page and judges your highlight-everything strategy | camera/text
+189. **Lecture Time Translator** | lecture-time-translator | Converts "five more minutes" professor-time to actual real-world clock minutes | timer/text
+190. **Late for Class Navigator** | late-class-navigator | Emergency routing advisor when you're lost and already three minutes late | text/mixed
+
+191. **Spoiler Roulette** | spoiler-roulette | Randomly decides to spoil or protect any movie or show you mention | text
+192. **Watch History Roaster** | watch-history-roaster | Roasts your taste based on your described streaming history | text
+193. **Book Club Bluffer** | book-club-bluffer | Generates convincing opinions about books you definitely didn't finish | text
+194. **Game Rage Counselor** | game-rage-counselor | Provides therapy after you lose to someone much younger than you online | text/mic
+195. **Puzzle IQ Timer** | puzzle-iq-timer | Times your puzzle solving and delivers an unsolicited intelligence verdict | timer/text
+196. **Overconfidence Gap Meter** | overconfidence-gap | Measures the chasm between how certain you were and how wrong you actually were | text
+197. **Meme Expiration Detector** | meme-expiration | Determines if the meme you're about to send is still fresh or embarrassingly stale | camera/text
+198. **Podcast Speed Shamer** | podcast-speed-shamer | Judges your podcast playback speed and what it says about your relationship with time | text
+199. **Streaming Paralysis Timer** | streaming-paralysis | Counts how long you've been scrolling without picking anything to watch | timer/text
+200. **One More Episode Enabler** | one-more-episode | Generates progressively weaker justifications for why you should watch just one more | timer/text
