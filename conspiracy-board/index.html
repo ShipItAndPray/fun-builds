@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE BOARD - Conspiracy Theory Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Courier Prime', monospace;
+    background: #3b2517;
+    color: #e8d5b7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Cork board texture */
+  .cork-bg {
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-conic-gradient(#4a3020 0% 25%, transparent 0% 50%) 0 0 / 4px 4px,
+      linear-gradient(135deg, #5a3d2b 0%, #3b2517 50%, #4a3020 100%);
+    opacity: 0.6;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    color: #ff3333;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.6), 0 0 20px rgba(255,0,0,0.3);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    color: #aa8866;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  .classified-stamp {
+    display: inline-block;
+    border: 3px solid #ff3333;
+    color: #ff3333;
+    padding: 4px 18px;
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1rem;
+    transform: rotate(-3deg);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    opacity: 0.8;
+  }
+
+  /* Input area */
+  .input-section {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid #664422;
+    border-radius: 4px;
+    padding: 24px;
+    margin: 20px 0;
+    position: relative;
+  }
+
+  .input-section label {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    color: #cc9966;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .input-row input {
+    flex: 1;
+    padding: 14px 16px;
+    background: #1a1008;
+    border: 1px solid #553311;
+    border-radius: 4px;
+    color: #e8d5b7;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .input-row input:focus {
+    border-color: #ff5533;
+    box-shadow: 0 0 8px rgba(255,50,20,0.3);
+  }
+
+  .input-row input::placeholder {
+    color: #665533;
+    font-style: italic;
+  }
+
+  #investigate-btn {
+    padding: 14px 28px;
+    background: #8b0000;
+    color: #fff;
+    border: 2px solid #ff3333;
+    border-radius: 4px;
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  #investigate-btn:hover {
+    background: #cc0000;
+    box-shadow: 0 0 16px rgba(255,0,0,0.5);
+    transform: scale(1.03);
+  }
+
+  #investigate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Investigation animation */
+  .investigation-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .investigation-overlay.active { display: flex; }
+
+  .investigation-text {
+    font-family: 'Courier Prime', monospace;
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: #00ff00;
+    text-align: center;
+    padding: 0 20px;
+    text-shadow: 0 0 10px rgba(0,255,0,0.5);
+  }
+
+  .investigation-text .cursor {
+    animation: blink 0.5s infinite;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .scan-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: rgba(0,255,0,0.15);
+    animation: scanDown 2s linear infinite;
+  }
+
+  @keyframes scanDown {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+
+  /* Board / cards */
+  .board-section {
+    margin-top: 30px;
+  }
+
+  .board-section h2 {
+    font-family: 'Special Elite', cursive;
+    color: #cc4444;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    position: relative;
+  }
+
+  /* Red string SVG layer */
+  .string-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: visible;
+  }
+
+  .string-layer line {
+    stroke: #cc2222;
+    stroke-width: 1.5;
+    opacity: 0.6;
+    filter: drop-shadow(0 0 2px rgba(255,0,0,0.4));
+  }
+
+  /* Card */
+  .case-card {
+    position: relative;
+    z-index: 1;
+    background: #f5ecd0;
+    color: #2a1a0a;
+    padding: 20px 18px 16px;
+    border-radius: 2px;
+    box-shadow: 4px 4px 12px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.05);
+    transform: rotate(var(--rot, 0deg));
+    transition: transform 0.3s, box-shadow 0.3s;
+    animation: pinDrop 0.4s ease-out;
+  }
+
+  .case-card:hover {
+    transform: rotate(0deg) scale(1.03);
+    box-shadow: 6px 6px 20px rgba(0,0,0,0.6);
+    z-index: 10;
+  }
+
+  @keyframes pinDrop {
+    0% { transform: rotate(var(--rot, 0deg)) scale(0.3) translateY(-40px); opacity: 0; }
+    60% { transform: rotate(var(--rot, 0deg)) scale(1.05); }
+    100% { transform: rotate(var(--rot, 0deg)) scale(1); opacity: 1; }
+  }
+
+  /* Pin */
+  .pin {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff6644, #cc0000);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    z-index: 2;
+  }
+
+  .case-card .subject {
+    font-family: 'Special Elite', cursive;
+    font-size: 1rem;
+    color: #8b0000;
+    border-bottom: 1px dashed #aa8866;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .case-card .theory {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .evidence-rating {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .rating-irrefutable { background: #cc0000; color: #fff; }
+  .rating-compelling { background: #cc6600; color: #fff; }
+  .rating-suspicious { background: #ccaa00; color: #1a1a00; }
+  .rating-questionable { background: #5577aa; color: #fff; }
+  .rating-needs-string { background: #666; color: #eee; }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: #887755;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .card-actions button {
+    background: none;
+    border: 1px solid #aa8866;
+    color: #665533;
+    padding: 3px 8px;
+    border-radius: 2px;
+    cursor: pointer;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+  }
+
+  .card-actions button:hover {
+    background: #8b0000;
+    color: #fff;
+    border-color: #cc0000;
+  }
+
+  /* Case counter */
+  .case-counter {
+    text-align: center;
+    margin: 20px 0 10px;
+    font-family: 'Special Elite', cursive;
+    color: #cc6644;
+    font-size: 0.95rem;
+  }
+
+  /* Clear button */
+  .clear-section {
+    text-align: center;
+    margin-top: 24px;
+    padding-bottom: 40px;
+  }
+
+  .clear-section button {
+    background: none;
+    border: 1px solid #664422;
+    color: #886644;
+    padding: 8px 20px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .clear-section button:hover {
+    border-color: #ff3333;
+    color: #ff3333;
+  }
+
+  /* Examples */
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .examples button {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #553322;
+    color: #aa8866;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .examples button:hover {
+    border-color: #ff5533;
+    color: #ff5533;
+    background: rgba(255,50,20,0.1);
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .input-row { flex-direction: column; }
+    #investigate-btn { width: 100%; }
+    .board { grid-template-columns: 1fr; }
+    .container { padding: 12px; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #222;
+    color: #0f0;
+    padding: 12px 24px;
+    border-radius: 4px;
+    border: 1px solid #0f0;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.85rem;
+    z-index: 200;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="cork-bg"></div>
+
+<div class="container">
+  <header>
+    <h1>THE BOARD</h1>
+    <p>Nothing is a coincidence. Everything is connected.</p>
+    <div class="classified-stamp">TOP SECRET</div>
+  </header>
+
+  <div class="input-section">
+    <label>What did you just see?</label>
+    <div class="input-row">
+      <input type="text" id="observation" placeholder="e.g. my neighbor's lawn is too green" maxlength="200" />
+      <button id="investigate-btn" onclick="investigate()">INVESTIGATE</button>
+    </div>
+    <div class="examples">
+      <button onclick="fillExample(this)">my neighbor's lawn is too green</button>
+      <button onclick="fillExample(this)">the mailman came twice today</button>
+      <button onclick="fillExample(this)">my cat stared at the wall for 20 minutes</button>
+      <button onclick="fillExample(this)">there's a new stop sign on my street</button>
+      <button onclick="fillExample(this)">my coworker always has fresh coffee</button>
+      <button onclick="fillExample(this)">the grocery store rearranged the aisles</button>
+    </div>
+  </div>
+
+  <div class="board-section" id="board-section" style="display:none;">
+    <h2>ACTIVE INVESTIGATIONS</h2>
+    <div class="case-counter" id="case-counter"></div>
+    <div class="board" id="board">
+      <svg class="string-layer" id="string-layer"></svg>
+    </div>
+    <div class="clear-section">
+      <button onclick="clearBoard()">BURN ALL EVIDENCE</button>
+    </div>
+  </div>
+</div>
+
+<div class="investigation-overlay" id="overlay">
+  <div class="scan-line"></div>
+  <div class="investigation-text" id="inv-text"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- CONSPIRACY TEMPLATES (60+) ----
+const templates = [
+  // Government / Military
+  (s) => `CLEARLY ${s} is a cover operation run by a shadow division of the NSA. Our sources confirm the pattern matches PROJECT MOCKINGBIRD-7.`,
+  (s) => `${s}? That's EXACTLY what the Pentagon's classified "Operation Suburban Veil" was designed to normalize. Wake up.`,
+  (s) => `We've traced ${s} back to a covert government program. The same program that "officially" doesn't exist in any congressional budget.`,
+  (s) => `${s} matches the EXACT behavioral profile outlined in a leaked CIA manual from 1973. Coincidence? There ARE no coincidences.`,
+  (s) => `${s} is a Phase 3 deployment of the Department of Homeland Security's civilian monitoring initiative. Phase 4 is scheduled for next Tuesday.`,
+  (s) => `Our deep state contacts confirm: ${s} is a dead drop signal used by embedded agents. The message has been received.`,
+
+  // Area 51 / Aliens
+  (s) => `${s}? CLEARLY using technology only available to Area 51 groundskeepers. The same tech that powers the anti-gravity cafeteria trays.`,
+  (s) => `${s} is a known side effect of proximity to Zeta Reticuli communication beacons. Check for a metallic taste in your mouth.`,
+  (s) => `The Roswell files SPECIFICALLY warned about ${s}. It's a telltale sign of extraterrestrial surveillance equipment being calibrated.`,
+  (s) => `${s} matches the EXACT description from the 1994 Varginha incident. The beings are testing whether we notice. You noticed. They know.`,
+  (s) => `Cross-referencing with declassified Majestic-12 documents reveals that ${s} is Phase 2 of the alien integration protocol.`,
+  (s) => `${s} is a holographic projection test. The real version was swapped out at 3 AM by unmarked vans. We have the satellite imagery.`,
+
+  // Illuminati / Secret Societies
+  (s) => `${s} contains EXACTLY 3 hidden Illuminati symbols when viewed through a UV filter. We checked. We always check.`,
+  (s) => `The Freemasons have been orchestrating ${s} since 1776. It's encoded in the original architectural plans of the Washington Monument.`,
+  (s) => `${s} is a Bilderberg Group loyalty test. If you noticed it, congratulations: you're now on List C.`,
+  (s) => `Our analysis reveals ${s} follows the EXACT same pattern the Knights Templar used before the fall of the Bastille. History is a loop.`,
+  (s) => `${s}? That's a Skull and Bones initiation marker. Every member of the organization has encountered this within 48 hours of recruitment.`,
+  (s) => `The Bohemian Grove attendee manifest cross-references perfectly with ${s}. The owl sees everything.`,
+
+  // Technology / Surveillance
+  (s) => `${s} is a field test for 6G mind-wave technology. The FCC filing is hidden in Appendix Q-7, subsection "definitely not this."`,
+  (s) => `Your smart devices SPIKED in data transmission the exact moment ${s} occurred. They're documenting everything.`,
+  (s) => `${s} is being used to calibrate the new satellite array. Your GPS was off by 3 feet yesterday. Now you know why.`,
+  (s) => `We intercepted encrypted traffic confirming ${s} is part of a neural network training exercise. YOU are the training data.`,
+  (s) => `${s} generates a specific frequency—17.4 Hz—that coincidentally is the EXACT resonance needed to activate dormant nanobots.`,
+  (s) => `Big Tech patented a system matching ${s} in 2019. The patent was filed under "agricultural equipment." Sure it was.`,
+
+  // Corporate / Big Business
+  (s) => `Follow the money: ${s} traces directly back to a shell company owned by a subsidiary of a hedge fund that DOESN'T EXIST on paper.`,
+  (s) => `${s} is a consumer behavior modification experiment funded by Big Pharma. The quarterly earnings report has the receipts.`,
+  (s) => `We've confirmed that ${s} was focus-grouped in a secure facility beneath a major retailer's headquarters. Test market: YOUR neighborhood.`,
+  (s) => `${s} is a supply chain psyop. The real product was diverted to underground bunkers while you get the decoy version.`,
+  (s) => `Amazon's recommendation algorithm PREDICTED ${s} would happen 6 months ago. It's in the metadata. They know everything before you do.`,
+
+  // Time / Simulation
+  (s) => `${s} is a GLITCH IN THE SIMULATION. The render engine stuttered. Check if your clocks are all showing the same time. They won't be.`,
+  (s) => `${s} is a temporal echo from a parallel timeline where the Mandela Effect originated. In THAT timeline, it never happened.`,
+  (s) => `The probability of ${s} occurring naturally is 0.00003%. Statistically, we are living in a pre-programmed sequence.`,
+  (s) => `${s} was already documented in a time traveler's journal found in a Swiss vault. The entry is dated 2087.`,
+  (s) => `${s} is a timeline correction event. Someone changed something in 1987 and THIS is how reality is compensating.`,
+
+  // Historical
+  (s) => `${s} was PREDICTED in a Nostradamus quatrain. Century IV, Quatrain 42: "And the mundane shall reveal the hidden hand."`,
+  (s) => `Ancient Sumerian tablets describe ${s} as a harbinger of the Great Awakening. The translation was suppressed for 400 years.`,
+  (s) => `${s} appears in Da Vinci's notebooks, sketched in mirror writing. He KNEW. He always knew.`,
+  (s) => `Egyptian hieroglyphs in a recently excavated chamber depict EXACTLY ${s}. The chamber was immediately re-sealed. We have photos.`,
+  (s) => `Tesla wrote about ${s} in letters that J.P. Morgan ordered destroyed. Three survived. We have one.`,
+
+  // Nature / Weather
+  (s) => `${s} correlates with a spike in HAARP facility activity. The weather was 2 degrees warmer than predicted that day. Not a coincidence.`,
+  (s) => `${s} occurs along the EXACT same ley line that connects Stonehenge to the Denver Airport horse statue. The energy doesn't lie.`,
+  (s) => `Seismographs detected a 0.2 magnitude tremor at the precise moment of ${s}. The underground facilities are operational.`,
+  (s) => `${s} only happens during specific lunar phases. Tonight: waxing gibbous. The SAME phase when the Tunguska event occurred.`,
+  (s) => `Bird migration patterns SHIFTED the day ${s} was first observed. The birds know. They always know first.`,
+
+  // Food / Water
+  (s) => `${s} is linked to fluoride concentration changes in the municipal water supply. Check lot number 7749-B on your utility bill.`,
+  (s) => `${s} started appearing EXACTLY when they changed the artificial sweetener formula. The original formula is now classified.`,
+  (s) => `${s} is a side effect of chemtrail compound CT-7 interacting with microplastics in the food supply. The ratio is precise.`,
+
+  // Psychology / Mind Control
+  (s) => `${s} triggers a specific neural pathway that was mapped in MKUltra Subproject 119. The activation phrase is embedded.`,
+  (s) => `${s} is a mass hypnosis anchor. Once you've seen it, the subliminal programming can begin. Fortunately, KNOWING is the antidote.`,
+  (s) => `${s} creates a cognitive dissonance loop designed by behavioral scientists at [REDACTED]. The goal: compliance.`,
+
+  // Math / Numbers
+  (s) => `${s} occurred at coordinates that, when converted to hexadecimal, spell out "OBEY." The math doesn't lie.`,
+  (s) => `If you assign numerical values to each letter in "${s}" and sum them, you get 33. The master number. The MASON number.`,
+  (s) => `${s} happens in cycles of 23 days. The 23 enigma is real. Jim Carrey tried to warn us.`,
+
+  // Miscellaneous absurd
+  (s) => `${s} is a recruitment signal for a secret society of mailmen who actually control international shipping routes and, by extension, the global economy.`,
+  (s) => `WAKE UP: ${s} is how they test civilian alertness. You passed. Most don't. Report to your nearest library's restricted section.`,
+  (s) => `${s} is the first domino. Within 6 weeks, you'll notice a second anomaly. Then a third. By then it will be too late to pretend you don't see the pattern.`,
+  (s) => `Our forensic analysis of ${s} reveals traces of a compound found ONLY in two places: the Mariana Trench and the White House basement kitchen.`,
+  (s) => `${s} is a beta test for the new reality update. Version 2024.7.3 introduced "subtle wrongness" as a feature, not a bug.`,
+  (s) => `${s} was SPECIFICALLY mentioned in the terms and conditions you agreed to on that app last week. Page 847, paragraph 12.`,
+  (s) => `Multiple whistleblowers have confirmed: ${s} is a controlled demonstration. The real operation happens at a frequency humans can't perceive.`,
+  (s) => `${s} is a distraction. While you were looking at THAT, the REAL operation was happening exactly 90 degrees to your left. You missed it.`,
+  (s) => `Professional lip readers analyzed security footage of world leaders and found that 4 of them mouthed "${s}" during the last UN assembly.`,
+  (s) => `${s} emits a subsonic hum at 7.83 Hz—the Schumann Resonance. It's literally vibrating at the frequency of Earth's consciousness grid.`,
+  (s) => `Swiss bankers have been using ${s} as a coded asset transfer signal since the Cold War. The protocol is called "PAPERCLIP ECHO."`,
+  (s) => `${s} was classified as a Level 4 Anomalous Event by an agency that technically doesn't exist. The classification has since been upgraded to Level 5.`,
+  (s) => `Deep state operatives planted ${s} as a loyalty test. If you reported it, you're flagged. If you didn't, you're flagged differently.`,
+  (s) => `${s} is a memetic payload. Now that you've perceived it, the information virus has been transmitted. Don't worry—side effects are mild: heightened awareness, distrust of pigeons.`,
+];
+
+const investigationMessages = [
+  "Cross-referencing satellite imagery...",
+  "Accessing classified databases...",
+  "Decrypting intercepted communications...",
+  "Analyzing chemtrail dispersion patterns...",
+  "Checking Illuminati membership records...",
+  "Scanning for electromagnetic anomalies...",
+  "Cross-referencing with Roswell archives...",
+  "Running facial recognition on suspicious pigeons...",
+  "Triangulating with deep state GPS coordinates...",
+  "Decoding subliminal messages in local radio...",
+  "Checking alignment of nearby cell towers...",
+  "Verifying with time traveler testimony...",
+  "Analyzing fluoride concentration data...",
+  "Matching against MKUltra subject profiles...",
+  "Consulting the forbidden texts...",
+  "Intercepting encrypted pizza delivery orders...",
+  "Enhancing... enhancing... enhancing...",
+  "Reversing the polarity of the truth matrix...",
+  "Checking for simulation rendering artifacts...",
+  "Connection established with deep cover agent...",
+  "WARNING: Pattern match found...",
+  "Multiple connections confirmed...",
+  "ALERT: Classification level exceeded...",
+  "Compiling dossier...",
+];
+
+const ratings = [
+  { label: "IRREFUTABLE", cls: "rating-irrefutable" },
+  { label: "COMPELLING", cls: "rating-compelling" },
+  { label: "HIGHLY SUSPICIOUS", cls: "rating-suspicious" },
+  { label: "QUESTIONABLE", cls: "rating-questionable" },
+  { label: "NEEDS MORE STRING", cls: "rating-needs-string" },
+];
+
+const caseNames = [
+  "RED SPARROW", "BLUE FALCON", "BLACK ORCHID", "GRAY WOLF", "GREEN PHANTOM",
+  "SILENT OWL", "IRON CURTAIN", "PAPER TRAIL", "DARK MIRROR", "GOLDEN THREAD",
+  "SHADOW PINE", "CRYSTAL MAZE", "COPPER SNAKE", "VELVET HAMMER", "NEON GHOST",
+  "FROZEN ECHO", "RUST SIGNAL", "AMBER WAVE", "ZINC PROPHET", "COBALT MOTH",
+];
+
+// ---- STATE ----
+let cases = JSON.parse(localStorage.getItem('conspiracy_cases') || '[]');
+
+// ---- INIT ----
+window.addEventListener('DOMContentLoaded', () => {
+  renderBoard();
+  document.getElementById('observation').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') investigate();
+  });
+});
+
+function fillExample(btn) {
+  document.getElementById('observation').value = btn.textContent;
+}
+
+// ---- INVESTIGATION ----
+async function investigate() {
+  const input = document.getElementById('observation');
+  const subject = input.value.trim();
+  if (!subject) return;
+
+  const btn = document.getElementById('investigate-btn');
+  btn.disabled = true;
+
+  const overlay = document.getElementById('overlay');
+  const invText = document.getElementById('inv-text');
+  overlay.classList.add('active');
+
+  // Show 5-7 messages with typewriter effect
+  const msgCount = 5 + Math.floor(Math.random() * 3);
+  const shuffled = investigationMessages.sort(() => Math.random() - 0.5).slice(0, msgCount);
+
+  for (const msg of shuffled) {
+    await typewrite(invText, msg);
+    await delay(600 + Math.random() * 400);
+  }
+
+  await typewrite(invText, "CASE FILE COMPILED. EVIDENCE: OVERWHELMING.");
+  await delay(800);
+
+  overlay.classList.remove('active');
+  invText.textContent = '';
+
+  // Generate theory
+  const template = templates[Math.floor(Math.random() * templates.length)];
+  const theory = template(subject);
+  const rating = ratings[Math.floor(Math.random() * ratings.length)];
+  const caseName = caseNames[Math.floor(Math.random() * caseNames.length)];
+
+  const caseObj = {
+    id: Date.now(),
+    subject,
+    theory,
+    rating,
+    caseName,
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  };
+
+  cases.unshift(caseObj);
+  saveCases();
+  renderBoard();
+
+  input.value = '';
+  btn.disabled = false;
+
+  // Read aloud in paranoid whisper
+  speakTheory(theory);
+}
+
+function typewrite(el, text) {
+  return new Promise((resolve) => {
+    el.innerHTML = '';
+    let i = 0;
+    const speed = 25 + Math.random() * 15;
+    const interval = setInterval(() => {
+      el.innerHTML = text.slice(0, i) + '<span class="cursor">|</span>';
+      i++;
+      if (i > text.length) {
+        clearInterval(interval);
+        el.innerHTML = text;
+        resolve();
+      }
+    }, speed);
+  });
+}
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ---- RENDER ----
+function renderBoard() {
+  const section = document.getElementById('board-section');
+  const board = document.getElementById('board');
+  const counter = document.getElementById('case-counter');
+
+  if (cases.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = '';
+  counter.textContent = `${cases.length} CASE${cases.length !== 1 ? 'S' : ''} ON THE BOARD`;
+
+  // Clear cards but keep SVG
+  const svg = document.getElementById('string-layer');
+  board.querySelectorAll('.case-card').forEach(c => c.remove());
+  svg.innerHTML = '';
+
+  cases.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'case-card';
+    card.style.setProperty('--rot', (Math.random() * 4 - 2).toFixed(1) + 'deg');
+    card.dataset.id = c.id;
+    card.innerHTML = `
+      <div class="pin"></div>
+      <div class="subject">CASE "${c.caseName}": ${c.subject}</div>
+      <div class="theory">${c.theory}</div>
+      <span class="evidence-rating ${c.rating.cls}">Evidence: ${c.rating.label}</span>
+      <div class="card-footer">
+        <span>${c.date}</span>
+        <div class="card-actions">
+          <button onclick="speakTheory(\`${c.theory.replace(/`/g, "'").replace(/\\/g, '\\\\')}\`)">WHISPER</button>
+          <button onclick="shareCase(${c.id})">SHARE</button>
+          <button onclick="deleteCase(${c.id})">REDACT</button>
+        </div>
+      </div>
+    `;
+    board.appendChild(card);
+  });
+
+  // Draw red strings between adjacent cards after layout
+  requestAnimationFrame(() => drawStrings());
+}
+
+function drawStrings() {
+  const svg = document.getElementById('string-layer');
+  const cards = document.querySelectorAll('.case-card');
+  if (cards.length < 2) return;
+
+  const boardRect = document.getElementById('board').getBoundingClientRect();
+  svg.setAttribute('width', boardRect.width);
+  svg.setAttribute('height', boardRect.height);
+  svg.style.width = boardRect.width + 'px';
+  svg.style.height = boardRect.height + 'px';
+
+  for (let i = 0; i < cards.length - 1; i++) {
+    const a = cards[i].getBoundingClientRect();
+    const b = cards[i + 1].getBoundingClientRect();
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', a.left + a.width / 2 - boardRect.left);
+    line.setAttribute('y1', a.top + 10 - boardRect.top);
+    line.setAttribute('x2', b.left + b.width / 2 - boardRect.left);
+    line.setAttribute('y2', b.top + 10 - boardRect.top);
+    svg.appendChild(line);
+  }
+
+  // Random extra strings for chaos
+  if (cards.length > 2) {
+    const extra = Math.min(cards.length - 1, 3);
+    for (let n = 0; n < extra; n++) {
+      const i = Math.floor(Math.random() * cards.length);
+      let j = Math.floor(Math.random() * cards.length);
+      if (i === j) j = (j + 1) % cards.length;
+      const a = cards[i].getBoundingClientRect();
+      const b = cards[j].getBoundingClientRect();
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', a.left + a.width * Math.random() - boardRect.left);
+      line.setAttribute('y1', a.top + 10 - boardRect.top);
+      line.setAttribute('x2', b.left + b.width * Math.random() - boardRect.left);
+      line.setAttribute('y2', b.top + 10 - boardRect.top);
+      line.style.opacity = '0.3';
+      svg.appendChild(line);
+    }
+  }
+}
+
+window.addEventListener('resize', () => {
+  if (cases.length > 0) {
+    const svg = document.getElementById('string-layer');
+    svg.innerHTML = '';
+    requestAnimationFrame(() => drawStrings());
+  }
+});
+
+// ---- ACTIONS ----
+function deleteCase(id) {
+  cases = cases.filter(c => c.id !== id);
+  saveCases();
+  renderBoard();
+}
+
+function clearBoard() {
+  if (!confirm('Destroy all evidence? This cannot be undone.')) return;
+  cases = [];
+  saveCases();
+  renderBoard();
+}
+
+function shareCase(id) {
+  const c = cases.find(x => x.id === id);
+  if (!c) return;
+  const text = `CASE "${c.caseName}": ${c.subject}\n\n${c.theory}\n\nEvidence: ${c.rating.label}\n\n-- Generated by THE BOARD`;
+  if (navigator.share) {
+    navigator.share({ title: `CASE "${c.caseName}"`, text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Evidence copied to clipboard'));
+  }
+}
+
+function speakTheory(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.75;
+  utterance.pitch = 0.6;
+  utterance.volume = 0.7;
+  // Try to pick a deeper / quieter voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /male/i.test(v.name) && !/female/i.test(v.name)) || voices[0];
+  if (preferred) utterance.voice = preferred;
+  speechSynthesis.speak(utterance);
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function saveCases() {
+  localStorage.setItem('conspiracy_cases', JSON.stringify(cases));
+}
+</script>
+</body>
+</html>

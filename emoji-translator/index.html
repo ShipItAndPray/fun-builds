@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE EMOJI DISPATCH - Dramatic Narration Bureau</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Special+Elite&family=UnifrakturMaguntia&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold: #d4a843;
+    --gold-light: #e8c96a;
+    --gold-dim: #8a6d2b;
+    --bg: #0d0d0d;
+    --bg-card: #1a1a1a;
+    --bg-input: #111;
+    --text: #e0d6c2;
+    --text-dim: #8a8070;
+    --red: #8b2020;
+    --red-bright: #c0392b;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Special Elite', 'Courier New', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  /* MASTHEAD */
+  .masthead {
+    text-align: center;
+    border-bottom: 4px double var(--gold);
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+  }
+
+  .masthead-rule {
+    border: none;
+    border-top: 1px solid var(--gold-dim);
+    margin: 6px 0;
+  }
+
+  .masthead h1 {
+    font-family: 'UnifrakturMaguntia', cursive;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    color: var(--gold);
+    letter-spacing: 2px;
+    line-height: 1.1;
+    text-shadow: 0 0 20px rgba(212,168,67,0.3);
+  }
+
+  .masthead-sub {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .masthead-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 8px;
+    padding: 0 4px;
+  }
+
+  .decode-counter {
+    color: var(--gold);
+    font-weight: bold;
+    font-size: 0.75rem;
+  }
+
+  /* INPUT SECTION */
+  .input-section {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-dim);
+    padding: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .input-section::before {
+    content: 'INCOMING TRANSMISSION';
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: var(--bg-card);
+    padding: 0 8px;
+    font-size: 0.6rem;
+    color: var(--gold);
+    letter-spacing: 3px;
+  }
+
+  .input-area {
+    width: 100%;
+    min-height: 120px;
+    background: var(--bg-input);
+    border: 1px solid #333;
+    color: var(--text);
+    font-family: 'Special Elite', monospace;
+    font-size: 1.1rem;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .input-area:focus {
+    border-color: var(--gold-dim);
+  }
+
+  .input-area::placeholder {
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 20px;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .btn-translate {
+    background: var(--gold);
+    color: #000;
+    font-weight: bold;
+  }
+
+  .btn-translate:hover {
+    background: var(--gold-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212,168,67,0.3);
+  }
+
+  .btn-translate:active {
+    transform: translateY(0);
+  }
+
+  .btn-speak {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold-dim);
+  }
+
+  .btn-speak:hover {
+    background: rgba(212,168,67,0.1);
+  }
+
+  .btn-speak.speaking {
+    animation: pulse-gold 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { border-color: var(--gold-dim); }
+    50% { border-color: var(--gold); box-shadow: 0 0 10px rgba(212,168,67,0.3); }
+  }
+
+  .btn-sample {
+    flex: 0;
+    min-width: auto;
+    padding: 12px 16px;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid #333;
+    font-size: 0.75rem;
+  }
+
+  .btn-sample:hover {
+    border-color: var(--text-dim);
+    color: var(--text);
+  }
+
+  /* OUTPUT SECTION */
+  .output-section {
+    display: none;
+  }
+
+  .output-section.visible {
+    display: block;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .breaking-banner {
+    background: var(--red);
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 0.85rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    animation: flash-banner 2s ease-in-out 3;
+  }
+
+  @keyframes flash-banner {
+    0%, 100% { background: var(--red); }
+    50% { background: var(--red-bright); }
+  }
+
+  .broadcast-card {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-dim);
+    border-top: none;
+    padding: 20px;
+  }
+
+  .broadcast-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+  }
+
+  .broadcast-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--red-bright);
+    border-radius: 50%;
+    animation: blink-dot 1.5s ease-in-out infinite;
+  }
+
+  @keyframes blink-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  .broadcast-label {
+    font-size: 0.7rem;
+    color: var(--red-bright);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .broadcast-time {
+    margin-left: auto;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .translation-output {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--text);
+    min-height: 60px;
+  }
+
+  .translation-output .emoji-ref {
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .translation-output .dramatic {
+    font-style: italic;
+  }
+
+  .cursor-blink {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    background: var(--gold);
+    vertical-align: text-bottom;
+    animation: cursor-blink 0.7s step-end infinite;
+  }
+
+  @keyframes cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .broadcast-footer {
+    margin-top: 16px;
+    padding-top: 10px;
+    border-top: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+  }
+
+  .emoji-count {
+    color: var(--gold);
+  }
+
+  /* EXAMPLES */
+  .examples-strip {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 0;
+    margin-top: 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .example-chip {
+    flex-shrink: 0;
+    background: var(--bg-input);
+    border: 1px solid #333;
+    color: var(--text-dim);
+    padding: 6px 12px;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .example-chip:hover {
+    border-color: var(--gold-dim);
+    color: var(--text);
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 24px 0 16px;
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    border-top: 1px solid #222;
+    margin-top: 30px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dim); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="masthead">
+    <hr class="masthead-rule">
+    <h1>The Emoji Dispatch</h1>
+    <div class="masthead-sub">Bureau of Dramatic Narration</div>
+    <hr class="masthead-rule">
+    <div class="masthead-meta">
+      <span>Est. 2026 &mdash; All Emojis Fit to Narrate</span>
+      <span class="decode-counter">DISPATCHES FILED: <span id="decodeCount">0</span></span>
+    </div>
+  </header>
+
+  <section class="input-section">
+    <textarea class="input-area" id="inputArea" placeholder="Paste your emoji-laden communiqu&eacute; here...&#10;&#10;e.g. &quot;omg I can't even &#x1F602;&#x1F602;&#x1F602; he really said that &#x1F480; I'm done &#x1F62D;&quot;"></textarea>
+    <div class="examples-strip">
+      <button class="example-chip" data-text="I can't believe this 😂😂😂 I'm literally dead 💀">😂😂😂💀</button>
+      <button class="example-chip" data-text="we need to talk 👀💀 this is serious 😤">👀💀😤</button>
+      <button class="example-chip" data-text="hey... 👉👈 do you maybe want to hang out? 🥺❤️">👉👈🥺❤️</button>
+      <button class="example-chip" data-text="LET'S GOOOOO 🔥🔥🔥 WE WON 🏆🙌💪">🔥🔥🔥🏆</button>
+      <button class="example-chip" data-text="please 🙏🙏🙏 I'm begging you 😭😭">🙏🙏🙏😭</button>
+      <button class="example-chip" data-text="she left me on read 💀😭 it's been 3 hours 📱👀">💀😭📱👀</button>
+      <button class="example-chip" data-text="bestie look at this 👁️👄👁️ I can NOT 😂💀🤡">👁️👄👁️😂</button>
+      <button class="example-chip" data-text="just got promoted 🎉🥳💰 drinks on me tonight 🍾🥂">🎉💰🍾🥂</button>
+    </div>
+    <div class="controls">
+      <button class="btn btn-translate" id="translateBtn">Translate</button>
+      <button class="btn btn-speak" id="speakBtn" disabled>Read Aloud</button>
+      <button class="btn btn-sample" id="clearBtn">Clear</button>
+    </div>
+  </section>
+
+  <section class="output-section" id="outputSection">
+    <div class="breaking-banner">BREAKING NEWS &mdash; EMOJI DISPATCH DECODED</div>
+    <div class="broadcast-card">
+      <div class="broadcast-header">
+        <div class="broadcast-dot"></div>
+        <span class="broadcast-label">Live Broadcast</span>
+        <span class="broadcast-time" id="broadcastTime"></span>
+      </div>
+      <div class="translation-output" id="translationOutput"></div>
+      <div class="broadcast-footer">
+        <span>Emojis decoded: <span class="emoji-count" id="emojiDecodedCount">0</span></span>
+        <span>Classification: HIGHLY DRAMATIC</span>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    The Emoji Dispatch &mdash; No emoji shall go unnarrated &mdash; MMXXVI
+  </footer>
+</div>
+
+<script>
+// ─── EMOJI MAPPINGS ───
+const SINGLE = {
+  '😂': 'The subject found this so amusing they feared permanent facial damage',
+  '🤣': 'Amusement of such magnitude the subject has been knocked sideways',
+  '😭': 'Tears flow like rivers breaching their banks',
+  '💀': 'The subject has perished (emotionally)',
+  '☠️': 'Death itself has entered the conversation',
+  '❤️': 'A heart, offered without reservation',
+  '🔥': 'Flames of extraordinary intensity have erupted',
+  '❤️‍🔥': 'A passion burns with the intensity of a thousand suns',
+  '👀': 'Surveillance has been initiated',
+  '👁️': 'A single, unblinking eye observes',
+  '🙏': 'Hands clasped in solemn supplication',
+  '🙏🏻': 'A prayer of the most earnest variety has been dispatched',
+  '😤': 'Steam pours from the nostrils of the aggrieved party',
+  '🤡': 'The subject has been declared a certified fool',
+  '🥺': 'Eyes widened to maximum vulnerability, lower lip trembling',
+  '😈': 'Dark mischief stirs within the subject\'s soul',
+  '👑': 'Royalty has been conferred upon the individual',
+  '💅': 'A gesture of supreme unbothered elegance',
+  '🤷': 'A shrug of cosmic indifference',
+  '🤔': 'Deep contemplation grips the subject',
+  '😏': 'A smirk loaded with unstated implications',
+  '🥳': 'Festive elation has overtaken all reason',
+  '🎉': 'Celebrations of considerable magnitude are underway',
+  '🍾': 'Champagne corks fly with reckless abandon',
+  '🥂': 'Glasses raised in triumphant toast',
+  '💰': 'Currency of notable quantity has entered the discourse',
+  '💸': 'Money flees the premises at alarming velocity',
+  '🏆': 'A trophy of the highest distinction has been awarded',
+  '💪': 'A flexed bicep signals formidable strength',
+  '🙌': 'Hands thrust skyward in jubilation',
+  '👏': 'Applause reverberates through the chamber',
+  '🤝': 'A handshake seals the accord',
+  '👍': 'Approval has been granted via upward thumb',
+  '👎': 'The thumb descends in devastating disapproval',
+  '✨': 'Sparkles of enchantment permeate the atmosphere',
+  '💫': 'Stars orbit the subject, dazed and wondrous',
+  '🌟': 'A star of blinding brilliance appears',
+  '⭐': 'A golden star marks this moment for posterity',
+  '🫠': 'The subject melts into an undignified puddle',
+  '🫣': 'One eye peeks through trembling fingers',
+  '🫡': 'A crisp salute is rendered',
+  '🫶': 'A heart formed by human hands, an offering of devotion',
+  '💀💀💀': 'Death has occurred not once, not twice, but thrice over',
+  '😤😤': 'Fury compounds upon itself',
+  '😱': 'Horror of the most theatrical variety strikes',
+  '🤮': 'The stomach rebels violently against what has been witnessed',
+  '🤢': 'Nausea creeps in like a fog',
+  '💔': 'A heart, once whole, now shattered into irreparable fragments',
+  '🖤': 'A heart darkened by experience',
+  '💜': 'Purple devotion of the most fervent order',
+  '💙': 'A cool blue affection is extended',
+  '💚': 'Green-hearted regard is offered',
+  '🧡': 'Warmth of amber affection radiates outward',
+  '💛': 'Sunshine-colored fondness beams forth',
+  '🤍': 'A heart of purest white, pristine and unblemished',
+  '😍': 'Hearts have replaced the subject\'s eyes, vision compromised by adoration',
+  '🥰': 'Affection envelops the subject like a warm blanket',
+  '😘': 'A kiss launched through the digital ether',
+  '😋': 'The tongue emerges in anticipation of deliciousness',
+  '🤤': 'Drool cascades forth, all dignity abandoned',
+  '😴': 'Consciousness has departed for the realm of slumber',
+  '😪': 'A single tear of drowsiness escapes',
+  '🤯': 'The cranium has been detonated by this revelation',
+  '🧠': 'Raw cerebral matter is invoked',
+  '👻': 'A spectral presence haunts the conversation',
+  '🤖': 'A mechanical entity makes its presence known',
+  '👽': 'Extraterrestrial intelligence has been detected',
+  '🌈': 'A rainbow arcs across the proceedings',
+  '☀️': 'The sun blazes with unforgiving radiance',
+  '🌙': 'The moon casts its silver surveillance',
+  '⚡': 'Lightning strikes with electric urgency',
+  '💎': 'A gem of incalculable value glints',
+  '🗑️': 'The rubbish bin awaits its next offering',
+  '📱': 'The digital communication device is implicated',
+  '📸': 'Photographic evidence has been secured',
+  '🎵': 'Musical notes drift through the atmosphere',
+  '🎶': 'A melody unfolds, unbidden',
+  '🍷': 'Wine, the ancient companion of drama, appears',
+  '🍕': 'Pizza, the great unifier, makes its entrance',
+  '☕': 'Coffee, fuel of the weary narrator, is summoned',
+  '🐍': 'A serpent slithers into the narrative, trust shattered',
+  '🐸': 'The frog of judgment sips its tea',
+  '🦋': 'A butterfly emerges, transformation complete',
+  '🐶': 'A loyal canine companion enters the scene',
+  '🐱': 'A feline of supreme indifference regards the situation',
+  '💤': 'Sleep beckons with irresistible force',
+  '👋': 'A farewell wave cuts through the silence',
+  '✌️': 'The peace sign is flashed with casual authority',
+  '🤞': 'Fingers crossed in desperate hope',
+  '🖕': 'A single finger, extended in the most impolite fashion conceivable',
+  '💍': 'A ring of betrothal catches the light',
+  '🎂': 'A cake of celebration is presented with ceremony',
+  '🎁': 'A gift, wrapped in anticipation',
+  '🚀': 'A rocket tears through the heavens at impossible speed',
+  '⏰': 'The clock ticks with menacing precision',
+  '🔔': 'A bell tolls, demanding immediate attention',
+  '🚨': 'Sirens wail through the corridors',
+  '❌': 'A great red X strikes through the record',
+  '✅': 'A checkmark of definitive confirmation',
+  '⚠️': 'Caution! A warning of the gravest import',
+  '💯': 'One hundred percent. Maximum. Complete. Absolute',
+  '🆘': 'A distress signal pierces the void',
+  '🏃': 'The subject flees the scene at considerable speed',
+  '💃': 'Dancing erupts with wild, uninhibited joy',
+  '🕺': 'A gentleman takes to the dance floor with gusto',
+  '🤦': 'A palm meets a forehead in universal exasperation',
+  '🙄': 'The eyes execute a full rotation of disdain',
+  '😒': 'Unamusement of the most withering variety',
+  '😑': 'The face goes blank, all emotion evacuated',
+  '🫥': 'The subject has become translucent with disbelief',
+  '🤭': 'A hand conceals a gasp of scandalous delight',
+  '🫢': 'Shock so profound the mouth must be physically restrained',
+  '😮‍💨': 'A sigh of such magnitude it could extinguish candles',
+  '🥴': 'Disorientation has rendered the face asymmetrical',
+  '🤑': 'Dollar signs materialize in both eyes simultaneously',
+  '💬': 'Words hang in the air, pregnant with meaning',
+  '💭': 'Thoughts bubble upward from the subconscious',
+  '🔪': 'A blade gleams ominously in the low light',
+  '⚰️': 'A coffin is prepared, the situation is that dire',
+  '🪦': 'A gravestone marks where dignity once stood',
+};
+
+// ─── COMBO PATTERNS (checked before singles) ───
+const COMBOS = [
+  { pattern: ['😂','😂','😂'], text: 'The subject found this so amusing they feared permanent facial damage. The laughter compounds, each wave stronger than the last, until the very foundations of composure have crumbled.' },
+  { pattern: ['😭','💀'], text: 'First came the weeping, then came the death. An emotional double-tap from which there is no recovery.' },
+  { pattern: ['💀','😭'], text: 'Death arrived first, followed by posthumous sobbing -- a phenomenon science cannot yet explain.' },
+  { pattern: ['👉','👈'], text: 'Two index fingers approach each other with the shy energy of a Victorian courtship, suggesting the subject is too bashful to speak plainly.' },
+  { pattern: ['👁️','👄','👁️'], text: 'The subject stares with an unsettling, unblinking gaze that says everything and nothing simultaneously.' },
+  { pattern: ['🙏','🙏','🙏'], text: 'A triple invocation of mercy, suggesting desperation of biblical proportions.' },
+  { pattern: ['😂','💀'], text: 'Laughter so violent it has proven fatal. The coroner will list cause of death as "comedy."' },
+  { pattern: ['🔥','🔥','🔥'], text: 'A conflagration of triple intensity. Whatever has occurred is, in the parlance of the youth, extremely lit.' },
+  { pattern: ['😭','😭'], text: 'Double tears indicate a flood warning has been issued for the immediate emotional vicinity.' },
+  { pattern: ['❤️','🔥'], text: 'A passion burns with the intensity of a thousand suns, consuming all rational thought in its wake.' },
+  { pattern: ['🥺','❤️'], text: 'Vulnerability and love intertwine in a display so tender it could soften steel.' },
+  { pattern: ['👀','💀'], text: 'The subject witnessed something so shocking it immediately resulted in emotional death.' },
+  { pattern: ['😈','🔥'], text: 'Devilry and fire combine, signaling mischief of the most dangerously appealing variety.' },
+  { pattern: ['🤡','💀'], text: 'Foolishness of lethal proportions has been exhibited. The clown has perished by its own jest.' },
+  { pattern: ['💅','✨'], text: 'Unbothered elegance, elevated to the sparkle dimension. The subject simply cannot be troubled.' },
+  { pattern: ['🚀','🔥'], text: 'A launch of explosive proportions tears through the atmosphere, trailing flames of ambition.' },
+  { pattern: ['💰','💰'], text: 'Wealth accumulates at an alarming and enviable rate.' },
+  { pattern: ['💸','💸'], text: 'Money hemorrhages from the subject\'s wallet in a display of fiscal carnage.' },
+  { pattern: ['😤','💪'], text: 'Determination fused with raw power, the subject has entered their final form.' },
+  { pattern: ['🏃','💨'], text: 'The subject has absconded from the premises with such velocity they leave only a dust trail.' },
+  { pattern: ['📱','👀'], text: 'The device is under surveillance, every notification monitored with forensic precision.' },
+  { pattern: ['🐍','🐍'], text: 'Multiple serpents have been identified in the vicinity, betrayal comes from all directions.' },
+  { pattern: ['✨','✨'], text: 'Double sparkle suggests reality itself has been enchanted beyond normal parameters.' },
+  { pattern: ['🤯','🤯'], text: 'Multiple cranial detonations in sequence. The mind has been blown, reassembled, and blown again.' },
+  { pattern: ['👑','💅'], text: 'Royalty and grace combine. The subject rules with effortless poise.' },
+  { pattern: ['🙄','😒'], text: 'Eyes roll heavenward as annoyance settles in like a permanent weather system.' },
+  { pattern: ['🤦','🤦'], text: 'Repeated face-palming suggests the situation has exceeded all known thresholds of absurdity.' },
+  { pattern: ['💀','💀','💀'], text: 'A triple fatality. Three separate deaths in rapid succession, each more dramatic than the last.' },
+  { pattern: ['🎉','🥳'], text: 'The celebration has reached fever pitch. Party hats fly and confetti rains from the heavens.' },
+  { pattern: ['🍾','🥂'], text: 'Champagne flows freely as glasses clink in a toast to whatever triumph has been achieved.' },
+];
+
+// ─── DRAMATIC OPENERS & CLOSERS ───
+const OPENERS = [
+  'Ladies and gentlemen, we interrupt this broadcast with a dispatch of extraordinary emotional magnitude.',
+  'This just in from our field correspondents in the digital trenches.',
+  'A communiqu\u00e9 has arrived at the bureau, and what it contains will shake the foundations of civil discourse.',
+  'We bring you now a report so laden with emotional payload that our translators required hazard pay.',
+  'The following transmission was intercepted moments ago, dripping with unfiltered human sentiment.',
+  'Attention all stations. What follows is a decoded message of considerable dramatic weight.',
+  'From the frontlines of human expression comes this bulletin of staggering emotional content.',
+];
+
+const CLOSERS = [
+  'This has been a dispatch from The Emoji Bureau. We return you now to your regularly scheduled composure.',
+  'The full emotional toll of this communiqu\u00e9 may not be known for days. Stay vigilant.',
+  'Thus concludes this dramatic reading. No emojis were harmed in the translation.',
+  'We remind our audience: what has been narrated cannot be unnarrated.',
+  'This correspondent will now take a moment to recover. Good evening.',
+  'End of transmission. The record shall reflect the gravity of these symbols.',
+];
+
+const TRANSITIONS = [
+  'Furthermore,',
+  'In a stunning development,',
+  'But wait -- there is more.',
+  'As if this were not enough,',
+  'The plot, as they say, thickens.',
+  'And then, dear listeners,',
+  'What follows next defies ordinary description.',
+  'The narrative takes a turn:',
+  'Witness now the next chapter:',
+];
+
+// ─── STATE ───
+let decodeCount = parseInt(localStorage.getItem('emojiDispatchCount') || '0');
+let currentTranslation = '';
+let isSpeaking = false;
+document.getElementById('decodeCount').textContent = decodeCount;
+
+// ─── EMOJI DETECTION ───
+const emojiRegex = /(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)(?:\u200D(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F))*/gu;
+
+function extractEmojis(text) {
+  return [...text.matchAll(emojiRegex)].map(m => m[0]);
+}
+
+function findCombos(emojis) {
+  const results = [];
+  const used = new Set();
+
+  // Try combos (longest first)
+  const sorted = [...COMBOS].sort((a, b) => b.pattern.length - a.pattern.length);
+
+  for (const combo of sorted) {
+    for (let i = 0; i <= emojis.length - combo.pattern.length; i++) {
+      if (used.has(i)) continue;
+      let match = true;
+      const indices = [];
+      let pos = i;
+      for (const p of combo.pattern) {
+        while (pos < emojis.length && used.has(pos)) pos++;
+        if (pos >= emojis.length || emojis[pos] !== p) { match = false; break; }
+        indices.push(pos);
+        pos++;
+      }
+      if (match) {
+        indices.forEach(idx => used.add(idx));
+        results.push({ type: 'combo', emojis: combo.pattern.join(''), text: combo.text, index: indices[0] });
+      }
+    }
+  }
+
+  // Remaining singles
+  for (let i = 0; i < emojis.length; i++) {
+    if (used.has(i)) continue;
+    const e = emojis[i];
+    if (SINGLE[e]) {
+      results.push({ type: 'single', emojis: e, text: SINGLE[e], index: i });
+      used.add(i);
+    }
+  }
+
+  results.sort((a, b) => a.index - b.index);
+  return results;
+}
+
+function buildNarration(inputText) {
+  const emojis = extractEmojis(inputText);
+  if (emojis.length === 0) {
+    return { text: 'Our analysts have examined this communiqu\u00e9 with great care and found... no emojis whatsoever. The subject communicates with the restraint of a Victorian-era telegraph operator. We salute their discipline, even as we question their vitality.', count: 0 };
+  }
+
+  const decoded = findCombos(emojis);
+  const opener = OPENERS[Math.floor(Math.random() * OPENERS.length)];
+  const closer = CLOSERS[Math.floor(Math.random() * CLOSERS.length)];
+
+  let parts = [opener, ''];
+
+  // Weave the plain text context
+  const plainText = inputText.replace(emojiRegex, '').replace(/\s+/g, ' ').trim();
+  if (plainText.length > 2) {
+    parts.push(`The subject writes, and I quote: "${plainText}"`);
+    parts.push('');
+    parts.push('But it is the hieroglyphs that tell the true story:');
+    parts.push('');
+  }
+
+  decoded.forEach((d, i) => {
+    if (i > 0 && i % 3 === 0) {
+      parts.push('');
+      parts.push(TRANSITIONS[Math.floor(Math.random() * TRANSITIONS.length)]);
+      parts.push('');
+    }
+    parts.push(`[${d.emojis}] -- ${d.text}.`);
+  });
+
+  parts.push('');
+  parts.push(closer);
+
+  return { text: parts.join('\n'), count: emojis.length };
+}
+
+// ─── TYPEWRITER ───
+async function typewrite(element, text, speed = 18) {
+  element.innerHTML = '';
+  const lines = text.split('\n');
+  let fullHTML = '';
+
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
+    if (line === '') {
+      fullHTML += '<br>';
+      element.innerHTML = fullHTML + '<span class="cursor-blink"></span>';
+      await sleep(80);
+      continue;
+    }
+
+    // Style emoji references
+    const styled = line.replace(/\[([^\]]+)\]/g, '<span class="emoji-ref">[$1]</span>')
+                       .replace(/^(Ladies and gentlemen|This just in|A communiqu|We bring you|The following|Attention all|From the frontlines|Our analysts|This has been|The full emotional|Thus concludes|We remind|This correspondent|End of transmission|The record)/, '<span class="dramatic">$&</span>');
+
+    for (let ci = 0; ci < styled.length; ci++) {
+      // Skip HTML tags in typing
+      if (styled[ci] === '<') {
+        const closeIdx = styled.indexOf('>', ci);
+        if (closeIdx !== -1) {
+          fullHTML += styled.substring(ci, closeIdx + 1);
+          ci = closeIdx;
+          continue;
+        }
+      }
+      fullHTML += styled[ci];
+      // Only update DOM every few chars for performance
+      if (ci % 2 === 0 || ci === styled.length - 1) {
+        element.innerHTML = fullHTML + '<span class="cursor-blink"></span>';
+      }
+      await sleep(speed);
+    }
+    if (li < lines.length - 1) fullHTML += '<br>';
+    element.innerHTML = fullHTML + '<span class="cursor-blink"></span>';
+  }
+
+  // Remove cursor after typing
+  await sleep(800);
+  element.innerHTML = fullHTML;
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ─── SPEECH ───
+function speakText(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+
+  const clean = text.replace(/\[([^\]]+)\]/g, '').replace(/--/g, ',').replace(/<[^>]*>/g, '');
+  const utterance = new SpeechSynthesisUtterance(clean);
+
+  // Try to find a deep/formal voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /Daniel|James|Thomas|Google UK English Male|Arthur/i.test(v.name))
+    || voices.find(v => /English.*Male|en.*GB/i.test(v.name) && /Male/i.test(v.name))
+    || voices.find(v => /en/i.test(v.lang));
+  if (preferred) utterance.voice = preferred;
+
+  utterance.rate = 0.82;
+  utterance.pitch = 0.75;
+  utterance.volume = 1;
+
+  const speakBtn = document.getElementById('speakBtn');
+  utterance.onstart = () => { isSpeaking = true; speakBtn.classList.add('speaking'); speakBtn.textContent = 'Stop'; };
+  utterance.onend = () => { isSpeaking = false; speakBtn.classList.remove('speaking'); speakBtn.textContent = 'Read Aloud'; };
+  utterance.onerror = () => { isSpeaking = false; speakBtn.classList.remove('speaking'); speakBtn.textContent = 'Read Aloud'; };
+
+  speechSynthesis.speak(utterance);
+}
+
+// ─── EVENT HANDLERS ───
+const inputArea = document.getElementById('inputArea');
+const translateBtn = document.getElementById('translateBtn');
+const speakBtn = document.getElementById('speakBtn');
+const clearBtn = document.getElementById('clearBtn');
+const outputSection = document.getElementById('outputSection');
+const translationOutput = document.getElementById('translationOutput');
+const broadcastTime = document.getElementById('broadcastTime');
+const emojiDecodedCount = document.getElementById('emojiDecodedCount');
+
+translateBtn.addEventListener('click', async () => {
+  const text = inputArea.value.trim();
+  if (!text) { inputArea.focus(); return; }
+
+  translateBtn.disabled = true;
+  translateBtn.textContent = 'Decoding...';
+
+  const result = buildNarration(text);
+  currentTranslation = result.text;
+
+  // Update counter
+  decodeCount++;
+  localStorage.setItem('emojiDispatchCount', decodeCount);
+  document.getElementById('decodeCount').textContent = decodeCount;
+
+  // Show output
+  broadcastTime.textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+  emojiDecodedCount.textContent = result.count;
+  outputSection.classList.add('visible');
+
+  // Scroll to output
+  setTimeout(() => outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+  await typewrite(translationOutput, currentTranslation);
+
+  translateBtn.disabled = false;
+  translateBtn.textContent = 'Translate';
+  speakBtn.disabled = false;
+});
+
+speakBtn.addEventListener('click', () => {
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    return;
+  }
+  if (currentTranslation) speakText(currentTranslation);
+});
+
+clearBtn.addEventListener('click', () => {
+  inputArea.value = '';
+  outputSection.classList.remove('visible');
+  currentTranslation = '';
+  speakBtn.disabled = true;
+  speechSynthesis.cancel();
+  inputArea.focus();
+});
+
+// Example chips
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    inputArea.value = chip.dataset.text;
+    inputArea.focus();
+  });
+});
+
+// Ctrl+Enter to translate
+inputArea.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    translateBtn.click();
+  }
+});
+
+// Load voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

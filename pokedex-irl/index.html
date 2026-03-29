@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pokedex IRL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --dex-red: #dc0a2d;
+    --dex-dark-red: #a00020;
+    --dex-white: #f0f0f0;
+    --dex-screen: #98cb98;
+    --dex-screen-dark: #78ab78;
+    --type-normal: #a8a878;
+    --type-fire: #f08030;
+    --type-water: #6890f0;
+    --type-electric: #f8d030;
+    --type-grass: #78c850;
+    --type-dark: #705848;
+    --type-fairy: #ee99ac;
+  }
+
+  body {
+    font-family: 'VT323', monospace;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    color: #222;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    background: var(--dex-red);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--dex-dark-red);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lens {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #8df, #3b82f6, #1d4ed8);
+    border: 3px solid #fff;
+    box-shadow: 0 0 8px rgba(59,130,246,0.6), inset 0 -3px 6px rgba(0,0,0,0.3);
+    animation: lensPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes lensPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(59,130,246,0.6), inset 0 -3px 6px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 16px rgba(59,130,246,0.9), inset 0 -3px 6px rgba(0,0,0,0.3); }
+  }
+
+  .title {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 14px;
+    text-shadow: 2px 2px 0 var(--dex-dark-red);
+  }
+
+  .catch-count {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 10px;
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .progress-bar {
+    width: 80px;
+    height: 8px;
+    background: var(--dex-dark-red);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #4ade80;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* Main content */
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  /* Scan Button */
+  .scan-btn {
+    width: 100%;
+    padding: 18px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    color: #fff;
+    background: linear-gradient(180deg, var(--dex-red) 0%, var(--dex-dark-red) 100%);
+    border: 4px solid #fff;
+    border-radius: 16px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scan-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  }
+
+  .scan-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+    animation: btnShine 3s ease-in-out infinite;
+  }
+
+  @keyframes btnShine {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+  }
+
+  /* Camera */
+  .camera-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 200;
+    flex-direction: column;
+  }
+
+  .camera-overlay.active { display: flex; }
+
+  .camera-header {
+    background: var(--dex-red);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .camera-header span {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 11px;
+  }
+
+  .camera-close {
+    background: none;
+    border: 2px solid #fff;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .camera-feed {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #111;
+  }
+
+  .camera-feed video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .camera-feed canvas { display: none; }
+
+  .camera-crosshair {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .camera-crosshair::before,
+  .camera-crosshair::after {
+    content: '';
+    position: absolute;
+  }
+
+  .camera-crosshair::before {
+    top: 50%;
+    left: 20%;
+    right: 20%;
+    height: 2px;
+    background: rgba(220,10,45,0.5);
+    transform: translateY(-50%);
+  }
+
+  .camera-crosshair::after {
+    left: 50%;
+    top: 20%;
+    bottom: 20%;
+    width: 2px;
+    background: rgba(220,10,45,0.5);
+    transform: translateX(-50%);
+  }
+
+  .capture-btn {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: 6px solid var(--dex-red);
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    transition: transform 0.1s;
+  }
+
+  .capture-btn:active { transform: translateX(-50%) scale(0.9); }
+
+  .capture-btn::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 50%;
+    background: var(--dex-red);
+  }
+
+  /* Scan animation overlay */
+  .scan-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 300;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scan-overlay.active { display: flex; }
+
+  .scan-photo-wrapper {
+    width: 200px;
+    height: 200px;
+    border: 4px solid var(--dex-red);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 24px;
+  }
+
+  .scan-photo-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #0f0, transparent);
+    box-shadow: 0 0 10px #0f0;
+    animation: scanDown 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scanDown {
+    0% { top: 0; }
+    100% { top: 100%; }
+  }
+
+  .scan-text {
+    font-family: 'Press Start 2P', cursive;
+    color: #0f0;
+    font-size: 12px;
+    animation: blink 0.5s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .scan-dots {
+    color: #0f0;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    margin-top: 8px;
+  }
+
+  /* Creature Card */
+  .card-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .card-overlay.active { display: flex; }
+
+  .creature-card {
+    background: var(--dex-white);
+    border: 6px solid var(--dex-red);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 360px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(220,10,45,0.4);
+    animation: cardPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  @keyframes cardPop {
+    0% { transform: scale(0.5) rotateY(90deg); opacity: 0; }
+    100% { transform: scale(1) rotateY(0); opacity: 1; }
+  }
+
+  .card-header {
+    background: var(--dex-red);
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .card-name {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+
+  .card-number {
+    font-family: 'Press Start 2P', cursive;
+    color: rgba(255,255,255,0.7);
+    font-size: 10px;
+  }
+
+  .card-photo {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    image-rendering: pixelated;
+    border-bottom: 4px solid #ddd;
+    position: relative;
+  }
+
+  .card-photo-container {
+    position: relative;
+  }
+
+  .pixel-border {
+    position: absolute;
+    inset: 0;
+    border: 8px solid transparent;
+    border-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Crect width='4' height='4' fill='%23333'/%3E%3Crect x='4' width='4' height='4' fill='%23555'/%3E%3Crect x='8' width='4' height='4' fill='%23333'/%3E%3Crect y='4' width='4' height='4' fill='%23555'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23777'/%3E%3Crect x='8' y='4' width='4' height='4' fill='%23555'/%3E%3Crect y='8' width='4' height='4' fill='%23333'/%3E%3Crect x='4' y='8' width='4' height='4' fill='%23555'/%3E%3Crect x='8' y='8' width='4' height='4' fill='%23333'/%3E%3C/svg%3E") 4 repeat;
+    pointer-events: none;
+  }
+
+  .card-type {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 12px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    color: #fff;
+    margin: 12px 16px 8px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  }
+
+  .card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 0 16px 12px;
+  }
+
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    color: #888;
+    width: 30px;
+  }
+
+  .stat-bar-bg {
+    flex: 1;
+    height: 10px;
+    background: #ddd;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+
+  .stat-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease;
+  }
+
+  .stat-val {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    width: 28px;
+    text-align: right;
+  }
+
+  .card-desc {
+    padding: 12px 16px;
+    font-size: 20px;
+    line-height: 1.4;
+    color: #444;
+    background: #e8e8e0;
+    border-top: 3px solid #ccc;
+    min-height: 70px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+
+  .card-actions button {
+    flex: 1;
+    padding: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    border: 3px solid;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .card-actions button:active { transform: scale(0.95); }
+
+  .btn-keep {
+    background: #4ade80;
+    border-color: #22c55e;
+    color: #fff;
+  }
+
+  .btn-share {
+    background: #60a5fa;
+    border-color: #3b82f6;
+    color: #fff;
+  }
+
+  .btn-dismiss {
+    background: #f87171;
+    border-color: #ef4444;
+    color: #fff;
+  }
+
+  /* Collection Grid */
+  .section-title {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 12px;
+    margin: 24px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: rgba(255,255,255,0.2);
+  }
+
+  .collection {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .collection-item {
+    background: var(--dex-white);
+    border: 3px solid var(--dex-red);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .collection-item:active { transform: scale(0.95); }
+
+  .collection-item img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .collection-item-info {
+    padding: 4px 6px;
+    text-align: center;
+  }
+
+  .collection-item-name {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 7px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .collection-item-type {
+    font-size: 14px;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    line-height: 2;
+  }
+
+  /* View card overlay (from collection) */
+  .view-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 400;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .view-overlay.active { display: flex; }
+
+  .view-card .card-actions button { flex: none; width: 48%; }
+
+  /* Type colors */
+  .type-Normal { background: var(--type-normal); }
+  .type-Fire { background: var(--type-fire); }
+  .type-Water { background: var(--type-water); }
+  .type-Electric { background: var(--type-electric); color: #333; }
+  .type-Grass { background: var(--type-grass); }
+  .type-Dark { background: var(--type-dark); }
+  .type-Fairy { background: var(--type-fairy); }
+
+  .stat-Normal { background: var(--type-normal); }
+  .stat-Fire { background: var(--type-fire); }
+  .stat-Water { background: var(--type-water); }
+  .stat-Electric { background: var(--type-electric); }
+  .stat-Grass { background: var(--type-grass); }
+  .stat-Dark { background: var(--type-dark); }
+  .stat-Fairy { background: var(--type-fairy); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    z-index: 500;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Delete confirmation */
+  .delete-confirm {
+    text-align: center;
+    padding: 8px;
+  }
+
+  .delete-confirm p {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .delete-confirm button {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 2px solid;
+    cursor: pointer;
+    margin: 0 4px;
+  }
+
+  .btn-cancel { background: #ddd; border-color: #bbb; color: #666; }
+  .btn-delete-confirm { background: #f87171; border-color: #ef4444; color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="lens"></div>
+    <div class="title">POKEDEX IRL</div>
+  </div>
+  <div class="catch-count">
+    <div id="countText">0 / 151</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <button class="scan-btn" id="scanBtn">SCAN CREATURE</button>
+
+  <div class="section-title">COLLECTION</div>
+  <div class="collection" id="collection"></div>
+  <div class="empty-state" id="emptyState">
+    No creatures caught yet.<br>Tap SCAN to start!
+  </div>
+</div>
+
+<!-- Camera Overlay -->
+<div class="camera-overlay" id="cameraOverlay">
+  <div class="camera-header">
+    <span>SCANNER</span>
+    <button class="camera-close" id="cameraClose">X</button>
+  </div>
+  <div class="camera-feed">
+    <video id="cameraVideo" autoplay playsinline></video>
+    <canvas id="cameraCanvas"></canvas>
+    <div class="camera-crosshair"></div>
+    <button class="capture-btn" id="captureBtn"></button>
+  </div>
+</div>
+
+<!-- Scan Animation -->
+<div class="scan-overlay" id="scanOverlay">
+  <div class="scan-photo-wrapper">
+    <img id="scanPhoto" src="" alt="scanning">
+    <div class="scan-line"></div>
+  </div>
+  <div class="scan-text">ANALYZING SPECIMEN...</div>
+  <div class="scan-dots" id="scanDots"></div>
+</div>
+
+<!-- New Creature Card -->
+<div class="card-overlay" id="cardOverlay">
+  <div class="creature-card" id="creatureCard">
+    <div class="card-header">
+      <span class="card-name" id="cardName"></span>
+      <span class="card-number" id="cardNumber"></span>
+    </div>
+    <div class="card-photo-container">
+      <img class="card-photo" id="cardPhoto" src="" alt="creature">
+      <div class="pixel-border"></div>
+    </div>
+    <span class="card-type" id="cardType"></span>
+    <div class="card-stats" id="cardStats"></div>
+    <div class="card-desc" id="cardDesc"></div>
+    <div class="card-actions">
+      <button class="btn-keep" id="btnKeep">CATCH!</button>
+      <button class="btn-share" id="btnShare">SHARE</button>
+      <button class="btn-dismiss" id="btnDismiss">RUN</button>
+    </div>
+  </div>
+</div>
+
+<!-- View existing creature -->
+<div class="view-overlay" id="viewOverlay">
+  <div class="creature-card view-card" id="viewCard"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ========== DATA ==========
+
+const TYPES = ['Normal','Fire','Water','Electric','Grass','Dark','Fairy'];
+
+const TYPE_EMOJI = {
+  Normal: '\u2b50', Fire: '\ud83d\udd25', Water: '\ud83d\udca7', Electric: '\u26a1',
+  Grass: '\ud83c\udf3f', Dark: '\ud83c\udf11', Fairy: '\u2728'
+};
+
+// Portmanteau name generator parts
+const PREFIXES = [
+  'Blub','Char','Snor','Zap','Fluf','Grim','Mew','Bub','Dusk','Fern',
+  'Glim','Hoot','Jinx','Krak','Lurk','Mist','Nuzz','Puff','Quil','Rumb',
+  'Shim','Twig','Umba','Vex','Wobb','Yawn','Zest','Bonk','Crum','Drib',
+  'Fizz','Gloop','Honk','Itch','Jolt','Knob','Lump','Murk','Nerd','Oink',
+  'Plop','Quirk','Rash','Slob','Thud','Ugh','Vibe','Wonk','Xerp','Yeet'
+];
+
+const SUFFIXES = [
+  'asaur','izard','tle','achu','puff','er','two','asol','uff','ix',
+  'eon','ite','oid','ling','mon','dex','zel','ink','oop','awk',
+  'urk','amp','olt','ust','orm','owl','aze','ump','ork','ish',
+  'onk','uzz','ub','oot','erg','alp','ine','oxy','ent','ast',
+  'oid','rix','ump','yne','ape','ode','urn','omp','ish','ulk'
+];
+
+// 60 description templates
+const DESCRIPTIONS = [
+  "This creature was found lurking near a coffee mug. It feeds on procrastination and WiFi signals.",
+  "Often spotted hiding behind laptop screens. It gets stronger when deadlines approach.",
+  "This specimen emits a faint buzzing sound, possibly from all the energy drinks it has consumed.",
+  "Known to hoard snacks in its habitat. Becomes hostile if you touch its leftovers.",
+  "Researchers believe this creature evolves when exposed to enough unread emails.",
+  "It communicates exclusively through passive-aggressive sticky notes.",
+  "This creature has never been seen awake before noon. Its power peaks at 2 AM.",
+  "Feeds primarily on forgotten leftovers and ambient anxiety.",
+  "Its natural defense mechanism is pretending to be busy when the boss walks by.",
+  "Rumored to gain strength from cancelled meetings and early Fridays.",
+  "It nests in piles of unfolded laundry and dreams of clean socks.",
+  "This creature's battle cry sounds suspiciously like a microwave beep.",
+  "Scientists report it becomes invisible whenever someone asks for volunteers.",
+  "Thrives in environments with poor lighting and strong opinions about fonts.",
+  "Its favorite move is 'Reply All' -- devastating to office morale.",
+  "Can detect free food from up to three floors away.",
+  "This creature hoards USB cables but can never find the right one.",
+  "It has been observed arguing with printers. It always loses.",
+  "Evolves only when Mercury is in retrograde and the vending machine is broken.",
+  "Known to produce small sparks when angered by slow internet.",
+  "This specimen was discovered underneath a pile of Amazon boxes.",
+  "It mimics the sound of Slack notifications to confuse predators.",
+  "Researchers found it sleeping inside a hoodie pocket. It refused to leave.",
+  "Its natural habitat is the couch cushion gap where remotes go to die.",
+  "Gains a temporary power boost when someone says 'let's circle back.'",
+  "This creature panics when its phone battery drops below 20%.",
+  "It collects houseplants but has never successfully kept one alive.",
+  "Often found guarding the last slice of pizza with fierce determination.",
+  "This specimen generates static electricity by shuffling across carpet in socks.",
+  "Its defense mechanism is sending you a calendar invite instead of talking.",
+  "Known to nest in tangled headphone cords. Good luck getting it out.",
+  "This creature's power level directly correlates with room temperature complaints.",
+  "It becomes nearly invincible after its third cup of coffee.",
+  "Researchers have observed it reorganizing the same spreadsheet for hours.",
+  "Its cry sounds like a dying printer -- EEEEE-CHUNK-CHUNK.",
+  "This specimen is allergic to mornings and Monday meetings.",
+  "It was discovered living inside an old backpack no one has opened since 2019.",
+  "Known to evolve when exposed to enough true crime podcasts.",
+  "This creature types aggressively but only to look productive.",
+  "Its habitat is wherever the strongest WiFi signal can be found.",
+  "Feeds on drama but pretends it doesn't. Classic defensive behavior.",
+  "This specimen stores energy in its cheeks, chipmunk-style, but with gummy bears.",
+  "It has a symbiotic relationship with dust bunnies under the bed.",
+  "Known to freeze completely when someone says 'we need to talk.'",
+  "This creature vibrates at the exact frequency of a phone on silent mode.",
+  "It was found inside a desk drawer full of pens that don't work.",
+  "Researchers believe it gains power from hitting snooze exactly 7 times.",
+  "This specimen camouflages itself as a pile of clothes on 'the chair.'",
+  "Its special ability is remembering song lyrics from 2007 but not your name.",
+  "Known to summon rain clouds by planning outdoor activities.",
+  "This creature sweats nervously when asked 'what are your hobbies?'",
+  "It hoards grocery bags inside other grocery bags. An infinite recursion.",
+  "Its mating call is the sound of someone saying 'I brought donuts.'",
+  "This specimen powers up when someone validates its parking.",
+  "Known to go berserk when the office thermostat is touched.",
+  "This creature only appears during group project season. Nobody wants it.",
+  "It generates small earthquakes by bouncing its leg under the desk.",
+  "Researchers found it living inside an air fryer. It evolved there.",
+  "Its defense mechanism is over-explaining a joke until no one laughs.",
+  "This creature has been banned from three escape rooms for reasons unknown."
+];
+
+// ========== STATE ==========
+
+let collection = JSON.parse(localStorage.getItem('pokedex-irl') || '[]');
+let currentCreature = null;
+let cameraStream = null;
+
+// ========== AUDIO ==========
+
+function playDiscoveryChime() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.12 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.4);
+    });
+  } catch(e) {}
+}
+
+function playCatchSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [440, 554.37, 659.25, 880].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.08);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + i * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.2);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.08);
+      osc.stop(ctx.currentTime + i * 0.08 + 0.25);
+    });
+  } catch(e) {}
+}
+
+// ========== NAME GENERATOR ==========
+
+function generateName() {
+  const pre = PREFIXES[Math.floor(Math.random() * PREFIXES.length)];
+  const suf = SUFFIXES[Math.floor(Math.random() * SUFFIXES.length)];
+  return pre + suf;
+}
+
+// ========== CREATURE GENERATOR ==========
+
+function generateCreature(photoDataURL) {
+  const name = generateName();
+  const type = TYPES[Math.floor(Math.random() * TYPES.length)];
+  const hp = Math.floor(Math.random() * 91) + 10;
+  const atk = Math.floor(Math.random() * 91) + 10;
+  const def = Math.floor(Math.random() * 91) + 10;
+  const spd = Math.floor(Math.random() * 91) + 10;
+  const desc = DESCRIPTIONS[Math.floor(Math.random() * DESCRIPTIONS.length)];
+  const number = collection.length + 1;
+
+  return { name, type, hp, atk, def, spd, desc, photo: photoDataURL, number, caught: Date.now() };
+}
+
+// ========== UI UPDATES ==========
+
+function updateCount() {
+  const count = collection.length;
+  const pct = Math.min((count / 151) * 100, 100);
+  document.getElementById('countText').textContent = `${count} / 151`;
+  document.getElementById('progressFill').style.width = `${pct}%`;
+}
+
+function renderCollection() {
+  const grid = document.getElementById('collection');
+  const empty = document.getElementById('emptyState');
+
+  if (collection.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.innerHTML = collection.map((c, i) => `
+    <div class="collection-item" data-index="${i}">
+      <img src="${c.photo}" alt="${c.name}">
+      <div class="collection-item-info">
+        <div class="collection-item-name">${c.name}</div>
+        <div class="collection-item-type">${TYPE_EMOJI[c.type]} ${c.type}</div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.collection-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const idx = parseInt(item.dataset.index);
+      showViewCard(collection[idx], idx);
+    });
+  });
+}
+
+function showViewCard(creature, idx) {
+  const overlay = document.getElementById('viewOverlay');
+  const card = document.getElementById('viewCard');
+
+  card.innerHTML = `
+    <div class="card-header">
+      <span class="card-name">${creature.name}</span>
+      <span class="card-number">#${String(creature.number).padStart(3,'0')}</span>
+    </div>
+    <div class="card-photo-container">
+      <img class="card-photo" src="${creature.photo}" alt="${creature.name}">
+      <div class="pixel-border"></div>
+    </div>
+    <span class="card-type type-${creature.type}">${TYPE_EMOJI[creature.type]} ${creature.type}</span>
+    <div class="card-stats">
+      ${statHTML('HP', creature.hp, creature.type)}
+      ${statHTML('ATK', creature.atk, creature.type)}
+      ${statHTML('DEF', creature.def, creature.type)}
+      ${statHTML('SPD', creature.spd, creature.type)}
+    </div>
+    <div class="card-desc">${creature.desc}</div>
+    <div class="card-actions">
+      <button class="btn-share" onclick="shareCreature(${idx})">SHARE</button>
+      <button class="btn-dismiss" onclick="confirmDelete(${idx})">RELEASE</button>
+      <button class="btn-keep" onclick="closeViewCard()">CLOSE</button>
+    </div>
+    <div class="delete-confirm" id="deleteConfirm${idx}" style="display:none">
+      <p>Release ${creature.name}?</p>
+      <button class="btn-cancel" onclick="document.getElementById('deleteConfirm${idx}').style.display='none'">NO</button>
+      <button class="btn-delete-confirm" onclick="deleteCreature(${idx})">YES</button>
+    </div>
+  `;
+
+  overlay.classList.add('active');
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeViewCard();
+  });
+}
+
+function closeViewCard() {
+  document.getElementById('viewOverlay').classList.remove('active');
+}
+
+function confirmDelete(idx) {
+  document.getElementById(`deleteConfirm${idx}`).style.display = 'block';
+}
+
+function deleteCreature(idx) {
+  collection.splice(idx, 1);
+  // Re-number
+  collection.forEach((c, i) => c.number = i + 1);
+  saveCollection();
+  updateCount();
+  renderCollection();
+  closeViewCard();
+  showToast('Released into the wild!');
+}
+
+function statHTML(label, value, type) {
+  return `
+    <div class="stat">
+      <span class="stat-label">${label}</span>
+      <div class="stat-bar-bg">
+        <div class="stat-bar stat-${type}" style="width:${value}%"></div>
+      </div>
+      <span class="stat-val">${value}</span>
+    </div>
+  `;
+}
+
+function showCreatureCard(creature) {
+  document.getElementById('cardName').textContent = creature.name;
+  document.getElementById('cardNumber').textContent = `#${String(creature.number).padStart(3,'0')}`;
+  document.getElementById('cardPhoto').src = creature.photo;
+
+  const typeEl = document.getElementById('cardType');
+  typeEl.textContent = `${TYPE_EMOJI[creature.type]} ${creature.type}`;
+  typeEl.className = `card-type type-${creature.type}`;
+
+  document.getElementById('cardStats').innerHTML = `
+    ${statHTML('HP', creature.hp, creature.type)}
+    ${statHTML('ATK', creature.atk, creature.type)}
+    ${statHTML('DEF', creature.def, creature.type)}
+    ${statHTML('SPD', creature.spd, creature.type)}
+  `;
+
+  document.getElementById('cardDesc').textContent = creature.desc;
+  document.getElementById('cardOverlay').classList.add('active');
+}
+
+function saveCollection() {
+  localStorage.setItem('pokedex-irl', JSON.stringify(collection));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ========== SHARE ==========
+
+function shareCreature(idx) {
+  const c = idx !== undefined ? collection[idx] : currentCreature;
+  if (!c) return;
+
+  const text = `I caught ${c.name}! (${TYPE_EMOJI[c.type]} ${c.type})\nHP:${c.hp} ATK:${c.atk} DEF:${c.def} SPD:${c.spd}\n"${c.desc}"\n\nCaught with Pokedex IRL!`;
+
+  if (navigator.share) {
+    navigator.share({ title: `Pokedex IRL - ${c.name}`, text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied to clipboard!');
+    }).catch(() => {
+      showToast('Could not share');
+    });
+  }
+}
+
+// ========== CAMERA ==========
+
+async function openCamera() {
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    });
+    video.srcObject = cameraStream;
+    overlay.classList.add('active');
+  } catch(e) {
+    showToast('Camera access denied');
+  }
+}
+
+function closeCamera() {
+  const overlay = document.getElementById('cameraOverlay');
+  const video = document.getElementById('cameraVideo');
+
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  video.srcObject = null;
+  overlay.classList.remove('active');
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cameraVideo');
+  const canvas = document.getElementById('cameraCanvas');
+
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+
+  const dataURL = canvas.toDataURL('image/jpeg', 0.7);
+  closeCamera();
+  startScanAnimation(dataURL);
+}
+
+// ========== SCAN ANIMATION ==========
+
+function startScanAnimation(photoDataURL) {
+  const overlay = document.getElementById('scanOverlay');
+  const photo = document.getElementById('scanPhoto');
+  const dots = document.getElementById('scanDots');
+
+  photo.src = photoDataURL;
+  overlay.classList.add('active');
+
+  let dotCount = 0;
+  const phrases = ['Scanning biometrics', 'Matching DNA', 'Classifying species', 'Generating entry'];
+  let phraseIdx = 0;
+
+  const dotInterval = setInterval(() => {
+    dotCount = (dotCount + 1) % 4;
+    dots.textContent = (phrases[phraseIdx] || 'Processing') + '.'.repeat(dotCount);
+    if (dotCount === 0) phraseIdx++;
+  }, 300);
+
+  setTimeout(() => {
+    clearInterval(dotInterval);
+    overlay.classList.remove('active');
+    playDiscoveryChime();
+
+    currentCreature = generateCreature(photoDataURL);
+    showCreatureCard(currentCreature);
+  }, 2800);
+}
+
+// ========== EVENT LISTENERS ==========
+
+document.getElementById('scanBtn').addEventListener('click', openCamera);
+document.getElementById('cameraClose').addEventListener('click', closeCamera);
+document.getElementById('captureBtn').addEventListener('click', capturePhoto);
+
+document.getElementById('btnKeep').addEventListener('click', () => {
+  if (!currentCreature) return;
+  collection.push(currentCreature);
+  saveCollection();
+  updateCount();
+  renderCollection();
+  playCatchSound();
+  document.getElementById('cardOverlay').classList.remove('active');
+  showToast(`${currentCreature.name} was caught!`);
+  currentCreature = null;
+});
+
+document.getElementById('btnShare').addEventListener('click', () => shareCreature());
+
+document.getElementById('btnDismiss').addEventListener('click', () => {
+  document.getElementById('cardOverlay').classList.remove('active');
+  showToast('It got away...');
+  currentCreature = null;
+});
+
+document.getElementById('cardOverlay').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('cardOverlay')) {
+    document.getElementById('cardOverlay').classList.remove('active');
+    currentCreature = null;
+  }
+});
+
+// ========== INIT ==========
+updateCount();
+renderCollection();
+</script>
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle Dice - Consult the Beyond</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;700&family=MedievalSharp&display=swap');
+
+  :root{
+    --purple-deep:#0a0014;
+    --purple-mid:#1a0a2e;
+    --purple-glow:#7b2ff2;
+    --gold:#d4a017;
+    --gold-light:#f5d76e;
+    --gold-dim:#8b6914;
+  }
+
+  body{
+    min-height:100vh;
+    background:var(--purple-deep);
+    color:#e0d0f0;
+    font-family:'Cinzel',serif;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* FOG LAYERS */
+  .fog-container{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:hidden}
+  .fog{
+    position:absolute;width:200%;height:100%;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(123,47,242,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(123,47,242,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(212,160,23,0.04) 0%, transparent 50%);
+    animation:fogDrift 30s ease-in-out infinite alternate;
+  }
+  .fog:nth-child(2){animation-duration:22s;animation-direction:alternate-reverse;opacity:0.7}
+  .fog:nth-child(3){animation-duration:35s;opacity:0.5}
+  @keyframes fogDrift{0%{transform:translateX(0)}100%{transform:translateX(-30%)}}
+
+  /* PARTICLES */
+  .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2}
+  .particle{
+    position:absolute;width:3px;height:3px;
+    background:var(--gold);border-radius:50%;
+    opacity:0;animation:particleFloat linear infinite;
+  }
+  @keyframes particleFloat{
+    0%{opacity:0;transform:translateY(100vh) scale(0)}
+    10%{opacity:0.8}
+    90%{opacity:0.3}
+    100%{opacity:0;transform:translateY(-10vh) scale(1.5)}
+  }
+
+  /* LIGHTNING FLASH */
+  .lightning-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:#fff;opacity:0;z-index:100;pointer-events:none;
+  }
+  .lightning-overlay.flash{animation:lightningFlash 0.15s ease-out}
+  @keyframes lightningFlash{
+    0%{opacity:0.9}20%{opacity:0.1}40%{opacity:0.7}60%{opacity:0}80%{opacity:0.4}100%{opacity:0}
+  }
+
+  /* DIM OVERLAY */
+  .dim-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0);z-index:50;pointer-events:none;
+    transition:background 1s ease;
+  }
+  .dim-overlay.active{background:rgba(0,0,0,0.7)}
+
+  /* MAIN CONTENT */
+  .container{
+    position:relative;z-index:10;
+    max-width:700px;margin:0 auto;padding:40px 20px;
+    display:flex;flex-direction:column;align-items:center;
+    min-height:100vh;
+  }
+
+  /* TITLE */
+  .title{
+    font-family:'Cinzel Decorative',cursive;
+    font-size:clamp(2rem,6vw,3.5rem);
+    font-weight:900;
+    background:linear-gradient(135deg,var(--gold-light),var(--gold),var(--gold-dim),var(--gold-light));
+    background-size:300% 300%;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    animation:goldShimmer 4s ease-in-out infinite;
+    text-align:center;margin-bottom:8px;
+    text-shadow:0 0 40px rgba(212,160,23,0.3);
+    filter:drop-shadow(0 0 20px rgba(212,160,23,0.3));
+  }
+  @keyframes goldShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  .subtitle{
+    font-family:'MedievalSharp',cursive;
+    font-size:clamp(0.9rem,2.5vw,1.1rem);
+    color:rgba(200,180,220,0.6);
+    margin-bottom:40px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+  }
+
+  /* QUESTION INPUT */
+  .question-section{width:100%;text-align:center;margin-bottom:30px}
+  .question-label{
+    font-size:0.9rem;color:var(--gold-dim);
+    letter-spacing:2px;text-transform:uppercase;
+    margin-bottom:12px;display:block;
+  }
+  .question-input{
+    width:100%;padding:16px 20px;
+    background:rgba(123,47,242,0.08);
+    border:1px solid rgba(123,47,242,0.3);
+    border-radius:8px;
+    color:#e0d0f0;
+    font-family:'Cinzel',serif;
+    font-size:1.05rem;
+    text-align:center;
+    outline:none;
+    transition:all 0.4s ease;
+  }
+  .question-input::placeholder{color:rgba(200,180,220,0.3);font-style:italic}
+  .question-input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 20px rgba(212,160,23,0.15), inset 0 0 20px rgba(123,47,242,0.05);
+  }
+
+  /* ORACLE BUTTON */
+  .oracle-btn{
+    position:relative;
+    padding:18px 48px;margin:20px 0 30px;
+    background:linear-gradient(135deg,rgba(123,47,242,0.3),rgba(123,47,242,0.15));
+    border:2px solid var(--gold);
+    border-radius:50px;
+    color:var(--gold-light);
+    font-family:'Cinzel Decorative',cursive;
+    font-size:clamp(0.85rem,2.5vw,1.1rem);
+    font-weight:700;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    cursor:pointer;
+    overflow:hidden;
+    transition:all 0.4s ease;
+  }
+  .oracle-btn::before{
+    content:'';position:absolute;top:-50%;left:-50%;
+    width:200%;height:200%;
+    background:conic-gradient(from 0deg,transparent,var(--gold),transparent,var(--purple-glow),transparent);
+    animation:btnGlow 3s linear infinite;
+    opacity:0.15;
+  }
+  @keyframes btnGlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+  .oracle-btn:hover{
+    box-shadow:0 0 30px rgba(212,160,23,0.4), 0 0 60px rgba(123,47,242,0.3);
+    transform:scale(1.05);
+  }
+  .oracle-btn:active{transform:scale(0.98)}
+  .oracle-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+  .oracle-btn span{position:relative;z-index:2}
+
+  /* DICE */
+  .dice-stage{
+    width:120px;height:120px;
+    perspective:600px;
+    margin:20px auto;
+    display:none;
+  }
+  .dice-stage.active{display:block}
+  .dice{
+    width:100%;height:100%;
+    position:relative;
+    transform-style:preserve-3d;
+  }
+  .dice.rolling{animation:diceRoll 2.5s ease-out forwards}
+  @keyframes diceRoll{
+    0%{transform:rotateX(0) rotateY(0) rotateZ(0)}
+    20%{transform:rotateX(720deg) rotateY(360deg) rotateZ(180deg)}
+    40%{transform:rotateX(1080deg) rotateY(720deg) rotateZ(540deg)}
+    60%{transform:rotateX(1440deg) rotateY(1080deg) rotateZ(720deg)}
+    80%{transform:rotateX(1620deg) rotateY(1260deg) rotateZ(810deg)}
+    100%{transform:rotateX(1800deg) rotateY(1440deg) rotateZ(900deg)}
+  }
+  .dice-face{
+    position:absolute;width:120px;height:120px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:2.5rem;
+    background:linear-gradient(135deg,rgba(26,10,46,0.95),rgba(10,0,20,0.95));
+    border:2px solid var(--gold-dim);
+    border-radius:12px;
+    box-shadow:inset 0 0 20px rgba(123,47,242,0.3);
+  }
+  .dice-face:nth-child(1){transform:rotateY(0deg) translateZ(60px)}
+  .dice-face:nth-child(2){transform:rotateY(180deg) translateZ(60px)}
+  .dice-face:nth-child(3){transform:rotateY(90deg) translateZ(60px)}
+  .dice-face:nth-child(4){transform:rotateY(-90deg) translateZ(60px)}
+  .dice-face:nth-child(5){transform:rotateX(90deg) translateZ(60px)}
+  .dice-face:nth-child(6){transform:rotateX(-90deg) translateZ(60px)}
+
+  .dot{
+    width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle,var(--gold-light),var(--gold));
+    box-shadow:0 0 6px var(--gold);
+    margin:3px;
+  }
+  .dots{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px;padding:10px}
+
+  /* PROPHECY */
+  .prophecy-section{
+    text-align:center;margin:20px 0;
+    opacity:0;transition:opacity 1.5s ease;
+    max-width:600px;
+  }
+  .prophecy-section.visible{opacity:1}
+  .prophecy-text{
+    font-family:'MedievalSharp',cursive;
+    font-size:clamp(1.2rem,3.5vw,1.6rem);
+    line-height:1.8;
+    color:var(--gold-light);
+    text-shadow:0 0 30px rgba(212,160,23,0.4), 0 0 60px rgba(212,160,23,0.2);
+    animation:prophecyGlow 3s ease-in-out infinite alternate;
+  }
+  @keyframes prophecyGlow{
+    0%{text-shadow:0 0 20px rgba(212,160,23,0.3)}
+    100%{text-shadow:0 0 40px rgba(212,160,23,0.6), 0 0 80px rgba(123,47,242,0.3)}
+  }
+  .prophecy-tone{
+    display:inline-block;margin-top:12px;padding:4px 16px;
+    border:1px solid rgba(123,47,242,0.4);border-radius:20px;
+    font-size:0.7rem;letter-spacing:2px;text-transform:uppercase;
+    color:rgba(200,180,220,0.5);
+  }
+
+  /* ASK AGAIN BUTTON */
+  .ask-again-btn{
+    padding:12px 36px;margin:24px 0;
+    background:transparent;
+    border:1px solid rgba(123,47,242,0.4);
+    border-radius:30px;
+    color:rgba(200,180,220,0.7);
+    font-family:'Cinzel',serif;
+    font-size:0.85rem;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all 0.3s ease;
+    display:none;
+  }
+  .ask-again-btn.visible{display:inline-block}
+  .ask-again-btn:hover{
+    border-color:var(--gold);color:var(--gold-light);
+    box-shadow:0 0 20px rgba(212,160,23,0.2);
+  }
+
+  /* HISTORY */
+  .history-section{
+    width:100%;margin-top:40px;
+    border-top:1px solid rgba(123,47,242,0.2);
+    padding-top:24px;
+  }
+  .history-title{
+    font-size:0.8rem;color:var(--gold-dim);
+    letter-spacing:3px;text-transform:uppercase;
+    text-align:center;margin-bottom:16px;
+  }
+  .history-list{list-style:none}
+  .history-item{
+    padding:14px 18px;margin-bottom:10px;
+    background:rgba(123,47,242,0.05);
+    border:1px solid rgba(123,47,242,0.15);
+    border-radius:8px;
+    transition:all 0.3s ease;
+  }
+  .history-item:hover{border-color:rgba(212,160,23,0.3)}
+  .history-question{
+    font-size:0.8rem;color:rgba(200,180,220,0.5);
+    margin-bottom:6px;font-style:italic;
+  }
+  .history-answer{
+    font-family:'MedievalSharp',cursive;
+    font-size:0.95rem;color:var(--gold);
+  }
+  .history-meta{
+    font-size:0.65rem;color:rgba(200,180,220,0.3);
+    margin-top:6px;
+  }
+  .history-empty{
+    text-align:center;font-size:0.8rem;
+    color:rgba(200,180,220,0.3);font-style:italic;
+  }
+
+  /* DECORATIVE ORNAMENT */
+  .ornament{
+    font-size:1.8rem;color:var(--gold-dim);
+    margin:10px 0;opacity:0.4;
+    user-select:none;
+  }
+
+  /* STATUS TEXT */
+  .status-text{
+    font-size:0.85rem;color:rgba(200,180,220,0.6);
+    font-style:italic;margin:10px 0;
+    min-height:1.2em;
+    text-align:center;
+  }
+
+  /* RESPONSIVE */
+  @media(max-width:480px){
+    .container{padding:24px 16px}
+    .oracle-btn{padding:14px 32px}
+    .dice-stage{width:90px;height:90px}
+    .dice-face{width:90px;height:90px;font-size:1.8rem}
+    .dice-face:nth-child(1){transform:rotateY(0deg) translateZ(45px)}
+    .dice-face:nth-child(2){transform:rotateY(180deg) translateZ(45px)}
+    .dice-face:nth-child(3){transform:rotateY(90deg) translateZ(45px)}
+    .dice-face:nth-child(4){transform:rotateY(-90deg) translateZ(45px)}
+    .dice-face:nth-child(5){transform:rotateX(90deg) translateZ(45px)}
+    .dice-face:nth-child(6){transform:rotateX(-90deg) translateZ(45px)}
+    .dot{width:10px;height:10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="fog-container">
+  <div class="fog"></div>
+  <div class="fog"></div>
+  <div class="fog"></div>
+</div>
+
+<div class="particles" id="particles"></div>
+<div class="lightning-overlay" id="lightning"></div>
+<div class="dim-overlay" id="dimOverlay"></div>
+
+<div class="container">
+  <h1 class="title">Oracle Dice</h1>
+  <p class="subtitle">Peer beyond the veil</p>
+  <div class="ornament">&#9764;</div>
+
+  <div class="question-section">
+    <label class="question-label" for="questionInput">Speak your question into the void</label>
+    <input type="text" id="questionInput" class="question-input"
+      placeholder="Should I quit my job?"
+      maxlength="200" autocomplete="off">
+  </div>
+
+  <button class="oracle-btn" id="oracleBtn" onclick="consultOracle()">
+    <span>Consult the Oracle</span>
+  </button>
+
+  <div class="status-text" id="statusText"></div>
+
+  <div class="dice-stage" id="diceStage">
+    <div class="dice" id="dice">
+      <div class="dice-face"><div class="dots"><div class="dot"></div></div></div>
+      <div class="dice-face"><div class="dots"><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="dice-face"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="dice-face"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="dice-face"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+      <div class="dice-face"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>
+    </div>
+  </div>
+
+  <div class="prophecy-section" id="prophecySection">
+    <p class="prophecy-text" id="prophecyText"></p>
+    <span class="prophecy-tone" id="prophecyTone"></span>
+  </div>
+
+  <button class="ask-again-btn" id="askAgainBtn" onclick="askAgain()">Ask the Oracle Again</button>
+
+  <div class="history-section" id="historySection">
+    <h3 class="history-title">Scroll of Past Consultations</h3>
+    <ul class="history-list" id="historyList">
+      <li class="history-empty">The scroll is empty. The Oracle awaits your first question.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+// ===== PROPHECIES (80+ templates across 4 tones) =====
+const prophecies = {
+  ominous: [
+    "The stars align, but not in your favor. Proceed... if you dare.",
+    "A shadow falls across this path. Turn back while you still can.",
+    "The bones speak of loss. Guard what you hold dear.",
+    "Three ravens circle overhead. This is not the time.",
+    "The void has heard you, and it laughs.",
+    "What you seek will find you first, and you may not like the meeting.",
+    "The river runs red at dusk. Wait for clearer waters.",
+    "An old debt will come calling. Are you prepared to pay?",
+    "The ground beneath your feet is not as solid as you believe.",
+    "Something wicked stirs in answer to your question. Be careful what you summon.",
+    "The candle flickers before it dies. So too does this path.",
+    "I see teeth in the darkness. Do not go gently.",
+    "The mirror shows a face that is not quite yours. Question everything.",
+    "Ash falls from a sky you cannot see. This is an ending, not a beginning.",
+    "The Oracle weeps for what it has seen. You are not ready.",
+    "There is a door. Behind it, something waits. It has been waiting a very long time.",
+    "The dice fell and cracked. Even the Oracle fears this answer.",
+    "A serpent sleeps beneath the stone you are about to overturn.",
+    "The moon is dark tonight. All dark moons bring dark tidings.",
+    "Trust nothing that arrives too easily. The trap is already set.",
+  ],
+  encouraging: [
+    "Fortune smiles. Act before the moon changes.",
+    "The wind is at your back. Spread your sails now.",
+    "A golden thread runs through this decision. Follow it.",
+    "The ancestors nod in approval. You have their blessing.",
+    "Stars have aligned in patterns not seen for a thousand years. Move boldly.",
+    "Your courage has already been rewarded. You simply haven't noticed yet.",
+    "The seed you plant today will become a forest. Begin.",
+    "Light breaks through. The Oracle sees triumph on this path.",
+    "The universe has been waiting for you to ask this exact question. Yes.",
+    "A door opens that can never be closed again. Walk through it.",
+    "The dice sing. This is your moment. Seize it with both hands.",
+    "What you fear is smaller than you imagine. What awaits is greater than you dream.",
+    "The Oracle has seen ten thousand futures. In most of them, you succeed.",
+    "Rise. The throne is empty and it bears your name.",
+    "An ancient power stirs in your favor. Do not waste this gift.",
+    "Every obstacle in your path is made of paper. Push through.",
+    "The Oracle rarely smiles. Today it smiles for you.",
+    "Your question answers itself. You already know this is right.",
+    "The fire in your chest? That is the universe saying yes.",
+    "Destiny bends toward you like a tree heavy with fruit. Reach up.",
+  ],
+  cryptic: [
+    "The answer lies in the third drawer you haven't opened in years.",
+    "Count the crows at dawn. You'll know what to do.",
+    "A stranger will sneeze three times. Pay attention to what follows.",
+    "The answer is hidden in the song you can't stop humming.",
+    "Look to the left hand. It knows what the right hand denies.",
+    "When the clock strikes an odd hour, the truth will taste like copper.",
+    "The cat knows. Ask the cat.",
+    "Your shoelace will break on a Tuesday. That is when you'll understand.",
+    "Read the seventh word on page forty-two of the nearest book.",
+    "The answer was written in steam on a bathroom mirror. You wiped it away.",
+    "Follow the crack in the ceiling. It points to your answer.",
+    "An umbrella. A key. A glass of water. One of these is your answer.",
+    "The Oracle speaks in colors today: indigo, then vermillion, then silence.",
+    "Your reflection blinked first. Think about what that means.",
+    "The teacup has a chip on its rim. That chip is your answer.",
+    "Between the second and third raindrop, there is a pause. Live there.",
+    "The word you cannot spell is the word you most need to say.",
+    "A pigeon carries your answer. You will know which pigeon.",
+    "The answer rhymes with something you said last Wednesday.",
+    "Turn the map upside down. Now you can see where you truly are.",
+    "The dream you forgot this morning held the answer. Try to remember the color blue.",
+    "Your answer is underneath something heavy that you've been meaning to move.",
+  ],
+  snarky: [
+    "You already know the answer. You're just looking for permission.",
+    "The Oracle charges extra for questions you could answer yourself.",
+    "Interesting question. Wrong question, but interesting.",
+    "Have you tried asking someone who actually cares about the outcome?",
+    "The Oracle has seen your browser history. The answer is obvious.",
+    "Bold of you to assume the universe has an opinion about this.",
+    "The dice rolled their eyes. Yes, dice can do that apparently.",
+    "The Oracle consulted its Oracle, and even they said 'seriously?'",
+    "You're going to do what you want anyway. Why are you asking a dice?",
+    "The spirits said, and I quote: 'lol.'",
+    "This is the third time you've asked this week. The answer hasn't changed.",
+    "The Oracle is on break. Please consult your common sense instead.",
+    "Somewhere, a more interesting question is waiting to be asked.",
+    "The Oracle sees all, knows all, and is mildly disappointed in all.",
+    "Your question has been forwarded to the Department of Obvious Answers.",
+    "The stars don't care. But fine, here's your prophecy anyway.",
+    "The Oracle's magic 8-ball says 'Ask again later.' The Oracle agrees.",
+    "Plot twist: you are the Oracle. You always were. Surprise.",
+    "The ancient spirits convened a meeting about your question. Minutes: 'No.'",
+    "The Oracle would like to remind you that free will exists. Use it.",
+    "Asking a glowing dice about life decisions. Peak humanity. The answer is yes.",
+    "The void gazed back into you and found the answer unremarkable.",
+  ],
+};
+
+// Build flat list for random picking
+const allProphecies = [];
+for (const [tone, list] of Object.entries(prophecies)) {
+  for (const text of list) {
+    allProphecies.push({ text, tone });
+  }
+}
+
+// ===== CONSULTATION HISTORY =====
+let history = JSON.parse(localStorage.getItem('oracleHistory') || '[]');
+
+// ===== WEB AUDIO: THUNDER =====
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playThunder() {
+  const ctx = getAudioCtx();
+  const duration = 3;
+  const sampleRate = ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, sampleRate * duration, sampleRate);
+  const data = buffer.getChannelData(0);
+
+  // Generate thunder: filtered noise with exponential decay
+  for (let i = 0; i < data.length; i++) {
+    const t = i / sampleRate;
+    const envelope = Math.exp(-t * 2) * (1 + 0.3 * Math.sin(t * 5));
+    // Add rumble bursts
+    const burst1 = t < 0.3 ? Math.exp(-t * 8) * 0.8 : 0;
+    const burst2 = (t > 0.5 && t < 0.9) ? Math.exp(-(t - 0.5) * 6) * 0.5 : 0;
+    data[i] = (Math.random() * 2 - 1) * (envelope * 0.3 + burst1 + burst2);
+  }
+
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+
+  // Low-pass filter for deep rumble
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 150;
+  filter.Q.value = 1;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.6;
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
+
+function playMysticalChime() {
+  const ctx = getAudioCtx();
+  const freqs = [261.6, 329.6, 392, 523.25]; // C major chord
+  freqs.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
+    gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.15 + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(ctx.currentTime + i * 0.15);
+    osc.stop(ctx.currentTime + i * 0.15 + 2.5);
+  });
+}
+
+// ===== PARTICLES =====
+function createParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (8 + Math.random() * 12) + 's';
+    p.style.animationDelay = Math.random() * 10 + 's';
+    p.style.width = p.style.height = (2 + Math.random() * 3) + 'px';
+    container.appendChild(p);
+  }
+}
+createParticles();
+
+// ===== LIGHTNING =====
+function triggerLightning(count = 3) {
+  const el = document.getElementById('lightning');
+  let i = 0;
+  const flash = () => {
+    if (i >= count) return;
+    el.classList.remove('flash');
+    void el.offsetWidth; // reflow
+    el.classList.add('flash');
+    i++;
+    setTimeout(flash, 200 + Math.random() * 400);
+  };
+  flash();
+}
+
+// ===== SPEECH SYNTHESIS =====
+function speakProphecy(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.75;
+  utter.pitch = 0.4;
+  utter.volume = 0.8;
+  // Try to find a deep voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /daniel|thomas|male|deep/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utter.voice = preferred;
+  window.speechSynthesis.speak(utter);
+}
+// Pre-load voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ===== RENDER HISTORY =====
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (history.length === 0) {
+    list.innerHTML = '<li class="history-empty">The scroll is empty. The Oracle awaits your first question.</li>';
+    return;
+  }
+  list.innerHTML = history.slice().reverse().map(h => `
+    <li class="history-item">
+      <div class="history-question">"${escapeHtml(h.question)}"</div>
+      <div class="history-answer">${escapeHtml(h.prophecy)}</div>
+      <div class="history-meta">${h.tone} &middot; ${new Date(h.time).toLocaleString()}</div>
+    </li>
+  `).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+renderHistory();
+
+// ===== MAIN ORACLE CONSULTATION =====
+let isConsulting = false;
+
+async function consultOracle() {
+  if (isConsulting) return;
+
+  const input = document.getElementById('questionInput');
+  const question = input.value.trim();
+  if (!question) {
+    input.style.borderColor = '#f44';
+    setTimeout(() => input.style.borderColor = '', 1000);
+    return;
+  }
+
+  isConsulting = true;
+  const btn = document.getElementById('oracleBtn');
+  btn.disabled = true;
+
+  const statusText = document.getElementById('statusText');
+  const dimOverlay = document.getElementById('dimOverlay');
+  const diceStage = document.getElementById('diceStage');
+  const dice = document.getElementById('dice');
+  const prophecySection = document.getElementById('prophecySection');
+  const askAgainBtn = document.getElementById('askAgainBtn');
+
+  // Reset
+  prophecySection.classList.remove('visible');
+  askAgainBtn.classList.remove('visible');
+
+  // PHASE 1: Dim and rumble
+  statusText.textContent = 'The Oracle stirs...';
+  dimOverlay.classList.add('active');
+  playThunder();
+
+  await sleep(800);
+
+  // PHASE 2: Lightning
+  statusText.textContent = 'Forces gather from beyond...';
+  triggerLightning(4);
+
+  await sleep(1200);
+
+  // PHASE 3: Dice roll
+  statusText.textContent = 'The dice of fate are cast...';
+  diceStage.classList.add('active');
+  dice.classList.remove('rolling');
+  void dice.offsetWidth;
+  dice.classList.add('rolling');
+
+  await sleep(2800);
+
+  // PHASE 4: Chime + Prophecy
+  playMysticalChime();
+  statusText.textContent = '';
+
+  const chosen = allProphecies[Math.floor(Math.random() * allProphecies.length)];
+
+  document.getElementById('prophecyText').textContent = chosen.text;
+  document.getElementById('prophecyTone').textContent = chosen.tone;
+  prophecySection.classList.add('visible');
+
+  // Speak
+  await sleep(500);
+  speakProphecy(chosen.text);
+
+  // Un-dim
+  dimOverlay.classList.remove('active');
+
+  // Save to history
+  history.push({
+    question,
+    prophecy: chosen.text,
+    tone: chosen.tone,
+    time: Date.now(),
+  });
+  if (history.length > 50) history = history.slice(-50);
+  localStorage.setItem('oracleHistory', JSON.stringify(history));
+  renderHistory();
+
+  // Show ask again
+  askAgainBtn.classList.add('visible');
+
+  btn.disabled = false;
+  isConsulting = false;
+}
+
+function askAgain() {
+  const input = document.getElementById('questionInput');
+  input.value = '';
+  input.focus();
+
+  document.getElementById('prophecySection').classList.remove('visible');
+  document.getElementById('askAgainBtn').classList.remove('visible');
+  document.getElementById('diceStage').classList.remove('active');
+  document.getElementById('dice').classList.remove('rolling');
+  document.getElementById('statusText').textContent = '';
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Enter key triggers oracle
+document.getElementById('questionInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') consultOracle();
+});
+</script>
+</body>
+</html>

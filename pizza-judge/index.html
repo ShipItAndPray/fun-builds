@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Pizza Judge - The Definitive Food Argument Settler</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --pizza-red:#d32f2f;--pizza-orange:#e65100;--pizza-gold:#ff8f00;
+    --pizza-yellow:#ffc107;--pizza-cream:#fff8e1;--pizza-brown:#4e342e;
+    --pizza-dark:#2e1503;--pizza-light:#fff3e0;--glow:#ff6d00;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:linear-gradient(135deg,var(--pizza-dark) 0%,#3e1a00 50%,var(--pizza-dark) 100%);
+    color:var(--pizza-cream);min-height:100vh;overflow-x:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .container{max-width:480px;margin:0 auto;padding:16px;padding-bottom:100px}
+  h1{
+    text-align:center;font-size:2.2em;margin:12px 0 4px;
+    background:linear-gradient(to right,var(--pizza-yellow),var(--pizza-orange),var(--pizza-red));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    text-shadow:none;
+  }
+  .subtitle{text-align:center;font-size:.85em;color:var(--pizza-gold);margin-bottom:18px;opacity:.8}
+  .pizza-icon{text-align:center;font-size:3em;margin-top:8px;animation:bounce 2s infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tab{
+    flex:1;min-width:0;padding:10px 6px;text-align:center;font-size:.78em;font-weight:700;
+    background:var(--pizza-brown);border:2px solid transparent;border-radius:12px;cursor:pointer;
+    color:var(--pizza-cream);white-space:nowrap;transition:.2s;
+  }
+  .tab.active{border-color:var(--pizza-gold);background:var(--pizza-orange);color:#fff}
+  .tab:hover{background:var(--pizza-orange)}
+
+  .panel{display:none}.panel.active{display:block}
+
+  /* Input area */
+  .input-row{display:flex;gap:8px;margin-bottom:12px}
+  .input-row input{
+    flex:1;padding:12px;border-radius:12px;border:2px solid var(--pizza-brown);
+    background:rgba(255,255,255,.08);color:var(--pizza-cream);font-size:1em;
+    outline:none;transition:.2s;
+  }
+  .input-row input:focus{border-color:var(--pizza-gold)}
+  .input-row input::placeholder{color:rgba(255,243,224,.35)}
+
+  .btn{
+    padding:12px 20px;border-radius:12px;border:none;font-weight:700;font-size:.95em;
+    cursor:pointer;transition:.2s;text-transform:uppercase;letter-spacing:.5px;
+  }
+  .btn:active{transform:scale(.95)}
+  .btn-primary{background:linear-gradient(135deg,var(--pizza-orange),var(--pizza-red));color:#fff}
+  .btn-primary:hover{box-shadow:0 0 20px rgba(255,109,0,.5)}
+  .btn-gold{background:linear-gradient(135deg,var(--pizza-gold),var(--pizza-orange));color:var(--pizza-dark)}
+  .btn-danger{background:linear-gradient(135deg,#c62828,#b71c1c);color:#fff}
+  .btn-ghost{background:rgba(255,255,255,.08);color:var(--pizza-cream);border:1px solid var(--pizza-brown)}
+  .btn-block{display:block;width:100%;margin-top:8px}
+
+  /* Food cards */
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .food-card{
+    background:linear-gradient(135deg,rgba(255,143,0,.15),rgba(211,47,47,.1));
+    border:2px solid var(--pizza-brown);border-radius:16px;padding:16px 10px;
+    text-align:center;cursor:pointer;transition:.25s;position:relative;overflow:hidden;
+    user-select:none;-webkit-user-select:none;
+  }
+  .food-card:hover{border-color:var(--pizza-gold);transform:translateY(-2px)}
+  .food-card:active{transform:scale(.95)}
+  .food-card.voted{border-color:var(--pizza-gold);background:linear-gradient(135deg,rgba(255,193,7,.25),rgba(255,143,0,.2))}
+  .food-card .food-emoji{font-size:2.2em;margin-bottom:6px;display:block}
+  .food-card .food-name{font-size:1em;font-weight:700;color:var(--pizza-cream)}
+  .food-card .vote-count{
+    font-size:.75em;color:var(--pizza-gold);margin-top:4px;
+    opacity:0;transition:.2s;
+  }
+  .food-card.voted .vote-count,.show-votes .food-card .vote-count{opacity:1}
+  .food-card .vote-badge{
+    position:absolute;top:8px;right:8px;background:var(--pizza-gold);color:var(--pizza-dark);
+    width:24px;height:24px;border-radius:50%;font-size:.7em;font-weight:900;
+    display:flex;align-items:center;justify-content:center;
+    transform:scale(0);transition:.2s;
+  }
+  .food-card.voted .vote-badge{transform:scale(1)}
+
+  .remove-btn{
+    position:absolute;top:4px;left:8px;background:none;border:none;
+    color:rgba(255,255,255,.3);font-size:1.1em;cursor:pointer;padding:4px;
+  }
+  .remove-btn:hover{color:var(--pizza-red)}
+
+  /* Voter info */
+  .voter-section{
+    background:rgba(255,255,255,.05);border-radius:12px;padding:14px;margin:12px 0;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .voter-section label{font-size:.8em;color:var(--pizza-gold);margin-bottom:6px;display:block}
+  .voter-count{display:flex;align-items:center;gap:12px;margin-top:8px}
+  .voter-count button{
+    width:36px;height:36px;border-radius:50%;border:2px solid var(--pizza-gold);
+    background:transparent;color:var(--pizza-gold);font-size:1.2em;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .voter-count button:active{background:var(--pizza-gold);color:var(--pizza-dark)}
+  .voter-count span{font-size:1.4em;font-weight:700;min-width:30px;text-align:center}
+
+  .current-voter{
+    text-align:center;margin:12px 0;padding:10px;background:rgba(255,143,0,.15);
+    border-radius:12px;font-size:.9em;
+  }
+  .current-voter strong{color:var(--pizza-gold)}
+
+  /* Verdict overlay */
+  .verdict-overlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:1000;
+    background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;
+    justify-content:center;padding:20px;
+  }
+  .verdict-overlay.show{display:flex}
+
+  /* Bracket */
+  .bracket-container{
+    width:100%;max-width:400px;margin:20px auto;position:relative;
+  }
+  .bracket-round{
+    display:flex;flex-direction:column;gap:12px;margin-bottom:20px;
+    opacity:0;transform:translateY(20px);transition:.6s;
+  }
+  .bracket-round.visible{opacity:1;transform:translateY(0)}
+  .bracket-round .round-label{
+    text-align:center;font-size:.7em;color:var(--pizza-gold);text-transform:uppercase;
+    letter-spacing:2px;margin-bottom:4px;
+  }
+  .bracket-match{
+    display:flex;gap:8px;justify-content:center;align-items:center;
+  }
+  .bracket-entry{
+    padding:8px 14px;border-radius:10px;font-size:.85em;font-weight:700;
+    background:rgba(255,255,255,.08);border:2px solid var(--pizza-brown);
+    min-width:80px;text-align:center;transition:.4s;
+  }
+  .bracket-entry.winner{border-color:var(--pizza-gold);background:rgba(255,193,7,.2);color:var(--pizza-yellow)}
+  .bracket-entry.loser{opacity:.35;text-decoration:line-through}
+  .bracket-vs{font-size:.7em;color:var(--pizza-red);font-weight:900}
+
+  /* Winner */
+  .winner-reveal{
+    text-align:center;opacity:0;transform:scale(.5);transition:.6s;
+  }
+  .winner-reveal.visible{opacity:1;transform:scale(1)}
+  .winner-reveal .crown{font-size:4em;animation:bounce 1s infinite}
+  .winner-reveal .winner-text{
+    font-size:2.5em;font-weight:900;margin:10px 0;
+    background:linear-gradient(to right,var(--pizza-yellow),var(--pizza-orange));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .winner-reveal .verdict-label{
+    font-size:1em;color:var(--pizza-gold);letter-spacing:3px;text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .verdict-btns{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center}
+
+  /* Wheel */
+  .wheel-container{
+    position:relative;width:280px;height:280px;margin:20px auto;display:none;
+  }
+  .wheel-container.show{display:block}
+  .wheel-canvas{width:280px;height:280px}
+  .wheel-pointer{
+    position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+    font-size:2em;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));z-index:2;
+  }
+  .wheel-label{text-align:center;color:var(--pizza-gold);font-size:.85em;margin-top:8px}
+
+  /* Overruled */
+  .overruled-banner{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:2000;
+    background:rgba(183,28,28,.95);display:none;align-items:center;justify-content:center;
+    flex-direction:column;
+  }
+  .overruled-banner.show{display:flex}
+  .overruled-banner .gavel{font-size:5em;animation:slam .3s ease-out}
+  .overruled-banner h2{font-size:3em;color:#fff;margin:10px 0;letter-spacing:4px}
+  .overruled-banner p{color:rgba(255,255,255,.7);font-size:1em}
+  @keyframes slam{0%{transform:rotate(-30deg) scale(2);opacity:0}100%{transform:rotate(0) scale(1);opacity:1}}
+
+  /* Stats */
+  .stats-card{
+    background:rgba(255,255,255,.05);border-radius:14px;padding:14px;margin:10px 0;
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .stats-card h3{font-size:.85em;color:var(--pizza-gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+  .stat-bar{display:flex;align-items:center;gap:8px;margin:6px 0}
+  .stat-bar .stat-name{font-size:.82em;min-width:70px;text-align:right}
+  .stat-bar .bar-track{flex:1;height:20px;background:rgba(255,255,255,.06);border-radius:10px;overflow:hidden}
+  .stat-bar .bar-fill{
+    height:100%;border-radius:10px;transition:width .6s ease;
+    background:linear-gradient(90deg,var(--pizza-orange),var(--pizza-gold));
+  }
+  .stat-bar .stat-val{font-size:.78em;color:var(--pizza-gold);min-width:30px}
+
+  .history-item{
+    background:rgba(255,255,255,.04);border-radius:10px;padding:10px 12px;margin:6px 0;
+    display:flex;justify-content:space-between;align-items:center;
+    border-left:3px solid var(--pizza-orange);
+  }
+  .history-item .h-winner{font-weight:700;color:var(--pizza-yellow)}
+  .history-item .h-date{font-size:.7em;color:rgba(255,255,255,.4)}
+  .history-item .h-options{font-size:.72em;color:rgba(255,255,255,.5);margin-top:2px}
+
+  .empty-state{text-align:center;padding:30px;color:rgba(255,255,255,.3);font-size:.9em}
+
+  .share-text{
+    background:rgba(255,255,255,.06);border-radius:10px;padding:10px;margin-top:10px;
+    font-size:.8em;color:var(--pizza-cream);word-break:break-word;cursor:pointer;
+    border:1px dashed var(--pizza-brown);
+  }
+  .share-text:active{background:rgba(255,193,7,.15)}
+
+  .toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:var(--pizza-gold);color:var(--pizza-dark);padding:10px 20px;
+    border-radius:20px;font-weight:700;font-size:.85em;z-index:5000;
+    opacity:0;transition:.3s;pointer-events:none;
+  }
+  .toast.show{opacity:1}
+
+  /* Just Pick button */
+  .just-pick{
+    background:linear-gradient(135deg,var(--pizza-red),#b71c1c);
+    border:2px dashed var(--pizza-gold);animation:pulse 2s infinite;
+  }
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,109,0,.4)}50%{box-shadow:0 0 0 10px rgba(255,109,0,0)}}
+
+  .section-title{
+    font-size:.75em;color:var(--pizza-gold);text-transform:uppercase;
+    letter-spacing:2px;margin:16px 0 8px;
+  }
+
+  .clear-btn{font-size:.7em;color:rgba(255,255,255,.3);background:none;border:none;cursor:pointer;float:right}
+  .clear-btn:hover{color:var(--pizza-red)}
+
+  /* Dramatic countdown */
+  .countdown-num{
+    font-size:6em;font-weight:900;color:var(--pizza-gold);
+    animation:countPop .4s ease-out;
+  }
+  @keyframes countPop{0%{transform:scale(2);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  .overrule-used{opacity:.3;pointer-events:none;position:relative}
+  .overrule-used::after{
+    content:'USED';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);
+    font-size:.7em;color:var(--pizza-red);font-weight:900;letter-spacing:2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="pizza-icon">&#127829;</div>
+  <h1>PIZZA JUDGE</h1>
+  <p class="subtitle">The Definitive Food Argument Settler</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('debate')">The Debate</div>
+    <div class="tab" onclick="switchTab('stats')">Win Stats</div>
+    <div class="tab" onclick="switchTab('history')">History</div>
+  </div>
+
+  <!-- DEBATE PANEL -->
+  <div id="panel-debate" class="panel active">
+    <div id="setup-phase">
+      <p class="section-title">What are we eating? (2-6 options)</p>
+      <div class="input-row">
+        <input type="text" id="food-input" placeholder="e.g. Pizza, Sushi, Tacos..." maxlength="30"
+          onkeydown="if(event.key==='Enter')addOption()">
+        <button class="btn btn-primary" onclick="addOption()">Add</button>
+      </div>
+      <div class="options-grid" id="options-grid"></div>
+
+      <div class="voter-section" id="voter-section" style="display:none">
+        <label>How many people are voting?</label>
+        <div class="voter-count">
+          <button onclick="changeVoters(-1)">-</button>
+          <span id="voter-num">2</span>
+          <button onclick="changeVoters(1)">+</button>
+        </div>
+      </div>
+
+      <button class="btn btn-gold btn-block" id="start-btn" style="display:none" onclick="startVoting()">
+        &#9989; Start Voting
+      </button>
+      <button class="btn just-pick btn-block" id="pick-btn" style="display:none" onclick="justPickForUs()">
+        &#127922; JUST PICK FOR US
+      </button>
+    </div>
+
+    <div id="voting-phase" style="display:none">
+      <div class="current-voter" id="current-voter-label">
+        <strong>Voter 1</strong> &mdash; tap your pick!
+      </div>
+      <div class="options-grid show-votes" id="voting-grid"></div>
+      <button class="btn btn-ghost btn-block" onclick="skipVoter()">Skip This Voter</button>
+    </div>
+  </div>
+
+  <!-- STATS PANEL -->
+  <div id="panel-stats" class="panel">
+    <p class="section-title">All-Time Win Rates <button class="clear-btn" onclick="clearStats()">Clear</button></p>
+    <div id="stats-bars"></div>
+  </div>
+
+  <!-- HISTORY PANEL -->
+  <div id="panel-history" class="panel">
+    <p class="section-title">Group Order History <button class="clear-btn" onclick="clearHistory()">Clear</button></p>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- VERDICT OVERLAY -->
+<div class="verdict-overlay" id="verdict-overlay">
+  <div id="verdict-content"></div>
+</div>
+
+<!-- OVERRULED OVERLAY -->
+<div class="overruled-banner" id="overruled-banner">
+  <div class="gavel">&#9878;&#65039;</div>
+  <h2>OVERRULED!</h2>
+  <p id="overruled-text">The verdict has been vetoed!</p>
+  <button class="btn btn-gold" style="margin-top:20px" onclick="closeOverruled()">OK, Back to Voting</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// Audio context for sound effects
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function getAudio(){
+  if(!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playDinnerBell(){
+  try{
+    const ctx=getAudio(),now=ctx.currentTime;
+    [800,1000,1200,1000,800,1000,1200].forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(.15,now+i*.12);
+      g.gain.exponentialDecayToValueAtTime?.(.001,now+i*.12+.15)||g.gain.setTargetAtTime(.001,now+i*.12,.05);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(now+i*.12);o.stop(now+i*.12+.2);
+    });
+  }catch(e){}
+}
+
+function playSadTrombone(){
+  try{
+    const ctx=getAudio(),now=ctx.currentTime;
+    const notes=[250,235,220,180];
+    notes.forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sawtooth';o.frequency.value=f;
+      g.gain.setValueAtTime(.1,now+i*.35);
+      g.gain.setTargetAtTime(.001,now+i*.35+.25,.08);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(now+i*.35);o.stop(now+i*.35+.4);
+    });
+  }catch(e){}
+}
+
+function playDrumroll(){
+  try{
+    const ctx=getAudio(),now=ctx.currentTime;
+    for(let i=0;i<30;i++){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='square';o.frequency.value=100+Math.random()*50;
+      const t=now+i*.05;
+      g.gain.setValueAtTime(.03+i*.003,t);
+      g.gain.setTargetAtTime(.001,t+.04,.01);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(t);o.stop(t+.06);
+    }
+  }catch(e){}
+}
+
+function playWheelTick(){
+  try{
+    const ctx=getAudio(),o=ctx.createOscillator(),g=ctx.createGain();
+    o.type='sine';o.frequency.value=1200;
+    g.gain.setValueAtTime(.08,ctx.currentTime);
+    g.gain.setTargetAtTime(.001,ctx.currentTime,.02);
+    o.connect(g);g.connect(ctx.destination);
+    o.start();o.stop(ctx.currentTime+.05);
+  }catch(e){}
+}
+
+function playVictoryFanfare(){
+  try{
+    const ctx=getAudio(),now=ctx.currentTime;
+    const melody=[523,659,784,1047,784,1047];
+    melody.forEach((f,i)=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(.12,now+i*.15);
+      g.gain.setTargetAtTime(.001,now+i*.15+.2,.06);
+      o.connect(g);g.connect(ctx.destination);
+      o.start(now+i*.15);o.stop(now+i*.15+.3);
+    });
+  }catch(e){}
+}
+
+// Food emoji mapping
+const foodEmojis={
+  pizza:'\u{1F355}',sushi:'\u{1F363}',taco:'\u{1F32E}',tacos:'\u{1F32E}',burger:'\u{1F354}',burgers:'\u{1F354}',
+  ramen:'\u{1F35C}',noodle:'\u{1F35C}',noodles:'\u{1F35C}',pasta:'\u{1F35D}',
+  salad:'\u{1F957}',steak:'\u{1F969}',chicken:'\u{1F357}',wings:'\u{1F357}',
+  fries:'\u{1F35F}',hotdog:'\u{1F32D}','hot dog':'\u{1F32D}',sandwich:'\u{1F96A}',
+  curry:'\u{1F35B}',rice:'\u{1F35A}',bbq:'\u{1F356}',thai:'\u{1F35B}',
+  chinese:'\u{1F961}',mexican:'\u{1F32E}',italian:'\u{1F35D}',indian:'\u{1F35B}',
+  pho:'\u{1F35C}',kebab:'\u{1F356}',fish:'\u{1F41F}',seafood:'\u{1F990}',
+  soup:'\u{1F372}',dumplings:'\u{1F95F}',gyoza:'\u{1F95F}','fried chicken':'\u{1F357}',
+  wrap:'\u{1F32F}',burrito:'\u{1F32F}',donut:'\u{1F369}',donuts:'\u{1F369}',
+  icecream:'\u{1F366}','ice cream':'\u{1F366}',poke:'\u{1F363}',acai:'\u{1F347}',
+  sub:'\u{1F96A}',shawarma:'\u{1F959}',falafel:'\u{1F9C6}',
+};
+function getEmoji(name){
+  const l=name.toLowerCase().trim();
+  return foodEmojis[l]||'\u{1F37D}\u{FE0F}';
+}
+
+// State
+let options=[];
+let numVoters=2;
+let currentVoter=0;
+let votes={};// {optionIndex: count}
+let overruleUsed=false;
+let lastWinner=null;
+
+function addOption(){
+  const input=document.getElementById('food-input');
+  const val=input.value.trim();
+  if(!val)return;
+  if(options.length>=6){showToast('Max 6 options!');return}
+  if(options.find(o=>o.toLowerCase()===val.toLowerCase())){showToast('Already added!');return}
+  options.push(val);
+  input.value='';
+  input.focus();
+  renderSetup();
+}
+
+function removeOption(i){
+  options.splice(i,1);
+  renderSetup();
+}
+
+function renderSetup(){
+  const grid=document.getElementById('options-grid');
+  grid.innerHTML=options.map((o,i)=>`
+    <div class="food-card">
+      <button class="remove-btn" onclick="event.stopPropagation();removeOption(${i})">&times;</button>
+      <span class="food-emoji">${getEmoji(o)}</span>
+      <div class="food-name">${esc(o)}</div>
+    </div>
+  `).join('');
+
+  const enough=options.length>=2;
+  document.getElementById('voter-section').style.display=enough?'block':'none';
+  document.getElementById('start-btn').style.display=enough?'block':'none';
+  document.getElementById('pick-btn').style.display=enough?'block':'none';
+}
+
+function changeVoters(d){
+  numVoters=Math.max(1,Math.min(20,numVoters+d));
+  document.getElementById('voter-num').textContent=numVoters;
+}
+
+function startVoting(){
+  currentVoter=0;
+  votes={};
+  options.forEach((_,i)=>votes[i]=0);
+  overruleUsed=false;
+  document.getElementById('setup-phase').style.display='none';
+  document.getElementById('voting-phase').style.display='block';
+  renderVotingRound();
+}
+
+function renderVotingRound(){
+  document.getElementById('current-voter-label').innerHTML=
+    `<strong>Voter ${currentVoter+1} of ${numVoters}</strong> &mdash; tap your pick!`;
+  const grid=document.getElementById('voting-grid');
+  grid.innerHTML=options.map((o,i)=>`
+    <div class="food-card" onclick="castVote(${i})">
+      <span class="food-emoji">${getEmoji(o)}</span>
+      <div class="food-name">${esc(o)}</div>
+      <div class="vote-count">${votes[i]} vote${votes[i]!==1?'s':''}</div>
+    </div>
+  `).join('');
+}
+
+function castVote(i){
+  votes[i]++;
+  // Flash card
+  const cards=document.querySelectorAll('#voting-grid .food-card');
+  cards[i].classList.add('voted');
+  setTimeout(()=>{
+    currentVoter++;
+    if(currentVoter>=numVoters){
+      tallyVotes();
+    }else{
+      renderVotingRound();
+    }
+  },400);
+}
+
+function skipVoter(){
+  currentVoter++;
+  if(currentVoter>=numVoters) tallyVotes();
+  else renderVotingRound();
+}
+
+function tallyVotes(){
+  // Find max votes
+  let maxV=-1;
+  let winners=[];
+  options.forEach((o,i)=>{
+    if(votes[i]>maxV){maxV=votes[i];winners=[i]}
+    else if(votes[i]===maxV) winners.push(i);
+  });
+
+  if(winners.length>1){
+    // Tiebreaker wheel!
+    showTiebreakerWheel(winners);
+  }else{
+    showBracketVerdict(winners[0]);
+  }
+}
+
+function showBracketVerdict(winnerIdx){
+  const overlay=document.getElementById('verdict-overlay');
+  const content=document.getElementById('verdict-content');
+  overlay.classList.add('show');
+
+  // Build bracket rounds
+  let remaining=[...options.map((o,i)=>({name:o,idx:i,votes:votes[i]}))];
+  // Sort by votes descending
+  remaining.sort((a,b)=>b.votes-a.votes);
+
+  // Simulate elimination rounds
+  const rounds=[];
+  let roundNum=1;
+  while(remaining.length>1){
+    const matches=[];
+    const nextRound=[];
+    for(let i=0;i<remaining.length;i+=2){
+      if(i+1<remaining.length){
+        const a=remaining[i],b=remaining[i+1];
+        const aWins=a.votes>b.votes||(a.votes===b.votes&&a.idx===winnerIdx);
+        matches.push({a,b,winner:aWins?a:b,loser:aWins?b:a});
+        nextRound.push(aWins?a:b);
+      }else{
+        // Bye
+        matches.push({a:remaining[i],b:null,winner:remaining[i],loser:null});
+        nextRound.push(remaining[i]);
+      }
+    }
+    rounds.push({label:remaining.length<=2?'FINAL':'Round '+roundNum,matches});
+    remaining=nextRound;
+    roundNum++;
+  }
+
+  const winner=options[winnerIdx];
+  lastWinner={name:winner,options:[...options],votes:{...votes}};
+
+  // Render bracket
+  let html='<div class="bracket-container">';
+  rounds.forEach((r,ri)=>{
+    html+=`<div class="bracket-round" id="round-${ri}"><div class="round-label">${r.label}</div>`;
+    r.matches.forEach(m=>{
+      if(m.b){
+        html+=`<div class="bracket-match">
+          <div class="bracket-entry" data-winner="${m.winner.name===m.a.name}" data-idx="${m.a.idx}">${getEmoji(m.a.name)} ${esc(m.a.name)} (${m.a.votes})</div>
+          <span class="bracket-vs">VS</span>
+          <div class="bracket-entry" data-winner="${m.winner.name===m.b.name}" data-idx="${m.b.idx}">${getEmoji(m.b.name)} ${esc(m.b.name)} (${m.b.votes})</div>
+        </div>`;
+      }else{
+        html+=`<div class="bracket-match"><div class="bracket-entry winner">${getEmoji(m.a.name)} ${esc(m.a.name)} (BYE)</div></div>`;
+      }
+    });
+    html+='</div>';
+  });
+
+  html+=`<div class="winner-reveal" id="winner-reveal">
+    <div class="crown">&#128081;</div>
+    <div class="verdict-label">FINAL VERDICT</div>
+    <div class="winner-text">${getEmoji(winner)} ${esc(winner)}</div>
+    <div style="color:var(--pizza-gold);font-size:.85em">${votes[winnerIdx]} vote${votes[winnerIdx]!==1?'s':''}</div>
+    <div class="verdict-btns">
+      <button class="btn btn-gold" onclick="shareResult()">&#128227; Share</button>
+      <button class="btn btn-danger ${overruleUsed?'overrule-used':''}" onclick="overrule()" id="overrule-btn">&#9878;&#65039; OVERRULED</button>
+      <button class="btn btn-ghost" onclick="newDebate()">New Debate</button>
+    </div>
+    <div class="share-text" id="share-text" style="display:none"></div>
+  </div>`;
+  html+='</div>';
+
+  content.innerHTML=html;
+
+  // Animate rounds sequentially
+  playDrumroll();
+  rounds.forEach((r,ri)=>{
+    setTimeout(()=>{
+      const el=document.getElementById('round-'+ri);
+      if(el){
+        el.classList.add('visible');
+        // Mark winners/losers
+        el.querySelectorAll('.bracket-entry').forEach(e=>{
+          if(e.dataset.winner==='true')e.classList.add('winner');
+          else if(e.dataset.winner==='false')e.classList.add('loser');
+        });
+      }
+    },(ri+1)*800);
+  });
+
+  // Show winner after all rounds
+  setTimeout(()=>{
+    document.getElementById('winner-reveal').classList.add('visible');
+    playDinnerBell();
+    playVictoryFanfare();
+    // Save to history & stats
+    saveResult(winner);
+  },rounds.length*800+600);
+}
+
+// Tiebreaker wheel
+function showTiebreakerWheel(tiedIndices){
+  const overlay=document.getElementById('verdict-overlay');
+  const content=document.getElementById('verdict-content');
+  overlay.classList.add('show');
+
+  const tiedOptions=tiedIndices.map(i=>options[i]);
+
+  content.innerHTML=`
+    <div style="text-align:center">
+      <div style="font-size:.8em;color:var(--pizza-red);text-transform:uppercase;letter-spacing:3px;margin-bottom:8px">TIE DETECTED!</div>
+      <div style="font-size:1.2em;color:var(--pizza-gold);margin-bottom:12px">${tiedOptions.map(o=>getEmoji(o)+' '+esc(o)).join(' vs ')}</div>
+      <div class="wheel-container show" id="wheel-box">
+        <div class="wheel-pointer">&#9660;</div>
+        <canvas class="wheel-canvas" id="wheel-canvas" width="280" height="280"></canvas>
+      </div>
+      <div class="wheel-label" id="wheel-status">Spinning...</div>
+    </div>
+  `;
+
+  // Draw & spin wheel
+  const canvas=document.getElementById('wheel-canvas');
+  const ctx2d=canvas.getContext('2d');
+  const cx=140,cy=140,r=130;
+  const colors=['#d32f2f','#e65100','#ff8f00','#ffc107','#4e342e','#ff6d00'];
+  const sliceAngle=2*Math.PI/tiedOptions.length;
+  let rotation=0;
+  const targetRotation=Math.random()*2*Math.PI + 8*Math.PI; // 4+ full spins
+  const duration=3500;
+  const start=performance.now();
+  let lastTickAngle=0;
+
+  function drawWheel(rot){
+    ctx2d.clearRect(0,0,280,280);
+    tiedOptions.forEach((name,i)=>{
+      const startA=rot+i*sliceAngle;
+      const endA=startA+sliceAngle;
+      ctx2d.beginPath();
+      ctx2d.moveTo(cx,cy);
+      ctx2d.arc(cx,cy,r,startA,endA);
+      ctx2d.closePath();
+      ctx2d.fillStyle=colors[i%colors.length];
+      ctx2d.fill();
+      ctx2d.strokeStyle='rgba(0,0,0,.3)';
+      ctx2d.lineWidth=2;
+      ctx2d.stroke();
+      // Label
+      ctx2d.save();
+      ctx2d.translate(cx,cy);
+      ctx2d.rotate(startA+sliceAngle/2);
+      ctx2d.fillStyle='#fff';
+      ctx2d.font='bold 14px sans-serif';
+      ctx2d.textAlign='center';
+      ctx2d.fillText(name,r*.55,5);
+      ctx2d.restore();
+    });
+    // Center
+    ctx2d.beginPath();
+    ctx2d.arc(cx,cy,15,0,2*Math.PI);
+    ctx2d.fillStyle='#2e1503';
+    ctx2d.fill();
+  }
+
+  function easeOut(t){return 1-Math.pow(1-t,3)}
+
+  function animate(now){
+    const elapsed=now-start;
+    const t=Math.min(elapsed/duration,1);
+    rotation=targetRotation*easeOut(t);
+
+    // Tick sound at slice boundaries
+    const currentSlice=Math.floor(rotation/sliceAngle);
+    if(currentSlice!==lastTickAngle){
+      playWheelTick();
+      lastTickAngle=currentSlice;
+    }
+
+    drawWheel(-rotation-Math.PI/2);
+
+    if(t<1){
+      requestAnimationFrame(animate);
+    }else{
+      // Determine winner: top position (angle = -PI/2 from pointer)
+      const finalAngle=((rotation%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+      const winIdx=Math.floor(finalAngle/sliceAngle)%tiedOptions.length;
+      const wheelWinner=tiedIndices[winIdx];
+      document.getElementById('wheel-status').innerHTML=
+        `<strong style="color:var(--pizza-yellow)">${getEmoji(options[wheelWinner])} ${esc(options[wheelWinner])} wins!</strong>`;
+      setTimeout(()=>{
+        overlay.classList.remove('show');
+        showBracketVerdict(wheelWinner);
+      },1200);
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+// "Just Pick For Us" with maximum drama
+function justPickForUs(){
+  if(options.length<2)return;
+  const overlay=document.getElementById('verdict-overlay');
+  const content=document.getElementById('verdict-content');
+  overlay.classList.add('show');
+
+  // Dramatic countdown
+  let count=3;
+  function showCount(){
+    if(count>0){
+      content.innerHTML=`<div style="text-align:center">
+        <div style="font-size:.8em;color:var(--pizza-red);text-transform:uppercase;letter-spacing:3px;margin-bottom:20px">The universe is deciding...</div>
+        <div class="countdown-num">${count}</div>
+      </div>`;
+      playDrumroll();
+      count--;
+      setTimeout(showCount,800);
+    }else{
+      // Rapid flash through options
+      let flashes=0;
+      const maxFlashes=15;
+      function flash(){
+        if(flashes<maxFlashes){
+          const ri=Math.floor(Math.random()*options.length);
+          content.innerHTML=`<div style="text-align:center">
+            <div style="font-size:4em">${getEmoji(options[ri])}</div>
+            <div style="font-size:1.5em;font-weight:900;color:var(--pizza-cream);margin-top:8px">${esc(options[ri])}</div>
+          </div>`;
+          playWheelTick();
+          flashes++;
+          setTimeout(flash,80+flashes*15);
+        }else{
+          // Final pick
+          overlay.classList.remove('show');
+          const winner=Math.floor(Math.random()*options.length);
+          // Set fake votes for bracket display
+          votes={};
+          options.forEach((_,i)=>votes[i]=i===winner?1:0);
+          numVoters=1;currentVoter=1;
+          overruleUsed=false;
+          showBracketVerdict(winner);
+        }
+      }
+      flash();
+    }
+  }
+  showCount();
+}
+
+function overrule(){
+  if(overruleUsed)return;
+  overruleUsed=true;
+  // Close verdict
+  document.getElementById('verdict-overlay').classList.remove('show');
+  // Show overruled banner
+  const banner=document.getElementById('overruled-banner');
+  banner.classList.add('show');
+  playSadTrombone();
+  // Remove last history entry
+  const hist=JSON.parse(localStorage.getItem('pj_history')||'[]');
+  if(hist.length>0){
+    const removed=hist.pop();
+    localStorage.setItem('pj_history',JSON.stringify(hist));
+    // Decrement stat
+    const stats=JSON.parse(localStorage.getItem('pj_stats')||'{}');
+    if(stats[removed.winner]){
+      stats[removed.winner]=Math.max(0,stats[removed.winner]-1);
+      localStorage.setItem('pj_stats',JSON.stringify(stats));
+    }
+    document.getElementById('overruled-text').textContent=
+      `${removed.winner} has been VETOED! Vote again.`;
+  }
+}
+
+function closeOverruled(){
+  document.getElementById('overruled-banner').classList.remove('show');
+  // Restart voting
+  resetToSetup();
+}
+
+function shareResult(){
+  if(!lastWinner)return;
+  const text=`\u{1F3DB}\u{FE0F} PIZZA JUDGE VERDICT \u{1F3DB}\u{FE0F}\n\n${getEmoji(lastWinner.name)} ${lastWinner.name} WINS!\n\nContenders: ${lastWinner.options.join(', ')}\nVotes: ${lastWinner.options.map((o,i)=>o+': '+lastWinner.votes[i]).join(', ')}\n\nSettled by PizzaJudge.`;
+
+  const shareBox=document.getElementById('share-text');
+  shareBox.style.display='block';
+  shareBox.textContent=text;
+
+  if(navigator.share){
+    navigator.share({title:'Pizza Judge Verdict',text}).catch(()=>{});
+  }else if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(()=>showToast('Copied to clipboard!'));
+  }
+}
+
+function saveResult(winner){
+  // Stats
+  const stats=JSON.parse(localStorage.getItem('pj_stats')||'{}');
+  stats[winner]=(stats[winner]||0)+1;
+  localStorage.setItem('pj_stats',JSON.stringify(stats));
+
+  // History
+  const hist=JSON.parse(localStorage.getItem('pj_history')||'[]');
+  hist.push({
+    winner,
+    options:[...options],
+    votes:{...votes},
+    date:new Date().toISOString(),
+  });
+  // Keep last 50
+  if(hist.length>50)hist.splice(0,hist.length-50);
+  localStorage.setItem('pj_history',JSON.stringify(hist));
+}
+
+function newDebate(){
+  document.getElementById('verdict-overlay').classList.remove('show');
+  resetToSetup();
+}
+
+function resetToSetup(){
+  document.getElementById('voting-phase').style.display='none';
+  document.getElementById('setup-phase').style.display='block';
+  options=[];
+  votes={};
+  currentVoter=0;
+  numVoters=2;
+  document.getElementById('voter-num').textContent='2';
+  renderSetup();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='stats')renderStats();
+  if(name==='history')renderHistory();
+}
+
+function renderStats(){
+  const stats=JSON.parse(localStorage.getItem('pj_stats')||'{}');
+  const container=document.getElementById('stats-bars');
+  const entries=Object.entries(stats).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length){
+    container.innerHTML='<div class="empty-state">No verdicts yet. Go settle an argument!</div>';
+    return;
+  }
+  const max=entries[0][1];
+  container.innerHTML=entries.map(([name,wins])=>`
+    <div class="stat-bar">
+      <span class="stat-name">${getEmoji(name)} ${esc(name)}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${max?wins/max*100:0}%"></div></div>
+      <span class="stat-val">${wins}W</span>
+    </div>
+  `).join('');
+}
+
+function renderHistory(){
+  const hist=JSON.parse(localStorage.getItem('pj_history')||'[]');
+  const container=document.getElementById('history-list');
+  if(!hist.length){
+    container.innerHTML='<div class="empty-state">No history yet. Start debating!</div>';
+    return;
+  }
+  container.innerHTML=[...hist].reverse().map(h=>{
+    const d=new Date(h.date);
+    const dateStr=d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    return`<div class="history-item">
+      <div>
+        <div class="h-winner">${getEmoji(h.winner)} ${esc(h.winner)}</div>
+        <div class="h-options">vs ${h.options.filter(o=>o!==h.winner).join(', ')}</div>
+      </div>
+      <div class="h-date">${dateStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearStats(){
+  if(confirm('Clear all win stats?')){
+    localStorage.removeItem('pj_stats');
+    renderStats();
+    showToast('Stats cleared');
+  }
+}
+
+function clearHistory(){
+  if(confirm('Clear order history?')){
+    localStorage.removeItem('pj_history');
+    renderHistory();
+    showToast('History cleared');
+  }
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+// Init
+renderSetup();
+</script>
+</body>
+</html>

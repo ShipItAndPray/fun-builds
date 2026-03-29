@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Car Roaster</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Russo+One&family=Barlow+Condensed:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #1a1a1a;
+    --surface2: #242424;
+    --accent: #ff4d00;
+    --accent2: #ff8800;
+    --text: #e8e8e8;
+    --dim: #666;
+    --danger: #ff2222;
+    --success: #00cc66;
+  }
+
+  body {
+    font-family: 'Barlow Condensed', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 16px 12px;
+    background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%);
+    border-bottom: 2px solid var(--accent);
+    position: relative;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), var(--accent), transparent);
+  }
+
+  h1 {
+    font-family: 'Russo One', sans-serif;
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .subtitle {
+    color: var(--dim);
+    font-size: 0.95rem;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .tachometer {
+    display: inline-block;
+    font-size: 1.4rem;
+    margin: 0 6px;
+  }
+
+  /* Main camera / snap area */
+  #snap-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  #camera-preview {
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 4/3;
+    background: var(--surface);
+    border: 2px dashed var(--dim);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #camera-preview.active { border: 2px solid var(--accent); }
+
+  #camera-preview video,
+  #camera-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  #camera-preview .placeholder {
+    text-align: center;
+    color: var(--dim);
+    font-size: 1.1rem;
+    padding: 20px;
+  }
+
+  .placeholder-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .btn {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 32px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,77,0,0.3);
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(255,77,0,0.45); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-secondary {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid #333;
+  }
+
+  .btn-secondary:hover { background: #2a2a2a; }
+
+  .btn-small {
+    font-size: 0.9rem;
+    padding: 8px 18px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Loading screen */
+  #loading-section {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .loading-title {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 24px;
+  }
+
+  .scanner-ring {
+    width: 120px;
+    height: 120px;
+    border: 3px solid var(--surface2);
+    border-top: 3px solid var(--accent);
+    border-right: 3px solid var(--accent2);
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+    position: relative;
+  }
+
+  .scanner-ring::after {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 2px solid var(--surface2);
+    border-bottom: 2px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite reverse;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-step {
+    font-size: 1rem;
+    color: var(--dim);
+    margin: 8px 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .loading-step.active {
+    opacity: 1;
+    color: var(--text);
+  }
+
+  .loading-step.done { color: var(--success); }
+  .loading-step.done::before { content: '\2713 '; }
+
+  /* Result section */
+  #result-section {
+    display: none;
+    padding: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #2a2a2a;
+  }
+
+  .result-photo {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+
+  .result-body { padding: 20px; }
+
+  .car-class-badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .class-beater { background: #3a1a0a; color: #ff6633; border: 1px solid #ff6633; }
+  .class-daily { background: #1a2a1a; color: #66cc66; border: 1px solid #66cc66; }
+  .class-midlife { background: #2a2a0a; color: #cccc33; border: 1px solid #cccc33; }
+  .class-overcomp { background: #2a0a2a; color: #cc66ff; border: 1px solid #cc66ff; }
+  .class-nice { background: #0a1a2a; color: #3399ff; border: 1px solid #3399ff; }
+
+  .roast-text {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    margin: 12px 0 20px;
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+  }
+
+  .stat-box.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .result-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 16px;
+  }
+
+  /* Gallery */
+  #gallery-section {
+    padding: 16px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .gallery-header h2 {
+    font-family: 'Russo One', sans-serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .gallery-item {
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s;
+    border: 1px solid #2a2a2a;
+  }
+
+  .gallery-item:hover { transform: scale(1.03); }
+
+  .gallery-item img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+
+  .gallery-item-info {
+    padding: 8px 10px;
+  }
+
+  .gallery-item-class {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .gallery-item-roast {
+    font-size: 0.75rem;
+    color: var(--dim);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .empty-gallery {
+    text-align: center;
+    color: var(--dim);
+    padding: 40px 20px;
+    font-size: 1rem;
+  }
+
+  /* Modal for gallery detail */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal-content {
+    background: var(--surface);
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--accent);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.8rem;
+    cursor: pointer;
+    z-index: 101;
+  }
+
+  /* Nav tabs */
+  .tab-bar {
+    display: flex;
+    border-top: 1px solid #2a2a2a;
+    background: var(--surface);
+    position: sticky;
+    bottom: 0;
+    z-index: 50;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    background: none;
+    border: none;
+    color: var(--dim);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color 0.2s;
+    border-top: 2px solid transparent;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-top-color: var(--accent);
+  }
+
+  .tab-icon { font-size: 1.2rem; display: block; margin-bottom: 2px; }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Speaking indicator */
+  .speaking-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 12px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .speaking-indicator.active { display: flex; }
+
+  .sound-bar {
+    width: 3px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: soundBar 0.6s ease-in-out infinite alternate;
+  }
+
+  .sound-bar:nth-child(2) { animation-delay: 0.15s; height: 22px; }
+  .sound-bar:nth-child(3) { animation-delay: 0.3s; }
+  .sound-bar:nth-child(4) { animation-delay: 0.45s; height: 20px; }
+
+  @keyframes soundBar {
+    from { transform: scaleY(0.3); }
+    to { transform: scaleY(1); }
+  }
+
+  .mute-btn {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="tachometer">&#x1F3CE;</span> Car Roaster <span class="tachometer">&#x1F525;</span></h1>
+  <p class="subtitle">Snap a ride. Get it destroyed.</p>
+</header>
+
+<div id="snap-section">
+  <div id="camera-preview">
+    <div class="placeholder">
+      <span class="placeholder-icon">&#x1F4F7;</span>
+      Snap or upload a photo of any car<br>and we'll judge it mercilessly
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-primary" id="snap-btn">
+      &#x1F4F8; Snap a Ride
+    </button>
+    <button class="btn btn-secondary" id="upload-btn">
+      &#x1F4C1; Upload
+    </button>
+  </div>
+  <button class="btn btn-secondary btn-small" id="retake-btn" style="display:none;">
+    &#x1F504; Retake
+  </button>
+  <input type="file" id="file-input" accept="image/*" style="display:none;">
+  <canvas id="snap-canvas" style="display:none;"></canvas>
+</div>
+
+<div id="loading-section">
+  <div class="scanner-ring"></div>
+  <div class="loading-title">Analyzing your ride...</div>
+  <div class="loading-step" id="step-1">Scanning paint job for regret...</div>
+  <div class="loading-step" id="step-2">Measuring horsepower (if any)...</div>
+  <div class="loading-step" id="step-3">Checking if it qualifies as a vehicle...</div>
+  <div class="loading-step" id="step-4">Calculating clout score...</div>
+  <div class="loading-step" id="step-5">Generating maximum disrespect...</div>
+</div>
+
+<div id="result-section">
+  <div class="result-card" id="result-card">
+    <img id="result-photo" class="result-photo" src="" alt="Roasted car">
+    <div class="result-body">
+      <span class="car-class-badge" id="result-class-badge"></span>
+      <div class="roast-text" id="result-roast"></div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-label">Clout Score</div>
+          <div class="stat-value" id="stat-clout"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Would Race</div>
+          <div class="stat-value" id="stat-race"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">0-60 Time</div>
+          <div class="stat-value" id="stat-060"></div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Resale Value</div>
+          <div class="stat-value" id="stat-resale"></div>
+        </div>
+        <div class="stat-box full-width">
+          <div class="stat-label">Insurance Company's Verdict</div>
+          <div class="stat-value" id="stat-insurance"></div>
+        </div>
+      </div>
+      <div class="speaking-indicator" id="speaking-indicator">
+        <div class="sound-bar"></div>
+        <div class="sound-bar"></div>
+        <div class="sound-bar"></div>
+        <div class="sound-bar"></div>
+        <span style="margin-left:4px;">Announcing...</span>
+        <button class="mute-btn" id="mute-btn" title="Stop">&#x1F507;</button>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary btn-small" id="speak-btn">&#x1F4E2; Announce</button>
+        <button class="btn btn-secondary btn-small" id="share-btn">&#x1F4E4; Share</button>
+        <button class="btn btn-secondary btn-small" id="roast-again-btn">&#x1F525; Roast Another</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="gallery-section" style="display:none;">
+  <div class="gallery-header">
+    <h2>&#x1F3C6; Wall of Shame</h2>
+    <button class="btn btn-secondary btn-small" id="clear-gallery-btn">Clear All</button>
+  </div>
+  <div id="gallery-grid" class="gallery-grid"></div>
+  <div id="empty-gallery" class="empty-gallery">
+    No roasted cars yet.<br>Go judge something!
+  </div>
+</div>
+
+<div class="modal-overlay" id="gallery-modal">
+  <div class="modal-content" id="modal-inner"></div>
+</div>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" data-tab="camera">
+    <span class="tab-icon">&#x1F4F7;</span> Camera
+  </button>
+  <button class="tab-btn" data-tab="gallery">
+    <span class="tab-icon">&#x1F3DB;</span> Gallery
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ROASTS = [
+  "This car's 0-60 time is measured in calendar days.",
+  "The check engine light isn't a warning, it's a cry for help.",
+  "This car has 'I peaked in high school' energy.",
+  "Nice car. Does it come in a color that ISN'T 'regret'?",
+  "This ride screams 'I have a credit score of maybe.'",
+  "Somewhere, a junkyard is missing its centerpiece.",
+  "The GPS just says 'Turn around. Go home. Think about what you've done.'",
+  "This car doesn't have blind spots. It IS the blind spot.",
+  "If disappointment were a vehicle, this would be the flagship model.",
+  "The only thing this car is fast at is depreciating.",
+  "Your car's spirit animal is a shopping cart with one bad wheel.",
+  "This car has been described as 'transportation-adjacent.'",
+  "It's giving 'I negotiated the price UP at the dealership.'",
+  "This car runs on hopes, prayers, and denial.",
+  "Bold of you to park this in public where people can see it.",
+  "The horn on this car just apologizes to other drivers.",
+  "This ride is what happens when a coupon meets a car lot.",
+  "Even the rear-view mirror tries not to look back.",
+  "Your car has less horsepower than a horse with asthma.",
+  "This vehicle is a moving violation all by itself.",
+  "Aerodynamics? This thing has the drag coefficient of a brick.",
+  "Insurance companies see this car and laugh nervously.",
+  "The only race this car wins is the race to the bottom.",
+  "This car makes a strong case for public transportation.",
+  "Somewhere a mechanic just got a cold chill down his spine.",
+  "The exhaust pipe coughs more than my grandpa.",
+  "This car's best feature is that it occasionally starts.",
+  "If this car were a movie, it'd be straight-to-DVD.",
+  "The Kelley Blue Book value of this car is a coupon for bus fare.",
+  "This car has 'I'll fix it next paycheck' energy.",
+  "You didn't buy this car. You survived it.",
+  "The only thing lower than this car's resale value is my expectations.",
+  "This car was built different. And by different, I mean wrong.",
+  "Even the parking lot is embarrassed.",
+  "The factory recall on this car was just the word 'everything.'",
+  "If you listen closely, you can hear this car giving up.",
+  "This ride has more warning lights than a Christmas tree.",
+  "Your car's top speed is 'eventually.'",
+  "This car has been to the mechanic more times than to a gas station.",
+  "It's not rust, it's a 'patina of poor decisions.'",
+  "The airbags in this car are just filled with regret.",
+  "This car doesn't need a theft deterrent. It IS the theft deterrent.",
+  "A test drive in this car is technically a cry for help.",
+  "The turn signal on this car blinks in Morse code for 'save me.'",
+  "You could trade this car in and owe the dealer money.",
+  "This car's autobiography would be titled 'Why?'",
+  "The only thing this car passes is gas.",
+  "Even the tow truck driver charges extra for this one.",
+  "This car qualifies for both vintage AND biohazard status.",
+  "The car alarm on this goes off because even it wants to escape.",
+  "If sadness were aerodynamic, this car would fly.",
+  "Your car doesn't leak oil. It marks its territory.",
+  "The AC in this car just blows broken promises.",
+  "This car has 'My parents are very disappointed' energy.",
+  "The speedometer on this car is really more of a suggestion.",
+  "Even a clown car has more dignity than this.",
+  "This is the automotive equivalent of a participation trophy.",
+  "Elon Musk saw this car and decided humanity needs Mars.",
+  "This car is proof that 'it runs' is the lowest bar possible.",
+  "The bumper stickers are literally holding it together.",
+  "Your car is in a relationship with the breakdown lane.",
+  "The headlights on this car look like it's been crying.",
+  "If this car was a meal, it would be gas station sushi.",
+  "The resale value of this car is negative. You'd have to pay someone.",
+  "This ride went from 'brand new' to 'what happened' real fast."
+];
+
+const CAR_CLASSES = [
+  { name: 'Beater', css: 'class-beater' },
+  { name: 'Daily Driver', css: 'class-daily' },
+  { name: 'Mid-Life Crisis', css: 'class-midlife' },
+  { name: 'Overcompensating', css: 'class-overcomp' },
+  { name: 'Actually Nice', css: 'class-nice' }
+];
+
+const RACE_RESPONSES = [
+  "No", "Absolutely not", "Only downhill", "Not even on a dare",
+  "Maybe if I was walking", "In your dreams", "Only if there's a headstart of 3 miles",
+  "Against a bicycle? Maybe", "I'd rather forfeit", "Only for comedy"
+];
+
+const ZERO_SIXTY = [
+  "Yes", "Eventually", "3-5 business days", "When it feels like it",
+  "Heat death of the universe", "Measured in sunsets", "N/A",
+  "Depends on the hill", "With a push", "Error: overflow"
+];
+
+const RESALE_VALUES = [
+  "$12", "A firm handshake", "Two tacos", "Negative",
+  "A bus pass", "Scrap metal rates", "$0.99 OBO",
+  "They'd pay YOU to take it", "A coupon", "Thoughts & prayers"
+];
+
+const INSURANCE_VERDICTS = [
+  "Why bother", "We'll insure it out of pity", "Policy denied: self-respect clause",
+  "Full coverage: $3/month (it's all it's worth)", "Have you considered walking?",
+  "We'll cover it... from a distance", "This is a liability, not a vehicle",
+  "Our adjusters refuse to touch it", "Covered under our comedy policy",
+  "We're raising premiums just for having to look at it"
+];
+
+const LOADING_STEPS = [
+  "Scanning paint job for regret...",
+  "Measuring horsepower (if any)...",
+  "Checking if it qualifies as a vehicle...",
+  "Calculating clout score...",
+  "Generating maximum disrespect..."
+];
+
+// State
+let currentStream = null;
+let capturedImageData = null;
+let currentRoast = null;
+let speaking = false;
+
+// Elements
+const snapSection = document.getElementById('snap-section');
+const loadingSection = document.getElementById('loading-section');
+const resultSection = document.getElementById('result-section');
+const gallerySection = document.getElementById('gallery-section');
+const cameraPreview = document.getElementById('camera-preview');
+const snapBtn = document.getElementById('snap-btn');
+const uploadBtn = document.getElementById('upload-btn');
+const retakeBtn = document.getElementById('retake-btn');
+const fileInput = document.getElementById('file-input');
+const snapCanvas = document.getElementById('snap-canvas');
+const toast = document.getElementById('toast');
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// Camera
+async function openCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false
+    });
+    currentStream = stream;
+    cameraPreview.innerHTML = '';
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.setAttribute('playsinline', '');
+    video.autoplay = true;
+    cameraPreview.appendChild(video);
+    cameraPreview.classList.add('active');
+
+    snapBtn.innerHTML = '&#x1F4F8; Take Photo';
+    snapBtn.onclick = capturePhoto;
+    retakeBtn.style.display = 'none';
+  } catch (e) {
+    showToast('Camera not available - try upload!');
+  }
+}
+
+function capturePhoto() {
+  const video = cameraPreview.querySelector('video');
+  if (!video) return;
+  snapCanvas.width = video.videoWidth || 640;
+  snapCanvas.height = video.videoHeight || 480;
+  const ctx = snapCanvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  capturedImageData = snapCanvas.toDataURL('image/jpeg', 0.8);
+
+  stopCamera();
+  showCaptured(capturedImageData);
+}
+
+function stopCamera() {
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+  }
+}
+
+function showCaptured(dataUrl) {
+  cameraPreview.innerHTML = `<img src="${dataUrl}" alt="Captured car">`;
+  cameraPreview.classList.add('active');
+  snapBtn.innerHTML = '&#x1F525; Roast This Ride';
+  snapBtn.onclick = startRoast;
+  retakeBtn.style.display = '';
+}
+
+snapBtn.addEventListener('click', openCamera);
+
+retakeBtn.addEventListener('click', () => {
+  capturedImageData = null;
+  cameraPreview.innerHTML = `<div class="placeholder"><span class="placeholder-icon">&#x1F4F7;</span>Snap or upload a photo of any car<br>and we'll judge it mercilessly</div>`;
+  cameraPreview.classList.remove('active');
+  snapBtn.innerHTML = '&#x1F4F8; Snap a Ride';
+  snapBtn.onclick = openCamera;
+  retakeBtn.style.display = 'none';
+});
+
+uploadBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    capturedImageData = ev.target.result;
+    stopCamera();
+    showCaptured(capturedImageData);
+  };
+  reader.readAsDataURL(file);
+  fileInput.value = '';
+});
+
+// Loading animation
+async function startRoast() {
+  if (!capturedImageData) {
+    showToast('Snap or upload a photo first!');
+    return;
+  }
+
+  snapSection.style.display = 'none';
+  resultSection.style.display = 'none';
+  loadingSection.style.display = 'block';
+
+  const steps = document.querySelectorAll('.loading-step');
+  steps.forEach(s => { s.classList.remove('active', 'done'); s.textContent = s.dataset.text || s.textContent; });
+
+  for (let i = 0; i < steps.length; i++) {
+    steps[i].classList.add('active');
+    await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+    steps[i].classList.remove('active');
+    steps[i].classList.add('done');
+  }
+
+  await new Promise(r => setTimeout(r, 400));
+  showResult();
+}
+
+function generateRoast() {
+  const carClass = pick(CAR_CLASSES);
+  const roast = pick(ROASTS);
+  const clout = carClass.name === 'Actually Nice' ? rand(55, 78) : rand(1, 35);
+  const race = pick(RACE_RESPONSES);
+  const zeroSixty = pick(ZERO_SIXTY);
+  const resale = pick(RESALE_VALUES);
+  const insurance = pick(INSURANCE_VERDICTS);
+
+  return { carClass, roast, clout, race, zeroSixty, resale, insurance, imageData: capturedImageData, timestamp: Date.now() };
+}
+
+function showResult() {
+  loadingSection.style.display = 'none';
+  resultSection.style.display = 'block';
+  switchTab('camera');
+
+  currentRoast = generateRoast();
+  const r = currentRoast;
+
+  document.getElementById('result-photo').src = r.imageData;
+  const badge = document.getElementById('result-class-badge');
+  badge.textContent = r.carClass.name;
+  badge.className = 'car-class-badge ' + r.carClass.css;
+  document.getElementById('result-roast').textContent = `"${r.roast}"`;
+  document.getElementById('stat-clout').textContent = `${r.clout}/100`;
+  document.getElementById('stat-race').textContent = r.race;
+  document.getElementById('stat-060').textContent = r.zeroSixty;
+  document.getElementById('stat-resale').textContent = r.resale;
+  document.getElementById('stat-insurance').textContent = r.insurance;
+
+  document.getElementById('speaking-indicator').classList.remove('active');
+
+  // Save to gallery
+  saveToGallery(r);
+}
+
+// Speech
+function announceRoast() {
+  if (!currentRoast || !('speechSynthesis' in window)) {
+    showToast('Speech not available');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+  const r = currentRoast;
+  const text = `Ladies and gentlemen, we have a ${r.carClass.name} in the house! ${r.roast} Clout score: ${r.clout} out of 100. Would I race this? ${r.race}. Zero to sixty? ${r.zeroSixty}. Insurance company says: ${r.insurance}.`;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.9;
+  utterance.pitch = 0.8;
+
+  // Try to find a deep male voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /Daniel|Alex|Google US English|Aaron/i.test(v.name));
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onstart = () => {
+    speaking = true;
+    document.getElementById('speaking-indicator').classList.add('active');
+  };
+  utterance.onend = () => {
+    speaking = false;
+    document.getElementById('speaking-indicator').classList.remove('active');
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+document.getElementById('speak-btn').addEventListener('click', announceRoast);
+document.getElementById('mute-btn').addEventListener('click', () => {
+  speechSynthesis.cancel();
+  speaking = false;
+  document.getElementById('speaking-indicator').classList.remove('active');
+});
+
+// Ensure voices loaded
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => {};
+  speechSynthesis.getVoices();
+}
+
+// Share
+document.getElementById('share-btn').addEventListener('click', async () => {
+  if (!currentRoast) return;
+  const r = currentRoast;
+  const text = `Car Roaster says this is a "${r.carClass.name}" \n"${r.roast}"\nClout Score: ${r.clout}/100 | Would Race: ${r.race}\nInsurance Verdict: ${r.insurance}\n\nGet YOUR car roasted!`;
+
+  if (navigator.share) {
+    try {
+      // Try sharing with image
+      const response = await fetch(r.imageData);
+      const blob = await response.blob();
+      const file = new File([blob], 'car-roast.jpg', { type: 'image/jpeg' });
+      await navigator.share({ text, files: [file] });
+    } catch {
+      try { await navigator.share({ text }); } catch {}
+    }
+  } else {
+    await navigator.clipboard.writeText(text);
+    showToast('Roast copied to clipboard!');
+  }
+});
+
+// Roast another
+document.getElementById('roast-again-btn').addEventListener('click', () => {
+  resultSection.style.display = 'none';
+  snapSection.style.display = 'flex';
+  capturedImageData = null;
+  cameraPreview.innerHTML = `<div class="placeholder"><span class="placeholder-icon">&#x1F4F7;</span>Snap or upload a photo of any car<br>and we'll judge it mercilessly</div>`;
+  cameraPreview.classList.remove('active');
+  snapBtn.innerHTML = '&#x1F4F8; Snap a Ride';
+  snapBtn.onclick = openCamera;
+  retakeBtn.style.display = 'none';
+  speechSynthesis.cancel();
+  switchTab('camera');
+});
+
+// Gallery (localStorage)
+function getGallery() {
+  try { return JSON.parse(localStorage.getItem('car-roaster-gallery') || '[]'); } catch { return []; }
+}
+
+function saveToGallery(roast) {
+  const gallery = getGallery();
+  // Limit to compressed thumbnail
+  const thumb = compressImage(roast.imageData, 200);
+  gallery.unshift({
+    imageData: thumb,
+    className: roast.carClass.name,
+    classCss: roast.carClass.css,
+    roast: roast.roast,
+    clout: roast.clout,
+    race: roast.race,
+    zeroSixty: roast.zeroSixty,
+    resale: roast.resale,
+    insurance: roast.insurance,
+    timestamp: roast.timestamp
+  });
+  // Keep max 20
+  if (gallery.length > 20) gallery.length = 20;
+  try { localStorage.setItem('car-roaster-gallery', JSON.stringify(gallery)); } catch {}
+  renderGallery();
+}
+
+function compressImage(dataUrl, maxSize) {
+  const canvas = document.createElement('canvas');
+  const img = new Image();
+  img.src = dataUrl;
+  const ratio = Math.min(maxSize / (img.naturalWidth || maxSize), maxSize / (img.naturalHeight || maxSize), 1);
+  canvas.width = (img.naturalWidth || maxSize) * ratio;
+  canvas.height = (img.naturalHeight || maxSize) * ratio;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL('image/jpeg', 0.5);
+}
+
+function renderGallery() {
+  const gallery = getGallery();
+  const grid = document.getElementById('gallery-grid');
+  const empty = document.getElementById('empty-gallery');
+
+  if (gallery.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.innerHTML = gallery.map((item, i) => `
+    <div class="gallery-item" data-index="${i}">
+      <img src="${item.imageData}" alt="Roasted car" loading="lazy">
+      <div class="gallery-item-info">
+        <div class="gallery-item-class ${item.classCss}">${item.className}</div>
+        <div class="gallery-item-roast">${item.roast}</div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.gallery-item').forEach(el => {
+    el.addEventListener('click', () => showGalleryModal(gallery[parseInt(el.dataset.index)]));
+  });
+}
+
+function showGalleryModal(item) {
+  const modal = document.getElementById('gallery-modal');
+  const inner = document.getElementById('modal-inner');
+  inner.innerHTML = `
+    <img src="${item.imageData}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px 16px 0 0;">
+    <div style="padding:20px;">
+      <span class="car-class-badge ${item.classCss}">${item.className}</span>
+      <div class="roast-text">"${item.roast}"</div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-label">Clout</div><div class="stat-value">${item.clout}/100</div></div>
+        <div class="stat-box"><div class="stat-label">Would Race</div><div class="stat-value">${item.race}</div></div>
+        <div class="stat-box"><div class="stat-label">0-60</div><div class="stat-value">${item.zeroSixty}</div></div>
+        <div class="stat-box"><div class="stat-label">Resale</div><div class="stat-value">${item.resale}</div></div>
+        <div class="stat-box full-width"><div class="stat-label">Insurance Verdict</div><div class="stat-value">${item.insurance}</div></div>
+      </div>
+      <div style="text-align:center;margin-top:12px;">
+        <button class="btn btn-secondary btn-small" onclick="document.getElementById('gallery-modal').classList.remove('active')">Close</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('active');
+}
+
+document.getElementById('gallery-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove('active');
+});
+
+document.getElementById('clear-gallery-btn').addEventListener('click', () => {
+  if (confirm('Clear all roasted cars?')) {
+    localStorage.removeItem('car-roaster-gallery');
+    renderGallery();
+    showToast('Gallery cleared!');
+  }
+});
+
+// Tabs
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'camera') {
+    gallerySection.style.display = 'none';
+    if (resultSection.style.display === 'block') {
+      snapSection.style.display = 'none';
+    } else if (loadingSection.style.display === 'block') {
+      snapSection.style.display = 'none';
+    } else {
+      snapSection.style.display = 'flex';
+    }
+  } else {
+    snapSection.style.display = 'none';
+    loadingSection.style.display = 'none';
+    resultSection.style.display = 'none';
+    gallerySection.style.display = 'block';
+    renderGallery();
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+// Init gallery
+renderGallery();
+</script>
+</body>
+</html>

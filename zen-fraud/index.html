@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Zen Fraud Detector</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;500;700&family=Inter:wght@300;400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --zen-bg: #0a0f0d;
+    --zen-text: #c8d6c0;
+    --zen-accent: #7a9e6e;
+    --zen-gold: #c9a84c;
+    --fraud-red: #e03e3e;
+    --fraud-glow: rgba(224, 62, 62, 0.3);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--zen-bg);
+    color: var(--zen-text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Ambient background circles */
+  .bg-circle {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.15;
+    pointer-events: none;
+    transition: opacity 1s, background 1s;
+  }
+  .bg-circle.c1 { width: 400px; height: 400px; background: #2d5a27; top: -100px; left: -100px; }
+  .bg-circle.c2 { width: 300px; height: 300px; background: #1a3a2a; bottom: -50px; right: -80px; }
+  .bg-circle.c3 { width: 250px; height: 250px; background: #3a5a30; top: 40%; left: 60%; }
+
+  body.fraud-mode .bg-circle { background: #5a1a1a !important; opacity: 0.25; }
+
+  /* Title screen */
+  #title-screen {
+    text-align: center;
+    z-index: 10;
+    animation: fadeIn 1.5s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  .enso {
+    width: 120px; height: 120px;
+    border: 3px solid var(--zen-accent);
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    position: relative;
+    opacity: 0.7;
+  }
+  .enso::after {
+    content: '';
+    position: absolute;
+    top: -6px; right: 10px;
+    width: 12px; height: 12px;
+    background: var(--zen-bg);
+  }
+
+  h1 {
+    font-family: 'Noto Serif JP', serif;
+    font-weight: 300;
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    opacity: 0.5;
+    margin-bottom: 40px;
+    font-weight: 300;
+  }
+
+  #begin-btn {
+    background: none;
+    border: 1px solid var(--zen-accent);
+    color: var(--zen-accent);
+    padding: 14px 48px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.4s;
+    letter-spacing: 0.05em;
+  }
+  #begin-btn:hover { background: rgba(122, 158, 110, 0.1); }
+  #begin-btn:active { transform: scale(0.97); }
+
+  .accel-note {
+    font-size: 0.7rem;
+    opacity: 0.3;
+    margin-top: 16px;
+    max-width: 260px;
+  }
+
+  /* Meditation screen */
+  #meditation-screen {
+    display: none;
+    text-align: center;
+    z-index: 10;
+    width: 100%;
+    padding: 20px;
+    position: relative;
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #timer-display {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    margin-bottom: 8px;
+    transition: color 0.5s;
+  }
+
+  .timer-label {
+    font-size: 0.75rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin-bottom: 32px;
+  }
+
+  /* Zen Score */
+  #zen-score-container {
+    margin-bottom: 32px;
+  }
+
+  .zen-score-ring {
+    width: 140px; height: 140px;
+    position: relative;
+    margin: 0 auto 8px;
+  }
+
+  .zen-score-ring svg {
+    transform: rotate(-90deg);
+    width: 140px; height: 140px;
+  }
+
+  .zen-score-ring .bg-ring {
+    fill: none;
+    stroke: rgba(122, 158, 110, 0.15);
+    stroke-width: 4;
+  }
+
+  .zen-score-ring .score-ring {
+    fill: none;
+    stroke: var(--zen-accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 408;
+    stroke-dashoffset: 408;
+    transition: stroke-dashoffset 1s ease, stroke 0.5s;
+  }
+
+  #zen-score-value {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.2rem;
+    font-weight: 600;
+  }
+
+  .zen-score-label {
+    font-size: 0.7rem;
+    opacity: 0.4;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  /* Breath guide */
+  #breath-guide {
+    width: 60px; height: 60px;
+    border: 1px solid rgba(122, 158, 110, 0.3);
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    animation: breathe 8s ease-in-out infinite;
+    transition: border-color 0.5s, box-shadow 0.5s;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.8); opacity: 0.4; }
+    50% { transform: scale(1.2); opacity: 0.8; }
+  }
+
+  /* Fraud state */
+  .fraud-pulse #breath-guide {
+    border-color: var(--fraud-red) !important;
+    box-shadow: 0 0 30px var(--fraud-glow);
+    animation: fraudPulse 0.3s ease-in-out 3;
+  }
+
+  @keyframes fraudPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+
+  /* Callout banner */
+  #callout {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: linear-gradient(135deg, #1a0505, #2a0a0a);
+    border-bottom: 2px solid var(--fraud-red);
+    padding: 20px;
+    text-align: center;
+    z-index: 100;
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  #callout.show { transform: translateY(0); }
+
+  #callout-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--fraud-red);
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  #callout-dismiss {
+    background: none;
+    border: 1px solid rgba(224, 62, 62, 0.4);
+    color: #e08080;
+    padding: 8px 24px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Intrusive thought popup */
+  #intrusive-thought {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: rgba(15, 20, 18, 0.95);
+    border: 1px solid rgba(122, 158, 110, 0.2);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    z-index: 90;
+    max-width: 320px;
+    width: 90%;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    backdrop-filter: blur(20px);
+  }
+
+  #intrusive-thought.show { transform: translate(-50%, -50%) scale(1); }
+
+  #thought-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  #thought-dismiss {
+    background: rgba(122, 158, 110, 0.1);
+    border: 1px solid rgba(122, 158, 110, 0.3);
+    color: var(--zen-accent);
+    padding: 8px 20px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 3px;
+    font-family: 'Inter', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* Achievements toast */
+  #achievement-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(201, 168, 76, 0.15);
+    border: 1px solid var(--zen-gold);
+    border-radius: 8px;
+    padding: 12px 24px;
+    z-index: 95;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    text-align: center;
+    backdrop-filter: blur(10px);
+  }
+
+  #achievement-toast.show { transform: translateX(-50%) translateY(0); }
+
+  .achievement-icon { font-size: 1.5rem; margin-bottom: 4px; }
+  .achievement-name { font-size: 0.85rem; color: var(--zen-gold); font-weight: 600; }
+  .achievement-desc { font-size: 0.7rem; opacity: 0.6; margin-top: 2px; }
+
+  /* End session button */
+  #end-btn {
+    background: none;
+    border: 1px solid rgba(200, 214, 192, 0.15);
+    color: rgba(200, 214, 192, 0.4);
+    padding: 10px 32px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-top: 20px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.3s;
+  }
+  #end-btn:hover { border-color: rgba(200, 214, 192, 0.3); color: rgba(200, 214, 192, 0.6); }
+
+  /* Fraud counter */
+  #fraud-counter {
+    font-size: 0.75rem;
+    opacity: 0.3;
+    margin-top: 12px;
+  }
+
+  /* Summary screen */
+  #summary-screen {
+    display: none;
+    text-align: center;
+    z-index: 10;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 100dvh;
+    overflow-y: auto;
+  }
+
+  .summary-header {
+    font-family: 'Noto Serif JP', serif;
+    font-size: 1.5rem;
+    font-weight: 300;
+    margin-bottom: 24px;
+  }
+
+  .summary-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(200, 214, 192, 0.08);
+    font-size: 0.9rem;
+  }
+
+  .summary-stat .label { opacity: 0.5; }
+  .summary-stat .value { font-weight: 600; }
+
+  .summary-roast {
+    margin-top: 24px;
+    padding: 20px;
+    background: rgba(224, 62, 62, 0.05);
+    border: 1px solid rgba(224, 62, 62, 0.15);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #e08080;
+  }
+
+  .summary-achievements {
+    margin-top: 20px;
+    text-align: left;
+  }
+
+  .summary-achievements h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    opacity: 0.4;
+    margin-bottom: 12px;
+  }
+
+  .summary-achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 0.85rem;
+  }
+
+  .summary-achievement-item .icon { font-size: 1.2rem; }
+
+  #restart-btn {
+    background: none;
+    border: 1px solid var(--zen-accent);
+    color: var(--zen-accent);
+    padding: 12px 40px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-top: 28px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* Screen shake on fraud */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+  }
+
+  .shake { animation: shake 0.5s ease; }
+</style>
+</head>
+<body>
+
+<div class="bg-circle c1"></div>
+<div class="bg-circle c2"></div>
+<div class="bg-circle c3"></div>
+
+<!-- Title Screen -->
+<div id="title-screen">
+  <div class="enso"></div>
+  <h1>Zen Fraud</h1>
+  <p class="subtitle">A meditation timer that knows you're faking it</p>
+  <button id="begin-btn" onclick="startMeditation()">Begin Meditation</button>
+  <p class="accel-note">Best on mobile. Uses accelerometer to detect your lies.</p>
+</div>
+
+<!-- Meditation Screen -->
+<div id="meditation-screen">
+  <div id="timer-display">0:00</div>
+  <div class="timer-label">elapsed</div>
+
+  <div id="zen-score-container">
+    <div class="zen-score-ring">
+      <svg viewBox="0 0 140 140">
+        <circle class="bg-ring" cx="70" cy="70" r="65"/>
+        <circle class="score-ring" id="score-ring" cx="70" cy="70" r="65"/>
+      </svg>
+      <div id="zen-score-value">100</div>
+    </div>
+    <div class="zen-score-label">Zen Score</div>
+  </div>
+
+  <div id="breath-guide"></div>
+
+  <button id="end-btn" onclick="endSession()">End Session</button>
+  <div id="fraud-counter"></div>
+</div>
+
+<!-- Callout Banner -->
+<div id="callout">
+  <div id="callout-text"></div>
+  <button id="callout-dismiss" onclick="dismissCallout()">I Accept My Shame</button>
+</div>
+
+<!-- Intrusive Thought -->
+<div id="intrusive-thought">
+  <div id="thought-text"></div>
+  <button id="thought-dismiss" onclick="dismissThought()">Return to Void</button>
+</div>
+
+<!-- Achievement Toast -->
+<div id="achievement-toast">
+  <div class="achievement-icon" id="ach-icon"></div>
+  <div class="achievement-name" id="ach-name"></div>
+  <div class="achievement-desc" id="ach-desc"></div>
+</div>
+
+<!-- Summary Screen -->
+<div id="summary-screen">
+  <div class="summary-header" id="summary-title"></div>
+  <div id="summary-stats"></div>
+  <div class="summary-roast" id="summary-roast"></div>
+  <div class="summary-achievements" id="summary-achievements"></div>
+  <button id="restart-btn" onclick="restart()">Try Again, Fraud</button>
+</div>
+
+<script>
+// ===================== STATE =====================
+let audioCtx, droneOsc1, droneOsc2, droneGain, stingGain;
+let timerInterval, thoughtInterval, startTime;
+let zenScore = 100;
+let fraudCount = 0;
+let totalMovement = 0;
+let longestStill = 0;
+let currentStillStreak = 0;
+let lastStillCheck = 0;
+let isRunning = false;
+let calloutQueue = [];
+let calloutShowing = false;
+let thoughtShowing = false;
+let earnedAchievements = [];
+let hasAccelerometer = false;
+let motionSamples = [];
+const MOTION_WINDOW = 20; // samples to average
+const FRAUD_THRESHOLD = 2.5; // m/s^2 above baseline
+let lastFraudTime = 0;
+
+// ===================== CALLOUT TEMPLATES (40+) =====================
+const motionCallouts = [
+  "FRAUD DETECTED. You just checked your phone.",
+  "That wasn't a spiritual tremor. You moved.",
+  "The Buddha didn't fidget. Neither should you.",
+  "Your phone has an accelerometer and zero respect for your lies.",
+  "Movement detected. Enlightenment revoked.",
+  "I felt that. The universe felt that. Everyone knows.",
+  "Were you scratching your nose or your ego?",
+  "Phone movement detected. Were you texting your chakras?",
+  "Your hand moved. Your mind moved first. Both are failures.",
+  "That micro-movement just cost you 3 zen points. Worth it?",
+  "A true monk's phone stays still. Yours just did a little dance.",
+  "Accelerometer says you're a fraud. Accelerometer doesn't lie.",
+  "You shifted the phone. The phone shifts its opinion of you.",
+  "Motion alert: Are you meditating or doing yoga?",
+  "Your stillness game is weaker than your Wi-Fi signal.",
+  "That wobble was NOT breathing. Don't even try.",
+  "Seismographs pick up less activity than your meditation practice.",
+  "Did you just check the time? Time is an illusion. Your fraud isn't.",
+  "Movement spike detected. Were you waving at your thoughts?",
+  "Real meditators are so still they get mistaken for furniture.",
+];
+
+const timeCallouts = [
+  "That's not meditation, that's blinking slowly.",
+  "30 seconds? That's not a session, that's a sneeze.",
+  "Even a goldfish could focus longer than that.",
+  "Speed-running enlightenment doesn't work. We tried.",
+  "You can't microwave nirvana.",
+  "That was less meditation and more of a long blink.",
+  "Your meditation was shorter than a TikTok. Reflect on that.",
+];
+
+const escalatingCallouts = [
+  // Level 1 (frauds 1-3)
+  "Gentle reminder: You're supposed to be meditating.",
+  "The void called. It says you're not trying.",
+  "Your inner peace called in sick today, apparently.",
+  // Level 2 (frauds 4-7)
+  "At this point you're just holding your phone with your eyes closed.",
+  "This is a meditation app, not a phone-warming app.",
+  "You've been caught more times than a shoplifter at Whole Foods.",
+  "Your zen score is dropping faster than your dignity.",
+  // Level 3 (frauds 8-12)
+  "I've seen more stillness at a children's birthday party.",
+  "Your meditation practice is a war crime against tranquility.",
+  "The Dalai Lama would block you on all platforms.",
+  "You're not meditating. You're sitting in the dark with anxiety.",
+  "Your chakras filed a restraining order.",
+  // Level 4 (13+)
+  "BREAKING: Local fraud sets new record for worst meditation ever.",
+  "Even your intrusive thoughts are embarrassed for you.",
+  "At this point the app is meditating on YOUR failures.",
+  "You are the anti-monk. The un-buddha. The NOT-enlightened one.",
+  "I'm not angry, I'm disappointed. Actually no, I'm angry too.",
+  "Your zen master would have given up on you by now.",
+  "Congratulations: you've achieved negative enlightenment.",
+  "This session will be used as a cautionary tale in monasteries.",
+];
+
+const intrusiveThoughts = [
+  "Did you leave the oven on?",
+  "You should check your notifications.",
+  "What if everyone at work secretly hates you?",
+  "Remember that embarrassing thing from 2014?",
+  "You're probably breathing wrong.",
+  "Is this even doing anything?",
+  "You could be scrolling right now.",
+  "What's for dinner?",
+  "Your ex posted a story 3 minutes ago.",
+  "You have 47 unread emails.",
+  "Is that a weird mole? Should you get it checked?",
+  "You forgot to text them back.",
+  "What if meditation is just a scam?",
+  "Your posture is terrible right now.",
+  "A package might be at your door.",
+  "That song is stuck in your head again.",
+  "Are you sure the door is locked?",
+  "You should be more productive.",
+  "Remember when you tripped in public?",
+  "Your phone battery is probably dying.",
+];
+
+const achievements = [
+  { id: '10s', name: '10 Second Sage', desc: 'Lasted 10 whole seconds', icon: '🌱', time: 10 },
+  { id: '30s', name: 'Half-Minute Hermit', desc: '30 seconds of "meditation"', icon: '🧘', time: 30 },
+  { id: '1m', name: '1 Minute Monk', desc: 'A full minute. Barely.', icon: '⛩️', time: 60 },
+  { id: '2m', name: '2 Minute Tourist', desc: 'Visited meditation briefly', icon: '🗿', time: 120 },
+  { id: '5m', name: '5 Minute Fraud', desc: 'Faked it for 5 whole minutes', icon: '🎭', time: 300 },
+  { id: '10m', name: 'Actually Meditated', desc: '10 minutes. Color us impressed.', icon: '🔔', time: 600 },
+  { id: '20m', name: 'Suspicious Stillness', desc: 'Are you asleep?', icon: '💤', time: 1200 },
+  { id: 'first_fraud', name: 'First Offense', desc: 'Your first fraud detection', icon: '🚨', frauds: 1 },
+  { id: 'serial_fraud', name: 'Serial Offender', desc: '5 fraud detections. Impressive.', icon: '👮', frauds: 5 },
+  { id: 'fraud_master', name: 'Master of Deception', desc: '10+ frauds. A new low.', icon: '🏆', frauds: 10 },
+  { id: 'zen100', name: 'Perfect Stillness', desc: 'Maintained 100 zen for 30s', icon: '✨', special: 'zen100' },
+  { id: 'zen0', name: 'Absolute Zero', desc: 'Hit 0 zen score', icon: '💀', special: 'zen0' },
+];
+
+// ===================== AUDIO =====================
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Ambient drone - two detuned oscillators
+  droneGain = audioCtx.createGain();
+  droneGain.gain.value = 0;
+  droneGain.connect(audioCtx.destination);
+
+  droneOsc1 = audioCtx.createOscillator();
+  droneOsc1.type = 'sine';
+  droneOsc1.frequency.value = 136.1; // Om frequency
+  droneOsc1.connect(droneGain);
+  droneOsc1.start();
+
+  droneOsc2 = audioCtx.createOscillator();
+  droneOsc2.type = 'sine';
+  droneOsc2.frequency.value = 272.2;
+  const osc2Gain = audioCtx.createGain();
+  osc2Gain.gain.value = 0.3;
+  droneOsc2.connect(osc2Gain);
+  osc2Gain.connect(droneGain);
+  droneOsc2.start();
+
+  // Sub bass
+  const subOsc = audioCtx.createOscillator();
+  subOsc.type = 'sine';
+  subOsc.frequency.value = 68.05;
+  const subGain = audioCtx.createGain();
+  subGain.gain.value = 0.4;
+  subOsc.connect(subGain);
+  subGain.connect(droneGain);
+  subOsc.start();
+
+  // Fade in drone
+  droneGain.gain.setTargetAtTime(0.12, audioCtx.currentTime, 2);
+
+  // Sting gain node (pre-created for fraud detections)
+  stingGain = audioCtx.createGain();
+  stingGain.gain.value = 0;
+  stingGain.connect(audioCtx.destination);
+}
+
+function playFraudSting() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  // Dramatic dissonant chord
+  const freqs = [220, 277.18, 329.63, 415.30];
+  freqs.forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    osc.type = i === 0 ? 'sawtooth' : 'square';
+    osc.frequency.value = f;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.8);
+  });
+
+  // Dip the drone momentarily
+  droneGain.gain.setTargetAtTime(0.02, now, 0.1);
+  droneGain.gain.setTargetAtTime(0.12, now + 1, 0.5);
+}
+
+function playAchievementSound() {
+  if (!audioCtx) return;
+  const now = audioCtx.currentTime;
+  [523.25, 659.25, 783.99].forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    const g = audioCtx.createGain();
+    g.gain.setValueAtTime(0, now + i * 0.15);
+    g.gain.linearRampToValueAtTime(0.1, now + i * 0.15 + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.5);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(now + i * 0.15);
+    osc.stop(now + i * 0.15 + 0.5);
+  });
+}
+
+// ===================== ACCELEROMETER =====================
+function initMotion() {
+  if (typeof DeviceMotionEvent !== 'undefined') {
+    // iOS 13+ requires permission
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      DeviceMotionEvent.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('devicemotion', handleMotion);
+          hasAccelerometer = true;
+        }
+      }).catch(() => {
+        // Fallback: simulate on desktop
+        simulateMotion();
+      });
+    } else {
+      window.addEventListener('devicemotion', handleMotion);
+      hasAccelerometer = true;
+      // Check after a moment if we actually get data
+      setTimeout(() => {
+        if (motionSamples.length === 0) {
+          hasAccelerometer = false;
+          simulateMotion();
+        }
+      }, 1000);
+    }
+  } else {
+    simulateMotion();
+  }
+}
+
+function handleMotion(e) {
+  if (!isRunning) return;
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a) return;
+
+  const magnitude = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+  // Subtract ~9.8 for gravity baseline
+  const motion = Math.abs(magnitude - 9.8);
+
+  motionSamples.push(motion);
+  if (motionSamples.length > MOTION_WINDOW) motionSamples.shift();
+
+  const avgMotion = motionSamples.reduce((a,b) => a+b, 0) / motionSamples.length;
+  totalMovement += motion;
+
+  if (avgMotion > FRAUD_THRESHOLD) {
+    triggerFraudDetection('motion');
+    currentStillStreak = 0;
+  } else {
+    currentStillStreak += 0.05; // ~50ms per sample
+    if (currentStillStreak > longestStill) longestStill = currentStillStreak;
+  }
+}
+
+function simulateMotion() {
+  // Desktop: use mouse movement as proxy
+  let lastX = 0, lastY = 0;
+  document.addEventListener('mousemove', (e) => {
+    if (!isRunning) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    const motion = Math.sqrt(dx*dx + dy*dy) * 0.05;
+    lastX = e.clientX;
+    lastY = e.clientY;
+
+    if (motion > 3) {
+      triggerFraudDetection('motion');
+      currentStillStreak = 0;
+    } else {
+      currentStillStreak += 0.1;
+      if (currentStillStreak > longestStill) longestStill = currentStillStreak;
+    }
+    totalMovement += motion;
+  });
+
+  // Also detect tab visibility change
+  document.addEventListener('visibilitychange', () => {
+    if (!isRunning) return;
+    if (document.hidden) {
+      triggerFraudDetection('tab');
+    }
+  });
+}
+
+// ===================== FRAUD DETECTION =====================
+function triggerFraudDetection(type) {
+  const now = Date.now();
+  if (now - lastFraudTime < 4000) return; // Cooldown
+  lastFraudTime = now;
+
+  fraudCount++;
+  zenScore = Math.max(0, zenScore - (5 + fraudCount));
+  updateZenDisplay();
+
+  let message;
+  if (type === 'tab') {
+    message = "You literally left the app. That's not even trying.";
+  } else {
+    message = motionCallouts[Math.floor(Math.random() * motionCallouts.length)];
+  }
+
+  showCallout(message);
+  playFraudSting();
+  document.body.classList.add('fraud-mode');
+  document.getElementById('meditation-screen').classList.add('shake');
+  document.getElementById('meditation-screen').classList.add('fraud-pulse');
+
+  setTimeout(() => {
+    document.getElementById('meditation-screen').classList.remove('shake');
+    document.getElementById('meditation-screen').classList.remove('fraud-pulse');
+  }, 600);
+
+  setTimeout(() => { document.body.classList.remove('fraud-mode'); }, 2000);
+
+  checkAchievement('first_fraud', { frauds: fraudCount });
+  checkAchievement('serial_fraud', { frauds: fraudCount });
+  checkAchievement('fraud_master', { frauds: fraudCount });
+  if (zenScore === 0) checkAchievement('zen0', { special: 'zen0' });
+
+  document.getElementById('fraud-counter').textContent = `Frauds detected: ${fraudCount}`;
+}
+
+// ===================== CALLOUTS =====================
+function showCallout(text) {
+  if (calloutShowing) {
+    calloutQueue.push(text);
+    return;
+  }
+  calloutShowing = true;
+  document.getElementById('callout-text').textContent = text;
+  document.getElementById('callout').classList.add('show');
+}
+
+function dismissCallout() {
+  document.getElementById('callout').classList.remove('show');
+  calloutShowing = false;
+  setTimeout(() => {
+    if (calloutQueue.length > 0) {
+      showCallout(calloutQueue.shift());
+    }
+  }, 500);
+}
+
+// ===================== INTRUSIVE THOUGHTS =====================
+function showIntrusiveThought() {
+  if (thoughtShowing || calloutShowing) return;
+  thoughtShowing = true;
+  const thought = intrusiveThoughts[Math.floor(Math.random() * intrusiveThoughts.length)];
+  document.getElementById('thought-text').textContent = thought;
+  document.getElementById('intrusive-thought').classList.add('show');
+}
+
+function dismissThought() {
+  document.getElementById('intrusive-thought').classList.remove('show');
+  thoughtShowing = false;
+  // Small zen bonus for dismissing thoughts
+  zenScore = Math.min(100, zenScore + 1);
+  updateZenDisplay();
+}
+
+// ===================== ACHIEVEMENTS =====================
+function checkAchievement(id, data) {
+  if (earnedAchievements.includes(id)) return;
+  const ach = achievements.find(a => a.id === id);
+  if (!ach) return;
+
+  let earned = false;
+  if (ach.time && data.elapsed >= ach.time) earned = true;
+  if (ach.frauds && data.frauds >= ach.frauds) earned = true;
+  if (ach.special && data.special === ach.special) earned = true;
+
+  if (earned) {
+    earnedAchievements.push(id);
+    showAchievementToast(ach);
+    playAchievementSound();
+  }
+}
+
+function showAchievementToast(ach) {
+  document.getElementById('ach-icon').textContent = ach.icon;
+  document.getElementById('ach-name').textContent = ach.name;
+  document.getElementById('ach-desc').textContent = ach.desc;
+  const toast = document.getElementById('achievement-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// ===================== ZEN SCORE =====================
+function updateZenDisplay() {
+  const el = document.getElementById('zen-score-value');
+  el.textContent = Math.round(zenScore);
+  el.style.color = zenScore > 60 ? 'var(--zen-accent)' : zenScore > 30 ? 'var(--zen-gold)' : 'var(--fraud-red)';
+
+  const ring = document.getElementById('score-ring');
+  const circumference = 2 * Math.PI * 65; // ~408
+  ring.style.strokeDashoffset = circumference - (circumference * zenScore / 100);
+  ring.style.stroke = zenScore > 60 ? 'var(--zen-accent)' : zenScore > 30 ? 'var(--zen-gold)' : 'var(--fraud-red)';
+}
+
+// ===================== TIMER =====================
+function updateTimer() {
+  if (!isRunning) return;
+  const elapsed = (Date.now() - startTime) / 1000;
+  const mins = Math.floor(elapsed / 60);
+  const secs = Math.floor(elapsed % 60);
+  document.getElementById('timer-display').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+  // Gradual zen recovery when still
+  if (currentStillStreak > 2) {
+    zenScore = Math.min(100, zenScore + 0.05);
+    updateZenDisplay();
+  }
+
+  // Time-based achievements
+  achievements.filter(a => a.time).forEach(a => checkAchievement(a.id, { elapsed }));
+
+  // Perfect stillness achievement
+  if (zenScore === 100 && elapsed > 30) {
+    checkAchievement('zen100', { special: 'zen100' });
+  }
+}
+
+// ===================== ESCALATING CALLOUTS =====================
+function getEscalatingCallout() {
+  let pool;
+  if (fraudCount <= 3) pool = escalatingCallouts.slice(0, 3);
+  else if (fraudCount <= 7) pool = escalatingCallouts.slice(3, 7);
+  else if (fraudCount <= 12) pool = escalatingCallouts.slice(7, 12);
+  else pool = escalatingCallouts.slice(12);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ===================== SESSION MANAGEMENT =====================
+function startMeditation() {
+  initAudio();
+  initMotion();
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('meditation-screen').style.display = 'flex';
+
+  startTime = Date.now();
+  isRunning = true;
+  zenScore = 100;
+  fraudCount = 0;
+  totalMovement = 0;
+  longestStill = 0;
+  currentStillStreak = 0;
+  earnedAchievements = [];
+  calloutQueue = [];
+  motionSamples = [];
+
+  updateZenDisplay();
+
+  timerInterval = setInterval(updateTimer, 100);
+
+  // Intrusive thoughts every 12-25 seconds
+  thoughtInterval = setInterval(() => {
+    if (isRunning && Math.random() < 0.6) {
+      showIntrusiveThought();
+    }
+  }, 12000 + Math.random() * 13000);
+
+  // Periodic escalating callouts (less frequent, for the persistent)
+  setInterval(() => {
+    if (!isRunning) return;
+    const elapsed = (Date.now() - startTime) / 1000;
+    if (elapsed > 60 && fraudCount > 3 && Math.random() < 0.3) {
+      showCallout(getEscalatingCallout());
+      playFraudSting();
+    }
+  }, 20000);
+}
+
+function endSession() {
+  isRunning = false;
+  clearInterval(timerInterval);
+  clearInterval(thoughtInterval);
+
+  // Fade out audio
+  if (droneGain) {
+    droneGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.5);
+  }
+
+  const elapsed = (Date.now() - startTime) / 1000;
+
+  // Check for short session callout
+  if (elapsed < 30) {
+    const shortMsg = timeCallouts[Math.floor(Math.random() * timeCallouts.length)];
+    showCallout(shortMsg);
+    setTimeout(() => { dismissCallout(); showSummary(elapsed); }, 2500);
+  } else {
+    showSummary(elapsed);
+  }
+}
+
+function showSummary(elapsed) {
+  // Dismiss any open popups
+  document.getElementById('callout').classList.remove('show');
+  document.getElementById('intrusive-thought').classList.remove('show');
+  calloutShowing = false;
+  thoughtShowing = false;
+
+  document.getElementById('meditation-screen').style.display = 'none';
+  document.getElementById('summary-screen').style.display = 'block';
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = Math.floor(elapsed % 60);
+
+  // Title based on performance
+  const title = zenScore >= 80 ? 'Surprisingly Not Terrible' :
+                zenScore >= 50 ? 'Mediocre Meditation' :
+                zenScore >= 20 ? 'Certified Fraud' :
+                'Spiritual Disaster';
+
+  document.getElementById('summary-title').textContent = title;
+
+  // Stats
+  const statsHTML = [
+    { label: 'Duration', value: `${mins}m ${secs}s` },
+    { label: 'Final Zen Score', value: `${Math.round(zenScore)}/100` },
+    { label: 'Frauds Detected', value: fraudCount.toString() },
+    { label: 'Longest Stillness', value: `${Math.round(longestStill)}s` },
+    { label: 'Thoughts Dismissed', value: earnedAchievements.length > 0 ? 'Some' : 'None, probably' },
+  ].map(s => `<div class="summary-stat"><span class="label">${s.label}</span><span class="value">${s.value}</span></div>`).join('');
+
+  document.getElementById('summary-stats').innerHTML = statsHTML;
+
+  // Generate roast
+  let roast;
+  if (elapsed < 30) {
+    roast = `${Math.round(elapsed)} seconds. That's not meditation, that's a loading screen. Your zen practice has the depth of a puddle and the consistency of a politician's promises.`;
+  } else if (fraudCount === 0 && zenScore >= 90) {
+    roast = `Okay, we'll admit it. That was... actually decent. Either you genuinely meditated, or you propped your phone on a table and walked away. We're choosing to believe the latter because it hurts less.`;
+  } else if (fraudCount > 10) {
+    roast = `${fraudCount} fraud detections in ${mins} minutes. You weren't meditating, you were having a seizure with your eyes closed. The accelerometer needs therapy after watching your performance. Monks across the world just felt a disturbance in the force.`;
+  } else if (fraudCount > 5) {
+    roast = `Your phone detected you moving ${fraudCount} times. That's more fidgeting than a toddler on espresso. The good news? At least you showed up. The bad news? Showing up was the only thing you did right.`;
+  } else if (zenScore < 30) {
+    roast = `A zen score of ${Math.round(zenScore)}. We've seen better scores from people who fell asleep on their keyboard. Your inner peace isn't just absent, it filed for relocation.`;
+  } else {
+    roast = `${mins} minutes, ${fraudCount} frauds, zen score of ${Math.round(zenScore)}. Mediocre across the board. You're the C-student of meditation. Not bad enough to be memorable, not good enough to brag about. The beige of spiritual practice.`;
+  }
+
+  document.getElementById('summary-roast').textContent = roast;
+
+  // Achievements
+  if (earnedAchievements.length > 0) {
+    const achHTML = earnedAchievements.map(id => {
+      const a = achievements.find(x => x.id === id);
+      return `<div class="summary-achievement-item"><span class="icon">${a.icon}</span><span>${a.name}</span></div>`;
+    }).join('');
+    document.getElementById('summary-achievements').innerHTML = `<h3>Achievements Unlocked</h3>${achHTML}`;
+  } else {
+    document.getElementById('summary-achievements').innerHTML = '<h3>Achievements</h3><p style="opacity:0.3;font-size:0.8rem;">None. You earned nothing. Just like your meditation.</p>';
+  }
+}
+
+function restart() {
+  document.getElementById('summary-screen').style.display = 'none';
+  document.getElementById('title-screen').style.display = 'block';
+  // Reset fraud mode styling
+  document.body.classList.remove('fraud-mode');
+}
+</script>
+</body>
+</html>

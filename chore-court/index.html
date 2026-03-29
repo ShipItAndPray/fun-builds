@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chore Court - Roommate Dispute Resolution</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=IM+Fell+English+SC&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --wood-dark: #2c1810;
+    --wood-mid: #4a2c1a;
+    --wood-light: #6b3a24;
+    --gold: #d4a843;
+    --gold-bright: #f0c75e;
+    --gold-dim: #8b7330;
+    --parchment: #f5e6c8;
+    --parchment-dark: #e8d5a8;
+    --ink: #1a0e05;
+    --red: #8b1a1a;
+    --green: #1a5c1a;
+  }
+
+  body {
+    font-family: 'Crimson Text', Georgia, serif;
+    background: var(--wood-dark);
+    color: var(--parchment);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Wood grain texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(90deg, transparent, rgba(0,0,0,0.03) 2px, transparent 4px),
+      repeating-linear-gradient(180deg, transparent, rgba(139,69,19,0.05) 1px, transparent 3px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .court-header {
+    background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
+    border-bottom: 4px solid var(--gold);
+    text-align: center;
+    padding: 1.5rem 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .court-header::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  }
+
+  .court-header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    color: var(--gold-bright);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 0.1em;
+  }
+
+  .court-header .subtitle {
+    font-family: 'IM Fell English SC', serif;
+    color: var(--gold-dim);
+    font-size: 0.95rem;
+    margin-top: 0.3rem;
+    letter-spacing: 0.15em;
+  }
+
+  .gavel-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Filing section */
+  .case-filing {
+    background: linear-gradient(135deg, var(--wood-mid), var(--wood-light));
+    border: 2px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .case-filing h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 0.5rem;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-group {
+    flex: 1;
+  }
+
+  .form-group label {
+    display: block;
+    font-family: 'IM Fell English SC', serif;
+    color: var(--gold);
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05em;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 0.7rem;
+    background: var(--parchment);
+    border: 2px solid var(--gold-dim);
+    border-radius: 4px;
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    transition: border-color 0.3s;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 8px rgba(212,168,67,0.3);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.8rem 2rem;
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .btn-primary {
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    color: var(--wood-dark);
+    box-shadow: 0 4px 16px rgba(212,168,67,0.3);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(180deg, #ffe080, var(--gold-bright));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212,168,67,0.5);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-danger {
+    background: linear-gradient(180deg, #c0392b, var(--red));
+    color: var(--parchment);
+    border-color: #e74c3c;
+  }
+
+  .btn-danger:hover {
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+    transform: translateY(-2px);
+  }
+
+  .btn-center {
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+  }
+
+  /* Trial area */
+  .trial-arena {
+    display: none;
+    background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
+    border: 2px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trial-arena.active { display: block; }
+
+  .trial-arena::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  }
+
+  .case-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    color: var(--gold-bright);
+    margin-bottom: 1.5rem;
+  }
+
+  .case-title .vs {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--red);
+    font-style: italic;
+    margin: 0.3rem 0;
+  }
+
+  .deliberation {
+    font-style: italic;
+    color: var(--parchment-dark);
+    font-size: 1.15rem;
+    min-height: 2em;
+    margin: 1.5rem 0;
+    transition: opacity 0.3s;
+  }
+
+  .deliberation .dots {
+    animation: blink 1.4s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Gavel animation */
+  .gavel-strike {
+    font-size: 4rem;
+    display: none;
+    animation: gavelBang 0.4s ease-out;
+    margin: 1rem 0;
+  }
+
+  .gavel-strike.active {
+    display: block;
+  }
+
+  @keyframes gavelBang {
+    0% { transform: rotate(-30deg) scale(1.3); }
+    50% { transform: rotate(5deg) scale(1); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+
+  /* Verdict */
+  .verdict-box {
+    display: none;
+    background: var(--parchment);
+    color: var(--ink);
+    border: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    text-align: left;
+    position: relative;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+  }
+
+  .verdict-box.active { display: block; }
+
+  .verdict-box .verdict-label {
+    display: block;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--red);
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.15em;
+  }
+
+  .verdict-box .stamp {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-family: 'IM Fell English SC', serif;
+    color: rgba(139,26,26,0.25);
+    font-size: 2.5rem;
+    transform: rotate(15deg);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+
+  /* Objection button */
+  .objection-section {
+    display: none;
+    margin: 1rem 0;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .objection-section.active { display: flex; }
+
+  .btn-objection {
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+    color: white;
+    border: 2px solid #ff6b6b;
+    font-size: 1.1rem;
+    padding: 0.7rem 1.5rem;
+    animation: pulse-obj 2s infinite;
+  }
+
+  .btn-objection:hover {
+    animation: none;
+    background: linear-gradient(180deg, #ff6b6b, #e74c3c);
+    transform: translateY(-2px);
+  }
+
+  @keyframes pulse-obj {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(231,76,60,0); }
+  }
+
+  .objection-result {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 1rem 0;
+    display: none;
+    animation: slamIn 0.3s ease-out;
+  }
+
+  .objection-result.sustained { color: var(--green); }
+  .objection-result.overruled { color: var(--red); }
+
+  .objection-result.active { display: block; }
+
+  @keyframes slamIn {
+    0% { transform: scale(2); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Read verdict button */
+  .btn-read {
+    background: linear-gradient(180deg, var(--wood-light), var(--wood-mid));
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn-read:hover {
+    background: linear-gradient(180deg, var(--wood-mid), var(--wood-dark));
+    color: var(--gold-bright);
+  }
+
+  /* Case history */
+  .case-history {
+    background: linear-gradient(135deg, var(--wood-mid), var(--wood-light));
+    border: 2px solid var(--gold-dim);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .case-history h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 0.5rem;
+  }
+
+  .case-log {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .case-log::-webkit-scrollbar {
+    width: 6px;
+  }
+  .case-log::-webkit-scrollbar-track {
+    background: var(--wood-dark);
+  }
+  .case-log::-webkit-scrollbar-thumb {
+    background: var(--gold-dim);
+    border-radius: 3px;
+  }
+
+  .case-entry {
+    background: rgba(0,0,0,0.2);
+    border-left: 3px solid var(--gold-dim);
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.8rem;
+    border-radius: 0 4px 4px 0;
+    font-size: 0.95rem;
+  }
+
+  .case-entry .case-date {
+    font-family: 'IM Fell English SC', serif;
+    color: var(--gold-dim);
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .case-entry .case-parties {
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+
+  .case-entry .case-dispute {
+    color: var(--parchment-dark);
+    font-style: italic;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .case-entry .case-verdict {
+    color: var(--parchment);
+    line-height: 1.5;
+  }
+
+  .no-cases {
+    text-align: center;
+    color: var(--gold-dim);
+    font-style: italic;
+    padding: 2rem;
+  }
+
+  .btn-clear-history {
+    display: block;
+    margin: 0.5rem auto 0;
+    background: transparent;
+    color: var(--gold-dim);
+    border: 1px solid var(--gold-dim);
+    font-size: 0.8rem;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    font-family: 'IM Fell English SC', serif;
+    border-radius: 4px;
+    transition: all 0.3s;
+  }
+
+  .btn-clear-history:hover {
+    color: var(--red);
+    border-color: var(--red);
+  }
+
+  /* Screen shake */
+  .shake {
+    animation: shake 0.5s ease-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 50%, 90% { transform: translateX(-4px); }
+    30%, 70% { transform: translateX(4px); }
+  }
+
+  /* ALL RISE overlay */
+  .all-rise-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .all-rise-overlay.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+
+  .all-rise-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 10vw, 6rem);
+    color: var(--gold-bright);
+    text-shadow: 0 0 40px rgba(212,168,67,0.5);
+    letter-spacing: 0.2em;
+    animation: riseUp 1s ease-out;
+  }
+
+  @keyframes riseUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--gold-dim);
+    font-family: 'IM Fell English SC', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  @media (max-width: 500px) {
+    .form-row { flex-direction: column; gap: 0.7rem; }
+    .container { padding: 1rem 0.7rem; }
+    .case-filing, .trial-arena, .case-history { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="all-rise-overlay" id="allRiseOverlay">
+  <div class="all-rise-text">ALL RISE</div>
+</div>
+
+<header class="court-header">
+  <span class="gavel-icon">&#9878;</span>
+  <h1>CHORE COURT</h1>
+  <div class="subtitle">Where Roommate Disputes Are Settled With Authority</div>
+</header>
+
+<div class="container">
+
+  <!-- Case Filing -->
+  <section class="case-filing" id="caseFiling">
+    <h2>&#9878; File Your Case</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Plaintiff (Accuser)</label>
+        <input type="text" id="plaintiff" placeholder="e.g. Alex" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label>Defendant (Accused)</label>
+        <input type="text" id="defendant" placeholder="e.g. Jordan" maxlength="30">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>The Dispute</label>
+      <textarea id="dispute" placeholder="e.g. Who should do the dishes?"></textarea>
+    </div>
+    <div class="btn-center">
+      <button class="btn btn-primary" id="allRiseBtn" onclick="startTrial()">&#9878; ALL RISE</button>
+    </div>
+  </section>
+
+  <!-- Trial Arena -->
+  <section class="trial-arena" id="trialArena">
+    <div class="case-title" id="caseTitle"></div>
+    <div class="deliberation" id="deliberation"></div>
+    <div class="gavel-strike" id="gavelStrike">&#9878;</div>
+    <div class="verdict-box" id="verdictBox">
+      <span class="stamp">BINDING</span>
+      <span class="verdict-label">VERDICT</span>
+      <div id="verdictText"></div>
+    </div>
+    <div class="objection-section" id="objectionSection">
+      <button class="btn btn-objection" onclick="fileObjection(plaintiffName)">&#128227; OBJECTION! (<span id="objPlaintiffName">Plaintiff</span>)</button>
+      <button class="btn btn-objection" onclick="fileObjection(defendantName)">&#128227; OBJECTION! (<span id="objDefendantName">Defendant</span>)</button>
+    </div>
+    <div class="objection-result" id="objectionResult"></div>
+    <div id="readVerdictContainer" style="display:none; text-align:center; margin-top:1rem;">
+      <button class="btn btn-read" onclick="readVerdict()">&#128266; Read Verdict Aloud</button>
+    </div>
+    <div class="btn-center" id="newCaseContainer" style="display:none;">
+      <button class="btn btn-primary" onclick="newCase()">&#9878; New Case</button>
+    </div>
+  </section>
+
+  <!-- Case History -->
+  <section class="case-history">
+    <h2>&#128220; Case History</h2>
+    <div class="case-log" id="caseLog"></div>
+    <button class="btn-clear-history" id="clearHistoryBtn" onclick="clearHistory()" style="display:none;">Clear All Records</button>
+  </section>
+
+</div>
+
+<footer class="footer">
+  Chore Court &mdash; All Verdicts Are Final And Legally Binding*<br>
+  <small>*Not actually legally binding. But morally? Absolutely.</small>
+</footer>
+
+<script>
+// ==================== Audio ====================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playGavel() {
+  ensureAudio();
+  // Low thud
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.4);
+
+  // Crack
+  const noise = audioCtx.createBufferSource();
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * 0.1, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (data.length * 0.08));
+  noise.buffer = buf;
+  const ng = audioCtx.createGain();
+  ng.gain.setValueAtTime(0.6, audioCtx.currentTime);
+  ng.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  noise.connect(ng);
+  ng.connect(audioCtx.destination);
+  noise.start();
+}
+
+function playObjectionSound() {
+  ensureAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+  osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+  osc.frequency.setValueAtTime(500, audioCtx.currentTime + 0.2);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.35);
+}
+
+// ==================== Verdict Templates ====================
+const verdicts = [
+  // Dishes
+  (p, d) => `The court finds ${d} GUILTY of dish negligence. Sentence: dishes for 3 days + must say "Your Honor" to ${p} for 24 hours.`,
+  (p, d) => `${d} is hereby sentenced to dish duty for the remainder of the week. ${p} shall supervise with crossed arms.`,
+  (p, d) => `The court rules that ${d} has been living in willful ignorance of the dish situation. Sentence: all dishes for 48 hours, plus a formal written apology on nice paper.`,
+
+  // Trash
+  (p, d) => `${d} is found guilty of trash blindness in the first degree. Sentence: trash duty for 5 days. The bag does not take itself out, ${d}.`,
+  (p, d) => `The court orders ${d} to handle all trash-related duties for one week. Furthermore, ${d} must acknowledge the trash can's existence each time they pass it.`,
+
+  // Cleaning
+  (p, d) => `${d} is sentenced to deep-clean the bathroom this weekend. The court reminds ${d} that "it looked fine to me" is not a legal defense.`,
+  (p, d) => `Guilty. ${d} shall vacuum the entire apartment while ${p} watches from the couch, offering helpful commentary.`,
+  (p, d) => `The court finds ${d} in contempt of cleanliness. Sentence: mopping duty for 4 days. Yes, that includes under the couch.`,
+
+  // General chore verdicts
+  (p, d) => `After careful deliberation, the court rules in favor of ${p}. ${d} must perform the disputed chore for the next 72 hours without complaint.`,
+  (p, d) => `GUILTY. ${d} has been sentenced to chore duty. Additionally, ${d} must compliment ${p}'s cleaning abilities at least twice daily.`,
+  (p, d) => `The court finds ${d} guilty and sentences them to do the chore in question for one full week. Appeals may be filed but will be denied.`,
+  (p, d) => `The evidence overwhelmingly supports ${p}'s claim. ${d} shall perform the duty immediately and prepare a 30-second apology speech.`,
+  (p, d) => `${d} is found NOT GUILTY. ${p} must do the chore themselves and bring ${d} a snack as reparations. The court has spoken.`,
+  (p, d) => `The court rules this is BOTH parties' fault. ${p} and ${d} shall do the chore together while maintaining aggressive eye contact.`,
+  (p, d) => `MISTRIAL declared due to mutual negligence. Both ${p} and ${d} must clean the entire apartment this Saturday. No excuses.`,
+  (p, d) => `${d} is guilty. Sentence: the disputed chore plus they must wear a paper crown that says "Chore Champion" for the rest of the day.`,
+  (p, d) => `The court sentences ${d} to handle the chore AND make dinner tonight. ${p} gets to pick what's for dinner.`,
+  (p, d) => `${d} is found guilty of chronic avoidance. Sentence: chore duty for 5 days. Additionally, ${d} must set a daily alarm labeled "DO YOUR CHORES."`,
+  (p, d) => `After reviewing the Roommate Code, Section 4, Paragraph 7: ${d} is responsible. Sentence: the chore in question, plus taking out the recycling for a week.`,
+  (p, d) => `The court finds in favor of ${p} with extreme prejudice. ${d} must do the chore while ${p} films a TikTok about it.`,
+  (p, d) => `GUILTY. ${d} shall perform the chore and must text ${p} a photo of the completed task. Failure to comply results in double chore duty.`,
+
+  // Funny / creative sentences
+  (p, d) => `${d} is found guilty. Sentence: the chore, plus ${d} must narrate their cleaning in a nature documentary voice for ${p}'s amusement.`,
+  (p, d) => `The court sentences ${d} to chore duty. Additionally, ${d} loses TV remote privileges for 24 hours. ${p} controls the remote.`,
+  (p, d) => `GUILTY beyond a reasonable mess. ${d} must handle the chore and cannot use the phrase "I was going to do it" for 48 hours.`,
+  (p, d) => `The court awards ${p} full chore immunity for 3 days. ${d} picks up the slack. So it is written, so it shall be done.`,
+  (p, d) => `${d} is sentenced to the disputed chore and must greet ${p} with "Good morning, Your Excellence" for the next 2 days.`,
+  (p, d) => `The court finds ${d} guilty. Punishment: complete the chore within one hour AND buy ${p} their coffee of choice tomorrow morning.`,
+  (p, d) => `VERDICT: ${d} is guilty of willful chore evasion. ${d} must do the chore while wearing rubber gloves and a serious expression. No phone allowed.`,
+  (p, d) => `${d} is found guilty under the Roommate Fair Labor Act. Sentence: all disputed chores for 4 days, plus a heartfelt "thank you" card for ${p}.`,
+  (p, d) => `The court sentences ${d} to perform the chore immediately. ${d} is also banned from saying "but I did it last time" for one week.`,
+  (p, d) => `In the matter of ${p} v. ${d}, the court rules: ${d} is the designated chore-doer for the rest of the day. No negotiations, no substitutions.`,
+  (p, d) => `${d}: GUILTY. You shall do the chore AND write "I will not neglect my duties" on a Post-it note, to be displayed on the fridge.`,
+  (p, d) => `The court has considered the evidence. ${d} is guilty. Sentence: the chore in question, served with a side of humility. ${p} may gloat for exactly 5 minutes.`,
+  (p, d) => `${d} is acquitted on a technicality. However, ${d} must still do the chore as a "gesture of goodwill." The court sees through you, ${d}.`,
+  (p, d) => `The jury of imaginary peers finds ${d} guilty. Sentence: weekly chore chart creation duty falls to ${d} for the next month.`,
+  (p, d) => `GUILTY. ${d} must handle the chore and is forbidden from ordering takeout until it's done. Motivation is key.`,
+  (p, d) => `The court rules: ${p} wins. ${d} must complete the chore and play ${p}'s choice of music while doing it. No skipping songs.`,
+  (p, d) => `${d} is found guilty of Domestic Task Avoidance, Class B. Sentence: the chore plus a public admission that ${p} was right all along.`,
+  (p, d) => `LANDMARK RULING: ${d} must do the chore. Furthermore, any future disputes default to ${p}'s favor for 72 hours. Precedent has been set.`,
+  (p, d) => `The court sentences ${d} to the chore plus 10 minutes of listening to ${p} explain why chores matter. No eye-rolling allowed.`,
+  (p, d) => `${d} is guilty of Grade A procrastination. Sentence: the chore, completed within 30 minutes, plus ${d} must admit that ${p} keeps the place running.`,
+  (p, d) => `SPLIT VERDICT: ${d} does the chore today, ${p} does it tomorrow. But ${d} goes first because ${p} filed the complaint. Fair is fair.`,
+  (p, d) => `The court finds for ${p}. ${d}, you are sentenced to chore duty AND must leave a motivational sticky note for yourself on the mirror each morning for a week.`,
+  (p, d) => `${d}: GUILTY of roommate negligence. You must handle the chore while ${p} reads dramatic courtroom quotes aloud. This is non-negotiable.`,
+  (p, d) => `The court sentences ${d} to the disputed task. Also, ${d} must change their phone wallpaper to a picture of a mop for 48 hours.`,
+  (p, d) => `VERDICT: ${d} handles the chore. ${p} is awarded "Roommate of the Week" status and gets first shower rights for 3 days.`,
+  (p, d) => `${d} is found guilty. The court orders: complete the chore, then do one bonus chore of ${p}'s choosing. Consider it community service.`,
+  (p, d) => `The Honorable Chore Court finds ${d} responsible. Sentence: the chore, served immediately. ${d} may request a glass of water, but that is all.`,
+  (p, d) => `CASE DISMISSED against ${d}. Plot twist: BOTH parties must now do the chore together and reflect on the importance of teamwork. Get to it.`,
+  (p, d) => `${d} is guilty on all counts of sloth. Sentence: the disputed chore plus ${d} must start a "Chores Completed" tally on the fridge and stay ahead of ${p}.`,
+  (p, d) => `The court rules that ${d} shall handle the chore. Moreover, ${d} is on probation: any chore complaints in the next week result in double duty.`,
+  (p, d) => `GUILTY. ${d} performs the chore. As additional punishment, ${d} must agree that ${p}'s cleaning standards are "reasonable and just."`,
+];
+
+// ==================== Deliberation Messages ====================
+const deliberations = [
+  "The court is reviewing evidence...",
+  "Consulting the Roommate Code...",
+  "Examining prior case law...",
+  "Interviewing the dishes as witnesses...",
+  "The judge is stroking their chin thoughtfully...",
+  "Cross-referencing the chore chart...",
+  "Analyzing the defendant's cleaning history...",
+  "Reviewing surveillance footage of the kitchen...",
+  "The bailiff is shaking their head...",
+  "Measuring the exact height of the trash pile...",
+  "Consulting the ancient scroll of apartment rules...",
+  "The jury of houseplants has reached a consensus...",
+  "Running forensic analysis on the sponge...",
+  "Checking if the defendant's 'I'll do it later' holds up...",
+  "The court reporter is typing furiously...",
+];
+
+// ==================== State ====================
+let plaintiffName = '';
+let defendantName = '';
+let currentVerdict = '';
+
+// ==================== Trial Logic ====================
+function startTrial() {
+  plaintiffName = document.getElementById('plaintiff').value.trim();
+  defendantName = document.getElementById('defendant').value.trim();
+  const dispute = document.getElementById('dispute').value.trim();
+
+  if (!plaintiffName || !defendantName || !dispute) {
+    alert('The court requires all fields to be filled. Order in the court!');
+    return;
+  }
+
+  ensureAudio();
+
+  const btn = document.getElementById('allRiseBtn');
+  btn.disabled = true;
+
+  // Show ALL RISE overlay
+  const overlay = document.getElementById('allRiseOverlay');
+  overlay.classList.add('active');
+  playGavel();
+
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    beginDeliberation(plaintiffName, defendantName, dispute);
+    btn.disabled = false;
+  }, 2000);
+}
+
+function beginDeliberation(p, d, dispute) {
+  const arena = document.getElementById('trialArena');
+  const caseTitle = document.getElementById('caseTitle');
+  const deliberation = document.getElementById('deliberation');
+  const gavelEl = document.getElementById('gavelStrike');
+  const verdictBox = document.getElementById('verdictBox');
+  const verdictText = document.getElementById('verdictText');
+  const objSection = document.getElementById('objectionSection');
+  const objResult = document.getElementById('objectionResult');
+  const readContainer = document.getElementById('readVerdictContainer');
+  const newCaseBtn = document.getElementById('newCaseContainer');
+
+  // Reset
+  gavelEl.classList.remove('active');
+  verdictBox.classList.remove('active');
+  objSection.classList.remove('active');
+  objResult.classList.remove('active');
+  readContainer.style.display = 'none';
+  newCaseBtn.style.display = 'none';
+
+  // Set case title
+  caseTitle.innerHTML = `${escHtml(p)} <span class="vs">v.</span> ${escHtml(d)}`;
+
+  // Set objection button names
+  document.getElementById('objPlaintiffName').textContent = p;
+  document.getElementById('objDefendantName').textContent = d;
+
+  arena.classList.add('active');
+  arena.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Deliberation sequence
+  const shuffled = deliberations.sort(() => Math.random() - 0.5).slice(0, 4);
+  let i = 0;
+
+  function showNext() {
+    if (i < shuffled.length) {
+      deliberation.innerHTML = shuffled[i] + ' <span class="dots">...</span>';
+      i++;
+      setTimeout(showNext, 1200 + Math.random() * 800);
+    } else {
+      deliberation.textContent = '';
+      deliverVerdict(p, d, dispute);
+    }
+  }
+  showNext();
+}
+
+function deliverVerdict(p, d, dispute) {
+  const gavelEl = document.getElementById('gavelStrike');
+  const verdictBox = document.getElementById('verdictBox');
+  const verdictText = document.getElementById('verdictText');
+  const objSection = document.getElementById('objectionSection');
+  const readContainer = document.getElementById('readVerdictContainer');
+  const newCaseBtn = document.getElementById('newCaseContainer');
+
+  // Gavel bang
+  playGavel();
+  gavelEl.classList.add('active');
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 500);
+
+  // Second bang
+  setTimeout(() => { playGavel(); }, 300);
+  // Third bang
+  setTimeout(() => { playGavel(); }, 600);
+
+  setTimeout(() => {
+    // Pick random verdict
+    const template = verdicts[Math.floor(Math.random() * verdicts.length)];
+    currentVerdict = template(p, d);
+    verdictText.textContent = currentVerdict;
+    verdictBox.classList.add('active');
+    objSection.classList.add('active');
+    readContainer.style.display = 'block';
+    newCaseBtn.style.display = 'flex';
+
+    // Save to history
+    saveCase(p, d, dispute, currentVerdict);
+    renderHistory();
+  }, 1000);
+}
+
+// ==================== Objection ====================
+function fileObjection(who) {
+  const objResult = document.getElementById('objectionResult');
+  playObjectionSound();
+
+  const sustained = Math.random() < 0.35; // 35% chance sustained
+
+  objResult.className = 'objection-result active ' + (sustained ? 'sustained' : 'overruled');
+  objResult.textContent = sustained ? 'SUSTAINED!' : 'OVERRULED!';
+
+  document.body.classList.add('shake');
+  setTimeout(() => document.body.classList.remove('shake'), 500);
+
+  // Hide after a moment
+  setTimeout(() => {
+    objResult.classList.remove('active');
+  }, 2500);
+
+  // If sustained, reroll the verdict
+  if (sustained) {
+    setTimeout(() => {
+      const template = verdicts[Math.floor(Math.random() * verdicts.length)];
+      currentVerdict = template(plaintiffName, defendantName);
+      document.getElementById('verdictText').textContent = currentVerdict;
+
+      // Update the saved case
+      const cases = getCases();
+      if (cases.length > 0) {
+        cases[cases.length - 1].verdict = currentVerdict;
+        localStorage.setItem('choreCourt_cases', JSON.stringify(cases));
+        renderHistory();
+      }
+    }, 1500);
+  }
+}
+
+// ==================== Speech ====================
+function readVerdict() {
+  if (!currentVerdict) return;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(currentVerdict);
+    utter.rate = 0.85;
+    utter.pitch = 0.7;
+
+    // Try to find a deep/authoritative voice
+    const voices = window.speechSynthesis.getVoices();
+    const deep = voices.find(v => /daniel|male|james|google uk/i.test(v.name));
+    if (deep) utter.voice = deep;
+
+    window.speechSynthesis.speak(utter);
+  } else {
+    alert('Speech synthesis not supported in this browser.');
+  }
+}
+
+// Load voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ==================== Case History (localStorage) ====================
+function getCases() {
+  try {
+    return JSON.parse(localStorage.getItem('choreCourt_cases') || '[]');
+  } catch { return []; }
+}
+
+function saveCase(p, d, dispute, verdict) {
+  const cases = getCases();
+  cases.push({
+    date: new Date().toLocaleString(),
+    plaintiff: p,
+    defendant: d,
+    dispute: dispute,
+    verdict: verdict
+  });
+  localStorage.setItem('choreCourt_cases', JSON.stringify(cases));
+}
+
+function renderHistory() {
+  const log = document.getElementById('caseLog');
+  const cases = getCases();
+  const clearBtn = document.getElementById('clearHistoryBtn');
+
+  if (cases.length === 0) {
+    log.innerHTML = '<div class="no-cases">No cases on record. File your first dispute above.</div>';
+    clearBtn.style.display = 'none';
+    return;
+  }
+
+  clearBtn.style.display = 'block';
+  log.innerHTML = cases.slice().reverse().map(c => `
+    <div class="case-entry">
+      <div class="case-date">Case filed: ${escHtml(c.date)}</div>
+      <div class="case-parties">${escHtml(c.plaintiff)} v. ${escHtml(c.defendant)}</div>
+      <div class="case-dispute">"${escHtml(c.dispute)}"</div>
+      <div class="case-verdict">${escHtml(c.verdict)}</div>
+    </div>
+  `).join('');
+}
+
+function clearHistory() {
+  if (confirm('Clear all court records? This action is irreversible.')) {
+    localStorage.removeItem('choreCourt_cases');
+    renderHistory();
+  }
+}
+
+function newCase() {
+  document.getElementById('trialArena').classList.remove('active');
+  document.getElementById('plaintiff').value = '';
+  document.getElementById('defendant').value = '';
+  document.getElementById('dispute').value = '';
+  document.getElementById('plaintiff').focus();
+  document.getElementById('caseFiling').scrollIntoView({ behavior: 'smooth' });
+}
+
+function escHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>

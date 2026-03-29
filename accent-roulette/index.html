@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accent Roulette</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0a0a2e 0%, #1a1a4e 50%, #2d1b69 100%);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 20px 10px 10px;
+  }
+
+  .header h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bff6b, #6bd4ff, #d46bff);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s ease-in-out infinite;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    font-weight: 900;
+    text-shadow: none;
+  }
+
+  .header .subtitle {
+    font-size: 1rem;
+    color: #aaa;
+    margin-top: 4px;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Layout */
+  .game-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* Wheel */
+  .wheel-area {
+    position: relative;
+    width: 320px;
+    height: 320px;
+    flex-shrink: 0;
+  }
+
+  @media (min-width: 500px) {
+    .wheel-area { width: 380px; height: 380px; }
+  }
+
+  .wheel-pointer {
+    position: absolute;
+    top: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-size: 36px;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+    animation: none;
+  }
+
+  .wheel-svg {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(0,0,0,0.2);
+    transition: transform 0s;
+  }
+
+  .wheel-svg.spinning {
+    transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+  }
+
+  .segment-text {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #fff;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    pointer-events: none;
+  }
+
+  /* Spin Button */
+  .spin-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, #ff4444 0%, #cc0000 70%, #990000 100%);
+    border: 4px solid #ffd700;
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 4px 20px rgba(255,0,0,0.4), inset 0 -4px 8px rgba(0,0,0,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-transform: uppercase;
+  }
+
+  .spin-btn:hover:not(:disabled) {
+    transform: translate(-50%, -50%) scale(1.08);
+    box-shadow: 0 6px 30px rgba(255,0,0,0.6), inset 0 -4px 8px rgba(0,0,0,0.3);
+  }
+
+  .spin-btn:active:not(:disabled) {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+
+  .spin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Cards */
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+  }
+
+  .card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: #ffd700;
+  }
+
+  /* Accent Display */
+  .accent-display {
+    text-align: center;
+    display: none;
+  }
+
+  .accent-display.active { display: block; }
+
+  .accent-name {
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    font-weight: 900;
+    color: #ffd700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .accent-desc {
+    font-size: 1rem;
+    color: #ccc;
+    margin-bottom: 12px;
+  }
+
+  .accent-phrase {
+    background: rgba(255,215,0,0.1);
+    border: 1px dashed #ffd700;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #ffe680;
+  }
+
+  .accent-phrase::before { content: '"'; }
+  .accent-phrase::after { content: '"'; }
+
+  /* Timer */
+  .timer-section {
+    text-align: center;
+    display: none;
+  }
+
+  .timer-section.active { display: block; }
+
+  .timer-ring {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+
+  .timer-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .timer-ring .bg { stroke: rgba(255,255,255,0.1); }
+  .timer-ring .progress { stroke: #4ade80; stroke-linecap: round; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .timer-ring .progress.warning { stroke: #fbbf24; }
+  .timer-ring .progress.danger { stroke: #ef4444; }
+
+  .timer-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.2rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Judge Buttons */
+  .judge-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .judge-btn {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .judge-btn:active { transform: scale(0.95); }
+
+  .nailed-btn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(34,197,94,0.4);
+  }
+
+  .dropped-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+  }
+
+  /* Player Setup */
+  .player-setup input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 1rem;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .player-setup input::placeholder { color: rgba(255,255,255,0.4); }
+
+  .player-setup .add-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .player-setup .add-row input { flex: 1; margin-bottom: 0; }
+
+  .btn-small {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: transform 0.1s;
+  }
+
+  .btn-small:active { transform: scale(0.95); }
+
+  .btn-add {
+    background: #ffd700;
+    color: #000;
+  }
+
+  .btn-start {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #fff;
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    margin-top: 8px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .player-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .player-tag {
+    background: rgba(255,215,0,0.2);
+    border: 1px solid #ffd700;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .player-tag .remove {
+    cursor: pointer;
+    opacity: 0.6;
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .player-tag .remove:hover { opacity: 1; }
+
+  /* Scoreboard */
+  .scoreboard-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .scoreboard-table th, .scoreboard-table td {
+    padding: 8px 12px;
+    text-align: center;
+  }
+
+  .scoreboard-table th {
+    color: #ffd700;
+    border-bottom: 2px solid rgba(255,215,0,0.3);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .scoreboard-table td {
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 1rem;
+  }
+
+  .scoreboard-table tr.current-player {
+    background: rgba(255,215,0,0.1);
+  }
+
+  .scoreboard-table .player-name-col { text-align: left; }
+
+  .round-info {
+    text-align: center;
+    font-size: 1rem;
+    color: #aaa;
+    margin-bottom: 10px;
+  }
+
+  .current-turn {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #ffd700;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  /* Penalty */
+  .penalty-card {
+    text-align: center;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .penalty-card.active { display: block; }
+
+  .penalty-text {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #ff6b6b;
+    margin-bottom: 8px;
+  }
+
+  .penalty-desc {
+    font-size: 1.1rem;
+    color: #ccc;
+  }
+
+  .btn-next-round {
+    margin-top: 14px;
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    z-index: 100;
+    animation: confettiFall 3s ease-in forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { top: -20px; opacity: 1; transform: rotate(0deg) scale(1); }
+    100% { top: 110vh; opacity: 0; transform: rotate(720deg) scale(0.5); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Hide sections */
+  .hidden { display: none !important; }
+
+  /* Responsive tweaks */
+  @media (max-width: 400px) {
+    .wheel-area { width: 280px; height: 280px; }
+    .spin-btn { width: 90px; height: 90px; font-size: 1rem; }
+    .segment-text { font-size: 9px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Accent Roulette</h1>
+  <p class="subtitle">Spin. Speak. Survive.</p>
+</div>
+
+<div class="game-container">
+
+  <!-- Player Setup -->
+  <div class="card player-setup" id="setupCard">
+    <h2>Players</h2>
+    <div class="player-tags" id="playerTags"></div>
+    <div class="add-row">
+      <input type="text" id="nameInput" placeholder="Enter player name..." maxlength="20">
+      <button class="btn-small btn-add" onclick="addPlayer()">Add</button>
+    </div>
+    <button class="btn-start hidden" id="startBtn" onclick="startGame()">Start Game</button>
+  </div>
+
+  <!-- Game Info -->
+  <div class="card hidden" id="gameInfo">
+    <div class="round-info" id="roundInfo">Round 1</div>
+    <div class="current-turn" id="currentTurn"></div>
+  </div>
+
+  <!-- Wheel -->
+  <div class="wheel-area hidden" id="wheelArea">
+    <div class="wheel-pointer">&#9660;</div>
+    <svg class="wheel-svg" id="wheelSvg" viewBox="0 0 400 400"></svg>
+    <button class="spin-btn" id="spinBtn" onclick="spin()">SPIN</button>
+  </div>
+
+  <!-- Accent Display -->
+  <div class="card accent-display" id="accentCard">
+    <div class="accent-name" id="accentName"></div>
+    <div class="accent-desc" id="accentDesc"></div>
+    <div class="accent-phrase" id="accentPhrase"></div>
+  </div>
+
+  <!-- Timer + Judge -->
+  <div class="card timer-section" id="timerCard">
+    <h2>Keep The Accent Going!</h2>
+    <div class="timer-ring">
+      <svg width="140" height="140" viewBox="0 0 140 140">
+        <circle class="bg" cx="70" cy="70" r="62" fill="none" stroke-width="10"/>
+        <circle class="progress" id="timerProgress" cx="70" cy="70" r="62" fill="none" stroke-width="10"
+          stroke-dasharray="389.56" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-text" id="timerText">60</div>
+    </div>
+    <div class="judge-buttons">
+      <button class="judge-btn nailed-btn" onclick="judge(true)">NAILED IT</button>
+      <button class="judge-btn dropped-btn" onclick="judge(false)">DROPPED IT</button>
+    </div>
+  </div>
+
+  <!-- Penalty -->
+  <div class="card penalty-card" id="penaltyCard">
+    <div class="penalty-text" id="penaltyText"></div>
+    <div class="penalty-desc" id="penaltyDesc"></div>
+    <button class="btn-next-round" onclick="nextTurn()">Next Turn</button>
+  </div>
+
+  <!-- Scoreboard -->
+  <div class="card hidden" id="scoreCard">
+    <h2>Scoreboard</h2>
+    <table class="scoreboard-table">
+      <thead>
+        <tr><th class="player-name-col">Player</th><th>Score</th><th>Streak</th></tr>
+      </thead>
+      <tbody id="scoreBody"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// ========== DATA ==========
+const ACCENTS = [
+  { name: "British Posh", color: "#e63946", desc: "Think the Queen at high tea. Crisp, proper, slightly condescending.",
+    phrase: "I say, would you be so kind as to pass the Earl Grey? This weather is positively dreadful." },
+  { name: "Australian", color: "#f4a261", desc: "Laid-back, upward inflection, throw in a 'mate' or 'reckon'.",
+    phrase: "G'day mate! Reckon we should throw some shrimp on the barbie before it gets too arvo." },
+  { name: "Southern USA", color: "#2a9d8f", desc: "Slow drawl, honey-sweet. Everything is 'y'all' and 'fixin' to'.",
+    phrase: "Well bless your heart, I'm fixin' to make some sweet tea. Y'all want some?" },
+  { name: "New York", color: "#e76f51", desc: "Fast, loud, drop your R's. Walk fast, talk faster.",
+    phrase: "Hey, I'm walkin' here! Lemme get a cawfee, regular, and a bagel. Fuggedaboutit." },
+  { name: "Jamaican", color: "#06d6a0", desc: "Musical rhythm, warm vibes. Relaxed and melodic.",
+    phrase: "Everyting irie, mon! Come sit down ya so, we reason and enjoy di nice breeze." },
+  { name: "French", color: "#8338ec", desc: "Breathy, romantic, slightly bored. Everything sounds elegant.",
+    phrase: "Ah, but of course, ze baguette must be fresh. Life is too short for bad bread, non?" },
+  { name: "Scottish", color: "#ff006e", desc: "Rolling R's, fierce pride. Channel your inner Braveheart.",
+    phrase: "Ach, ye cannae be serious! Get yerself a wee dram of whisky and stop yer haverin'." },
+  { name: "Pirate", color: "#3a86ff", desc: "Arrr! Growly, salty, one eye squinted. Full commitment required.",
+    phrase: "Arrr, shiver me timbers! Set sail for the horizon, ye scurvy dogs, or walk the plank!" },
+  { name: "Robot", color: "#8d99ae", desc: "Monotone. Precise. No contractions. Beep boop.",
+    phrase: "GREETINGS HUMAN. I HAVE COMPUTED THAT YOUR REQUEST HAS A 97.3 PERCENT CHANCE OF FAILURE." },
+  { name: "Valley Girl", color: "#ff85a1", desc: "Like, totally! Upspeak everything. OMG. I can't even.",
+    phrase: "Oh my God, like, that is literally SO amazing? I literally can't even deal right now." },
+  { name: "Movie Trailer", color: "#ffc300", desc: "Deep, dramatic, intense pauses. IN A WORLD...",
+    phrase: "In a world... where no one can be trusted... one hero must rise... to order pizza." },
+  { name: "Shakespearean", color: "#7209b7", desc: "Thee, thou, forsooth! Grand gestures. Dramatic pauses.",
+    phrase: "Hark! What light through yonder window breaks? 'Tis but the notification on mine phone!" }
+];
+
+const PENALTIES = [
+  { text: "5 Push-ups!", desc: "Drop and give 'em five. No half reps." },
+  { text: "Chug Water!", desc: "Down a full glass of water. Hydration penalty." },
+  { text: "Dance for 10 Seconds!", desc: "Your best moves. Right now. No excuses." },
+  { text: "Sing a Line!", desc: "Belt out one line of any song. Commit to it." },
+  { text: "Talk in Slow-Mo!", desc: "Say your next sentence in dramatic slow motion." },
+  { text: "Act Like a Cat!", desc: "Meow, stretch, and groom yourself for 10 seconds." },
+  { text: "Compliment Everyone!", desc: "Give a genuine compliment to every player." },
+  { text: "Tongue Twister!", desc: "Say 'She sells seashells' 3 times fast." },
+  { text: "Freeze Frame!", desc: "Strike a dramatic pose and hold it for 10 seconds." },
+  { text: "Speak Only in Questions!", desc: "Everything must be a question for the next minute?" }
+];
+
+// ========== STATE ==========
+let players = [];
+let scores = {};
+let streaks = {};
+let currentPlayerIdx = 0;
+let round = 1;
+let timerInterval = null;
+let timeLeft = 60;
+let isSpinning = false;
+let totalRotation = 0;
+
+// ========== AUDIO (Web Audio API synth) ==========
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playTick() {
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = 'square';
+  o.frequency.value = 800 + Math.random() * 400;
+  g.gain.value = 0.08;
+  o.start(); o.stop(audioCtx.currentTime + 0.03);
+}
+
+function playFanfare() {
+  ensureAudio();
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'triangle';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.15);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.15 + 0.4);
+    o.start(audioCtx.currentTime + i * 0.15);
+    o.stop(audioCtx.currentTime + i * 0.15 + 0.4);
+  });
+}
+
+function playBuzzer() {
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
+  o.type = 'sawtooth';
+  o.frequency.value = 120;
+  g.gain.value = 0.15;
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  o.start(); o.stop(audioCtx.currentTime + 0.6);
+}
+
+function playSuccess() {
+  ensureAudio();
+  [880, 1108, 1320].forEach((freq, i) => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.12, audioCtx.currentTime + i * 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.3);
+    o.start(audioCtx.currentTime + i * 0.1);
+    o.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+  });
+}
+
+// ========== WHEEL DRAWING ==========
+function drawWheel() {
+  const svg = document.getElementById('wheelSvg');
+  const cx = 200, cy = 200, r = 190;
+  const n = ACCENTS.length;
+  const slice = (2 * Math.PI) / n;
+  let html = '';
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = i * slice;
+    const endAngle = (i + 1) * slice;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    html += `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z" fill="${ACCENTS[i].color}" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>`;
+
+    // Text along the middle of the segment
+    const midAngle = startAngle + slice / 2;
+    const textR = r * 0.68;
+    const tx = cx + textR * Math.cos(midAngle);
+    const ty = cy + textR * Math.sin(midAngle);
+    const deg = (midAngle * 180) / Math.PI;
+
+    html += `<text class="segment-text" x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" transform="rotate(${deg},${tx},${ty})">${ACCENTS[i].name}</text>`;
+  }
+
+  // Center circle overlay
+  html += `<circle cx="${cx}" cy="${cy}" r="55" fill="#1a1a3e" stroke="#ffd700" stroke-width="3"/>`;
+
+  svg.innerHTML = html;
+}
+
+// ========== PLAYER MANAGEMENT ==========
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPlayer();
+});
+
+function addPlayer() {
+  const input = document.getElementById('nameInput');
+  const name = input.value.trim();
+  if (!name || players.includes(name)) { input.value = ''; return; }
+  if (players.length >= 8) return;
+
+  players.push(name);
+  scores[name] = 0;
+  streaks[name] = 0;
+  input.value = '';
+  renderPlayerTags();
+
+  if (players.length >= 2) {
+    document.getElementById('startBtn').classList.remove('hidden');
+  }
+}
+
+function removePlayer(name) {
+  players = players.filter(p => p !== name);
+  delete scores[name];
+  delete streaks[name];
+  renderPlayerTags();
+  if (players.length < 2) {
+    document.getElementById('startBtn').classList.add('hidden');
+  }
+}
+
+function renderPlayerTags() {
+  const container = document.getElementById('playerTags');
+  container.innerHTML = players.map(p =>
+    `<div class="player-tag">${p}<span class="remove" onclick="removePlayer('${p}')">&times;</span></div>`
+  ).join('');
+}
+
+// ========== GAME FLOW ==========
+function startGame() {
+  document.getElementById('setupCard').classList.add('hidden');
+  document.getElementById('wheelArea').classList.remove('hidden');
+  document.getElementById('gameInfo').classList.remove('hidden');
+  document.getElementById('scoreCard').classList.remove('hidden');
+  currentPlayerIdx = 0;
+  round = 1;
+  updateGameInfo();
+  updateScoreboard();
+  drawWheel();
+}
+
+function updateGameInfo() {
+  document.getElementById('roundInfo').textContent = `Round ${round}`;
+  document.getElementById('currentTurn').textContent = `${players[currentPlayerIdx]}'s Turn`;
+}
+
+function updateScoreboard() {
+  const body = document.getElementById('scoreBody');
+  body.innerHTML = players.map((p, i) => {
+    const cls = i === currentPlayerIdx ? ' class="current-player"' : '';
+    const streakIcon = streaks[p] >= 3 ? ' &#128293;' : streaks[p] >= 2 ? ' &#11088;' : '';
+    return `<tr${cls}><td class="player-name-col">${p}${streakIcon}</td><td>${scores[p]}</td><td>${streaks[p]}</td></tr>`;
+  }).join('');
+}
+
+// ========== SPIN ==========
+function spin() {
+  if (isSpinning) return;
+  isSpinning = true;
+
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = true;
+
+  // Hide previous results
+  document.getElementById('accentCard').classList.remove('active');
+  document.getElementById('timerCard').classList.remove('active');
+  document.getElementById('penaltyCard').classList.remove('active');
+
+  const svg = document.getElementById('wheelSvg');
+  svg.classList.remove('spinning');
+
+  // Calculate target
+  const n = ACCENTS.length;
+  const extraSpins = 5 + Math.floor(Math.random() * 3); // 5-7 full spins
+  const targetIdx = Math.floor(Math.random() * n);
+  const sliceDeg = 360 / n;
+  // The pointer is at top (270 deg in SVG coords = 0 rotation visual).
+  // We want the target segment at the top.
+  const targetDeg = 360 - (targetIdx * sliceDeg + sliceDeg / 2);
+  const spinDeg = extraSpins * 360 + targetDeg;
+
+  totalRotation += spinDeg;
+
+  // Tick sounds during spin
+  let tickCount = 0;
+  const tickInterval = setInterval(() => {
+    playTick();
+    tickCount++;
+    if (tickCount > 30) clearInterval(tickInterval);
+  }, 80);
+
+  // Slower ticks
+  setTimeout(() => {
+    clearInterval(tickInterval);
+    const slowTick = setInterval(() => {
+      playTick();
+    }, 200);
+    setTimeout(() => clearInterval(slowTick), 1500);
+  }, 2000);
+
+  // Animate
+  requestAnimationFrame(() => {
+    svg.classList.add('spinning');
+    svg.style.transform = `rotate(${totalRotation}deg)`;
+  });
+
+  // After spin completes
+  setTimeout(() => {
+    isSpinning = false;
+    playFanfare();
+    showAccent(targetIdx);
+  }, 4200);
+}
+
+function showAccent(idx) {
+  const accent = ACCENTS[idx];
+  document.getElementById('accentName').textContent = accent.name;
+  document.getElementById('accentDesc').textContent = accent.desc;
+  document.getElementById('accentPhrase').textContent = accent.phrase;
+  document.getElementById('accentCard').classList.add('active');
+
+  // Start timer after a short pause
+  setTimeout(() => {
+    document.getElementById('timerCard').classList.add('active');
+    startTimer();
+  }, 1500);
+}
+
+// ========== TIMER ==========
+function startTimer() {
+  timeLeft = 60;
+  const circumference = 2 * Math.PI * 62; // ~389.56
+  const progress = document.getElementById('timerProgress');
+  const text = document.getElementById('timerText');
+
+  progress.style.strokeDashoffset = '0';
+  progress.classList.remove('warning', 'danger');
+  text.textContent = '60';
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    text.textContent = timeLeft;
+
+    const offset = circumference * (1 - timeLeft / 60);
+    progress.style.strokeDashoffset = offset;
+
+    if (timeLeft <= 10) {
+      progress.classList.add('danger');
+      progress.classList.remove('warning');
+    } else if (timeLeft <= 20) {
+      progress.classList.add('warning');
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      // Time's up - auto success!
+      playSuccess();
+      judge(true);
+    }
+  }, 1000);
+}
+
+// ========== JUDGING ==========
+function judge(nailed) {
+  clearInterval(timerInterval);
+  document.getElementById('timerCard').classList.remove('active');
+  document.getElementById('spinBtn').disabled = false;
+
+  const player = players[currentPlayerIdx];
+
+  if (nailed) {
+    scores[player] += 1;
+    streaks[player] += 1;
+    playSuccess();
+
+    // Check for perfect round (streak >= 3)
+    if (streaks[player] >= 3 && streaks[player] % 3 === 0) {
+      launchConfetti();
+    }
+
+    // Show brief success then advance
+    document.getElementById('penaltyCard').classList.add('active');
+    document.getElementById('penaltyText').textContent = 'NAILED IT!';
+    document.getElementById('penaltyDesc').textContent = `+1 point! Streak: ${streaks[player]}`;
+    document.getElementById('penaltyText').style.color = '#4ade80';
+  } else {
+    streaks[player] = 0;
+    playBuzzer();
+
+    const penalty = PENALTIES[Math.floor(Math.random() * PENALTIES.length)];
+    document.getElementById('penaltyCard').classList.add('active');
+    document.getElementById('penaltyText').textContent = penalty.text;
+    document.getElementById('penaltyDesc').textContent = penalty.desc;
+    document.getElementById('penaltyText').style.color = '#ff6b6b';
+  }
+
+  updateScoreboard();
+}
+
+function nextTurn() {
+  document.getElementById('penaltyCard').classList.remove('active');
+  document.getElementById('accentCard').classList.remove('active');
+
+  currentPlayerIdx++;
+  if (currentPlayerIdx >= players.length) {
+    currentPlayerIdx = 0;
+    round++;
+  }
+
+  updateGameInfo();
+  updateScoreboard();
+}
+
+// ========== CONFETTI ==========
+function launchConfetti() {
+  const colors = ['#ff6b6b', '#ffd93d', '#6bff6b', '#6bd4ff', '#d46bff', '#ff85a1', '#ffc300'];
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (6 + Math.random() * 8) + 'px';
+    el.style.height = (6 + Math.random() * 8) + 'px';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    el.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+// Init
+drawWheel();
+</script>
+</body>
+</html>

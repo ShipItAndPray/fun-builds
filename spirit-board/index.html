@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spirit Board - The Ghost That Roasts You</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;700&family=MedievalSharp&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #d4a574;
+    font-family: 'Cinzel', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  .fog {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 100;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(80,60,100,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(60,80,100,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(100,60,80,0.1) 0%, transparent 50%);
+    animation: fogDrift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes fogDrift {
+    0% { opacity: 0.6; transform: translateX(-20px); }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; transform: translateX(20px); }
+  }
+
+  .fog::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(100,80,120,0.02) 2px,
+      rgba(100,80,120,0.02) 4px
+    );
+    animation: scanlines 0.1s linear infinite;
+  }
+
+  @keyframes scanlines {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(4px); }
+  }
+
+  .candles {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .candle-glow {
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: candleFlicker 0.15s ease-in-out infinite alternate;
+  }
+
+  .candle-glow.left {
+    top: 10%; left: 5%;
+    background: radial-gradient(circle, rgba(255,150,50,0.3), transparent 70%);
+    animation-delay: 0s;
+  }
+  .candle-glow.right {
+    top: 10%; right: 5%;
+    background: radial-gradient(circle, rgba(255,130,40,0.25), transparent 70%);
+    animation-delay: 0.07s;
+  }
+  .candle-glow.bl {
+    bottom: 15%; left: 10%;
+    background: radial-gradient(circle, rgba(255,140,45,0.2), transparent 70%);
+    animation-delay: 0.12s;
+  }
+  .candle-glow.br {
+    bottom: 15%; right: 10%;
+    background: radial-gradient(circle, rgba(255,160,55,0.2), transparent 70%);
+    animation-delay: 0.04s;
+  }
+
+  @keyframes candleFlicker {
+    0% { opacity: 0.7; transform: scale(1); }
+    25% { opacity: 1; transform: scale(1.05); }
+    50% { opacity: 0.8; transform: scale(0.97); }
+    75% { opacity: 0.95; transform: scale(1.03); }
+    100% { opacity: 0.75; transform: scale(0.98); }
+  }
+
+  .summoning .candle-glow {
+    animation: candleSummon 0.08s ease-in-out infinite alternate;
+  }
+
+  @keyframes candleSummon {
+    0% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.3); }
+    100% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    text-align: center;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: #d4a574;
+    text-shadow: 0 0 20px rgba(212,165,116,0.5), 0 0 40px rgba(212,165,116,0.2);
+    margin: 20px 0 5px;
+    letter-spacing: 3px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #8a7060;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .ghost-selector {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .ghost-btn {
+    background: rgba(30,20,15,0.8);
+    border: 1px solid #5a4030;
+    color: #d4a574;
+    padding: 8px 16px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+  }
+
+  .ghost-btn:hover, .ghost-btn.active {
+    background: rgba(80,50,30,0.6);
+    border-color: #d4a574;
+    box-shadow: 0 0 15px rgba(212,165,116,0.3);
+  }
+
+  .ghost-btn.active {
+    text-shadow: 0 0 8px rgba(212,165,116,0.8);
+  }
+
+  .board {
+    background:
+      radial-gradient(ellipse at center, rgba(60,40,20,0.4), rgba(10,10,15,0.9)),
+      linear-gradient(135deg, #1a1208 0%, #0d0a06 50%, #1a1208 100%);
+    border: 3px solid #5a4030;
+    border-radius: 20px;
+    padding: 25px 15px;
+    position: relative;
+    box-shadow:
+      inset 0 0 60px rgba(0,0,0,0.5),
+      0 0 30px rgba(80,50,20,0.2);
+  }
+
+  .board::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid rgba(90,64,48,0.4);
+    border-radius: 15px;
+    pointer-events: none;
+  }
+
+  .board-decor {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+    opacity: 0.6;
+  }
+
+  .yes-no-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+  }
+
+  .board-word {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    color: #a08060;
+    cursor: default;
+    padding: 5px 20px;
+    border-radius: 8px;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .board-word.highlight {
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.8), 0 0 40px rgba(255,215,0,0.4);
+  }
+
+  .alpha-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .letter {
+    font-family: 'MedievalSharp', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    color: #a08060;
+    width: clamp(28px, 5vw, 40px);
+    height: clamp(28px, 5vw, 40px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    border-radius: 50%;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .letter.highlight {
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255,215,0,0.8), 0 0 30px rgba(255,215,0,0.5);
+    transform: scale(1.2);
+  }
+
+  .letter.highlight::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border: 2px solid rgba(255,215,0,0.4);
+    border-radius: 50%;
+    animation: planchettePulse 0.6s ease-in-out infinite;
+  }
+
+  @keyframes planchettePulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+
+  .planchette {
+    position: absolute;
+    width: 60px;
+    height: 70px;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    filter: drop-shadow(0 0 15px rgba(255,215,0,0.5));
+  }
+
+  .planchette.visible { opacity: 1; }
+
+  .planchette-shape {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .planchette-shape::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 0; height: 0;
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 50px solid rgba(139,90,43,0.8);
+    filter: drop-shadow(0 0 8px rgba(255,200,100,0.3));
+  }
+
+  .planchette-shape::after {
+    content: '';
+    position: absolute;
+    top: 15px; left: 50%;
+    transform: translateX(-50%);
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,215,0,0.6), transparent);
+    border: 1px solid rgba(255,215,0,0.4);
+  }
+
+  .number-row {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: 15px 0;
+    flex-wrap: wrap;
+  }
+
+  .number {
+    font-family: 'MedievalSharp', serif;
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: #a08060;
+    width: clamp(26px, 4vw, 36px);
+    height: clamp(26px, 4vw, 36px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    border-radius: 50%;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .number.highlight {
+    color: #ffd700;
+    text-shadow: 0 0 15px rgba(255,215,0,0.8);
+    transform: scale(1.2);
+  }
+
+  .number.highlight::before {
+    content: '';
+    position: absolute;
+    inset: -5px;
+    border: 2px solid rgba(255,215,0,0.4);
+    border-radius: 50%;
+    animation: planchettePulse 0.6s ease-in-out infinite;
+  }
+
+  .goodbye-row { text-align: center; margin-top: 15px; }
+
+  .goodbye-word {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: #a08060;
+    cursor: pointer;
+    padding: 8px 30px;
+    border-radius: 8px;
+    transition: all 0.3s;
+    display: inline-block;
+  }
+
+  .goodbye-word:hover {
+    color: #d4a574;
+    text-shadow: 0 0 10px rgba(212,165,116,0.5);
+  }
+
+  .goodbye-word.highlight {
+    color: #ff4444;
+    text-shadow: 0 0 20px rgba(255,68,68,0.8);
+  }
+
+  .message-area {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .spelled-out {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.3rem, 3vw, 2rem);
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    min-height: 40px;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+    word-break: break-all;
+  }
+
+  .spirit-speaks {
+    font-family: 'MedievalSharp', serif;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    color: #8a7060;
+    font-style: italic;
+    min-height: 25px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    padding: 0 10px;
+  }
+
+  .spirit-speaks.visible { opacity: 1; }
+
+  .input-area {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .question-input {
+    background: rgba(20,15,10,0.8);
+    border: 1px solid #5a4030;
+    color: #d4a574;
+    padding: 12px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 500px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .question-input:focus {
+    border-color: #d4a574;
+    box-shadow: 0 0 15px rgba(212,165,116,0.2);
+  }
+
+  .question-input::placeholder { color: #6a5040; }
+
+  .ask-btn, .summon-btn {
+    background: linear-gradient(135deg, #3a2510, #5a3520);
+    border: 1px solid #8a6040;
+    color: #d4a574;
+    padding: 12px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+
+  .ask-btn:hover, .summon-btn:hover {
+    background: linear-gradient(135deg, #5a3520, #7a4530);
+    box-shadow: 0 0 20px rgba(212,165,116,0.3);
+    transform: translateY(-1px);
+  }
+
+  .ask-btn:disabled, .summon-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .summon-btn {
+    display: block;
+    margin: 25px auto 0;
+    font-size: 1rem;
+    padding: 14px 40px;
+    font-family: 'Cinzel Decorative', serif;
+    letter-spacing: 2px;
+  }
+
+  .session-status {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #5a4030;
+    margin-top: 15px;
+    min-height: 20px;
+  }
+
+  .session-status.active {
+    color: #7a9060;
+    text-shadow: 0 0 10px rgba(122,144,96,0.3);
+  }
+
+  .shaking { animation: shake 0.1s linear infinite; }
+
+  @keyframes shake {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(1px, -2px); }
+    75% { transform: translate(-1px, 2px); }
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  @media (max-width: 500px) {
+    .board { padding: 15px 8px; }
+    .alpha-row { gap: 2px; }
+    .ghost-btn { padding: 6px 10px; font-size: 0.7rem; }
+    .container { padding: 10px; }
+    h1 { margin-top: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="fog"></div>
+  <div class="candles">
+    <div class="candle-glow left"></div>
+    <div class="candle-glow right"></div>
+    <div class="candle-glow bl"></div>
+    <div class="candle-glow br"></div>
+  </div>
+
+  <div class="container">
+    <h1>Spirit Board</h1>
+    <p class="subtitle">The dead have opinions. You won't like them.</p>
+
+    <div class="ghost-selector">
+      <button class="ghost-btn active" data-ghost="sassy">Sassy Ghost</button>
+      <button class="ghost-btn" data-ghost="boomer">Boomer Ghost</button>
+      <button class="ghost-btn" data-ghost="genz">Gen-Z Ghost</button>
+      <button class="ghost-btn" data-ghost="shakespeare">Shakespeare Ghost</button>
+    </div>
+
+    <div class="board" id="board">
+      <div class="board-decor">
+        <span>&#9788;</span>
+        <span>&#9789;</span>
+      </div>
+
+      <div class="yes-no-row">
+        <span class="board-word" id="word-YES">YES</span>
+        <span class="board-word" id="word-NO">NO</span>
+      </div>
+
+      <div class="alpha-row" id="row1"></div>
+      <div class="alpha-row" id="row2"></div>
+
+      <div class="number-row" id="numbers"></div>
+
+      <div class="goodbye-row">
+        <span class="goodbye-word" id="word-GOODBYE" onclick="endSession()">GOODBYE</span>
+      </div>
+
+      <div class="planchette" id="planchette">
+        <div class="planchette-shape"></div>
+      </div>
+    </div>
+
+    <div class="message-area">
+      <div class="spelled-out" id="spelledOut"></div>
+      <div class="spirit-speaks" id="spiritSpeaks"></div>
+    </div>
+
+    <div class="input-area" id="inputArea" style="display:none;">
+      <input type="text" class="question-input" id="questionInput" placeholder="Ask the spirits..." maxlength="200" />
+      <button class="ask-btn" id="askBtn" onclick="askQuestion()">Ask</button>
+    </div>
+
+    <button class="summon-btn" id="summonBtn" onclick="summonSpirit()">Summon Spirit</button>
+
+    <div class="session-status" id="sessionStatus"></div>
+  </div>
+
+<script>
+const row1Letters = 'ABCDEFGHIJKLM'.split('');
+const row2Letters = 'NOPQRSTUVWXYZ'.split('');
+
+function buildRow(containerId, letters) {
+  const c = document.getElementById(containerId);
+  letters.forEach(l => {
+    const el = document.createElement('span');
+    el.className = 'letter';
+    el.id = 'letter-' + l;
+    el.textContent = l;
+    c.appendChild(el);
+  });
+}
+buildRow('row1', row1Letters);
+buildRow('row2', row2Letters);
+
+const numContainer = document.getElementById('numbers');
+for (let i = 1; i <= 9; i++) {
+  const el = document.createElement('span');
+  el.className = 'number';
+  el.id = 'num-' + i;
+  el.textContent = i;
+  numContainer.appendChild(el);
+}
+const zeroEl = document.createElement('span');
+zeroEl.className = 'number';
+zeroEl.id = 'num-0';
+zeroEl.textContent = '0';
+numContainer.appendChild(zeroEl);
+
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playClick() {
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 800 + Math.random() * 400;
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.08);
+}
+
+function playWindSound(duration) {
+  initAudio();
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+  const bandpass = audioCtx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 400;
+  bandpass.Q.value = 0.5;
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.frequency.value = 0.3;
+  lfoGain.gain.value = 200;
+  lfo.connect(lfoGain).connect(bandpass.frequency);
+  lfo.start();
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 0.5);
+  gain.gain.linearRampToValueAtTime(0.08, audioCtx.currentTime + duration - 0.5);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+  source.connect(bandpass).connect(gain).connect(audioCtx.destination);
+  source.start();
+  source.stop(audioCtx.currentTime + duration);
+  setTimeout(() => lfo.stop(), duration * 1000);
+}
+
+function speakEerie(text) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.7;
+  utter.pitch = 0.3;
+  utter.volume = 0.8;
+  const voices = speechSynthesis.getVoices();
+  const eerie = voices.find(v => /whisper|ghost/i.test(v.name))
+    || voices.find(v => /female/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (eerie) utter.voice = eerie;
+  speechSynthesis.speak(utter);
+}
+
+let currentGhost = 'sassy';
+
+const roasts = {
+  sassy: {
+    love: [
+      { spell: "LOLNO", speak: "The spirits have seen your dating profile. They send condolences." },
+      { spell: "NOPE", speak: "Honey, even ghosts ghost you." },
+      { spell: "MAYBE", speak: "Sure, if you lower your standards to the underworld." },
+      { spell: "HA", speak: "Love? With that energy? The spirits are cackling." },
+      { spell: "DOUBT", speak: "The spirits consulted. They laughed. Meeting adjourned." },
+    ],
+    success: [
+      { spell: "LMAO", speak: "Your piggy jar called. It filed a missing persons report." },
+      { spell: "NO", speak: "Prosperous in spirit maybe. And that is being generous." },
+      { spell: "NEVER", speak: "I have been dead two hundred years and I still flex harder than you." },
+      { spell: "CUTE", speak: "That is adorable. You think effort leads to reward." },
+    ],
+    future: [
+      { spell: "YIKES", speak: "I have seen your future. I am not allowed to say, but... yikes." },
+      { spell: "BLEAK", speak: "The future is bright. For literally everyone except you." },
+      { spell: "MEH", speak: "Your future is like your personality. Vague and forgettable." },
+      { spell: "RUN", speak: "The spirits recommend running. From everything. Starting now." },
+    ],
+    job: [
+      { spell: "FIRED", speak: "Career? Bold of you to call it that." },
+      { spell: "NAH", speak: "Your resume just made three spirits cry." },
+      { spell: "YAWN", speak: "Even in the afterlife, your professional presence is boring." },
+    ],
+    general: [
+      { spell: "SIGH", speak: "You summoned me... for THIS?" },
+      { spell: "NEXT", speak: "The spirits have decided to pretend they did not hear that." },
+      { spell: "REALLY", speak: "I died for this? Literally died and came back for THIS question?" },
+      { spell: "BOO", speak: "That question was scarier than me. And I am a ghost." },
+      { spell: "WEAK", speak: "The spirit realm has a group chat. You are the main topic. Not in a good way." },
+      { spell: "BRUH", speak: "I just consulted the other side. They all face-palmed. All of them." },
+      { spell: "TRAGIC", speak: "The crystal ball just cracked trying to answer that." },
+      { spell: "HELP", speak: "I am the one who needs help. From your question." },
+      { spell: "NOWAY", speak: "The spirits took a vote. It was unanimous. I am not telling you which way." },
+    ],
+  },
+  boomer: {
+    love: [
+      { spell: "SWIPE", speak: "Back in my day, we actually talked to people. With our mouths." },
+      { spell: "NO", speak: "Maybe if you put down that phone and made eye contact for once." },
+      { spell: "TRY", speak: "Have you tried going outside? The sun still exists." },
+      { spell: "LAZY", speak: "You cannot even commit to a show, let alone a person." },
+    ],
+    success: [
+      { spell: "WORK", speak: "Back in my day, a firm handshake meant something. You cannot even shake a hand." },
+      { spell: "NOPE", speak: "Stop ordering overpriced toast and maybe you could afford a haunted house." },
+      { spell: "HA", speak: "I owned property at twenty-two. You own subscriptions you forget to cancel." },
+      { spell: "SAVE", speak: "You spend seven bucks on a single cup of bean water. Seven." },
+    ],
+    future: [
+      { spell: "SOFT", speak: "Your generation is doomed. You need a safe space from a Ouija board." },
+      { spell: "DARK", speak: "In my day, the future was bright. Then your generation happened." },
+      { spell: "LOST", speak: "You cannot even read a map. How will you navigate life?" },
+    ],
+    job: [
+      { spell: "WALK", speak: "Just walk in and ask for the manager. That is how it works." },
+      { spell: "BOOT", speak: "Your generation does not want to work. Even ghosts put in overtime." },
+    ],
+    general: [
+      { spell: "KIDS", speak: "Kids these days. Cannot even summon spirits without a tutorial." },
+      { spell: "WEAK", speak: "We used to walk uphill both ways to the cemetery. You use an app." },
+      { spell: "SOFT", speak: "Back in my day, ghosts were scary. Now you want us to be your therapist." },
+      { spell: "SIGH", speak: "I miss the good old days. When questions had substance." },
+      { spell: "NO", speak: "That question is why I am glad I am already dead." },
+      { spell: "PHONE", speak: "Put your phone down. Oh wait, you literally cannot. That is sad." },
+      { spell: "DOOM", speak: "Your attention span is shorter than my patience. And I am eternal." },
+    ],
+  },
+  genz: {
+    love: [
+      { spell: "CAP", speak: "Bestie that is cap. Your love life is giving nothing." },
+      { spell: "DEAD", speak: "Your situationship era is never ending. And I say this as someone literally dead." },
+      { spell: "SUS", speak: "Love? That is sus. You cannot even commit to a playlist." },
+      { spell: "OOF", speak: "Big oof energy. The spirits are sending thoughts and prayers to your DMs." },
+      { spell: "RIP", speak: "Your love life? It is giving ghost. I would know." },
+    ],
+    success: [
+      { spell: "SLAY", speak: "Slay... is what your life plan is not doing." },
+      { spell: "BET", speak: "No cap, your whole situation is literally the scariest thing here." },
+      { spell: "RENT", speak: "You cannot even afford to haunt a nice house. Gentrified ghosts only." },
+      { spell: "RATIO", speak: "Your ambitions got ratio'd by reality. L plus struggling." },
+    ],
+    future: [
+      { spell: "VIBE", speak: "The vibes are off. Way off. Like, therapy-level off." },
+      { spell: "IYKYK", speak: "Your future? If you know, you know. And it is not giving what you think." },
+      { spell: "CRINGE", speak: "I looked into your future and it is lowkey cringe. No cap." },
+    ],
+    job: [
+      { spell: "QUIET", speak: "You are not quiet quitting. You are loud failing." },
+      { spell: "NPC", speak: "Your career is giving NPC energy. Just vibing in the background." },
+    ],
+    general: [
+      { spell: "SLAY", speak: "You thought this was gonna slay? Bestie, no." },
+      { spell: "BRUH", speak: "The spirit realm is lowkey over you." },
+      { spell: "COPE", speak: "That question is copium. Pure, uncut copium." },
+      { spell: "TOUCH", speak: "Touch grass. I am literally six feet under and I go outside more than you." },
+      { spell: "BASED", speak: "That question was not based. It was cringe. Hard cringe." },
+      { spell: "FREE", speak: "I am living free in your head. At least someone is free." },
+      { spell: "MAIN", speak: "You are not the main character. You are the friend who gets cut in editing." },
+      { spell: "FERAL", speak: "The spirit realm finds you unhinged. And we are literally dead people." },
+    ],
+  },
+  shakespeare: {
+    love: [
+      { spell: "ALAS", speak: "What light through yonder window breaks? Not your love life, certainly." },
+      { spell: "NEVER", speak: "Shall I compare thee to a summer's day? Nay, for summer actually comes." },
+      { spell: "PITY", speak: "To love or not to love? The question assumes anyone would choose thee." },
+      { spell: "FOLLY", speak: "Love looks not with the eyes. Which explains nothing about thy predicament." },
+      { spell: "WOE", speak: "O Romeo, Romeo, wherefore art... oh wait, no one is coming for you." },
+    ],
+    success: [
+      { spell: "POOR", speak: "Neither a borrower nor a lender be. Convenient, since no one would lend to thee." },
+      { spell: "FOOL", speak: "A fool and his fortune are soon parted. Thou art halfway there." },
+      { spell: "NAY", speak: "All that glitters is not gold. In thy case, nothing glitters at all." },
+    ],
+    future: [
+      { spell: "DOOM", speak: "Tomorrow and tomorrow and tomorrow creeps in this petty pace. Especially for thee." },
+      { spell: "DIRE", speak: "Something wicked this way comes. It is thy future." },
+      { spell: "DARK", speak: "The course of true life never did run smooth. Thine runs not at all." },
+    ],
+    job: [
+      { spell: "JEST", speak: "All the world is a stage, and thou art merely an unpaid intern." },
+      { spell: "FARCE", speak: "Brevity is the soul of wit. Thy resume is brief. The wit is absent." },
+    ],
+    general: [
+      { spell: "FIE", speak: "What a piece of work is man. Though calling thee a piece of work is generous." },
+      { spell: "THOU", speak: "Thou hast summoned me from beyond the grave for drivel most foul." },
+      { spell: "VILE", speak: "Out, damned question! Out, I say!" },
+      { spell: "GRAVE", speak: "Et tu, mortal? Even the dead deserve better entertainment." },
+      { spell: "WRETCH", speak: "I have lived, I have died, and now I suffer thy questions. Truly, perdition is real." },
+      { spell: "KNAVE", speak: "Lord, what fools these mortals be. Exhibit A: thyself." },
+      { spell: "PLAGUE", speak: "A plague upon both thy questions. Next!" },
+      { spell: "PITY", speak: "The quality of mercy is strained. Especially after that question." },
+    ],
+  },
+};
+
+function categorizeQuestion(q) {
+  q = q.toLowerCase();
+  if (/love|dating|relationship|marry|partner|boyfriend|girlfriend|crush|single|tinder|bumble|match|soulmate|romance/.test(q)) return 'love';
+  if (/rich|wealth|millionaire|lottery|afford|fortune|prosper|successful|fame|power/.test(q)) return 'success';
+  if (/future|destiny|fate|happen|tomorrow|next year|when will|what will|predict|ahead/.test(q)) return 'future';
+  if (/job|career|work|promotion|boss|hired|fired|interview|business|startup/.test(q)) return 'job';
+  return 'general';
+}
+
+function pickRoast(question) {
+  const cat = categorizeQuestion(question);
+  const ghostRoasts = roasts[currentGhost];
+  const pool = ghostRoasts[cat] || ghostRoasts.general;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+let sessionActive = false;
+let spelling = false;
+
+function clearHighlights() {
+  document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+}
+
+function highlightElement(id) {
+  clearHighlights();
+  const el = document.getElementById(id);
+  if (el) {
+    el.classList.add('highlight');
+    playClick();
+    movePlanchette(el);
+  }
+}
+
+function movePlanchette(target) {
+  const planchette = document.getElementById('planchette');
+  const board = document.getElementById('board');
+  const boardRect = board.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const x = targetRect.left - boardRect.left + targetRect.width / 2 - 30;
+  const y = targetRect.top - boardRect.top + targetRect.height / 2 - 35;
+  planchette.style.left = x + 'px';
+  planchette.style.top = y + 'px';
+  planchette.classList.add('visible');
+}
+
+async function spellOut(text, afterSpeak) {
+  spelling = true;
+  const display = document.getElementById('spelledOut');
+  display.textContent = '';
+
+  for (let i = 0; i < text.length; i++) {
+    if (!sessionActive) break;
+    const char = text[i];
+    if (char === ' ') {
+      display.textContent += ' ';
+      await sleep(300);
+      continue;
+    }
+    let elId;
+    if (/[A-Z]/.test(char)) elId = 'letter-' + char;
+    else if (/[0-9]/.test(char)) elId = 'num-' + char;
+    else {
+      display.textContent += char;
+      await sleep(200);
+      continue;
+    }
+    if (elId) {
+      highlightElement(elId);
+      display.textContent += char;
+    }
+    await sleep(250 + Math.random() * 200);
+  }
+
+  clearHighlights();
+  document.getElementById('planchette').classList.remove('visible');
+  spelling = false;
+
+  if (afterSpeak) {
+    await sleep(500);
+    const speaksEl = document.getElementById('spiritSpeaks');
+    speaksEl.textContent = '\u201C' + afterSpeak + '\u201D';
+    speaksEl.classList.add('visible');
+    speakEerie(afterSpeak);
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function summonSpirit() {
+  if (sessionActive || spelling) return;
+  document.getElementById('summonBtn').disabled = true;
+  initAudio();
+  playWindSound(3);
+  document.body.classList.add('summoning', 'shaking');
+  document.getElementById('spelledOut').textContent = '';
+  document.getElementById('spiritSpeaks').textContent = '';
+  document.getElementById('spiritSpeaks').classList.remove('visible');
+
+  await sleep(2500);
+  document.body.classList.remove('summoning', 'shaking');
+
+  sessionActive = true;
+  document.getElementById('inputArea').style.display = 'flex';
+  document.getElementById('summonBtn').style.display = 'none';
+  document.getElementById('sessionStatus').textContent = 'A spirit has entered the session...';
+  document.getElementById('sessionStatus').classList.add('active');
+  document.getElementById('questionInput').focus();
+
+  const intros = {
+    sassy: { spell: "HELLO", speak: "Ugh, another one. Fine. Ask away, mortal." },
+    boomer: { spell: "HELLO", speak: "In my day, we did not need spirits. We had common sense." },
+    genz: { spell: "SUP", speak: "Okay slay. Let us speedrun this seance bestie." },
+    shakespeare: { spell: "HARK", speak: "What mortal dares disturb my eternal slumber? Speak, wretch." },
+  };
+  await spellOut(intros[currentGhost].spell, intros[currentGhost].speak);
+}
+
+async function askQuestion() {
+  if (!sessionActive || spelling) return;
+  const input = document.getElementById('questionInput');
+  const question = input.value.trim();
+  if (!question) return;
+
+  input.value = '';
+  document.getElementById('askBtn').disabled = true;
+  document.getElementById('spelledOut').textContent = '';
+  document.getElementById('spiritSpeaks').textContent = '';
+  document.getElementById('spiritSpeaks').classList.remove('visible');
+
+  await sleep(500 + Math.random() * 1000);
+
+  const roast = pickRoast(question);
+  await spellOut(roast.spell, roast.speak);
+
+  document.getElementById('askBtn').disabled = false;
+  document.getElementById('questionInput').focus();
+}
+
+async function endSession() {
+  if (!sessionActive || spelling) return;
+  sessionActive = false;
+
+  document.getElementById('spelledOut').textContent = '';
+  document.getElementById('spiritSpeaks').textContent = '';
+  document.getElementById('spiritSpeaks').classList.remove('visible');
+
+  highlightElement('word-GOODBYE');
+  await sleep(1000);
+
+  const farewells = {
+    sassy: "Finally. Do not call me again.",
+    boomer: "Good riddance. Go read a book.",
+    genz: "K bye bestie. This was mid.",
+    shakespeare: "Parting is such sweet relief. Farewell, thou tedious creature.",
+  };
+
+  clearHighlights();
+  document.getElementById('planchette').classList.remove('visible');
+
+  const speaksEl = document.getElementById('spiritSpeaks');
+  speaksEl.textContent = '\u201C' + farewells[currentGhost] + '\u201D';
+  speaksEl.classList.add('visible');
+  speakEerie(farewells[currentGhost]);
+
+  document.getElementById('inputArea').style.display = 'none';
+  document.getElementById('summonBtn').style.display = 'block';
+  document.getElementById('summonBtn').disabled = false;
+  document.getElementById('sessionStatus').textContent = 'The spirit has departed.';
+  document.getElementById('sessionStatus').classList.remove('active');
+}
+
+document.querySelectorAll('.ghost-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (sessionActive) return;
+    document.querySelectorAll('.ghost-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentGhost = btn.dataset.ghost;
+  });
+});
+
+document.getElementById('questionInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') askQuestion();
+});
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>
