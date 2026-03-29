@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nutrition Truth Decoder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#00cc66,#44aaff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+textarea{width:100%;height:120px;padding:14px;background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#fff;font-size:1rem;resize:vertical;font-family:inherit}
+textarea::placeholder{color:#555}
+.decode-btn{width:100%;padding:14px;background:linear-gradient(135deg,#00cc66,#008844);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;margin:12px 0;transition:.3s}
+.decode-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(0,204,102,.4)}
+.or-divider{text-align:center;color:#444;margin:10px 0;font-size:.85rem}
+.quick-claims{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.claim-tag{padding:6px 14px;background:#1a1a2e;border:1px solid #333;border-radius:20px;font-size:.8rem;cursor:pointer;transition:.2s;color:#aaa}
+.claim-tag:hover{border-color:#00cc66;color:#00cc66}
+.results{margin-top:16px}
+.result-card{background:#1a1020;border-left:4px solid #ff4444;border-radius:0 12px 12px 0;padding:16px;margin-bottom:12px;animation:slideIn .4s}
+.result-card .claim{color:#00cc66;font-weight:700;font-size:.95rem;margin-bottom:6px}
+.result-card .arrow{color:#ff4444;font-size:1.2rem;margin:4px 0;display:block}
+.result-card .truth{color:#ff8888;font-size:1rem;line-height:1.5}
+.result-card .detail{color:#666;font-size:.8rem;margin-top:8px;font-style:italic}
+.bs-meter{margin:20px 0;padding:15px;background:#1a1a2e;border-radius:12px;display:none}
+.bs-meter h3{font-size:.85rem;color:#888;margin-bottom:8px}
+.bs-bar{height:10px;background:#222;border-radius:5px;overflow:hidden}
+.bs-fill{height:100%;border-radius:5px;transition:width .8s}
+.bs-label{display:flex;justify-content:space-between;font-size:.7rem;color:#666;margin-top:4px}
+.bs-score{text-align:center;font-size:1.5rem;font-weight:700;margin-top:8px}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Nutrition Truth Decoder</h1>
+<p class="subtitle">Paste the marketing. Get the reality.</p>
+<textarea id="input" placeholder="Paste nutrition label marketing claims here...&#10;e.g., 'All natural, farm fresh, lightly sweetened, guilt-free snack made with real fruit'"></textarea>
+<button class="decode-btn" onclick="decode()">DECODE THE BS</button>
+<div class="or-divider">or try a quick claim:</div>
+<div class="quick-claims" id="quickClaims"></div>
+<div class="bs-meter" id="bsMeter">
+<h3>BS-O-METER</h3>
+<div class="bs-bar"><div class="bs-fill" id="bsFill"></div></div>
+<div class="bs-label"><span>Honest</span><span>Pure Fantasy</span></div>
+<div class="bs-score" id="bsScore"></div>
+</div>
+<div class="results" id="results"></div>
+</div>
+
+<script>
+const translations=[
+{claim:"all natural",truth:"Contains ingredients that technically exist in nature. So does arsenic.",detail:"'Natural' has no FDA-regulated definition for most foods."},
+{claim:"farm fresh",truth:"Was near a farm at some point. Possibly during the truck ride from the factory.",detail:"No legal definition. A factory next to a farm counts."},
+{claim:"lightly sweetened",truth:"Has sugar. Just less than the version they REALLY wanted to sell you.",detail:"Can still contain 15+ grams of sugar per serving."},
+{claim:"guilt-free",truth:"The guilt is not included in the nutrition label, but it should be.",detail:"Marketing term with zero nutritional meaning."},
+{claim:"made with real fruit",truth:"Contains fruit. How much? Could be 2%. Could be a drawing of fruit on the box.",detail:"No minimum fruit percentage required for this claim."},
+{claim:"no artificial flavors",truth:"Uses 'natural flavors' which are made in the same labs by the same chemists.",detail:"Natural and artificial flavors are often chemically identical."},
+{claim:"heart healthy",truth:"Won't actively attack your heart. That's the bar we're working with.",detail:"FDA allows this with specific fat/sodium limits, but it doesn't mean it's good for you."},
+{claim:"organic",truth:"Grown without synthetic pesticides. Still uses pesticides though. Organic ones.",detail:"USDA Organic allows certain natural pesticides and requires 95% organic ingredients."},
+{claim:"non-gmo",truth:"Not genetically modified. Still processed into an unrecognizable form though.",detail:"GMO status says nothing about nutritional value."},
+{claim:"whole grain",truth:"Contains SOME whole grain. The first ingredient might still be refined flour.",detail:"Only needs 8g whole grain per serving. Rest can be white flour."},
+{claim:"zero sugar",truth:"Replaced sugar with artificial sweeteners that make your taste buds trust nothing.",detail:"May contain sugar alcohols which technically aren't 'sugar.'"},
+{claim:"good source of protein",truth:"Has protein. So does a leather belt. Context matters.",detail:"Requires only 5g protein per serving to make this claim."},
+{claim:"low fat",truth:"Removed the fat. Added sugar to compensate. You're welcome.",detail:"Low-fat products often have MORE sugar than regular versions."},
+{claim:"gluten free",truth:"Doesn't contain gluten. May contain regret, sodium, and existential emptiness.",detail:"Important for celiac disease. Marketing goldmine for everyone else."},
+{claim:"superfood",truth:"A food with a marketing budget. Kale didn't become healthy, it got a publicist.",detail:"'Superfood' has no scientific or regulatory definition."},
+{claim:"no added sugar",truth:"The fruit juice concentrate we added is basically sugar wearing a disguise.",detail:"Fruit juice concentrates are nutritionally identical to added sugar."},
+{claim:"artisan",truth:"A machine made this. But a human pressed the 'start' button artisanally.",detail:"No legal standard for 'artisan' in food production."},
+{claim:"premium",truth:"Costs more. That's... that's the whole thing. It costs more.",detail:"'Premium' is a pricing strategy, not a quality indicator."},
+{claim:"handcrafted",truth:"Someone's hand touched a machine that crafted this. Technically true.",detail:"No verification or standard exists for this claim."},
+{claim:"clean label",truth:"Fewer ingredients you can't pronounce. Still processed. Just simpler processed.",detail:"Industry term with no regulatory definition."},
+{claim:"plant-based",truth:"Made from plants. French fries are plant-based. So is cotton candy.",detail:"Plant-based doesn't mean healthy. It means from plants."},
+{claim:"keto friendly",truth:"High fat, low carb. Your arteries called. They'd like a word.",detail:"No FDA standard for 'keto friendly.'"},
+{claim:"detox",truth:"Your liver detoxes. This juice does not. Your liver is judging this purchase.",detail:"No food can 'detox' your body. That's what organs do."},
+{claim:"immune boosting",truth:"Contains vitamin C. So does a bell pepper for 1/10th the price.",detail:"FTC has warned companies about unproven immune claims."},
+{claim:"probiotic",truth:"Contains bacteria. Hopefully the good kind. Probably killed during processing anyway.",detail:"Many probiotic claims aren't verified. Survival through digestion varies."},
+{claim:"ancient grain",truth:"Quinoa is old. So is wheat. Age doesn't equal nutrition.",detail:"Marketing term to make grain sound more exotic and premium."},
+{claim:"minimally processed",truth:"Processed less than the maximum amount possible. Low bar, but cleared.",detail:"No standard definition. Everything from washing to packaging is processing."},
+{claim:"small batch",truth:"The batch was small. The factory was not.",detail:"No legal definition for batch size."},
+{claim:"family recipe",truth:"Someone in some family wrote this recipe. Whose family? Doesn't matter.",detail:"Unverifiable and unregulated claim."},
+{claim:"locally sourced",truth:"Sourced from the same planet as you. That's local-ish.",detail:"No legal radius for 'local.' Could mean same state or same country."},
+{claim:"sugar free",truth:"Contains maltitol, which your digestive system will process into regret.",detail:"Sugar alcohols can cause significant GI distress."},
+{claim:"light",truth:"Could mean fewer calories, less fat, OR just lighter in color. Surprise!",detail:"FDA allows 'light' for 1/3 fewer calories OR 50% less fat OR lighter color/taste."},
+{claim:"enriched",truth:"We removed the nutrients during processing, then added some back. You're welcome.",detail:"Enrichment replaces B vitamins and iron lost during refining."},
+{claim:"multigrain",truth:"Multiple grains. All of them could be refined. Multi doesn't mean whole.",detail:"Multigrain just means more than one grain type. Says nothing about quality."},
+{claim:"high fiber",truth:"We added isolated fiber that may not give you the same benefits as actual fiber.",detail:"Added fiber (inulin, chicory root) may not have same benefits as natural fiber."},
+{claim:"no preservatives",truth:"Preserved using sugar, salt, and acid instead. The OG preservatives.",detail:"Traditional preservation methods are still preservation."},
+{claim:"free range",truth:"The door to outside was open. Whether anyone went outside is another story.",detail:"USDA requires 'access to outdoors.' No minimum time or space."},
+{claim:"vitamin fortified",truth:"We sprayed vitamins on this. Your body may or may not absorb them.",detail:"Bioavailability of added vitamins varies significantly."},
+{claim:"antioxidant rich",truth:"Contains antioxidants. So does coffee. And wine. And chocolate. Choose your fighter.",detail:"Antioxidant content doesn't directly translate to health benefits."},
+{claim:"no cholesterol",truth:"This is a PLANT product. Plants never had cholesterol. That's like saying 'no feathers.'",detail:"Cholesterol only exists in animal products. Labeling plant foods as cholesterol-free is misleading."},
+{claim:"lean",truth:"Less fat than the fattiest version of this product. Progress!",detail:"USDA 'lean' means <10g fat, <4.5g saturated fat per serving."},
+{claim:"freshly made",truth:"Made recently. How recently? Could be this morning. Could be this month.",detail:"No legal timeframe for 'fresh' in most contexts."},
+{claim:"balanced nutrition",truth:"Contains multiple nutrients. So does a TV dinner. Balance is generous.",detail:"No FDA standard for what constitutes 'balanced.'"},
+{claim:"wholesome",truth:"A feeling, not a fact. This word has zero nutritional information.",detail:"Purely emotional marketing with no regulatory meaning."}
+];
+
+const quickClaims=["all natural","guilt-free","superfood","organic","keto friendly","detox","plant-based","no added sugar","farm fresh","artisan","immune boosting","zero sugar"];
+document.getElementById('quickClaims').innerHTML=quickClaims.map(c=>`<span class="claim-tag" onclick="quickDecode('${c}')">${c}</span>`).join('');
+
+function quickDecode(c){
+document.getElementById('input').value=c;
+decode();
+}
+
+function decode(){
+const text=document.getElementById('input').value.toLowerCase().trim();
+if(!text){alert('Paste some marketing claims first!');return}
+const matched=translations.filter(t=>text.includes(t.claim));
+if(matched.length===0){
+const fuzzy=translations.filter(t=>t.claim.split(' ').some(w=>text.includes(w)));
+if(fuzzy.length>0)matched.push(...fuzzy.slice(0,3));
+else matched.push(...translations.sort(()=>Math.random()-.5).slice(0,2));
+}
+const bsLevel=Math.min(100,matched.length*18+Math.floor(Math.random()*15)+10);
+const meter=document.getElementById('bsMeter');
+meter.style.display='block';
+const fill=document.getElementById('bsFill');
+fill.style.width=bsLevel+'%';
+fill.style.background=bsLevel>70?'linear-gradient(90deg,#ff4444,#ff0000)':bsLevel>40?'linear-gradient(90deg,#ff8800,#ff4444)':'linear-gradient(90deg,#00cc66,#ff8800)';
+const labels=['Refreshingly Honest','Mild Spin','Creative Interpretation','Professional BS','Industrial-Grade Deception','Pure Marketing Fantasy'];
+const labelIdx=Math.min(Math.floor(bsLevel/20),labels.length-1);
+document.getElementById('bsScore').textContent=`${bsLevel}% BS  -  ${labels[labelIdx]}`;
+document.getElementById('bsScore').style.color=bsLevel>60?'#ff4444':bsLevel>30?'#ff8800':'#00cc66';
+document.getElementById('results').innerHTML=matched.map(m=>
+`<div class="result-card">
+<div class="claim">"${m.claim.toUpperCase()}"</div>
+<span class="arrow">Translation:</span>
+<div class="truth">${m.truth}</div>
+<div class="detail">${m.detail}</div>
+</div>`
+).join('');
+}
+</script>
+</body>
+</html>

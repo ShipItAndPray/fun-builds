@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Body Beat Box</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px;user-select:none}
+h1{font-size:2em;background:linear-gradient(135deg,#00e676,#00bcd4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:15px;font-size:0.9em}
+.bpm-display{font-size:1.5em;margin-bottom:15px}.bpm-val{color:#00e676;font-weight:bold}
+.pads{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:400px;width:100%;margin-bottom:20px}
+.pad{aspect-ratio:1;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:2em;transition:all .1s;border:2px solid transparent;-webkit-tap-highlight-color:transparent}
+.pad:active,.pad.hit{transform:scale(0.92);filter:brightness(1.4)}
+.pad-kick{background:#1a2a1a;border-color:#2e7d32}.pad-kick.hit{background:#2e7d32}
+.pad-snare{background:#2a2a1a;border-color:#f9a825}.pad-snare.hit{background:#f9a825}
+.pad-hat{background:#1a1a2a;border-color:#1565c0}.pad-hat.hit{background:#1565c0}
+.pad-clap{background:#2a1a2a;border-color:#8e24aa}.pad-clap.hit{background:#8e24aa}
+.pad-tom{background:#2a1a1a;border-color:#c62828}.pad-tom.hit{background:#c62828}
+.pad-rim{background:#1a2a2a;border-color:#00838f}.pad-rim.hit{background:#00838f}
+.pad .name{font-size:0.4em;margin-top:5px;color:#aaa}
+.controls{display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;justify-content:center}
+.btn{padding:10px 20px;border-radius:8px;border:none;cursor:pointer;font-size:0.9em;transition:all .3s;color:#fff}
+.btn-rec{background:#c62828}.btn-rec.recording{background:#ff5252;animation:pulse 1s infinite}
+.btn-play{background:#2e7d32}.btn-play.playing{background:#66bb6a}
+.btn-clear{background:#333}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.timeline{max-width:400px;width:100%;height:60px;background:#111;border-radius:8px;position:relative;overflow:hidden;margin-bottom:15px}
+.tl-beat{position:absolute;width:8px;height:8px;border-radius:50%;top:50%;transform:translateY(-50%)}
+.playhead{position:absolute;left:0;top:0;width:2px;height:100%;background:#00e676;transition:left linear}
+.keys-hint{color:#555;font-size:0.75em;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Body Beat Box</h1>
+<p class="subtitle">Tap out beats. Loop them. Sound cool.</p>
+<div class="bpm-display">BPM: <span class="bpm-val" id="bpm">--</span></div>
+
+<div class="pads" id="pads"></div>
+<div class="controls">
+  <button class="btn btn-rec" id="recBtn" onclick="toggleRec()">Record</button>
+  <button class="btn btn-play" id="playBtn" onclick="togglePlay()">Play Loop</button>
+  <button class="btn btn-clear" onclick="clearLoop()">Clear</button>
+</div>
+<div class="timeline" id="timeline"><div class="playhead" id="playhead"></div></div>
+<div class="keys-hint">Keyboard: Q W E / A S D</div>
+
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+const padData = [
+  {name:'Kick',cls:'kick',key:'q',freq:60,decay:0.3,type:'sine'},
+  {name:'Snare',cls:'snare',key:'w',freq:200,decay:0.15,type:'triangle'},
+  {name:'Hi-Hat',cls:'hat',key:'e',freq:800,decay:0.05,type:'square'},
+  {name:'Clap',cls:'clap',key:'a',freq:400,decay:0.08,type:'sawtooth'},
+  {name:'Tom',cls:'tom',key:'s',freq:120,decay:0.2,type:'sine'},
+  {name:'Rim',cls:'rim',key:'d',freq:600,decay:0.04,type:'triangle'},
+];
+
+const padsDiv = document.getElementById('pads');
+padData.forEach((p, i) => {
+  const el = document.createElement('div');
+  el.className = `pad pad-${p.cls}`;
+  el.innerHTML = `${['🦵','👋','🎩','👏','🥁','💫'][i]}<span class="name">${p.name} [${p.key.toUpperCase()}]</span>`;
+  el.addEventListener('pointerdown', e => { e.preventDefault(); hitPad(i); });
+  padsDiv.appendChild(el);
+});
+
+function playSound(i) {
+  const p = padData[i];
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = p.type;
+  osc.frequency.setValueAtTime(p.freq, audioCtx.currentTime);
+  if (p.cls === 'kick') osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + p.decay);
+  if (p.cls === 'snare' || p.cls === 'hat') {
+    // Add noise
+    const bufSize = audioCtx.sampleRate * p.decay;
+    const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let j = 0; j < bufSize; j++) d[j] = (Math.random() * 2 - 1) * (1 - j/bufSize);
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buf;
+    const ng = audioCtx.createGain();
+    ng.gain.value = p.cls === 'hat' ? 0.3 : 0.5;
+    noise.connect(ng).connect(audioCtx.destination);
+    noise.start();
+  }
+  gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + p.decay);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + p.decay);
+}
+
+function flashPad(i) {
+  const el = padsDiv.children[i];
+  el.classList.add('hit');
+  setTimeout(() => el.classList.remove('hit'), 100);
+}
+
+// BPM tracking
+let tapTimes = [];
+function updateBPM() {
+  const now = Date.now();
+  tapTimes.push(now);
+  tapTimes = tapTimes.filter(t => now - t < 5000);
+  if (tapTimes.length > 2) {
+    const intervals = [];
+    for (let i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i-1]);
+    const avg = intervals.reduce((a,b) => a+b) / intervals.length;
+    const bpm = Math.round(60000 / avg);
+    if (bpm > 30 && bpm < 300) document.getElementById('bpm').textContent = bpm;
+  }
+}
+
+// Recording
+let recording = false, playing = false;
+let loop = [], loopStart = 0, loopDuration = 4000;
+let playInterval = null;
+
+function hitPad(i) {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  playSound(i);
+  flashPad(i);
+  updateBPM();
+  if (recording) {
+    const t = Date.now() - loopStart;
+    loop.push({pad: i, time: t});
+    addBeatDot(i, t);
+  }
+}
+
+function toggleRec() {
+  if (playing) togglePlay();
+  recording = !recording;
+  const btn = document.getElementById('recBtn');
+  if (recording) {
+    loop = [];
+    document.getElementById('timeline').querySelectorAll('.tl-beat').forEach(e => e.remove());
+    loopStart = Date.now();
+    btn.textContent = 'Stop Rec';
+    btn.classList.add('recording');
+  } else {
+    loopDuration = Date.now() - loopStart;
+    if (loopDuration < 500) loopDuration = 2000;
+    btn.textContent = 'Record';
+    btn.classList.remove('recording');
+  }
+}
+
+function togglePlay() {
+  if (recording) toggleRec();
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing && loop.length > 0) {
+    btn.textContent = 'Stop';
+    btn.classList.add('playing');
+    playLoop();
+  } else {
+    playing = false;
+    btn.textContent = 'Play Loop';
+    btn.classList.remove('playing');
+    if (playInterval) clearInterval(playInterval);
+  }
+}
+
+function playLoop() {
+  let startTime = Date.now();
+  const tick = () => {
+    if (!playing) return;
+    const elapsed = (Date.now() - startTime) % loopDuration;
+    document.getElementById('playhead').style.left = (elapsed / loopDuration * 100) + '%';
+    loop.forEach(beat => {
+      const diff = elapsed - beat.time;
+      if (diff >= 0 && diff < 30) {
+        playSound(beat.pad);
+        flashPad(beat.pad);
+      }
+    });
+    requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function clearLoop() {
+  if (playing) togglePlay();
+  if (recording) toggleRec();
+  loop = [];
+  document.getElementById('timeline').querySelectorAll('.tl-beat').forEach(e => e.remove());
+  document.getElementById('playhead').style.left = '0';
+}
+
+const colors = ['#2e7d32','#f9a825','#1565c0','#8e24aa','#c62828','#00838f'];
+function addBeatDot(i, t) {
+  const tl = document.getElementById('timeline');
+  const dot = document.createElement('div');
+  dot.className = 'tl-beat';
+  dot.style.left = (t / loopDuration * 100) + '%';
+  dot.style.background = colors[i];
+  dot.style.top = (15 + i * 8) + 'px';
+  tl.appendChild(dot);
+}
+
+document.addEventListener('keydown', e => {
+  const idx = padData.findIndex(p => p.key === e.key.toLowerCase());
+  if (idx >= 0) hitPad(idx);
+});
+</script>
+</body>
+</html>

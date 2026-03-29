@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Prep Procrastinator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ff8800,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.section{background:#1a1a2e;border-radius:16px;padding:20px;margin-bottom:16px}
+.section h2{font-size:1rem;color:#ff8800;margin-bottom:12px}
+.meal-plan{display:grid;gap:8px}
+.meal{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#111;border-radius:10px;font-size:.9rem}
+.meal .time{color:#ffcc00;font-weight:600;min-width:60px}
+.meal .food{flex:1;margin-left:10px}
+.gen-btn{width:100%;padding:14px;background:linear-gradient(135deg,#ff8800,#cc6600);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;margin-top:12px;transition:.3s}
+.gen-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(255,136,0,.4)}
+.excuse-card{background:#1a1020;border:1px solid #ff4488;border-radius:16px;padding:24px;margin:16px 0;text-align:center;display:none;animation:slideIn .4s}
+.excuse-card .excuse-text{font-size:1.2rem;font-weight:600;color:#ff88aa;margin-bottom:8px;line-height:1.4}
+.excuse-card .excuse-type{font-size:.8rem;color:#666;text-transform:uppercase;letter-spacing:1px}
+.uber-btn{width:100%;padding:16px;background:linear-gradient(135deg,#00cc66,#009944);border:none;border-radius:12px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;margin:16px 0;transition:.3s;display:none}
+.uber-btn:hover{transform:scale(1.02);box-shadow:0 0 20px rgba(0,204,102,.4)}
+.uber-btn.clicked{background:linear-gradient(135deg,#cc0044,#990033)}
+.timer-section{background:#0d0d1a;border:2px solid #ff4444;border-radius:16px;padding:20px;text-align:center;margin:16px 0;display:none}
+.timer-section h3{color:#ff4444;font-size:.85rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
+.timer-display{font-size:2.5rem;font-weight:700;color:#ff6644;font-family:monospace}
+.timer-label{color:#666;font-size:.8rem;margin-top:4px}
+.excuse-counter{text-align:center;color:#666;font-size:.8rem;margin:10px 0}
+.shame-meter{margin-top:10px}
+.shame-bar{height:8px;background:#222;border-radius:4px;overflow:hidden}
+.shame-fill{height:100%;background:linear-gradient(90deg,#ffcc00,#ff4444);border-radius:4px;transition:width .5s}
+.shame-label{display:flex;justify-content:space-between;font-size:.75rem;color:#666;margin-top:4px}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Meal Prep Procrastinator</h1>
+<p class="subtitle">Sunday is for planning. Not doing.</p>
+
+<div class="section">
+<h2>Your Sunday Meal Prep Plan</h2>
+<div class="meal-plan" id="mealPlan"></div>
+<button class="gen-btn" onclick="generatePlan()">Generate New Plan</button>
+</div>
+
+<button class="gen-btn" style="background:linear-gradient(135deg,#ff4488,#cc2266)" onclick="generateExcuse()">Why I Can't Do This</button>
+
+<div class="excuse-card" id="excuseCard">
+<div class="excuse-type" id="excuseType"></div>
+<div class="excuse-text" id="excuseText"></div>
+</div>
+
+<div class="excuse-counter" id="excuseCounter"></div>
+<div class="shame-meter" id="shameMeter" style="display:none">
+<div class="shame-bar"><div class="shame-fill" id="shameFill" style="width:0%"></div></div>
+<div class="shame-label"><span>Mild Guilt</span><span>Complete Shame</span></div>
+</div>
+
+<button class="uber-btn" id="uberBtn" onclick="orderUber()">Order Uber Eats Instead</button>
+
+<div class="timer-section" id="timerSection">
+<h3>Time Wasted Not Prepping</h3>
+<div class="timer-display" id="timerDisplay">00:00:00</div>
+<div class="timer-label">You could have prepped 5 meals by now</div>
+</div>
+</div>
+
+<script>
+const meals=[
+{time:"Brkfst",foods:["Overnight oats with berries","Egg muffin cups","Chia pudding","Smoothie packs","Avocado toast prep"]},
+{time:"Lunch",foods:["Chicken & rice bowls","Quinoa salad jars","Turkey wraps","Buddha bowls","Pasta primavera"]},
+{time:"Dinner",foods:["Slow cooker chili","Sheet pan salmon","Stir fry with tofu","Beef & broccoli","Lentil soup"]},
+{time:"Snacks",foods:["Energy balls","Veggie sticks & hummus","Trail mix portions","Greek yogurt parfaits","Protein bars"]}
+];
+
+const excuses=[
+{text:"I need to let my kitchen 'breathe' after last week's disaster.",type:"Environmental"},
+{text:"My containers are in the dishwasher. And the dishwasher is broken. Emotionally.",type:"Equipment Failure"},
+{text:"Mercury is in retrograde. Can't chop vegetables under these conditions.",type:"Astrological"},
+{text:"I saw a TikTok that said meal prep causes burnout. Self-care first.",type:"Mental Health"},
+{text:"My grocery list is at home and I'm... also at home but the list is in the other room.",type:"Logistical"},
+{text:"I just cleaned the kitchen. Cooking would make it dirty again.",type:"Philosophical"},
+{text:"The recipe says 'easy 30-minute meal' and that's already 30 more minutes than I want to spend.",type:"Mathematical"},
+{text:"My knife is dull. I could sharpen it, but then I'd need to sharpen the sharpener.",type:"Recursive"},
+{text:"I'm waiting for the meal prep motivation to hit. Any decade now.",type:"Inspirational"},
+{text:"Sunday is a day of rest. It says so in like... several books.",type:"Religious"},
+{text:"I meal prepped once in 2019. I've done my part.",type:"Historical"},
+{text:"If I meal prep, I'll eat it all on Monday and starve Tuesday through Friday.",type:"Strategic"},
+{text:"My Tupperware lids don't match any containers. This is an unsolvable problem.",type:"Engineering"},
+{text:"I need to research recipes first. *Opens Instagram for 4 hours*",type:"Research"},
+{text:"The grocery store is 10 minutes away and that's basically a road trip.",type:"Geographic"},
+{text:"I'll start next Sunday. This Sunday is a practice Sunday.",type:"Developmental"},
+{text:"My roommate used all the counter space for their 'art project' (dirty dishes).",type:"Territorial"},
+{text:"I burned water last time. The kitchen isn't ready for me yet.",type:"Traumatic"},
+{text:"I need new containers. The old ones have achieved sentience from last month's leftovers.",type:"Biological"},
+{text:"The recipe calls for 'a pinch of salt' and I refuse to guess measurements.",type:"Precision"},
+{text:"My oven makes a weird noise. Could be ghosts. Not risking it.",type:"Supernatural"},
+{text:"I forgot to defrost the chicken. Again. For the 47th Sunday in a row.",type:"Habitual"},
+{text:"Meal prep requires standing. My legs have a prior engagement with the couch.",type:"Physical"},
+{text:"I'll just intermittent fast instead. That's basically the same as cooking, right?",type:"Dietary"},
+{text:"My kitchen scale is in pounds and the recipe is in grams. Impossible.",type:"International"},
+{text:"I can't find my can opener. Actually I can, but pretending I can't is easier.",type:"Psychological"},
+{text:"The onion will make me cry and I've already cried enough this week.",type:"Emotional"},
+{text:"My blender sounds like a jet engine and my neighbor already hates me.",type:"Social"},
+{text:"I meal prep in my mind. Visualization counts, right?",type:"Metaphysical"},
+{text:"The expiration date on the chicken is tomorrow. Too risky. Too safe. Either way, no.",type:"Paradoxical"},
+{text:"I need to organize my spice rack first. That's a 3-day project minimum.",type:"Prerequisite"},
+{text:"Cooking from scratch is just paying myself minimum wage with extra steps.",type:"Economic"},
+{text:"My smoke alarm is too sensitive. Last time I boiled water it went off.",type:"Safety"},
+{text:"I'll do it tonight. *Tonight:* I'll do it tomorrow morning. *Tomorrow:* I'll do it next Sunday.",type:"Temporal"},
+{text:"My kitchen is too small. I need at least an aircraft hangar to properly meal prep.",type:"Spatial"},
+{text:"I watched a Gordon Ramsay video and now I'm too intimidated to cook.",type:"Celebrity"},
+{text:"The recipe says 'season to taste' and I don't trust my taste anymore.",type:"Existential"},
+{text:"My meal prep playlist isn't updated. Can't cook without the right vibes.",type:"Musical"},
+{text:"I just ate. Can't cook on a full stomach. That's science probably.",type:"Medical"},
+{text:"The farmers market is tomorrow and I should really use fresh ingredients. Tomorrow.",type:"Ethical"},
+{text:"My cutting board has a crack in it. This is a health hazard. I'm being responsible.",type:"Legal"},
+{text:"I need to first Marie Kondo my pantry. Does this expired paprika spark joy? Survey says no.",type:"Organizational"},
+{text:"I'm saving my energy for the dishes I'll have to do after. Oh wait...",type:"Forward-Thinking"},
+{text:"My food processor is still in the box from when I bought it. In 2021.",type:"Archaeological"}
+];
+
+let excuseCount=0;
+let timerStart=null;
+let timerInterval=null;
+let usedExcuses=[];
+
+function generatePlan(){
+const el=document.getElementById('mealPlan');
+el.innerHTML=meals.map(m=>{
+const food=m.foods[Math.floor(Math.random()*m.foods.length)];
+return `<div class="meal"><span class="time">${m.time}</span><span class="food">${food}</span></div>`;
+}).join('');
+}
+
+function generateExcuse(){
+if(usedExcuses.length>=excuses.length)usedExcuses=[];
+let e;
+do{e=excuses[Math.floor(Math.random()*excuses.length)]}while(usedExcuses.includes(e.text));
+usedExcuses.push(e.text);
+excuseCount++;
+const card=document.getElementById('excuseCard');
+card.style.display='block';
+document.getElementById('excuseText').textContent=e.text;
+document.getElementById('excuseType').textContent=e.type+' Excuse #'+excuseCount;
+document.getElementById('excuseCounter').textContent=`${excuseCount} excuse${excuseCount>1?'s':''} generated. Meal prep status: Not Started.`;
+document.getElementById('shameMeter').style.display='block';
+document.getElementById('shameFill').style.width=Math.min(excuseCount/excuses.length*100,100)+'%';
+if(excuseCount>=3){
+document.getElementById('uberBtn').style.display='block';
+}
+if(!timerStart){
+timerStart=Date.now();
+document.getElementById('timerSection').style.display='block';
+timerInterval=setInterval(updateTimer,1000);
+}
+}
+
+function updateTimer(){
+const elapsed=Math.floor((Date.now()-timerStart)/1000);
+const h=String(Math.floor(elapsed/3600)).padStart(2,'0');
+const m=String(Math.floor((elapsed%3600)/60)).padStart(2,'0');
+const s=String(elapsed%60).padStart(2,'0');
+document.getElementById('timerDisplay').textContent=`${h}:${m}:${s}`;
+const meals=Math.floor(elapsed/360);
+document.querySelector('.timer-label').textContent=`You could have prepped ${Math.max(1,meals)} meal${meals!==1?'s':''} by now`;
+}
+
+function orderUber(){
+const btn=document.getElementById('uberBtn');
+btn.textContent='Uber Eats Ordered. Meal Prep: Officially Dead.';
+btn.classList.add('clicked');
+btn.disabled=true;
+document.getElementById('excuseCard').innerHTML=`<div class="excuse-type">FINAL VERDICT</div><div class="excuse-text">Congratulations. You spent ${excuseCount} excuses and ${document.getElementById('timerDisplay').textContent} to arrive at the same conclusion as every other Sunday: someone else is cooking.</div>`;
+}
+
+generatePlan();
+</script>
+</body>
+</html>

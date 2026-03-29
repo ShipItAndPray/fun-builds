@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Allergy Roulette</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;overflow-x:hidden}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:2rem;margin-bottom:10px;background:linear-gradient(135deg,#ff4444,#ff8800);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.9rem}
+.allergy-input{width:100%;padding:14px;background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#fff;font-size:1rem;margin-bottom:10px}
+.allergy-input::placeholder{color:#555}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;min-height:30px}
+.tag{background:#2a1a1a;border:1px solid #ff4444;color:#ff6666;padding:4px 12px;border-radius:20px;font-size:.85rem;cursor:pointer;transition:.2s}
+.tag:hover{background:#ff4444;color:#fff}
+.wheel-container{position:relative;width:300px;height:300px;margin:20px auto}
+canvas{width:300px;height:300px;border-radius:50%;box-shadow:0 0 30px rgba(255,68,68,.3)}
+.pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:30px solid #ff4444;z-index:10;filter:drop-shadow(0 0 5px #ff4444)}
+.spin-btn{display:block;width:100%;padding:16px;margin:20px 0;background:linear-gradient(135deg,#ff4444,#cc0000);border:none;border-radius:12px;color:#fff;font-size:1.2rem;font-weight:700;cursor:pointer;transition:.3s;text-transform:uppercase;letter-spacing:2px}
+.spin-btn:hover{transform:scale(1.02);box-shadow:0 0 20px rgba(255,68,68,.5)}
+.spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.result{text-align:center;padding:30px;margin:20px 0;border-radius:16px;display:none;animation:fadeIn .5s}
+.result.safe{background:linear-gradient(135deg,#0a2a0a,#1a4a1a);border:2px solid #00ff44}
+.result.danger{background:linear-gradient(135deg,#2a0a0a,#4a1a1a);border:2px solid #ff0044;animation:shake .5s}
+.result h2{font-size:2.5rem;margin-bottom:10px}
+.result .item-name{font-size:1.3rem;margin-bottom:5px;color:#ccc}
+.result .reason{font-size:.9rem;color:#999;margin-top:8px}
+.score-bar{margin:20px 0;padding:15px;background:#1a1a2e;border-radius:12px}
+.score-bar h3{margin-bottom:8px;font-size:.9rem;color:#888}
+.score-display{display:flex;justify-content:space-between;align-items:center}
+.score-num{font-size:2rem;font-weight:700;color:#ff8800}
+.score-label{color:#666;font-size:.8rem}
+.history{margin-top:20px}
+.history h3{color:#888;font-size:.9rem;margin-bottom:10px}
+.history-item{display:flex;justify-content:space-between;padding:8px 12px;background:#111;border-radius:8px;margin-bottom:4px;font-size:.85rem}
+.history-item.safe-h{border-left:3px solid #00ff44}
+.history-item.danger-h{border-left:3px solid #ff0044}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Allergy Roulette</h1>
+<p class="subtitle">Enter your allergies, spin the wheel, survive dinner.</p>
+<input class="allergy-input" id="allergyInput" placeholder="Type an allergy and press Enter (e.g., peanuts, gluten, dairy...)" />
+<div class="tags" id="tags"></div>
+<div class="wheel-container">
+<div class="pointer"></div>
+<canvas id="wheel" width="600" height="600"></canvas>
+</div>
+<button class="spin-btn" id="spinBtn" onclick="spin()">SPIN THE WHEEL</button>
+<div class="result" id="result"></div>
+<div class="score-bar">
+<h3>SURVIVAL SCORE</h3>
+<div class="score-display">
+<div><span class="score-num" id="scoreNum">0/0</span></div>
+<div style="text-align:right"><span class="score-label" id="scoreLabel">Spin to begin</span></div>
+</div>
+</div>
+<div class="history" id="historySection" style="display:none">
+<h3>SPIN HISTORY</h3>
+<div id="historyList"></div>
+</div>
+</div>
+<script>
+const menuItems=[
+{name:"Pad Thai",ingredients:["peanuts","shrimp","eggs","soy","fish sauce"]},
+{name:"Margherita Pizza",ingredients:["gluten","dairy","tomato"]},
+{name:"Caesar Salad",ingredients:["dairy","eggs","fish","gluten","anchovies"]},
+{name:"Sushi Roll",ingredients:["fish","soy","gluten","sesame","rice"]},
+{name:"Chocolate Lava Cake",ingredients:["dairy","eggs","gluten","soy"]},
+{name:"Lobster Bisque",ingredients:["shellfish","dairy","gluten"]},
+{name:"Peanut Butter Smoothie",ingredients:["peanuts","dairy","soy"]},
+{name:"Fish Tacos",ingredients:["fish","gluten","dairy"]},
+{name:"Greek Salad",ingredients:["dairy"]},
+{name:"Hummus Plate",ingredients:["sesame","chickpeas"]},
+{name:"Shrimp Scampi",ingredients:["shellfish","gluten","dairy"]},
+{name:"Mac & Cheese",ingredients:["gluten","dairy","eggs"]},
+{name:"Clam Chowder",ingredients:["shellfish","dairy","gluten"]},
+{name:"Kung Pao Chicken",ingredients:["peanuts","soy","gluten","sesame"]},
+{name:"Tiramisu",ingredients:["dairy","eggs","gluten","coffee"]},
+{name:"Egg Fried Rice",ingredients:["eggs","soy","sesame"]},
+{name:"French Onion Soup",ingredients:["gluten","dairy"]},
+{name:"Walnut Brownie",ingredients:["tree nuts","dairy","eggs","gluten"]},
+{name:"Tuna Tartare",ingredients:["fish","soy","sesame","eggs"]},
+{name:"Chicken Satay",ingredients:["peanuts","soy","coconut"]},
+{name:"Crab Cakes",ingredients:["shellfish","eggs","gluten","dairy"]},
+{name:"Banana Bread",ingredients:["gluten","eggs","dairy","tree nuts"]},
+{name:"Tom Yum Soup",ingredients:["shrimp","fish sauce","shellfish"]},
+{name:"Falafel Wrap",ingredients:["gluten","sesame","chickpeas"]},
+{name:"Cheese Fondue",ingredients:["dairy","gluten"]},
+{name:"Pecan Pie",ingredients:["tree nuts","eggs","gluten","dairy"]},
+{name:"Miso Soup",ingredients:["soy","fish","seaweed"]},
+{name:"Grilled Steak",ingredients:[]},
+{name:"Ceviche",ingredients:["fish","shellfish","citrus"]},
+{name:"Pesto Pasta",ingredients:["tree nuts","dairy","gluten"]},
+{name:"Coconut Curry",ingredients:["coconut","fish sauce"]},
+{name:"BLT Sandwich",ingredients:["gluten","pork"]},
+{name:"Oysters Rockefeller",ingredients:["shellfish","dairy","gluten"]},
+{name:"Almond Croissant",ingredients:["tree nuts","gluten","dairy","eggs"]},
+{name:"Spring Rolls",ingredients:["shrimp","soy","gluten","sesame"]},
+{name:"Cheesecake",ingredients:["dairy","eggs","gluten"]},
+{name:"Edamame",ingredients:["soy"]},
+{name:"Beef Bulgogi",ingredients:["soy","sesame","gluten"]},
+{name:"Caprese Salad",ingredients:["dairy"]},
+{name:"Jambalaya",ingredients:["shellfish","pork"]},
+{name:"Plain Rice Bowl",ingredients:["rice"]},
+{name:"Guacamole & Chips",ingredients:["corn"]},
+{name:"Steamed Vegetables",ingredients:[]},
+{name:"Fruit Salad",ingredients:["kiwi","strawberry"]}
+];
+
+let allergies=[];
+let spinning=false;
+let totalSpins=0;
+let safeSpins=0;
+let history=[];
+const canvas=document.getElementById('wheel');
+const ctx=canvas.getContext('2d');
+let rotation=0;
+const colors=['#ff4444','#ff6600','#ff8800','#ffaa00','#44aa44','#2288cc','#6644cc','#cc44aa','#44cccc','#88cc44'];
+
+const input=document.getElementById('allergyInput');
+input.addEventListener('keydown',e=>{
+if(e.key==='Enter'&&input.value.trim()){
+const a=input.value.trim().toLowerCase();
+if(!allergies.includes(a)){allergies.push(a);renderTags()}
+input.value='';
+}
+});
+
+function renderTags(){
+const el=document.getElementById('tags');
+el.innerHTML=allergies.map(a=>`<span class="tag" onclick="removeAllergy('${a}')">${a} x</span>`).join('');
+}
+
+function removeAllergy(a){
+allergies=allergies.filter(x=>x!==a);
+renderTags();
+}
+
+function drawWheel(){
+const n=menuItems.length;
+const arc=2*Math.PI/n;
+ctx.clearRect(0,0,600,600);
+for(let i=0;i<n;i++){
+ctx.beginPath();
+ctx.moveTo(300,300);
+ctx.arc(300,300,290,rotation+i*arc,rotation+(i+1)*arc);
+ctx.fillStyle=colors[i%colors.length];
+ctx.fill();
+ctx.strokeStyle='#0a0a0f';
+ctx.lineWidth=2;
+ctx.stroke();
+ctx.save();
+ctx.translate(300,300);
+ctx.rotate(rotation+i*arc+arc/2);
+ctx.fillStyle='#fff';
+ctx.font='bold 11px sans-serif';
+ctx.textAlign='right';
+const name=menuItems[i].name.length>14?menuItems[i].name.slice(0,12)+'..':menuItems[i].name;
+ctx.fillText(name,270,4);
+ctx.restore();
+}
+ctx.beginPath();
+ctx.arc(300,300,30,0,2*Math.PI);
+ctx.fillStyle='#1a1a2e';
+ctx.fill();
+ctx.strokeStyle='#ff4444';
+ctx.lineWidth=3;
+ctx.stroke();
+}
+
+function spin(){
+if(spinning||allergies.length===0){
+if(allergies.length===0)alert('Add at least one allergy first!');
+return;
+}
+spinning=true;
+document.getElementById('spinBtn').disabled=true;
+document.getElementById('result').style.display='none';
+const totalRotation=Math.PI*2*8+Math.random()*Math.PI*2;
+const duration=4000;
+const start=Date.now();
+const startRot=rotation;
+const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+
+function animate(){
+const elapsed=Date.now()-start;
+const progress=Math.min(elapsed/duration,1);
+const ease=1-Math.pow(1-progress,4);
+rotation=startRot+totalRotation*ease;
+drawWheel();
+if(progress<1){requestAnimationFrame(animate)}
+else{
+spinning=false;
+document.getElementById('spinBtn').disabled=false;
+const arc=2*Math.PI/menuItems.length;
+const normalized=((2*Math.PI-(rotation%(2*Math.PI)))+(2*Math.PI))%(2*Math.PI);
+const idx=Math.floor(normalized/arc)%menuItems.length;
+showResult(menuItems[idx],audioCtx);
+}
+}
+animate();
+}
+
+function playSound(audioCtx,safe){
+const osc=audioCtx.createOscillator();
+const gain=audioCtx.createGain();
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+if(safe){
+osc.frequency.setValueAtTime(523,audioCtx.currentTime);
+osc.frequency.setValueAtTime(659,audioCtx.currentTime+.15);
+osc.frequency.setValueAtTime(784,audioCtx.currentTime+.3);
+gain.gain.setValueAtTime(.3,audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(.01,audioCtx.currentTime+.5);
+osc.start();osc.stop(audioCtx.currentTime+.5);
+}else{
+osc.type='sawtooth';
+osc.frequency.setValueAtTime(200,audioCtx.currentTime);
+osc.frequency.exponentialRampToValueAtTime(50,audioCtx.currentTime+.8);
+gain.gain.setValueAtTime(.4,audioCtx.currentTime);
+gain.gain.exponentialRampToValueAtTime(.01,audioCtx.currentTime+.8);
+osc.start();osc.stop(audioCtx.currentTime+.8);
+}
+}
+
+function showResult(item,audioCtx){
+totalSpins++;
+const matched=item.ingredients.filter(i=>allergies.some(a=>i.toLowerCase().includes(a)||a.includes(i.toLowerCase())));
+const safe=matched.length===0;
+if(safe)safeSpins++;
+const el=document.getElementById('result');
+el.className='result '+(safe?'safe':'danger');
+el.style.display='block';
+if(safe){
+el.innerHTML=`<h2 style="color:#00ff44">SAFE</h2><p class="item-name">${item.name}</p><p class="reason">No allergens detected. You live another meal.</p>`;
+}else{
+el.innerHTML=`<h2 style="color:#ff0044">DANGER</h2><p class="item-name">${item.name}</p><p class="reason">Contains: ${matched.join(', ').toUpperCase()}<br>This could literally end you.</p>`;
+}
+playSound(audioCtx,safe);
+document.getElementById('scoreNum').textContent=`${safeSpins}/${totalSpins}`;
+const pct=Math.round(safeSpins/totalSpins*100);
+document.getElementById('scoreLabel').textContent=pct>=80?'Born Survivor':pct>=50?'Living Dangerously':pct>=30?'Death Wish':'Walking Corpse';
+history.unshift({name:item.name,safe});
+document.getElementById('historySection').style.display='block';
+const hl=document.getElementById('historyList');
+hl.innerHTML=history.slice(0,10).map(h=>`<div class="history-item ${h.safe?'safe-h':'danger-h'}"><span>${h.name}</span><span>${h.safe?'SAFE':'DANGER'}</span></div>`).join('');
+}
+
+drawWheel();
+</script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concert Survival Kit</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;margin-bottom:5px;background:linear-gradient(135deg,#ff6b6b,#ffa500);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em}
+.situations{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;width:100%;max-width:600px;margin-bottom:20px}
+.sit-btn{background:#1a1a2e;border:2px solid #333;border-radius:12px;padding:15px 10px;cursor:pointer;text-align:center;transition:all .3s;font-size:0.85em;color:#ccc}
+.sit-btn:hover,.sit-btn.active{border-color:#ff6b6b;background:#1a1a2e;color:#fff;transform:scale(1.05)}
+.sit-btn .icon{font-size:1.8em;display:block;margin-bottom:5px}
+.tip-card{background:#1a1a2e;border-radius:16px;padding:25px;max-width:600px;width:100%;margin-bottom:15px;border-left:4px solid #ff6b6b;display:none;animation:slideIn .4s ease}
+.tip-card.show{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.tip-text{font-size:1.1em;line-height:1.6;margin-bottom:15px}
+.tip-number{color:#ff6b6b;font-weight:bold;font-size:0.8em;margin-bottom:8px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+.btn{background:#ff6b6b;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:0.9em;transition:background .3s}
+.btn:hover{background:#ff8585}
+.btn.share{background:#2a2a4a}
+.btn.share:hover{background:#3a3a5a}
+.severity{margin-top:10px;padding:8px 12px;border-radius:8px;font-size:0.8em;display:inline-block}
+.sev-low{background:#1a3a1a;color:#4caf50}
+.sev-mid{background:#3a3a1a;color:#ffc107}
+.sev-high{background:#3a1a1a;color:#ff5252}
+</style>
+</head>
+<body>
+<h1>Concert Survival Kit</h1>
+<p class="subtitle">Because nobody prepares you for the mosh pit bathroom dilemma</p>
+
+<div class="situations" id="situations"></div>
+<div class="tip-card" id="tipCard">
+  <div class="tip-number" id="tipNum"></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="severity" id="severity"></div>
+  <div class="btn-row" style="margin-top:15px">
+    <button class="btn" onclick="nextTip()">Next Tip</button>
+    <button class="btn share" onclick="shareTip()">Share This Wisdom</button>
+  </div>
+</div>
+
+<script>
+const situations = [
+  {icon:'👥',name:'Lost Friends',key:'lost'},
+  {icon:'📵',name:'No Signal',key:'signal'},
+  {icon:'🚻',name:'Need Bathroom',key:'bathroom'},
+  {icon:'🍺',name:'Spilled Drink',key:'spill'},
+  {icon:'👟',name:'Lost a Shoe',key:'shoe'},
+  {icon:'🔋',name:'Phone Dying',key:'phone'},
+  {icon:'🌧️',name:'Surprise Rain',key:'rain'},
+  {icon:'🤢',name:'Feeling Sick',key:'sick'},
+  {icon:'🧍',name:'Stuck Behind Tall Person',key:'tall'},
+  {icon:'🎤',name:'Forgot Lyrics',key:'lyrics'},
+  {icon:'💰',name:'No Cash',key:'cash'},
+  {icon:'👂',name:'Ears Ringing',key:'ears'}
+];
+
+const tips = {
+  lost:[
+    {t:"Establish a 'rally point' before the show. Pro tip: pick the most boring landmark nobody else would use, like the fire extinguisher near the third porta-potty.",s:"mid"},
+    {t:"Hold your phone flashlight straight up and wave it. You'll either find your friends or become the unofficial lighthouse of Section B.",s:"low"},
+    {t:"Start a conga line toward where you last saw them. You'll either find them or make 30 new friends trying.",s:"low"},
+    {t:"Text them your exact location using concert landmarks: 'I'm 3 crowd-surfers left of the sound booth.'",s:"mid"},
+    {t:"Wear something absurdly tall on your head. A pool noodle, a traffic cone, whatever. You become findable AND a local celebrity.",s:"low"},
+    {t:"Accept your new life. These strangers are your friends now. Learn their names. Share their nachos.",s:"low"},
+    {t:"Go to the merch booth. Everyone ends up at the merch booth eventually. It's the concert equivalent of a watering hole.",s:"low"},
+    {t:"Start loudly singing the wrong song. Your friends will find you out of sheer embarrassment.",s:"mid"}
+  ],
+  signal:[
+    {t:"Use the ancient technology known as 'yelling.' Range: approximately 15 feet. Accuracy: questionable.",s:"mid"},
+    {t:"Write your message on a napkin and crowd-surf it to the front. The band might even read it.",s:"low"},
+    {t:"Switch to SMS. Texts use different frequencies than data. Your 'where r u' has a fighting chance.",s:"mid"},
+    {t:"Accept that you are now off-grid. You are free. No emails. No notifications. Just vibes.",s:"low"},
+    {t:"Use airplane mode + WiFi. Sometimes the venue WiFi works when cell doesn't. Usually it doesn't. But hope is free.",s:"mid"},
+    {t:"Pre-download the venue map. Future you will thank past you when you're wandering like Moses in the desert.",s:"high"},
+    {t:"Carrier pigeon. Look, if you're reading this, you clearly have signal right now. Screenshot the venue map while you can.",s:"low"},
+    {t:"Find the one person whose phone always works. Every friend group has one. They're basically a wizard.",s:"mid"}
+  ],
+  bathroom:[
+    {t:"The optimal bathroom time is during the opening act's second song. Everyone's still pretending to care about them.",s:"high"},
+    {t:"The bathrooms furthest from the main stage have the shortest lines. Yes, you'll miss 4 minutes. You'll survive.",s:"high"},
+    {t:"Mark your spot with a friend who owes you a favor. Cash in that time you covered their shift.",s:"mid"},
+    {t:"Master the 'excuse me' shuffle. Move sideways like a crab. Apologize to exactly zero people. Confidence is key.",s:"mid"},
+    {t:"Never go during the set break. That's amateur hour. Every bladder in the venue activates simultaneously.",s:"high"},
+    {t:"Befriend the person at the end of your row BEFORE you need to leave. Pre-negotiated passage rights are invaluable.",s:"mid"},
+    {t:"Develop a smaller bladder strategy: stop drinking 45 minutes before the headliner. Hydration is a sacrifice.",s:"mid"},
+    {t:"If it's general admission, accept that your spot is gone. It belonged to the universe. The universe gave it to a 6'4\" guy.",s:"low"}
+  ],
+  spill:[
+    {t:"Announce loudly: 'THE FLOOR IS NOW A SPLASH ZONE.' Own it. You're an experience now.",s:"low"},
+    {t:"The person who spilled on you now owes you a drink. This is concert law. It's in the Geneva Convention, probably.",s:"mid"},
+    {t:"Beer-soaked shoes are basically waterproof now. Silver lining. You're welcome.",s:"low"},
+    {t:"If someone spills on your phone, rice is at the food trucks. Your phone is now a sushi phone.",s:"high"},
+    {t:"The wet shirt look is either a fashion statement or a disaster. Commit to one. Half-measures help nobody.",s:"low"}
+  ],
+  shoe:[
+    {t:"You have exactly 8 seconds to retrieve a lost shoe before it enters the Shoe Bermuda Triangle. It's gone forever after that.",s:"high"},
+    {t:"One shoe is a fashion statement in some cultures. You're not injured, you're cultured.",s:"low"},
+    {t:"Check the lost and found after the show. Your shoe has been on a journey. It has stories.",s:"mid"},
+    {t:"Tie your shoes so tight before the show that your feet lose circulation. Numb feet can't lose shoes.",s:"mid"},
+    {t:"Wear boots. Nobody has ever lost a boot in a mosh pit. Boots are the tanks of footwear.",s:"high"}
+  ],
+  phone:[
+    {t:"Enable low power mode, turn off Bluetooth, WiFi, and location. Your phone is now a fancy clock, but it'll last.",s:"high"},
+    {t:"Stop recording. I know. Controversial take. But your shaky video with blown-out audio? Nobody's watching that.",s:"high"},
+    {t:"Bring a portable charger. If you forgot, find someone with one. Offer concert snacks in exchange for 10% battery.",s:"mid"},
+    {t:"Turn brightness to minimum. You can see the screen if you cup your hands around it like a precious flame.",s:"mid"},
+    {t:"Take one photo. ONE. Then put the phone away and actually watch the show with your eyeballs. Revolutionary concept.",s:"mid"}
+  ],
+  rain:[
+    {t:"Garbage bags are $0 ponchos. Cut holes for head and arms. High fashion at festivals since 1969.",s:"mid"},
+    {t:"Rain makes mud. Mud means sliding. Sliding means this is now a water park. Adjust expectations accordingly.",s:"low"},
+    {t:"Stand under the sound tent overhang. The sound engineers have shelter. Join their protected society.",s:"mid"},
+    {t:"Embrace it. Some of the best concert moments happen in the rain. You're making a core memory right now.",s:"low"},
+    {t:"Zip your phone in a plastic bag. It can still read your touch through the plastic. Mostly. Sometimes. Good luck.",s:"high"}
+  ],
+  sick:[
+    {t:"Find the medical tent. Every major venue has one. They've seen worse than you. Much worse.",s:"high"},
+    {t:"Fresh air is at the edges. Work your way out of the crowd. The perimeter is your friend.",s:"high"},
+    {t:"Sit down with your head between your knees. People will assume you're emotional about the music. Let them.",s:"mid"},
+    {t:"Ginger ale from the bar. The universal stomach settler. Concert medics recommend it. Probably.",s:"mid"},
+    {t:"If you're overheating, wet a bandana and put it on your neck. You'll feel better AND look like a cowboy.",s:"mid"}
+  ],
+  tall:[
+    {t:"Befriend them. Say 'Hey, can I stand in front of you?' Worst case: awkward. Best case: new friend with a great view to share.",s:"mid"},
+    {t:"Shift 2-3 feet to either side. The geometry changes everything. Basic trigonometry saves concerts.",s:"low"},
+    {t:"Get on someone's shoulders. Now YOU'RE the tall person. The circle of life continues.",s:"low"},
+    {t:"Accept the view of their back. Study their shirt. Learn its patterns. Write a poem about it.",s:"low"},
+    {t:"Move closer to the stage where height matters less because everyone's looking up anyway.",s:"mid"}
+  ],
+  lyrics:[
+    {t:"Mumble confidently. Volume > accuracy. Nobody can hear you anyway. The bass is too loud.",s:"low"},
+    {t:"Just sing 'YEAH' and 'WOOO' at appropriate moments. You're a hype person now. That's a career.",s:"low"},
+    {t:"Follow the lips of the person next to you. They also don't know the words. You'll both be wrong together.",s:"low"},
+    {t:"Invent new lyrics. 'I will always love YOUUUU-nicorn.' Nobody noticed. The song is better now.",s:"low"},
+    {t:"Phone flashlight + sway. You don't need words. You're providing ambiance. Essential concert infrastructure.",s:"low"}
+  ],
+  cash:[
+    {t:"Most venues are cashless now. If yours isn't, find the ATM. It charges $47 in fees. This is the way.",s:"mid"},
+    {t:"Offer to buy someone's drink with Venmo in exchange for them buying yours with cash. The barter economy lives.",s:"mid"},
+    {t:"Water is usually free. Hydration is free. Dancing is free. The best things at concerts are free. Mostly.",s:"low"},
+    {t:"Check your car for change. Concert parking lots are treasure troves of forgotten quarters.",s:"low"},
+    {t:"Pre-load a wristband if the venue offers them. Past you was smart. If past you didn't... well.",s:"mid"}
+  ],
+  ears:[
+    {t:"You should have worn earplugs. You know this. I know this. Your audiologist knows this. Next time.",s:"high"},
+    {t:"Step outside for 10 minutes. Give your ears a break. They've been working overtime.",s:"high"},
+    {t:"Foam earplugs at the merch booth. $2. Your hearing: priceless. Actually, hearing aids cost $5000. So $5000.",s:"high"},
+    {t:"Stand further from the speakers. The mix actually sounds BETTER further back. You're not retreating, you're upgrading.",s:"mid"},
+    {t:"The ringing will stop. Usually. If it doesn't in 24 hours, see a doctor. Not WebMD. A real doctor.",s:"high"}
+  ]
+};
+
+let currentSit = null;
+let currentIdx = 0;
+
+const sitDiv = document.getElementById('situations');
+situations.forEach(s => {
+  const btn = document.createElement('div');
+  btn.className = 'sit-btn';
+  btn.innerHTML = `<span class="icon">${s.icon}</span>${s.name}`;
+  btn.onclick = () => selectSituation(s.key, btn);
+  sitDiv.appendChild(btn);
+});
+
+function selectSituation(key, btn) {
+  document.querySelectorAll('.sit-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentSit = key;
+  currentIdx = Math.floor(Math.random() * tips[key].length);
+  showTip();
+}
+
+function showTip() {
+  const tip = tips[currentSit][currentIdx];
+  document.getElementById('tipNum').textContent = `TIP ${currentIdx + 1} of ${tips[currentSit].length}`;
+  document.getElementById('tipText').textContent = tip.t;
+  const sev = document.getElementById('severity');
+  sev.className = 'severity sev-' + tip.s;
+  sev.textContent = tip.s === 'high' ? 'CRITICAL SURVIVAL INFO' : tip.s === 'mid' ? 'MODERATELY USEFUL' : 'QUESTIONABLE ADVICE';
+  const card = document.getElementById('tipCard');
+  card.classList.remove('show');
+  void card.offsetWidth;
+  card.classList.add('show');
+}
+
+function nextTip() {
+  if (!currentSit) return;
+  currentIdx = (currentIdx + 1) % tips[currentSit].length;
+  showTip();
+}
+
+function shareTip() {
+  if (!currentSit) return;
+  const tip = tips[currentSit][currentIdx];
+  const text = `Concert Survival Tip: ${tip.t} -- from Concert Survival Kit`;
+  if (navigator.share) {
+    navigator.share({title:'Concert Survival Kit', text});
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('Tip copied to clipboard!'));
+  }
+}
+</script>
+</body>
+</html>

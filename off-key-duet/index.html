@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Off-Key Duet</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#e040fb,#7c4dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em;text-align:center}
+.stage{background:#1a1a2e;border-radius:20px;padding:30px;max-width:500px;width:100%;text-align:center;margin-bottom:20px}
+.singers{display:flex;justify-content:space-around;margin:20px 0}
+.singer{text-align:center}
+.singer .avatar{font-size:3em;animation:bob 1s ease-in-out infinite alternate}
+.singer .label{font-size:0.8em;color:#888;margin-top:5px}
+@keyframes bob{from{transform:translateY(0)}to{transform:translateY(-8px)}}
+.viz{height:80px;display:flex;align-items:end;justify-content:center;gap:3px;margin:20px 0}
+.viz .bar{width:6px;background:linear-gradient(to top,#e040fb,#7c4dff);border-radius:3px;transition:height .1s}
+.score-box{background:#0a0a1a;border-radius:12px;padding:15px;margin:15px 0}
+.score-label{font-size:0.8em;color:#888}
+.score-val{font-size:2.5em;font-weight:bold;color:#ff5252}
+.verdict{font-size:0.9em;color:#ffa726;margin-top:5px}
+.btn{padding:15px 30px;border-radius:12px;border:none;font-size:1.1em;cursor:pointer;transition:all .3s;margin:5px}
+.btn-start{background:linear-gradient(135deg,#e040fb,#7c4dff);color:#fff}
+.btn-start:hover{transform:scale(1.05)}
+.btn-stop{background:#ff5252;color:#fff}
+.status{color:#888;font-size:0.85em;margin-top:10px}
+.note-display{font-size:1.2em;margin:10px 0;height:30px}
+.you-note{color:#4fc3f7}
+.ai-note{color:#ff5252}
+</style>
+</head>
+<body>
+<h1>Off-Key Duet</h1>
+<p class="subtitle">Sing with a virtual partner who harmonizes... badly</p>
+
+<div class="stage">
+  <div class="singers">
+    <div class="singer"><div class="avatar">🎤</div><div class="label">You</div></div>
+    <div class="singer"><div class="avatar">🤖</div><div class="label">AI Partner</div></div>
+  </div>
+  <div class="note-display" id="notes"></div>
+  <div class="viz" id="viz"></div>
+  <div class="score-box">
+    <div class="score-label">HARMONY SCORE</div>
+    <div class="score-val" id="score">0</div>
+    <div class="verdict" id="verdict">Press start and sing something!</div>
+  </div>
+  <button class="btn btn-start" id="startBtn" onclick="toggleDuet()">Start Duet</button>
+  <div class="status" id="status">Microphone access required</div>
+</div>
+
+<script>
+const noteNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const verdicts = [
+  "Cats are filing noise complaints",
+  "Technically this qualifies as psychological warfare",
+  "Auto-tune just uninstalled itself",
+  "A dog howled in sympathy somewhere",
+  "Simon Cowell just shed a tear",
+  "This harmony was outlawed by the Geneva Convention",
+  "Pythagoras is rolling in his grave",
+  "Even karaoke bars would reject this",
+  "Two wrong notes don't make a right",
+  "This is the sound of music... leaving the room",
+  "Congratulations, you've invented a new genre: anti-music",
+  "The notes are fighting each other",
+  "This is what happens when harmony takes a sick day",
+  "Your duet partner is trying their worst",
+  "Beethoven is glad he went deaf",
+];
+
+let running = false;
+let audioCtx, analyser, mic, score = 0, frameCount = 0;
+const vizDiv = document.getElementById('viz');
+const bars = [];
+for (let i = 0; i < 32; i++) {
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  bar.style.height = '4px';
+  vizDiv.appendChild(bar);
+  bars.push(bar);
+}
+
+let offKeyOsc = null;
+
+async function toggleDuet() {
+  if (running) { stopDuet(); return; }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mic = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    mic.connect(analyser);
+    running = true;
+    score = 0;
+    frameCount = 0;
+    document.getElementById('startBtn').textContent = 'Stop Duet';
+    document.getElementById('startBtn').className = 'btn btn-stop';
+    document.getElementById('status').textContent = 'Sing something! Your AI partner will "harmonize"...';
+    animate();
+  } catch(e) {
+    document.getElementById('status').textContent = 'Mic access denied. Grant permission and try again.';
+  }
+}
+
+function stopDuet() {
+  running = false;
+  if (offKeyOsc) { offKeyOsc.stop(); offKeyOsc = null; }
+  document.getElementById('startBtn').textContent = 'Start Duet';
+  document.getElementById('startBtn').className = 'btn btn-start';
+  document.getElementById('status').textContent = 'Duet ended. The world thanks you.';
+}
+
+function detectPitch(buf, sampleRate) {
+  let best = 0, bestR = 0;
+  const rms = Math.sqrt(buf.reduce((s,v) => s + v*v, 0) / buf.length);
+  if (rms < 0.01) return -1;
+  for (let lag = 20; lag < 500; lag++) {
+    let sum = 0;
+    for (let i = 0; i < buf.length - lag; i++) sum += buf[i] * buf[i + lag];
+    if (sum > bestR) { bestR = sum; best = lag; }
+  }
+  return sampleRate / best;
+}
+
+function freqToNote(f) {
+  const n = 12 * Math.log2(f / 440) + 69;
+  return noteNames[Math.round(n) % 12] + Math.floor(Math.round(n) / 12 - 1);
+}
+
+function animate() {
+  if (!running) return;
+  requestAnimationFrame(animate);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const step = Math.floor(data.length / 32);
+  for (let i = 0; i < 32; i++) {
+    bars[i].style.height = Math.max(4, data[i * step] / 2.5) + 'px';
+  }
+  const timeBuf = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(timeBuf);
+  const freq = detectPitch(timeBuf, audioCtx.sampleRate);
+  frameCount++;
+  if (freq > 60 && freq < 1200) {
+    const yourNote = freqToNote(freq);
+    // Create off-key version: shift by random semitones (always wrong)
+    const offsets = [-3, -2, 2, 3, 5, -5, 6, -1.5, 1.5, -4.5];
+    const offset = offsets[frameCount % offsets.length];
+    const offFreq = freq * Math.pow(2, offset / 12);
+    const aiNote = freqToNote(offFreq);
+    document.getElementById('notes').innerHTML = `<span class="you-note">You: ${yourNote}</span> &nbsp; <span class="ai-note">AI: ${aiNote}</span>`;
+    // Play off-key tone
+    if (offKeyOsc) { offKeyOsc.stop(); }
+    offKeyOsc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.08;
+    offKeyOsc.frequency.value = offFreq;
+    offKeyOsc.type = 'sine';
+    offKeyOsc.connect(gain).connect(audioCtx.destination);
+    offKeyOsc.start();
+    offKeyOsc.stop(audioCtx.currentTime + 0.15);
+    // Score always bad
+    score = Math.min(100, Math.max(0, score + (Math.random() * 6 - 5)));
+  } else {
+    document.getElementById('notes').innerHTML = '<span style="color:#555">Waiting for your voice...</span>';
+    if (offKeyOsc) { offKeyOsc.stop(); offKeyOsc = null; }
+  }
+  document.getElementById('score').textContent = Math.round(score);
+  if (frameCount % 60 === 0) {
+    document.getElementById('verdict').textContent = verdicts[Math.floor(Math.random() * verdicts.length)];
+  }
+}
+</script>
+</body>
+</html>

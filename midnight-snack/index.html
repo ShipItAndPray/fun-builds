@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midnight Snack Judge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#8844ff,#4488ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.input-section{background:#1a1a2e;border-radius:16px;padding:20px;margin-bottom:16px}
+.input-row{display:flex;gap:10px;margin-bottom:10px}
+.input-row input,.input-row select{flex:1;padding:12px;background:#111;border:1px solid #333;border-radius:10px;color:#fff;font-size:.95rem}
+.input-row input::placeholder{color:#555}
+.log-btn{width:100%;padding:14px;background:linear-gradient(135deg,#8844ff,#6622cc);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.3s}
+.log-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(136,68,255,.4)}
+.judgment{background:#1a1020;border:2px solid #8844ff;border-radius:16px;padding:24px;margin:16px 0;text-align:center;display:none;animation:fadeIn .5s}
+.judgment .verdict{font-size:1.3rem;font-weight:700;color:#ff88aa;margin-bottom:8px;line-height:1.4}
+.judgment .shame-level{font-size:.8rem;color:#666;margin-top:8px;text-transform:uppercase;letter-spacing:1px}
+.chart-section{background:#1a1a2e;border-radius:16px;padding:20px;margin:16px 0;display:none}
+.chart-section h2{font-size:1rem;color:#8844ff;margin-bottom:15px}
+.chart{display:flex;align-items:flex-end;gap:4px;height:150px;padding:10px 0}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bar{width:100%;background:linear-gradient(180deg,#ff4444,#8844ff);border-radius:4px 4px 0 0;min-height:2px;transition:height .5s}
+.bar-label{font-size:.6rem;color:#666;writing-mode:vertical-lr;text-orientation:mixed;height:40px}
+.log-list{margin-top:16px}
+.log-list h2{font-size:1rem;color:#8844ff;margin-bottom:10px}
+.log-entry{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#111;border-radius:10px;margin-bottom:6px;font-size:.85rem;border-left:3px solid #8844ff}
+.log-entry .time{color:#ffcc00;font-weight:600;min-width:50px}
+.log-entry .food{flex:1;margin:0 10px}
+.log-entry .shame{color:#ff4488;font-size:.75rem}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.stat{background:#1a1a2e;border-radius:12px;padding:15px;text-align:center}
+.stat .num{font-size:1.5rem;font-weight:700;color:#8844ff}
+.stat .label{font-size:.7rem;color:#666;margin-top:4px}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Midnight Snack Judge</h1>
+<p class="subtitle">Log your shame. Accept your judgment.</p>
+
+<div class="input-section">
+<div class="input-row">
+<input type="text" id="foodInput" placeholder="What did you eat?" />
+<input type="time" id="timeInput" />
+</div>
+<button class="log-btn" onclick="logSnack()">Log Snack & Face Judgment</button>
+</div>
+
+<div class="judgment" id="judgment">
+<div class="verdict" id="verdict"></div>
+<div class="shame-level" id="shameLevel"></div>
+</div>
+
+<div class="stats" id="statsBar" style="display:none">
+<div class="stat"><div class="num" id="totalSnacks">0</div><div class="label">Total Snacks</div></div>
+<div class="stat"><div class="num" id="avgShame">0</div><div class="label">Avg Shame</div></div>
+<div class="stat"><div class="num" id="worstTime">--</div><div class="label">Worst Hour</div></div>
+</div>
+
+<div class="chart-section" id="chartSection">
+<h2>Shame Chart (by Hour)</h2>
+<div class="chart" id="chart"></div>
+</div>
+
+<div class="log-list" id="logList" style="display:none">
+<h2>Snack Crime Log</h2>
+<div id="entries"></div>
+</div>
+</div>
+
+<script>
+const judgments=[
+{minH:0,maxH:3,foods:["pickles"],msg:"3am pickles? Really? What trauma are you processing?",shame:9},
+{minH:0,maxH:4,foods:["cheese","shredded cheese"],msg:"Eating shredded cheese straight from the bag at {time}. You are the bag now.",shame:10},
+{minH:0,maxH:5,foods:["cereal"],msg:"Cereal at {time}? At least use a bowl. You ARE using a bowl, right?",shame:7},
+{minH:0,maxH:5,foods:["ice cream"],msg:"Ice cream at {time}. Eating your feelings one scoop at a time.",shame:8},
+{minH:0,maxH:5,foods:["pizza"],msg:"Cold pizza at {time}. The universal language of 'I've given up.'",shame:6},
+{minH:0,maxH:4,foods:["chips"],msg:"Chips at {time}? The crunch is echoing through the entire apartment.",shame:7},
+{minH:0,maxH:5,foods:["leftovers"],msg:"Standing at the fridge eating leftovers at {time}. No plate. No dignity.",shame:8},
+{minH:0,maxH:4,foods:["chocolate"],msg:"Chocolate at {time}. Your dentist can sense this.",shame:6},
+{minH:0,maxH:6,foods:["ramen","noodles","instant"],msg:"Instant ramen at {time}. College never really ended for you.",shame:7},
+{minH:0,maxH:4,foods:["peanut butter"],msg:"Eating peanut butter with a spoon at {time}. You've become feral.",shame:9},
+{minH:0,maxH:5,foods:["sandwich"],msg:"Building a sandwich at {time} like some kind of nocturnal architect.",shame:5},
+{minH:22,maxH:24,foods:[""],msg:"It's not even midnight yet and you're already snacking. Speedrunning shame.",shame:4},
+{minH:0,maxH:3,foods:[""],msg:"It's {time}. Why are you even awake, let alone eating?",shame:8},
+{minH:3,maxH:5,foods:[""],msg:"{time}?! The birds aren't even up yet. Neither should your jaw be.",shame:9},
+{minH:0,maxH:4,foods:["cake","cookies","brownie","pastry"],msg:"Baked goods at {time}. This is what rock bottom tastes like (delicious).",shame:8},
+{minH:12,maxH:17,foods:[""],msg:"A perfectly normal snack time. Where's the fun in that? No judgment. Boring.",shame:1},
+{minH:0,maxH:6,foods:["water"],msg:"Water at {time}? Either you're healthy or this is a cry for help disguised as hydration.",shame:1},
+{minH:0,maxH:4,foods:["toast"],msg:"Toast at {time}. Simple. Sad. The beige food of surrender.",shame:6},
+{minH:17,maxH:20,foods:[""],msg:"Early evening snack. You call this a midnight snack? Amateur hour.",shame:2},
+{minH:20,maxH:23,foods:[""],msg:"Pre-midnight nibbling. The warm-up act before the real shame begins.",shame:4},
+{minH:0,maxH:6,foods:["banana"],msg:"A banana at {time}. Trying to be healthy in the least healthy hours. The audacity.",shame:3},
+{minH:0,maxH:6,foods:["hot dog","hotdog"],msg:"A hot dog at {time}? You're not at a baseball game. You're in your kitchen. Alone.",shame:10},
+{minH:0,maxH:4,foods:["candy"],msg:"Candy at {time}. Your inner child is screaming. Your outer adult is chewing.",shame:7},
+{minH:0,maxH:5,foods:["milk"],msg:"Glass of milk at {time}. Are you 5? Actually, a 5-year-old would be asleep.",shame:4},
+{minH:0,maxH:4,foods:["wings","chicken"],msg:"Chicken at {time}? The amount of effort you put into avoiding sleep is impressive.",shame:7},
+{minH:5,maxH:7,foods:[""],msg:"{time} snack. Is this a really late night snack or a really early breakfast? Either way: concerning.",shame:5},
+{minH:0,maxH:6,foods:["taco"],msg:"A taco at {time}. Somewhere, a Taco Bell drive-through employee is judging you.",shame:8},
+{minH:0,maxH:4,foods:["yogurt"],msg:"Yogurt at {time}. Pretending this is healthy doesn't work when the sun hasn't risen.",shame:4},
+{minH:0,maxH:6,foods:["bacon"],msg:"Cooking bacon at {time}. Your neighbors can smell this. Your neighbors are judging.",shame:9},
+{minH:0,maxH:6,foods:["soup"],msg:"Soup at {time}? Are you sick, sad, or both?",shame:5},
+{minH:7,maxH:12,foods:[""],msg:"Morning snack. This is just breakfast with extra steps.",shame:1},
+{minH:0,maxH:6,foods:["pop tart","poptart"],msg:"A Pop-Tart at {time}. Toasted or raw? Either answer is wrong.",shame:7},
+{minH:0,maxH:4,foods:["wine","beer","alcohol"],msg:"Drinking at {time}. This stopped being 'nightcap' 3 hours ago.",shame:9}
+];
+
+const genericJudgments=[
+"Eating {food} at {time}. The fridge light is the only thing illuminating your choices.",
+"Ah, {food} at {time}. Your future self is already disappointed.",
+"{food} at {time}? The judgment isn't from me. It's from your bathroom scale tomorrow.",
+"Logging {food} at {time}. Brave of you to document this crime.",
+"{food}. {time}. No witnesses. Except this app. And your shame.",
+"Every {food} eaten after midnight adds 1 year to your emotional age. You're now 847.",
+"{food} at {time}. This is what 'living your best life' looks like? Really?",
+"You chose {food} at {time}. Not even the raccoons outside are eating right now.",
+"{food} at {time}. Somewhere, a nutritionist just felt a disturbance in the force.",
+"At {time}, you decided {food} was a good idea. It wasn't. But here we are."
+];
+
+let snacks=JSON.parse(localStorage.getItem('midnightSnacks')||'[]');
+renderAll();
+
+function getHour(timeStr){
+return parseInt(timeStr.split(':')[0]);
+}
+
+function logSnack(){
+const food=document.getElementById('foodInput').value.trim();
+const time=document.getElementById('timeInput').value;
+if(!food){alert('What did you eat?');return}
+if(!time){alert('When did you eat it? (The shame requires a timestamp)');return}
+const hour=getHour(time);
+let matched=null;
+let bestScore=-1;
+for(const j of judgments){
+const inTime=(j.minH<=j.maxH)?(hour>=j.minH&&hour<j.maxH):(hour>=j.minH||hour<j.maxH);
+if(!inTime)continue;
+const foodMatch=j.foods.some(f=>f&&food.toLowerCase().includes(f));
+const score=foodMatch?10:j.foods[0]===''?1:0;
+if(score>bestScore){bestScore=score;matched=j}
+}
+let msg,shame;
+if(matched&&bestScore>0){
+msg=matched.msg.replace('{time}',time);
+shame=matched.shame;
+}else{
+msg=genericJudgments[Math.floor(Math.random()*genericJudgments.length)].replace('{food}',food).replace('{time}',time);
+shame=hour>=0&&hour<6?Math.floor(Math.random()*3)+7:hour>=22?Math.floor(Math.random()*3)+4:Math.floor(Math.random()*3)+1;
+}
+snacks.unshift({food,time,msg,shame,date:new Date().toLocaleDateString()});
+localStorage.setItem('midnightSnacks',JSON.stringify(snacks));
+document.getElementById('judgment').style.display='block';
+document.getElementById('verdict').textContent=msg;
+document.getElementById('shameLevel').textContent=`Shame Level: ${''.repeat(shame)} (${shame}/10)`;
+document.getElementById('foodInput').value='';
+renderAll();
+}
+
+function renderAll(){
+if(snacks.length===0)return;
+document.getElementById('statsBar').style.display='grid';
+document.getElementById('totalSnacks').textContent=snacks.length;
+const avg=(snacks.reduce((a,s)=>a+s.shame,0)/snacks.length).toFixed(1);
+document.getElementById('avgShame').textContent=avg;
+const hourCounts={};
+snacks.forEach(s=>{const h=getHour(s.time);hourCounts[h]=(hourCounts[h]||0)+1});
+const worst=Object.entries(hourCounts).sort((a,b)=>b[1]-a[1])[0];
+document.getElementById('worstTime').textContent=worst[0]+':00';
+// Chart
+document.getElementById('chartSection').style.display='block';
+const chart=document.getElementById('chart');
+const hours=Array.from({length:24},(_,i)=>i);
+const maxCount=Math.max(...hours.map(h=>hourCounts[h]||0),1);
+chart.innerHTML=hours.map(h=>{
+const c=hourCounts[h]||0;
+const pct=c/maxCount*100;
+return `<div class="bar-col"><div class="bar" style="height:${Math.max(pct,2)}%;opacity:${c?1:.2}"></div><div class="bar-label">${String(h).padStart(2,'0')}</div></div>`;
+}).join('');
+// Log
+document.getElementById('logList').style.display='block';
+document.getElementById('entries').innerHTML=snacks.slice(0,20).map(s=>
+`<div class="log-entry"><span class="time">${s.time}</span><span class="food">${s.food}</span><span class="shame">${''.repeat(Math.min(s.shame,5))} ${s.shame}/10</span></div>`
+).join('');
+}
+
+// Default time to now
+const now=new Date();
+document.getElementById('timeInput').value=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+</script>
+</body>
+</html>

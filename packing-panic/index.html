@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Packing Panic</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ff4444,#ffcc00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.setup{background:#1a1a2e;border-radius:16px;padding:20px;margin-bottom:16px}
+.setup label{display:block;color:#888;font-size:.85rem;margin-bottom:6px}
+.setup input,.setup select{width:100%;padding:12px;background:#111;border:1px solid #333;border-radius:10px;color:#fff;font-size:1rem;margin-bottom:12px}
+.go-btn{width:100%;padding:14px;background:linear-gradient(135deg,#ff4444,#cc2200);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;transition:.3s}
+.go-btn:hover{transform:scale(1.02);box-shadow:0 0 15px rgba(255,68,68,.4)}
+.countdown{text-align:center;padding:20px;margin:16px 0;display:none}
+.countdown .time-left{font-size:2.5rem;font-weight:700;font-family:monospace}
+.countdown .panic-label{font-size:.85rem;color:#888;margin-top:4px}
+.panic-level{padding:15px;background:#1a1a2e;border-radius:12px;margin:16px 0;display:none}
+.panic-bar{height:10px;background:#222;border-radius:5px;overflow:hidden}
+.panic-fill{height:100%;border-radius:5px;transition:width 1s,background 1s}
+.panic-text{text-align:center;margin-top:8px;font-size:.85rem}
+.alert-banner{background:#2a0a0a;border:2px solid #ff0044;border-radius:12px;padding:16px;margin:12px 0;text-align:center;display:none;animation:pulse 1s infinite}
+.alert-banner h3{color:#ff0044;font-size:1.1rem;margin-bottom:4px}
+.alert-banner p{color:#ff8888;font-size:.9rem}
+.packing-list{margin:16px 0}
+.packing-list h2{font-size:1rem;color:#ff8800;margin-bottom:12px}
+.category{margin-bottom:16px}
+.category h3{font-size:.85rem;color:#666;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #222}
+.item{display:flex;align-items:center;padding:8px 12px;background:#111;border-radius:8px;margin-bottom:4px;font-size:.9rem;cursor:pointer;transition:.2s}
+.item:hover{background:#1a1a2e}
+.item.checked{opacity:.5;text-decoration:line-through}
+.item .check{width:20px;height:20px;border:2px solid #444;border-radius:4px;margin-right:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.item.checked .check{background:#00cc66;border-color:#00cc66}
+.item .priority{margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:10px}
+.priority.critical{background:#2a0a0a;color:#ff4444}
+.priority.high{background:#2a1a0a;color:#ff8800}
+.priority.normal{background:#0a1a2a;color:#4488ff}
+.priority.absurd{background:#1a0a2a;color:#aa44ff}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Packing Panic</h1>
+<p class="subtitle">The closer the trip, the worse the list.</p>
+<div class="setup" id="setup">
+<label>Trip Destination</label>
+<input type="text" id="destination" placeholder="e.g., Tokyo, Paris, Cancun..." />
+<label>Departure Date</label>
+<input type="date" id="departDate" />
+<label>Trip Type</label>
+<select id="tripType">
+<option value="beach">Beach Vacation</option>
+<option value="business">Business Trip</option>
+<option value="adventure">Adventure/Hiking</option>
+<option value="city">City Break</option>
+<option value="family">Family Visit</option>
+</select>
+<button class="go-btn" onclick="startPanic()">START PACKING PANIC</button>
+</div>
+<div class="countdown" id="countdown"></div>
+<div class="panic-level" id="panicLevel"></div>
+<div class="alert-banner" id="alertBanner"></div>
+<div class="packing-list" id="packingList"></div>
+</div>
+
+<script>
+const essentials=[
+{name:"Passport",priority:"critical"},{name:"Phone charger",priority:"critical"},{name:"Wallet",priority:"critical"},
+{name:"Underwear (enough for the trip... hopefully)",priority:"critical"},{name:"Toothbrush",priority:"high"},
+{name:"Medications",priority:"critical"},{name:"ID / Driver's License",priority:"critical"},
+{name:"Deodorant",priority:"high"},{name:"Socks (they always get forgotten)",priority:"high"},
+{name:"Phone",priority:"critical"}
+];
+const normal=[
+{name:"Shirts (one per day, who are we kidding)",priority:"normal"},{name:"Pants/Shorts",priority:"normal"},
+{name:"Pajamas",priority:"normal"},{name:"Shoes (at least 2 pairs)",priority:"normal"},
+{name:"Jacket/Hoodie",priority:"normal"},{name:"Sunglasses",priority:"normal"},
+{name:"Headphones",priority:"normal"},{name:"Laptop + charger",priority:"normal"},
+{name:"Travel pillow",priority:"normal"},{name:"Snacks for the plane",priority:"normal"},
+{name:"Book you won't read",priority:"normal"},{name:"Toiletry bag",priority:"normal"},
+{name:"Shampoo/Conditioner",priority:"normal"},{name:"Razor",priority:"normal"},
+{name:"Belt",priority:"normal"}
+];
+const escalating=[
+{name:"Backup phone charger (for when you lose the first one)",priority:"high",minPanic:20},
+{name:"Printed copies of all reservations (trust no app)",priority:"high",minPanic:25},
+{name:"Tide pen (you WILL spill something)",priority:"normal",minPanic:30},
+{name:"Extra underwear (double what you think)",priority:"high",minPanic:35},
+{name:"Portable battery pack (your phone WILL die)",priority:"high",minPanic:30},
+{name:"Ziplock bags for EVERYTHING",priority:"normal",minPanic:40},
+{name:"Emergency cash in 3 different currencies",priority:"high",minPanic:45},
+{name:"Copy of passport in your sock",priority:"absurd",minPanic:50},
+{name:"Duct tape (fixes everything)",priority:"absurd",minPanic:55},
+{name:"Written list of emergency contacts (your phone is dead remember?)",priority:"high",minPanic:50},
+{name:"Whistle (for when you get lost)",priority:"absurd",minPanic:60},
+{name:"Second suitcase (the first one isn't big enough)",priority:"absurd",minPanic:55},
+{name:"Rope (you never know)",priority:"absurd",minPanic:65},
+{name:"Survival blanket",priority:"absurd",minPanic:70},
+{name:"Water purification tablets",priority:"absurd",minPanic:70},
+{name:"Flare gun (for emergencies)",priority:"absurd",minPanic:75},
+{name:"Satellite phone",priority:"absurd",minPanic:80},
+{name:"Decoy wallet (for pickpockets)",priority:"absurd",minPanic:60},
+{name:"Full first aid kit (surgery-grade)",priority:"absurd",minPanic:65},
+{name:"Solar panel charger (for the apocalypse)",priority:"absurd",minPanic:75},
+{name:"Compass (GPS will fail, it always fails)",priority:"absurd",minPanic:70},
+{name:"Fireproof document bag",priority:"absurd",minPanic:80},
+{name:"Night vision goggles",priority:"absurd",minPanic:85},
+{name:"Inflatable raft (trust no ferry)",priority:"absurd",minPanic:90},
+{name:"Hazmat suit (you saw the airline reviews)",priority:"absurd",minPanic:95}
+];
+
+const forgotAlerts=[
+"SUNSCREEN. You forgot sunscreen. Your skin remembers.",
+"ADAPTER PLUG. Different country = different outlets = dead everything.",
+"TRAVEL INSURANCE. You'll need it. You always need it.",
+"COMFORTABLE WALKING SHOES. Your feet are about to hate you.",
+"UMBRELLA. It WILL rain. The forecast is lying.",
+"COPIES OF YOUR ITINERARY. Your phone will die at the worst moment.",
+"CONTACT LENS SOLUTION. Enjoy your dry-eye vacation.",
+"MOTION SICKNESS PILLS. That bus ride will be rough.",
+"EARPLUGS. Your hotel neighbor snores through walls.",
+"LIP BALM. Airplane air is dryer than your sense of humor.",
+"CASH. Not everywhere takes cards. Especially that sketchy but amazing restaurant.",
+"SWIM TRUNKS. You're going to a beach destination and forgot SWIM TRUNKS.",
+"BELT. Your pants will betray you at the worst possible moment."
+];
+
+let panicInterval,alertInterval,alertIdx=0;
+
+function startPanic(){
+const dest=document.getElementById('destination').value||'Somewhere';
+const date=document.getElementById('departDate').value;
+if(!date){alert('Set a departure date!');return}
+const depart=new Date(date+'T00:00:00');
+const now=new Date();
+const diffMs=depart-now;
+if(diffMs<0){alert('That date has passed. You already missed it. Pack faster next time.');return}
+const diffHours=diffMs/1000/3600;
+const diffDays=diffHours/24;
+const panicPct=Math.min(100,Math.max(5,diffDays<=0?100:diffDays<1?95:diffDays<3?80:diffDays<7?60:diffDays<14?40:diffDays<30?20:10));
+
+document.getElementById('setup').style.display='none';
+// Countdown
+const cd=document.getElementById('countdown');
+cd.style.display='block';
+function updateCountdown(){
+const now2=new Date();
+const diff=depart-now2;
+if(diff<=0){cd.innerHTML=`<div class="time-left" style="color:#ff0044">DEPARTED</div><div class="panic-label">You should have packed yesterday</div>`;return}
+const d=Math.floor(diff/86400000);
+const h=Math.floor((diff%86400000)/3600000);
+const m=Math.floor((diff%3600000)/60000);
+const s=Math.floor((diff%60000)/1000);
+const color=d<1?'#ff0044':d<3?'#ff4444':d<7?'#ff8800':'#ffcc00';
+cd.innerHTML=`<div class="time-left" style="color:${color}">${d}d ${h}h ${m}m ${s}s</div><div class="panic-label">until departure to ${dest}</div>`;
+}
+updateCountdown();
+panicInterval=setInterval(updateCountdown,1000);
+
+// Panic meter
+const pl=document.getElementById('panicLevel');
+pl.style.display='block';
+const panicLabels=['Zen Master','Mildly Concerned','Actively Worried','Full Panic Mode','DEFCON 1','COMPLETE MELTDOWN'];
+const pIdx=Math.min(Math.floor(panicPct/20),panicLabels.length-1);
+const pColor=panicPct>80?'#ff0044':panicPct>60?'#ff4444':panicPct>40?'#ff8800':panicPct>20?'#ffcc00':'#00cc66';
+pl.innerHTML=`<div class="panic-bar"><div class="panic-fill" style="width:${panicPct}%;background:${pColor}"></div></div><div class="panic-text" style="color:${pColor}">Panic Level: ${Math.round(panicPct)}% - ${panicLabels[pIdx]}</div>`;
+
+// Alert
+const ab=document.getElementById('alertBanner');
+ab.style.display='block';
+function showAlert(){
+ab.innerHTML=`<h3>YOU FORGOT</h3><p>${forgotAlerts[alertIdx%forgotAlerts.length]}</p>`;
+alertIdx++;
+}
+showAlert();
+alertInterval=setInterval(showAlert,8000);
+
+// Packing list
+const items=[...essentials,...normal,...escalating.filter(e=>panicPct>=e.minPanic)];
+const cats={Critical:[],High:[],Normal:[],Absurd:[]};
+items.forEach(i=>{
+const c=i.priority==='critical'?'Critical':i.priority==='high'?'High':i.priority==='absurd'?'Absurd':'Normal';
+cats[c].push(i);
+});
+const plDiv=document.getElementById('packingList');
+plDiv.innerHTML=`<h2>Packing List (${items.length} items)</h2>`+
+Object.entries(cats).filter(([,v])=>v.length>0).map(([cat,items])=>
+`<div class="category"><h3>${cat}</h3>${items.map(i=>
+`<div class="item" onclick="this.classList.toggle('checked')"><div class="check"></div><span>${i.name}</span><span class="priority ${i.priority}">${i.priority}</span></div>`
+).join('')}</div>`
+).join('');
+}
+// Default date to 3 days from now
+const d=new Date();d.setDate(d.getDate()+3);
+document.getElementById('departDate').value=d.toISOString().split('T')[0];
+</script>
+</body>
+</html>

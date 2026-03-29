@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipe Roulette</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ff8a65,#ef5350);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em}
+.wheels{display:flex;gap:20px;justify-content:center;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.wheel-box{background:#1a1a2e;border-radius:16px;padding:20px;text-align:center;width:170px}
+.wheel-label{color:#888;font-size:0.8em;margin-bottom:8px}
+.wheel-display{font-size:1.3em;font-weight:bold;height:40px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.wheel-display.spinning{animation:slotSpin .1s infinite}
+@keyframes slotSpin{0%{transform:translateY(-5px)}50%{transform:translateY(5px)}100%{transform:translateY(-5px)}}
+.plus{font-size:2em;color:#555}
+.btn{padding:15px 35px;border-radius:12px;border:none;font-size:1.1em;cursor:pointer;color:#fff;transition:all .3s;background:linear-gradient(135deg,#ff8a65,#ef5350)}
+.btn:hover{transform:scale(1.05)}
+.btn:disabled{opacity:0.5;transform:none}
+.recipe-card{background:#1a1a2e;border-radius:16px;padding:25px;max-width:500px;width:100%;margin-top:20px;display:none;animation:slideUp .5s}
+.recipe-card.show{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.recipe-name{font-size:1.4em;font-weight:bold;color:#ff8a65;margin-bottom:10px}
+.recipe-body{line-height:1.8;font-size:0.95em;color:#ccc;margin-bottom:15px}
+.edibility{display:flex;align-items:center;gap:10px;margin-top:15px}
+.edibility-bar{flex:1;height:12px;background:#222;border-radius:6px;overflow:hidden}
+.edibility-fill{height:100%;border-radius:6px;transition:width .8s}
+.edibility-score{font-weight:bold;font-size:1.2em}
+.stars{color:#ffd54f;margin-top:5px;font-size:0.85em}
+</style>
+</head>
+<body>
+<h1>Recipe Roulette</h1>
+<p class="subtitle">Spin two ingredients. Get a questionable recipe.</p>
+
+<div class="wheels">
+  <div class="wheel-box">
+    <div class="wheel-label">INGREDIENT 1</div>
+    <div class="wheel-display" id="wheel1">?</div>
+  </div>
+  <div class="plus">+</div>
+  <div class="wheel-box">
+    <div class="wheel-label">INGREDIENT 2</div>
+    <div class="wheel-display" id="wheel2">?</div>
+  </div>
+</div>
+<button class="btn" id="spinBtn" onclick="spin()">Spin the Wheels!</button>
+<div class="recipe-card" id="recipe"></div>
+
+<script>
+const ingredients = [
+  "Pickles","Nutella","Sardines","Marshmallows","Hot Sauce","Cheese Whiz","Anchovies",
+  "Peanut Butter","Ketchup","Wasabi","Gummy Bears","Bacon","Mayonnaise","Oreos",
+  "Sriracha","Cottage Cheese","Olives","Banana","Spam","Cream Cheese",
+  "Jalapeños","Maple Syrup","Tofu","Pop Tarts","Sauerkraut","Mango","Doritos",
+  "Kimchi","Honey","Mustard","Avocado","Ranch Dressing","Ramen Noodles","Ice Cream",
+  "Salsa","Coconut","Beef Jerky","Corn Dogs","Feta Cheese","Rice Krispies",
+  "Cinnamon","Garlic","Licorice","Tuna","Chocolate Chips"
+];
+
+const templates = [
+  {name:"{0} & {1} Fusion Bowl",body:"Layer {0} on a bed of crushed {1}. Drizzle with olive oil. Microwave for 90 seconds. Serve with regret. Garnish with whatever you find in your fridge.",method:"fusion"},
+  {name:"Pan-Seared {0} with {1} Reduction",body:"Sear {0} in a hot pan until golden. Deglaze with melted {1}. Reduce until it coats the back of a spoon (or just looks thick enough). Plate artfully. Question your choices.",method:"sear"},
+  {name:"{0} {1} Smoothie",body:"Blend {0} and {1} with ice until smooth. Add milk if it's too thick. Add prayer if it's too thin. Drink quickly before you see the color.",method:"blend"},
+  {name:"Stuffed {0} à la {1}",body:"Hollow out {0} (creativity required). Stuff with {1}. Bake at 375°F for 20 minutes. The smell will be... memorable. Serve to enemies.",method:"stuff"},
+  {name:"{0}-Crusted {1} Bites",body:"Crush {0} into fine crumbs. Coat {1} pieces in egg wash, then press into {0} crumbs. Deep fry until courage runs out. Serve with a liability waiver.",method:"crust"},
+  {name:"Deconstructed {0} & {1} Tower",body:"Stack alternating layers of {0} and {1} into a precarious tower. It WILL fall over. That's the deconstructed part. Serve on a wooden board for Instagram points.",method:"tower"},
+  {name:"{0} {1} Tacos",body:"Warm tortillas. Fill with {0}. Top with {1}. Fold. Pray. The taco shell is doing its best. Add hot sauce to mask the confusion.",method:"taco"},
+  {name:"Slow-Roasted {0} in {1} Glaze",body:"Place {0} in a slow cooker. Cover in liquefied {1}. Cook for 6 hours. Your house will smell like a fever dream. Serve over rice to dilute the experience.",method:"roast"},
+  {name:"{0} & {1} Pizza",body:"Spread {1} as sauce on pizza dough. Top with {0}. Bake until the cheese (if any) bubbles. The delivery driver will judge you less than this recipe deserves.",method:"pizza"},
+  {name:"Emergency {0} {1} Soup",body:"Boil water. Add {0} and {1}. Stir until it looks like something. Season with salt and denial. Serve hot. Tell no one.",method:"soup"},
+  {name:"{0} {1} Stir-Fry Surprise",body:"Heat wok until smoking. Toss in {0}, stir vigorously. Add {1} at the last second. The surprise is that you ate it. Serve over noodles.",method:"fry"},
+  {name:"Grilled {0} with {1} Aioli",body:"Grill {0} over medium heat. Mix {1} with mayo to create 'aioli' (calling it aioli makes it fancy). Drizzle over grilled {0}. Contemplate life.",method:"grill"},
+  {name:"{0} {1} Breakfast Scramble",body:"Scramble eggs. Before they set, add {0} and {1}. Cook until your roommate asks what that smell is. Serve with toast and an apology.",method:"scramble"},
+  {name:"Molecular {0} {1} Spheres",body:"Using advanced food science (a dropper), create spheres of liquefied {0} in a {1} bath. They won't be spheres. They'll be blobs. Call them 'rustic.'",method:"molecular"},
+  {name:"{0} {1} Sandwich Royale",body:"Toast bread. Layer {0} and {1} between slices. Cut diagonally because you're not a monster. The filling will escape. It always escapes.",method:"sandwich"},
+  {name:"Frozen {0} {1} Bark",body:"Melt {1} (or just smoosh it). Spread on parchment paper. Press {0} pieces into it. Freeze for 2 hours. Break into shards of questionable dessert.",method:"bark"},
+  {name:"{0} & {1} Dumpling Disaster",body:"Wrap {0} and {1} in wonton wrappers. Steam for 8 minutes. Half will fall apart. That's normal. Serve the survivors with soy sauce.",method:"dumpling"},
+  {name:"BBQ {0} with {1} Slaw",body:"Slather {0} in BBQ sauce. Slow cook until tender. Shred {1} into a slaw with vinegar dressing. Combine on a bun. Tell people you're a pitmaster.",method:"bbq"},
+  {name:"{0} {1} Energy Balls",body:"Mash {0} and {1} together. Roll into balls. Refrigerate. Call them 'energy balls' so people think you're healthy. You're not. But the balls are round. Mostly.",method:"energy"},
+  {name:"Flambéed {0} over {1}",body:"Place {1} on a plate. Set {0} on top. Pour brandy over it and light it on fire. Watch the flames. This is fine. Everything is fine. Serve when fire dies.",method:"flambe"}
+];
+
+const edibilityComments = [
+  [0,20,"Call poison control. Not for you. For the recipe."],
+  [20,35,"Your stomach called. It filed a restraining order."],
+  [35,50,"Technically edible. So is cardboard. Same energy."],
+  [50,65,"You'll survive. Probably. Maybe keep a cracker nearby."],
+  [65,80,"Actually not terrible? Don't tell anyone I said that."],
+  [80,100,"Wait... this might actually work. Are you a secret chef?"]
+];
+
+let spinning = false;
+
+function spin() {
+  if (spinning) return;
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('recipe').classList.remove('show');
+  const w1 = document.getElementById('wheel1');
+  const w2 = document.getElementById('wheel2');
+  w1.classList.add('spinning');
+  w2.classList.add('spinning');
+  let count = 0;
+  const interval = setInterval(() => {
+    w1.textContent = ingredients[Math.floor(Math.random()*ingredients.length)];
+    w2.textContent = ingredients[Math.floor(Math.random()*ingredients.length)];
+    count++;
+    if (count > 20) {
+      clearInterval(interval);
+      w1.classList.remove('spinning');
+      w2.classList.remove('spinning');
+      let i1, i2;
+      do {
+        i1 = ingredients[Math.floor(Math.random()*ingredients.length)];
+        i2 = ingredients[Math.floor(Math.random()*ingredients.length)];
+      } while (i1 === i2);
+      w1.textContent = i1;
+      w2.textContent = i2;
+      generateRecipe(i1, i2);
+      spinning = false;
+      document.getElementById('spinBtn').disabled = false;
+    }
+  }, 80);
+}
+
+function generateRecipe(i1, i2) {
+  const tmpl = templates[Math.floor(Math.random()*templates.length)];
+  const name = tmpl.name.replace('{0}',i1).replace('{1}',i2);
+  const body = tmpl.body.replace(/\{0\}/g,i1).replace(/\{1\}/g,i2);
+  const edScore = Math.floor(Math.random()*80+10);
+  const comment = edibilityComments.find(c => edScore >= c[0] && edScore < c[1])[2];
+  const color = edScore < 35 ? '#ff5252' : edScore < 65 ? '#ffa726' : '#66bb6a';
+  const card = document.getElementById('recipe');
+  card.innerHTML = `
+    <div class="recipe-name">${name}</div>
+    <div class="recipe-body">${body}</div>
+    <div class="edibility">
+      <span>Edibility:</span>
+      <div class="edibility-bar"><div class="edibility-fill" style="width:${edScore}%;background:${color}"></div></div>
+      <span class="edibility-score" style="color:${color}">${edScore}%</span>
+    </div>
+    <div class="stars">${comment}</div>
+  `;
+  card.classList.remove('show');
+  void card.offsetWidth;
+  card.classList.add('show');
+}
+</script>
+</body>
+</html>

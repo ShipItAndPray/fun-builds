@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diet Saboteur</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ff5252,#d500f9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em;text-align:center}
+.main-card{background:#1a1a2e;border-radius:20px;padding:30px;max-width:500px;width:100%;text-align:center}
+.food-emoji{font-size:4em;margin-bottom:15px;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-10px) rotate(5deg)}}
+.temptation{font-size:1.2em;line-height:1.6;font-style:italic;color:#ffa726;margin-bottom:20px;min-height:80px}
+.willpower-section{margin:20px 0}
+.wp-label{display:flex;justify-content:space-between;font-size:0.85em;margin-bottom:5px}
+.wp-bar{height:16px;background:#222;border-radius:8px;overflow:hidden}
+.wp-fill{height:100%;border-radius:8px;transition:width .5s,background .5s}
+.wp-status{margin-top:8px;font-size:0.85em;color:#888}
+.buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.btn{padding:12px 24px;border-radius:10px;border:none;cursor:pointer;font-size:0.95em;transition:all .3s;color:#fff}
+.btn-resist{background:#2e7d32}.btn-resist:hover{background:#43a047}
+.btn-give-in{background:#c62828}.btn-give-in:hover{background:#e53935}
+.btn-new{background:#333}.btn-new:hover{background:#444}
+.streak{margin-top:15px;font-size:0.85em;color:#888}
+.streak span{color:#ffd54f;font-weight:bold}
+.game-over{display:none;margin-top:15px;padding:15px;background:#1a0a0a;border-radius:12px;border:1px solid #c62828}
+.game-over.show{display:block}
+.game-over h3{color:#ff5252;margin-bottom:8px}
+</style>
+</head>
+<body>
+<h1>Diet Saboteur</h1>
+<p class="subtitle">How long can you resist the temptation?</p>
+
+<div class="main-card">
+  <div class="food-emoji" id="foodEmoji">🍕</div>
+  <div class="temptation" id="temptation">Click "Tempt Me" to begin your trial...</div>
+
+  <div class="willpower-section">
+    <div class="wp-label"><span>Willpower</span><span id="wpVal">100%</span></div>
+    <div class="wp-bar"><div class="wp-fill" id="wpFill" style="width:100%;background:#66bb6a"></div></div>
+    <div class="wp-status" id="wpStatus">Your resolve is strong... for now.</div>
+  </div>
+
+  <div class="buttons">
+    <button class="btn btn-resist" id="resistBtn" onclick="resist()">I Resist!</button>
+    <button class="btn btn-give-in" onclick="giveIn()">Give In...</button>
+    <button class="btn btn-new" onclick="newTemptation()">Tempt Me</button>
+  </div>
+
+  <div class="streak">Temptations resisted: <span id="resisted">0</span> | Fallen: <span id="fallen">0</span></div>
+
+  <div class="game-over" id="gameOver">
+    <h3>Your Willpower Has Shattered</h3>
+    <p id="goText"></p>
+    <button class="btn btn-new" onclick="resetGame()" style="margin-top:10px">Try Again (We Both Know How This Ends)</button>
+  </div>
+</div>
+
+<script>
+const foods = ['🍕','🍔','🌮','🍩','🍰','🎂','🧁','🍪','🍫','🍦','🍟','🌯','🥐','🥞','🧀','🍿','🥓','🌭','🍝','🥘','🍱','🥧','🍭','🍬'];
+
+const temptations = [
+  "The pizza calls to you from across the room. Its cheese stretches like golden threads of destiny. You were meant for each other.",
+  "That burger isn't just a burger. It's a warm hug wrapped in a sesame seed bun. Your salad could never.",
+  "The donut sits there, glazed and glistening, a perfect ring of joy. It wants nothing from you. Only to be consumed.",
+  "Somewhere, a taco is being assembled. Layer by layer. Meat, cheese, salsa. It's not complete without you.",
+  "The chocolate cake whispers your name. Can you hear it? It says: 'One slice won't hurt.' It's right, you know.",
+  "French fries, golden and crisp, fresh from the oil. They're not just food. They're an experience. A lifestyle.",
+  "The ice cream is melting. It's MELTING. You can't let it go to waste. That would be the real sin here.",
+  "Pasta. Carbs. Cheese. The holy trinity. Your diet plan didn't account for divine intervention.",
+  "That cinnamon roll is spiraling, just like your willpower. Meet it where it is. In your mouth.",
+  "The nachos are loaded. LOADED. Extra cheese, extra everything. Your diet had a good run.",
+  "A fresh cookie, still warm, chocolate chips still gooey. It was baked with love. Rejecting it would be rude.",
+  "The pancakes are stacked high, syrup cascading down their sides like a buttery waterfall of happiness.",
+  "Fried chicken. Crispy. Juicy. Perfect. Your kale smoothie is embarrassed to be in the same room.",
+  "The cheese is calling. Brie, cheddar, gouda -- they've formed an alliance. You cannot win this war.",
+  "A slice of pie, steam rising, fruit glistening. Your grandmother would want you to eat it. Don't disappoint grandma.",
+  "The brownie is fudgy in the center, crisp at the edges. It is perfection. Your diet is a suggestion.",
+  "Popcorn. Butter. Salt. The movie doesn't start until the first handful. This is basic science.",
+  "The pretzel is warm, soft, and salted. It's a carb hug for your soul. Your soul is hungry.",
+  "Waffles with whipped cream and strawberries. This isn't food. This is art. You don't diet away from art.",
+  "The mac and cheese bubbles gently. Each noodle cradled in creamy, cheesy warmth. It's comfort. You deserve comfort.",
+  "A croissant, fresh from the oven, layers of buttery pastry flaking apart. The French didn't diet. Look how happy they are.",
+  "The milkshake brings all the boys to the yard. And the girls. And the dieters. Nobody is safe.",
+  "Bacon. The smell alone has defeated stronger wills than yours. Accept your fate. It's delicious.",
+  "The cupcake has sprinkles. SPRINKLES. Each one a tiny celebration of giving up. Join the party.",
+  "That burrito is the size of a small child. It contains everything. Rice. Beans. Your hopes and dreams.",
+  "The creme brulee torch just fired. That caramelized sugar crack? That's the sound of your diet breaking.",
+  "Spring rolls. They have 'spring' in the name. That's basically a vegetable season. This is health food.",
+  "The garlic bread is warm and aromatic. Vampires avoid garlic. You know what vampires don't have? Joy.",
+  "Onion rings. Golden. Circular. Like halos for your fingers before you eat them. Angel food.",
+  "The cheesecake is New York style. When in Rome. Or New York. Or your kitchen at midnight.",
+  "A warm churro, coated in cinnamon sugar. Churros don't count as breaking a diet. I don't make the rules.",
+  "That ramen broth took 12 hours to make. TWELVE HOURS of love. Your protein shake took 12 seconds.",
+  "The mozzarella sticks stretch when you pull them apart. That's cheese yoga. This IS your fitness routine.",
+  "Tiramisu. The name means 'pick me up.' It's literally medicine. Prescribed by Italian doctors (probably).",
+  "The BBQ ribs fall off the bone. Unlike your willpower, which fell off the cliff three temptations ago.",
+  "A fresh bagel with cream cheese. It's a circle. Circles represent wholeness. Eat it and become whole.",
+  "The funnel cake is dusted with powdered sugar like a delicious snow-covered landscape. Winter is coming. Eat.",
+  "Pad Thai with crushed peanuts. It's from Thailand. It's cultural appreciation. Your diet is culturally insensitive.",
+  "The lobster roll drips with butter. Real butter. Not 'I Can't Believe It's Not.' Because you CAN believe it. It's butter.",
+  "That slice of key lime pie is tangy, sweet, and doesn't judge you. Unlike your fitness tracker.",
+  "Chocolate lava cake. When you cut it open, warm chocolate flows out. Like your willpower. Flowing away.",
+  "The dim sum cart approaches. Dumplings. Buns. Little parcels of giving up. The cart doesn't stop. Neither should you.",
+  "A fresh baguette, crusty outside, soft inside. It's not carbs. It's architecture. Edible architecture.",
+  "The gelato has 47 flavors. Your diet has zero. The math is simple.",
+  "Deep dish pizza. It's basically a pie. Pies are American. This is patriotism.",
+  "That éclair is filled with cream and topped with chocolate. It's basically a fancy twinkie. You're fancy.",
+  "The crab rangoon are crispy little pillows of cream cheese and dreams. Dream big. Eat bigger.",
+  "A fresh-baked pretzel the size of your head. Your head is hungry. Feed it.",
+  "The s'more is perfectly toasted. Graham, chocolate, marshmallow. Three food groups. That's balanced.",
+  "Chicken wings in four different sauces. That's variety. Variety is the spice of life. This is living."
+];
+
+const resistMessages = [
+  "You resisted. Your salad is proud of you. Nobody else is.",
+  "Strong will! The food is plotting its next move though.",
+  "You said no. The food said 'I'll wait.' It's patient.",
+  "Impressive restraint. Your willpower took a hit but survived.",
+  "You held firm. The cheese weeps. Can you hear it crying?",
+  "Resistance noted. But at what cost? AT WHAT COST?",
+  "Your diet thanks you. Your taste buds filed a complaint.",
+  "Victory! A hollow, hungry victory. But victory nonetheless.",
+];
+
+const giveInMessages = [
+  "You gave in. The food gods smile upon you. Your trainer does not.",
+  "Worth it. Every single calorie. No regrets. (Many regrets.)",
+  "The diet is over. The feast has begun. Welcome home.",
+  "You lasted longer than most. That's not a compliment.",
+  "Surrender accepted. Your taste buds are celebrating.",
+  "The food won. As it always does. As it always will.",
+];
+
+const gameOverMessages = [
+  "Your willpower meter hit zero. You're now in a committed relationship with carbs.",
+  "Game over. Your diet plan has been shredded and used as a napkin for your pizza.",
+  "Zero willpower remaining. Your gym membership just cancelled itself.",
+  "You've reached peak surrender. The fridge is now your best friend.",
+  "Willpower depleted. Scientists will study your collapse for generations.",
+];
+
+let willpower = 100, resisted = 0, fallen = 0;
+
+function newTemptation() {
+  if (willpower <= 0) return;
+  document.getElementById('gameOver').classList.remove('show');
+  const t = temptations[Math.floor(Math.random()*temptations.length)];
+  const f = foods[Math.floor(Math.random()*foods.length)];
+  document.getElementById('temptation').textContent = t;
+  document.getElementById('foodEmoji').textContent = f;
+  // Each temptation drains willpower slightly
+  willpower = Math.max(0, willpower - Math.floor(Math.random()*5+2));
+  updateWP();
+}
+
+function resist() {
+  if (willpower <= 0) return;
+  resisted++;
+  willpower = Math.max(0, willpower - Math.floor(Math.random()*3+1));
+  document.getElementById('resisted').textContent = resisted;
+  document.getElementById('wpStatus').textContent = resistMessages[Math.floor(Math.random()*resistMessages.length)];
+  updateWP();
+  newTemptation();
+}
+
+function giveIn() {
+  if (willpower <= 0) return;
+  fallen++;
+  willpower = Math.max(0, willpower - Math.floor(Math.random()*15+10));
+  document.getElementById('fallen').textContent = fallen;
+  document.getElementById('wpStatus').textContent = giveInMessages[Math.floor(Math.random()*giveInMessages.length)];
+  updateWP();
+  if (willpower > 0) newTemptation();
+}
+
+function updateWP() {
+  document.getElementById('wpVal').textContent = willpower + '%';
+  const fill = document.getElementById('wpFill');
+  fill.style.width = willpower + '%';
+  fill.style.background = willpower > 60 ? '#66bb6a' : willpower > 30 ? '#ffa726' : '#ff5252';
+  if (willpower <= 0) {
+    document.getElementById('gameOver').classList.add('show');
+    document.getElementById('goText').textContent = gameOverMessages[Math.floor(Math.random()*gameOverMessages.length)];
+  }
+}
+
+function resetGame() {
+  willpower = 100;
+  resisted = 0;
+  fallen = 0;
+  document.getElementById('resisted').textContent = 0;
+  document.getElementById('fallen').textContent = 0;
+  document.getElementById('gameOver').classList.remove('show');
+  document.getElementById('wpStatus').textContent = 'Your resolve is strong... for now.';
+  updateWP();
+  newTemptation();
+}
+</script>
+</body>
+</html>

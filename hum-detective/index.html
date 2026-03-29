@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hum Detective</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ffd54f,#ff6f00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em;text-align:center}
+.detective-card{background:#1a1a2e;border-radius:20px;padding:30px;max-width:500px;width:100%;text-align:center}
+.magnifier{font-size:4em;margin-bottom:10px}
+.viz{height:60px;display:flex;align-items:end;justify-content:center;gap:2px;margin:15px 0}
+.viz .bar{width:4px;background:linear-gradient(to top,#ffd54f,#ff6f00);border-radius:2px;transition:height .05s}
+.btn{padding:15px 35px;border-radius:12px;border:none;font-size:1.1em;cursor:pointer;color:#fff;margin:5px;transition:all .3s}
+.btn-listen{background:linear-gradient(135deg,#ffd54f,#ff6f00)}
+.btn-listen:hover{transform:scale(1.05)}
+.btn-stop{background:#ff5252}
+.result{margin-top:20px;display:none;animation:fadeIn .5s}
+.result.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.you-hummed{color:#888;font-size:0.9em;margin-bottom:5px}
+.we-heard{font-size:1.4em;font-weight:bold;color:#ffd54f;margin-bottom:10px}
+.confidence{font-size:0.85em;color:#aaa;margin-bottom:10px}
+.confidence-bar{height:8px;background:#222;border-radius:4px;overflow:hidden;margin:8px 0}
+.confidence-fill{height:100%;background:linear-gradient(90deg,#ff5252,#ffd54f);border-radius:4px;transition:width .5s}
+.history{max-width:500px;width:100%;margin-top:20px}
+.history-item{background:#1a1a2e;border-radius:10px;padding:12px 15px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;font-size:0.85em}
+.history-item .song{color:#ffd54f}
+.status-text{color:#888;font-size:0.85em;margin-top:10px;min-height:20px}
+</style>
+</head>
+<body>
+<h1>Hum Detective</h1>
+<p class="subtitle">Hum any song. We'll identify it. (We won't.)</p>
+
+<div class="detective-card">
+  <div class="magnifier" id="icon">🔍</div>
+  <div class="viz" id="viz"></div>
+  <button class="btn btn-listen" id="listenBtn" onclick="toggleListen()">Start Humming</button>
+  <div class="status-text" id="status"></div>
+  <div class="result" id="result">
+    <div class="you-hummed" id="youHummed"></div>
+    <div class="we-heard" id="weHeard"></div>
+    <div class="confidence-bar"><div class="confidence-fill" id="confFill"></div></div>
+    <div class="confidence" id="confText"></div>
+  </div>
+</div>
+<div class="history" id="history"></div>
+
+<script>
+const fakeSongs = [
+  "Bohemian Rhapsody - Queen","Stairway to Heaven - Led Zeppelin","Never Gonna Give You Up - Rick Astley",
+  "Baby Shark - Pinkfong","All Star - Smash Mouth","Africa - Toto","Despacito - Luis Fonsi",
+  "Gangnam Style - PSY","Ice Ice Baby - Vanilla Ice","Wonderwall - Oasis",
+  "Smooth Criminal - Michael Jackson","Sandstorm - Darude","Cotton Eye Joe - Rednex",
+  "Who Let The Dogs Out - Baha Men","Macarena - Los del Rio","YMCA - Village People",
+  "Barbie Girl - Aqua","MMMBop - Hanson","Tubthumping - Chumbawamba",
+  "Mambo No. 5 - Lou Bega","Blue (Da Ba Dee) - Eiffel 65","Kung Fu Fighting - Carl Douglas",
+  "The Final Countdown - Europe","Eye of the Tiger - Survivor","Take On Me - a-ha",
+  "Livin' La Vida Loca - Ricky Martin","Toxic - Britney Spears","Wannabe - Spice Girls",
+  "Single Ladies - Beyonce","Bad Guy - Billie Eilish","Old Town Road - Lil Nas X",
+  "Shape of You - Ed Sheeran","Uptown Funk - Bruno Mars","Happy - Pharrell Williams",
+  "Shake It Off - Taylor Swift","Hotline Bling - Drake","Sorry - Justin Bieber",
+  "In Da Club - 50 Cent","Lose Yourself - Eminem","Mr. Brightside - The Killers",
+  "Seven Nation Army - The White Stripes","Smells Like Teen Spirit - Nirvana",
+  "Sweet Child O' Mine - Guns N' Roses","Hotel California - Eagles",
+  "Don't Stop Believin' - Journey","Billie Jean - Michael Jackson",
+  "Thriller - Michael Jackson","Stayin' Alive - Bee Gees",
+  "Somebody That I Used to Know - Gotye","Call Me Maybe - Carly Rae Jepsen",
+  "Party Rock Anthem - LMFAO","Crazy In Love - Beyonce"
+];
+
+const actualSongs = [
+  "Mary Had a Little Lamb","Happy Birthday","Twinkle Twinkle Little Star",
+  "Row Row Row Your Boat","Jingle Bells","London Bridge Is Falling Down",
+  "Old MacDonald Had a Farm","Baa Baa Black Sheep","Itsy Bitsy Spider",
+  "Humpty Dumpty","Three Blind Mice","Jack and Jill","Ring Around the Rosie",
+  "Hot Cross Buns","Wheels on the Bus"
+];
+
+const analysisMessages = [
+  "Analyzing pitch contour...","Cross-referencing 47 million songs...","Detecting melodic fingerprint...",
+  "Running harmonic analysis...","Consulting the algorithm...","Comparing tonal frequencies...",
+  "Processing chromatic data...","Scanning acoustic signature...","Decoding rhythmic pattern...",
+  "Matching spectral envelope..."
+];
+
+let listening = false, audioCtx, analyser;
+const vizDiv = document.getElementById('viz');
+const bars = [];
+for (let i = 0; i < 40; i++) {
+  const b = document.createElement('div');
+  b.className = 'bar';
+  b.style.height = '3px';
+  vizDiv.appendChild(b);
+  bars.push(b);
+}
+
+let detectTimeout = null;
+
+async function toggleListen() {
+  if (listening) { stopListen(); return; }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+    listening = true;
+    document.getElementById('listenBtn').textContent = 'Stop';
+    document.getElementById('listenBtn').className = 'btn btn-stop';
+    document.getElementById('icon').textContent = '👂';
+    document.getElementById('result').classList.remove('show');
+    document.getElementById('status').textContent = 'Listening... hum a tune!';
+    animate();
+    // Auto-detect after random 3-6 seconds
+    detectTimeout = setTimeout(() => {
+      if (listening) identifySong();
+    }, 3000 + Math.random() * 3000);
+  } catch(e) {
+    document.getElementById('status').textContent = 'Need mic access to detect your humming!';
+  }
+}
+
+function stopListen() {
+  listening = false;
+  if (detectTimeout) clearTimeout(detectTimeout);
+  document.getElementById('listenBtn').textContent = 'Start Humming';
+  document.getElementById('listenBtn').className = 'btn btn-listen';
+  document.getElementById('icon').textContent = '🔍';
+}
+
+function animate() {
+  if (!listening) return;
+  requestAnimationFrame(animate);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const step = Math.floor(data.length / 40);
+  for (let i = 0; i < 40; i++) bars[i].style.height = Math.max(3, data[i*step]/3) + 'px';
+}
+
+async function identifySong() {
+  stopListen();
+  document.getElementById('icon').textContent = '🤔';
+  // Show analysis messages
+  for (let i = 0; i < 3; i++) {
+    document.getElementById('status').textContent = analysisMessages[Math.floor(Math.random()*analysisMessages.length)];
+    await new Promise(r => setTimeout(r, 700));
+  }
+  const actual = actualSongs[Math.floor(Math.random()*actualSongs.length)];
+  const fake = fakeSongs[Math.floor(Math.random()*fakeSongs.length)];
+  const conf = (Math.random()*40+55).toFixed(1);
+  document.getElementById('youHummed').textContent = `You hummed: "${actual}"`;
+  document.getElementById('weHeard').textContent = `We heard: "${fake}"`;
+  document.getElementById('confFill').style.width = conf + '%';
+  document.getElementById('confText').textContent = `${conf}% match confidence (it's not)`;
+  document.getElementById('result').classList.add('show');
+  document.getElementById('status').textContent = '';
+  document.getElementById('icon').textContent = '🎵';
+  // Add to history
+  const hist = document.getElementById('history');
+  const item = document.createElement('div');
+  item.className = 'history-item';
+  item.innerHTML = `<span>${actual}</span><span class="song">${fake}</span>`;
+  hist.prepend(item);
+  if (hist.children.length > 10) hist.lastChild.remove();
+}
+</script>
+</body>
+</html>
