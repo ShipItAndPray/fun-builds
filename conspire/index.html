@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSPIRE - Connect Any Two Things</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Courier Prime', monospace;
+    background: #8B7355;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(0,0,0,0.03) 50px, rgba(0,0,0,0.03) 51px),
+      repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(0,0,0,0.03) 50px, rgba(0,0,0,0.03) 51px);
+    min-height: 100vh;
+    color: #1a1a1a;
+  }
+
+  .corkboard {
+    background: #c4956a;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(210,170,120,0.5) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(180,140,100,0.4) 0%, transparent 40%),
+      url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+    min-height: 100vh;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .corkboard::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 80px rgba(0,0,0,0.4);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Wood frame */
+  .corkboard::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 12px solid #5c3a1e;
+    box-shadow: inset 0 0 0 2px #3d2510, 0 0 0 2px #3d2510;
+    pointer-events: none;
+    z-index: 101;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+    z-index: 10;
+  }
+
+  .title {
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(2rem, 6vw, 4rem);
+    color: #cc0000;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+    letter-spacing: 8px;
+    transform: rotate(-1deg);
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: #555;
+    font-style: italic;
+    transform: rotate(0.5deg);
+  }
+
+  /* Pinned note styling */
+  .note {
+    background: #fffde7;
+    padding: 24px 28px;
+    box-shadow: 3px 3px 12px rgba(0,0,0,0.3);
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    transform: rotate(-0.5deg);
+    z-index: 10;
+  }
+
+  .note::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #cc0000 40%, #990000 50%, transparent 51%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 11;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  .input-wrapper {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  .input-wrapper label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .input-wrapper input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px dashed #bbb;
+    background: rgba(255,255,255,0.7);
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1rem;
+    color: #333;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-wrapper input:focus {
+    border-color: #cc0000;
+  }
+
+  .input-wrapper input::placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .connect-btn {
+    background: #cc0000;
+    color: white;
+    border: none;
+    padding: 12px 36px;
+    font-family: 'Special Elite', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .connect-btn:hover {
+    background: #aa0000;
+    transform: scale(1.02);
+  }
+
+  .connect-btn:active {
+    transform: scale(0.98);
+  }
+
+  .connect-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .connect-btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    border: 2px solid white;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    transform: translateY(-50%);
+  }
+
+  @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+
+  /* String canvas */
+  .string-canvas {
+    position: relative;
+    z-index: 10;
+    margin: 0 auto 30px;
+    max-width: 800px;
+    display: none;
+  }
+
+  .string-canvas canvas {
+    width: 100%;
+    display: block;
+  }
+
+  /* Result area */
+  .result-area {
+    display: none;
+    max-width: 700px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  .conspiracy-card {
+    background: #fffde7;
+    padding: 30px;
+    box-shadow: 4px 4px 15px rgba(0,0,0,0.35);
+    position: relative;
+    margin-bottom: 20px;
+    transform: rotate(0.3deg);
+  }
+
+  .conspiracy-card::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 30px;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #cc0000 40%, #990000 50%, transparent 51%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .conspiracy-card::after {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 40px;
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #cc0000 40%, #990000 50%, transparent 51%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .verdict {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.5rem;
+    color: #cc0000;
+    text-align: center;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-bottom: 2px solid #cc0000;
+    padding-bottom: 10px;
+  }
+
+  .conspiracy-text {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #333;
+    white-space: pre-wrap;
+  }
+
+  .conspiracy-text .highlight {
+    background: rgba(255,255,0,0.4);
+    padding: 1px 3px;
+    font-weight: bold;
+  }
+
+  .conspiracy-text .redacted {
+    background: #333;
+    color: #333;
+    padding: 1px 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+  }
+
+  .conspiracy-text .redacted:hover,
+  .conspiracy-text .redacted.revealed {
+    background: rgba(255,255,0,0.4);
+    color: #333;
+  }
+
+  /* Plausibility meter */
+  .plausibility {
+    background: #f5f0e0;
+    border: 2px solid #999;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+    transform: rotate(-0.7deg);
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+    position: relative;
+  }
+
+  .plausibility::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #228B22 40%, #1a6b1a 50%, transparent 51%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  .plausibility-label {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .plausibility-bar {
+    height: 24px;
+    background: #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    border: 1px solid #999;
+  }
+
+  .plausibility-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 1.5s ease-out;
+    background: linear-gradient(90deg, #228B22, #cc9900, #cc0000);
+    width: 0%;
+  }
+
+  .plausibility-score {
+    font-family: 'Special Elite', cursive;
+    font-size: 1.4rem;
+    color: #cc0000;
+    font-weight: bold;
+  }
+
+  .plausibility-verdict {
+    font-size: 0.8rem;
+    color: #888;
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  /* Evidence stamps */
+  .evidence-stamps {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .stamp {
+    border: 2px solid #cc0000;
+    color: #cc0000;
+    padding: 4px 12px;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transform: rotate(var(--r, -2deg));
+    opacity: 0.8;
+  }
+
+  .stamp:nth-child(2) { --r: 1deg; }
+  .stamp:nth-child(3) { --r: -1deg; }
+  .stamp:nth-child(4) { --r: 3deg; }
+  .stamp:nth-child(5) { --r: -0.5deg; }
+
+  /* Share / actions */
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+
+  .action-btn {
+    background: #333;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .action-btn:hover { background: #555; }
+  .action-btn.share { background: #1da1f2; }
+  .action-btn.share:hover { background: #0d8ed9; }
+  .action-btn.copy { background: #228B22; }
+  .action-btn.copy:hover { background: #1a6b1a; }
+
+  /* Presets */
+  .presets {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
+    color: #777;
+  }
+
+  .presets span {
+    cursor: pointer;
+    text-decoration: underline;
+    margin: 0 6px;
+    transition: color 0.2s;
+  }
+
+  .presets span:hover { color: #cc0000; }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(0,0,0,0.3);
+    padding: 20px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* Scattered pins decoration */
+  .deco-pin {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle, #cc0000 40%, #990000 50%, transparent 51%);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    z-index: 5;
+  }
+
+  /* Scattered newspaper clippings */
+  .clipping {
+    position: absolute;
+    background: #f8f4e8;
+    padding: 8px 12px;
+    font-size: 0.6rem;
+    color: #666;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    z-index: 2;
+    max-width: 140px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    transition: transform 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 600px) {
+    .corkboard { padding: 15px; }
+    .corkboard::after { border-width: 6px; }
+    .note { padding: 18px 20px; }
+    .input-group { flex-direction: column; }
+    .conspiracy-card { padding: 20px; }
+    .clipping { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="corkboard" id="corkboard">
+
+  <!-- Decorative pins -->
+  <div class="deco-pin" style="top:8%;left:5%"></div>
+  <div class="deco-pin" style="top:15%;right:8%"></div>
+  <div class="deco-pin" style="top:60%;left:3%"></div>
+  <div class="deco-pin" style="top:75%;right:5%"></div>
+  <div class="deco-pin" style="top:40%;left:7%"></div>
+
+  <!-- Decorative clippings -->
+  <div class="clipping" style="top:12%;left:2%;transform:rotate(-5deg)">CLASSIFIED DOCUMENT<br>SECTION 7-B REDACTED</div>
+  <div class="clipping" style="top:25%;right:3%;transform:rotate(3deg)">MEMO: DO NOT<br>DISTRIBUTE</div>
+  <div class="clipping" style="top:70%;left:1%;transform:rotate(-8deg)">EYES ONLY<br>LEVEL 5 CLEARANCE</div>
+  <div class="clipping" style="bottom:15%;right:2%;transform:rotate(6deg)">SUBJECT UNAWARE<br>CONTINUE MONITORING</div>
+
+  <div class="header">
+    <div class="title">CONSPIRE</div>
+    <div class="subtitle">Connect any two things. The truth is out there.</div>
+  </div>
+
+  <div class="note">
+    <div class="input-group">
+      <div class="input-wrapper">
+        <label>Subject A</label>
+        <input type="text" id="thing1" placeholder="pigeons" maxlength="40" autocomplete="off">
+      </div>
+      <div class="input-wrapper">
+        <label>Subject B</label>
+        <input type="text" id="thing2" placeholder="WiFi" maxlength="40" autocomplete="off">
+      </div>
+    </div>
+    <div class="presets">
+      Try:
+      <span onclick="setPreset('pigeons','WiFi')">pigeons + WiFi</span>
+      <span onclick="setPreset('IKEA','the Pentagon')">IKEA + Pentagon</span>
+      <span onclick="setPreset('cats','the stock market')">cats + stocks</span>
+      <span onclick="setPreset('toasters','time travel')">toasters + time travel</span>
+      <span onclick="setPreset('dentists','the moon landing')">dentists + moon</span>
+    </div>
+    <div style="text-align:center;margin-top:12px">
+      <button class="connect-btn" id="connectBtn" onclick="generate()">CONNECT</button>
+    </div>
+  </div>
+
+  <div class="string-canvas" id="stringCanvas">
+    <canvas id="redString" height="200"></canvas>
+  </div>
+
+  <div class="result-area" id="resultArea">
+    <div class="evidence-stamps" id="stamps"></div>
+
+    <div class="conspiracy-card">
+      <div class="verdict" id="verdict"></div>
+      <div class="conspiracy-text" id="conspiracyText"></div>
+    </div>
+
+    <div class="plausibility">
+      <div class="plausibility-label">Plausibility Assessment</div>
+      <div class="plausibility-bar">
+        <div class="plausibility-fill" id="plausibilityFill"></div>
+      </div>
+      <div class="plausibility-score" id="plausibilityScore"></div>
+      <div class="plausibility-verdict" id="plausibilityVerdict"></div>
+    </div>
+
+    <div class="actions">
+      <button class="action-btn copy" onclick="copyConspiracy()">COPY TO CLIPBOARD</button>
+      <button class="action-btn share" onclick="shareTwitter()">SHARE ON X</button>
+      <button class="action-btn" onclick="generate()">REGENERATE</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    CONSPIRE v1.0 &mdash; For entertainment purposes only. Or is it?<br>
+    All connections are algorithmically generated and definitely not based on classified intel.
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const templates = [
+  // Opening hooks (pick 1)
+  {type:'open', texts:[
+    `Wake up. {A} ARE {B}. They always have been.`,
+    `You think {A} and {B} are unrelated? That's exactly what they want you to think.`,
+    `I wasn't supposed to find this. {A} and {B} are the same program.`,
+    `The connection between {A} and {B} has been hidden since 1947.`,
+    `They scrubbed {A} from the {B} files. But I have screenshots.`,
+    `Ask yourself: why has no government EVER denied the link between {A} and {B}?`,
+    `Three words: {A}. {B}. Connected.`,
+    `My neighbor worked at a facility that studied {A}. He says {B} was always involved. He disappeared last Tuesday.`,
+    `Look at the etymology. "{A}" rearranged is almost "{B}". Coincidence? There are no coincidences.`,
+    `In 1973, a leaked NSA memo referenced both {A} and {B} in the same paragraph. That paragraph was redacted.`,
+  ]},
+  // Evidence patterns (pick 2-3)
+  {type:'evidence', texts:[
+    `Think about it: {A} appeared everywhere right when {B} started gaining traction. Statistically impossible without coordination.`,
+    `The same company that controls {B} filed 14 patents related to {A} between 2001 and 2006. All now classified.`,
+    `Every major {A} event in history coincides with a {B} anomaly. EVERY. SINGLE. ONE.`,
+    `The original {B} prototype? Found in a warehouse full of {A}. The warehouse "burned down" the next day.`,
+    `Follow the money. {A} generates $4.7 billion annually. Where does it go? Directly into {B} infrastructure.`,
+    `They put {A} in plain sight so you'd stop questioning {B}. Classic misdirection.`,
+    `The frequency at which {A} operates is exactly 0.003 Hz off from {B}'s resonance frequency. "Manufacturing tolerance." Sure.`,
+    `In ancient Sumerian texts, there's a glyph that depicts both {A} and {B} as a single entity. Scholars call it "decorative." Scholars are funded by grants.`,
+    `There are exactly 17 documented cases of {A} appearing at {B}-related sites. 17 is a prime number. Primes are nature's encryption.`,
+    `{B} was invented three years after {A} was first mass-produced. Three years. The same incubation period.`,
+    `Satellite imagery from 2019 shows {A} formations arranged in the exact pattern of {B} distribution networks.`,
+    `The Wikipedia article on {A} was edited 847 times in one month. 90% of edits removed references to {B}. I have the revision history.`,
+    `During the 2011 solar eclipse, both {A} and {B} exhibited identical electromagnetic signatures. NASA deleted the data.`,
+    `A retired intelligence officer told me: "The {A} program was always a delivery system for {B}." He was wearing two watches.`,
+    `{A} contains trace amounts of the same compound found in {B}. Mass spectrometry doesn't lie. Scientists do.`,
+    `Kids used to know about {A} and {B} instinctively. The education system was restructured in 1986 specifically to suppress this knowledge.`,
+    `Every country that banned {A} saw a 340% increase in {B} activity within 18 months. Every. Single. One.`,
+    `The CEO of the world's largest {A} conglomerate sits on the board of three {B}-adjacent organizations. He attends meetings via hologram.`,
+    `If you map {A} locations on a globe and connect them, the lines pass through every major {B} hub. The geometry is non-Euclidean.`,
+    `The original blueprints for {B} had "{A} integration module" as Component #7. It was removed in revision 3. But revision 2 exists in a vault in Geneva.`,
+  ]},
+  // Escalation (pick 1)
+  {type:'escalation', texts:[
+    `And here's what they REALLY don't want you to know: {A} was never natural. {B} was the template.`,
+    `This goes deeper than {A} and {B}. This goes all the way to the top. I mean THE top.`,
+    `I started researching {A} as a hobby. When I found the {B} connection, my hard drive was remotely wiped. I use typewriters now.`,
+    `The real question isn't "are {A} and {B} connected?" It's "what are they building with both?"`,
+    `There's a reason this information isn't in any textbook. {A} and {B} are the loose threads that unravel everything.`,
+    `Last month, a whistleblower posted the {A}-{B} connection on a forum. The post lasted 11 minutes before deletion. I printed it.`,
+    `You'll notice that searching "{A} {B} connection" returns zero results. Not "no relevant results." ZERO. That takes effort.`,
+    `I've been followed twice since I started connecting {A} to {B}. Once by a sedan. Once by what I can only describe as {A} itself.`,
+  ]},
+  // Closer (pick 1)
+  {type:'closer', texts:[
+    `Open your eyes. {A} IS {B}. {B} IS {A}. The loop is closed.`,
+    `Do your own research. But use a VPN. And maybe don't google "{A} {B}" from your home network.`,
+    `They'll call this "satire." They'll call ME "crazy." But when {A} and {B} merge publicly in 2028, remember who told you first.`,
+    `I'm not saying {A} and {B} are a conspiracy. I'm saying the evidence that they AREN'T is the real conspiracy.`,
+    `Share this before they take it down. The {A}-{B} connection cannot be suppressed forever. The truth finds a way.`,
+    `Stay vigilant. Question {A}. Question {B}. Question everything. Especially this.`,
+    `If this post disappears, you'll know why. Save it. Print it. Tattoo it. The {A}-{B} nexus is the key to everything.`,
+    `Wake up. Stay woke. And for the love of all that is holy, do NOT let {A} near your {B}.`,
+  ]},
+];
+
+const verdicts = [
+  `THE {A} - {B} NEXUS`,
+  `{A} = {B} (PROOF INSIDE)`,
+  `THE {A} DECEPTION`,
+  `OPERATION {B}`,
+  `CLASSIFIED: {A} x {B}`,
+  `THE TRUTH ABOUT {A}`,
+  `{B}: WHAT THEY WON'T TELL YOU`,
+  `EXHIBIT A: THE {A} FILES`,
+];
+
+const stampTexts = [
+  'CLASSIFIED','TOP SECRET','EYES ONLY','REDACTED','SUPPRESSED',
+  'DEEP STATE','CONFIRMED','LEVEL 5','RESTRICTED','BURN AFTER READING',
+  'NOT FOR DISTRIBUTION','BLACK PROJECT','NEED TO KNOW','SANITIZED COPY',
+  'COMPARTMENTED','ABOVE TOP SECRET','SPECIAL ACCESS','CONTROLLED DISSEMINATION',
+];
+
+const plausibilityVerdicts = [
+  {min:60, max:72, label:'Suspiciously plausible', emoji:''},
+  {min:72, max:78, label:'Disturbingly credible', emoji:''},
+  {min:78, max:84, label:'They\'re definitely hiding something', emoji:''},
+  {min:84, max:89, label:'Too connected to be coincidence', emoji:''},
+  {min:89, max:94, label:'This explains everything', emoji:''},
+  {min:94, max:99, label:'You weren\'t supposed to find this', emoji:''},
+];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function pickN(arr, n) {
+  const copy = [...arr];
+  const result = [];
+  for (let i = 0; i < Math.min(n, copy.length); i++) {
+    const idx = Math.floor(Math.random() * copy.length);
+    result.push(copy.splice(idx, 1)[0]);
+  }
+  return result;
+}
+
+function fill(template, a, b) {
+  return template.replace(/\{A\}/g, a).replace(/\{B\}/g, b);
+}
+
+function setPreset(a, b) {
+  document.getElementById('thing1').value = a;
+  document.getElementById('thing2').value = b;
+  generate();
+}
+
+let lastConspiracy = '';
+
+function generate() {
+  const a = document.getElementById('thing1').value.trim() || 'pigeons';
+  const b = document.getElementById('thing2').value.trim() || 'WiFi';
+
+  const btn = document.getElementById('connectBtn');
+  btn.classList.add('loading');
+  btn.textContent = 'CONNECTING...';
+
+  setTimeout(() => {
+    // Build conspiracy
+    const open = fill(pick(templates.find(t=>t.type==='open').texts), a, b);
+    const evidences = pickN(templates.find(t=>t.type==='evidence').texts, 3).map(t => fill(t, a, b));
+    const escalation = fill(pick(templates.find(t=>t.type==='escalation').texts), a, b);
+    const closer = fill(pick(templates.find(t=>t.type==='closer').texts), a, b);
+
+    const parts = [open, ...evidences, escalation, closer];
+    const fullText = parts.join('\n\n');
+
+    // Highlight the subject names
+    const highlighted = fullText
+      .replace(new RegExp(escapeRegex(a), 'g'), `<span class="highlight">${a}</span>`)
+      .replace(new RegExp(escapeRegex(b), 'g'), `<span class="highlight">${b}</span>`);
+
+    // Add a couple redacted words
+    const withRedacted = addRedactions(highlighted);
+
+    // Verdict
+    const verdict = fill(pick(verdicts), a.toUpperCase(), b.toUpperCase());
+    document.getElementById('verdict').textContent = verdict;
+    document.getElementById('conspiracyText').innerHTML = withRedacted;
+
+    // Stamps
+    const stamps = pickN(stampTexts, 4 + Math.floor(Math.random() * 3));
+    document.getElementById('stamps').innerHTML = stamps.map(s => `<span class="stamp">${s}</span>`).join('');
+
+    // Plausibility (always suspicious: 60-98%)
+    const pv = pick(plausibilityVerdicts);
+    const score = pv.min + Math.random() * (pv.max - pv.min);
+    const scoreStr = score.toFixed(1) + '%';
+    document.getElementById('plausibilityScore').textContent = scoreStr;
+    document.getElementById('plausibilityVerdict').textContent = `"${pv.label}"`;
+    const fillEl = document.getElementById('plausibilityFill');
+    fillEl.style.width = '0%';
+    setTimeout(() => { fillEl.style.width = score + '%'; }, 50);
+
+    // Draw red strings
+    drawStrings(a, b);
+
+    // Show results
+    document.getElementById('stringCanvas').style.display = 'block';
+    document.getElementById('resultArea').style.display = 'block';
+
+    // Scroll to results
+    document.getElementById('stringCanvas').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Store for sharing
+    lastConspiracy = `${verdict}\n\n${fullText}\n\nPlausibility: ${scoreStr} - "${pv.label}"`;
+
+    btn.classList.remove('loading');
+    btn.textContent = 'RECONNECT';
+
+    // Add redacted click handlers
+    document.querySelectorAll('.redacted').forEach(el => {
+      el.addEventListener('click', () => el.classList.toggle('revealed'));
+    });
+  }, 800 + Math.random() * 600);
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function addRedactions(html) {
+  const redactWords = ['government', 'documents', 'facility', 'officials', 'experiment', 'records', 'intelligence', 'operation', 'laboratory', 'funding'];
+  let result = html;
+  const used = new Set();
+  for (let i = 0; i < 2; i++) {
+    const word = pick(redactWords.filter(w => !used.has(w)));
+    if (word) {
+      used.add(word);
+      // Only redact first occurrence not inside a tag
+      const regex = new RegExp(`(?<![<\\w])${word}(?![\\w>])`, 'i');
+      result = result.replace(regex, `<span class="redacted">${word}</span>`);
+    }
+  }
+  return result;
+}
+
+function drawStrings(a, b) {
+  const container = document.getElementById('stringCanvas');
+  const canvas = document.getElementById('redString');
+  const dpr = window.devicePixelRatio || 1;
+  const w = container.offsetWidth;
+  const h = 200;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  // Pin positions
+  const pinA = { x: 60, y: 40 };
+  const pinB = { x: w - 60, y: 40 };
+
+  // Intermediate "evidence" points
+  const midPoints = [];
+  const numMid = 3 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < numMid; i++) {
+    midPoints.push({
+      x: 80 + Math.random() * (w - 160),
+      y: 60 + Math.random() * 100,
+    });
+  }
+  // Sort by x for a nicer path
+  midPoints.sort((a, b) => a.x - b.x);
+
+  const allPoints = [pinA, ...midPoints, pinB];
+
+  // Draw strings
+  ctx.strokeStyle = '#cc0000';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([]);
+
+  for (let i = 0; i < allPoints.length - 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(allPoints[i].x, allPoints[i].y);
+    // Slight curve
+    const cpx = (allPoints[i].x + allPoints[i+1].x) / 2;
+    const cpy = (allPoints[i].y + allPoints[i+1].y) / 2 + (Math.random() * 20 - 10);
+    ctx.quadraticCurveTo(cpx, cpy, allPoints[i+1].x, allPoints[i+1].y);
+    ctx.stroke();
+  }
+
+  // Draw some cross-connections for chaos
+  for (let i = 0; i < 2; i++) {
+    const from = pick(midPoints);
+    const to = pick(midPoints);
+    if (from !== to) {
+      ctx.globalAlpha = 0.3;
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Draw pins
+  allPoints.forEach(p => {
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#cc0000';
+    ctx.fill();
+    ctx.strokeStyle = '#990000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Pin highlight
+    ctx.beginPath();
+    ctx.arc(p.x - 1.5, p.y - 1.5, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fill();
+  });
+
+  // Labels
+  ctx.font = '14px "Special Elite", cursive';
+  ctx.fillStyle = '#333';
+  ctx.textAlign = 'center';
+  ctx.fillText(a.toUpperCase(), pinA.x, pinA.y - 15);
+  ctx.fillText(b.toUpperCase(), pinB.x, pinB.y - 15);
+
+  // Label some mid-points
+  const midLabels = ['???','LINK','PROOF','COVER-UP','WHY?','FOLLOW $','MISSING','REDACTED'];
+  midPoints.forEach((p, i) => {
+    if (Math.random() > 0.3) {
+      ctx.font = '10px "Courier Prime", monospace';
+      ctx.fillStyle = '#666';
+      ctx.fillText(pick(midLabels), p.x, p.y + 18);
+    }
+  });
+}
+
+function copyConspiracy() {
+  navigator.clipboard.writeText(lastConspiracy).then(() => {
+    showToast('Copied to clipboard. Distribute carefully.');
+  }).catch(() => {
+    showToast('Copy failed. They may be blocking your clipboard.');
+  });
+}
+
+function shareTwitter() {
+  const a = document.getElementById('thing1').value.trim() || 'pigeons';
+  const b = document.getElementById('thing2').value.trim() || 'WiFi';
+  const text = `I just discovered the connection between ${a} and ${b}. The truth cannot be suppressed.\n\nGenerate your own conspiracy:`;
+  const url = window.location.href;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Enter key to generate
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (document.activeElement === document.getElementById('thing1') || document.activeElement === document.getElementById('thing2'))) {
+    generate();
+  }
+});
+
+// Resize canvas on window resize
+window.addEventListener('resize', () => {
+  if (document.getElementById('stringCanvas').style.display !== 'none') {
+    const a = document.getElementById('thing1').value.trim() || 'pigeons';
+    const b = document.getElementById('thing2').value.trim() || 'WiFi';
+    drawStrings(a, b);
+  }
+});
+</script>
+</body>
+</html>

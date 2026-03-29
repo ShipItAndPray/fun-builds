@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fake Fluency - Vocabulary Grader</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --parchment: #faf6ed;
+    --ink: #1a1612;
+    --red-ink: #8b1a1a;
+    --blue-ink: #1a3a6b;
+    --gold: #b8860b;
+    --pencil: #666;
+    --grade-bg: #fff8f0;
+  }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, serif;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  header {
+    text-align: center;
+    border-bottom: 3px double var(--ink);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .seal {
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--red-ink);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--red-ink);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: var(--pencil);
+    font-size: 1.05rem;
+  }
+
+  .input-section {
+    margin-bottom: 2rem;
+  }
+
+  .input-section label {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 1rem;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.7;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--blue-ink);
+  }
+
+  textarea::placeholder {
+    color: #aaa;
+    font-style: italic;
+  }
+
+  .word-count-live {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--pencil);
+    margin-top: 0.3rem;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 0.9rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    background: var(--ink);
+    color: var(--parchment);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+  }
+
+  .btn:hover { background: #2a2520; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { background: #999; cursor: not-allowed; }
+
+  /* Results */
+  .results {
+    display: none;
+    margin-top: 2rem;
+    animation: fadeUp 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .report-header {
+    text-align: center;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .report-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .report-header .stamp {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 0.3rem 1.2rem;
+    border: 3px solid var(--red-ink);
+    color: var(--red-ink);
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 1.8rem;
+    transform: rotate(-3deg);
+    letter-spacing: 0.05em;
+  }
+
+  .verdict {
+    background: var(--grade-bg);
+    border-left: 4px solid var(--red-ink);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-card .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--blue-ink);
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pencil);
+    margin-top: 0.2rem;
+  }
+
+  .detail-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .filler-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .filler-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px dotted #ddd;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+  }
+
+  .filler-list li .word { color: var(--red-ink); font-weight: 600; }
+  .filler-list li .count { color: var(--pencil); }
+
+  .overused-word {
+    text-align: center;
+    padding: 1rem;
+    background: #fff;
+    border: 2px dashed var(--red-ink);
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+  }
+
+  .overused-word .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pencil);
+  }
+
+  .overused-word .the-word {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--red-ink);
+    margin: 0.3rem 0;
+  }
+
+  .overused-word .usage {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--pencil);
+  }
+
+  .vocab-bar {
+    margin-bottom: 1.5rem;
+  }
+
+  .vocab-bar .bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .vocab-bar .bar-track {
+    height: 24px;
+    background: #e8e0d4;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .vocab-bar .bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 1s ease;
+    position: relative;
+  }
+
+  .vocab-bar .bar-markers {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--pencil);
+    margin-top: 0.2rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .share-section {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 2px solid var(--ink);
+  }
+
+  .share-btn {
+    display: inline-block;
+    padding: 0.7rem 2rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    background: var(--blue-ink);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .share-btn:hover { background: #254d8a; }
+
+  .share-toast {
+    display: none;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .reading-level-badge {
+    display: inline-block;
+    padding: 0.15rem 0.7rem;
+    background: var(--blue-ink);
+    color: #fff;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .repetition-heat {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+  }
+
+  .heat-word {
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: #fff;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 1.2rem 1rem 3rem; }
+    h1 { font-size: 1.8rem; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .stat-card .stat-value { font-size: 1.4rem; }
+    textarea { min-height: 160px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="seal">Dept. of<br>Linguistic<br>Honesty</div>
+    <h1>Fake Fluency</h1>
+    <p class="subtitle">An Honest Assessment of Your Vocabulary</p>
+  </header>
+
+  <div class="input-section">
+    <label for="text-input">Submit Your Writing for Evaluation</label>
+    <textarea id="text-input" placeholder="Paste any text you've written. An email, an essay, a LinkedIn post, a cover letter -- anything. We will be honest. You may not enjoy it."></textarea>
+    <div class="word-count-live" id="live-count">0 words</div>
+  </div>
+
+  <button class="btn" id="grade-btn" onclick="gradeText()">Grade My Vocabulary</button>
+
+  <div class="results" id="results">
+    <div class="report-header">
+      <h2>Official Assessment</h2>
+      <div class="stamp" id="letter-grade">--</div>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="unique-words">0</div>
+        <div class="stat-label">Unique Words</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="total-words">0</div>
+        <div class="stat-label">Total Words</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="avg-length">0</div>
+        <div class="stat-label">Avg Word Length</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="vocab-density">0%</div>
+        <div class="stat-label">Vocab Density</div>
+      </div>
+    </div>
+
+    <div class="vocab-bar">
+      <div class="bar-label">
+        <span>Vocabulary Score</span>
+        <span id="vocab-score-num">0/100</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="vocab-bar-fill" style="width:0%; background: #ccc;"></div>
+      </div>
+      <div class="bar-markers">
+        <span>Caveman</span>
+        <span>Tourist</span>
+        <span>Intern</span>
+        <span>Human</span>
+        <span>Scholar</span>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Reading Level</h3>
+      <p id="reading-level-text"></p>
+    </div>
+
+    <div class="overused-word" id="overused-section">
+      <div class="label">Most Overused Word</div>
+      <div class="the-word" id="overused-word">--</div>
+      <div class="usage" id="overused-count">used 0 times</div>
+    </div>
+
+    <div class="detail-section" id="filler-section">
+      <h3>Filler Words Detected</h3>
+      <ul class="filler-list" id="filler-list"></ul>
+    </div>
+
+    <div class="detail-section" id="repetition-section">
+      <h3>Repetition Heatmap</h3>
+      <p style="font-size:0.85rem;color:var(--pencil);margin-bottom:0.5rem;">Words repeated 3+ times (darker = more repeated)</p>
+      <div class="repetition-heat" id="repetition-heat"></div>
+    </div>
+
+    <div class="share-section">
+      <button class="share-btn" onclick="shareResult()">Copy Report to Clipboard</button>
+      <div class="share-toast" id="share-toast">Copied. Now everyone can see.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FILLERS = [
+  'basically','literally','actually','honestly','obviously','clearly',
+  'really','very','just','like','totally','absolutely','definitely',
+  'essentially','simply','kind of','sort of','you know','i mean',
+  'stuff','things','whatever','anyways','anyhow','pretty much',
+  'at the end of the day','needless to say','it goes without saying',
+  'in terms of','moving forward','leverage','synergy','utilize',
+  'irregardless','supposably','could of','would of','should of'
+];
+
+const STOP_WORDS = new Set([
+  'the','a','an','is','are','was','were','be','been','being','have','has','had',
+  'do','does','did','will','would','could','should','may','might','shall','can',
+  'to','of','in','for','on','with','at','by','from','as','into','through',
+  'during','before','after','above','below','between','under','again','further',
+  'then','once','here','there','when','where','why','how','all','each','every',
+  'both','few','more','most','other','some','such','no','not','only','own',
+  'same','so','than','too','very','and','but','or','nor','if','while','that',
+  'this','these','those','i','me','my','we','our','you','your','he','him','his',
+  'she','her','it','its','they','them','their','what','which','who','whom',
+  'am','about','up','out','also','just','over','still','back','well'
+]);
+
+const ROASTS = {
+  terrible: [
+    (u) => `Your vocabulary consists of ${u} unique words. A golden retriever knows 165.`,
+    (u) => `${u} unique words. Siri's error messages have more range.`,
+    (u) => `With ${u} words at your disposal, you've essentially built a linguistic prison cell.`,
+    (u) => `You used ${u} distinct words. An IKEA manual uses more.`,
+    (u) => `${u} unique words. This is what happens when autocomplete does the heavy lifting.`,
+    (u) => `If vocabulary were currency, you'd be panhandling with ${u} coins.`,
+    (u) => `${u} words. A parrot with a head injury has more variety.`,
+    (u) => `Your ${u}-word vocabulary suggests you peaked in the 3rd grade and decided it was enough.`,
+  ],
+  poor: [
+    (u) => `${u} unique words. You're hovering just above "conversational caveman."`,
+    (u) => `With ${u} words, you write like someone narrating their grocery trip -- forever.`,
+    (u) => `${u} unique words. Technically language, but only technically.`,
+    (u) => `You deployed ${u} distinct words, most of which were doing nothing.`,
+    (u) => `${u} words. You're the verbal equivalent of a 3-chord punk band. Except they were charming.`,
+    (u) => `Your ${u}-word range is what linguists call "aggressively adequate."`,
+  ],
+  mediocre: [
+    (u) => `${u} unique words. Solidly average. The Honda Civic of vocabularies.`,
+    (u) => `You used ${u} distinct words. Not embarrassing. Not impressive. Perfectly forgettable.`,
+    (u) => `${u} words. You write like someone who reads the first chapter of books and quits.`,
+    (u) => `With ${u} unique words, you've achieved the literary equivalent of room temperature.`,
+    (u) => `${u} words. A competent email writer. Your English teacher would give you a polite nod.`,
+    (u) => `Your ${u}-word vocabulary is the "meets expectations" of language.`,
+  ],
+  decent: [
+    (u) => `${u} unique words. You read occasionally and it shows. Barely.`,
+    (u) => `With ${u} distinct words, you're in "surprisingly literate" territory.`,
+    (u) => `${u} words. Someone owns a bookshelf that isn't purely decorative.`,
+    (u) => `${u} unique words. Respectable. Like a well-organized junk drawer.`,
+    (u) => `Your ${u}-word vocabulary suggests you've read at least one book that wasn't assigned.`,
+    (u) => `${u} words. Not bad. Your vocabulary has... character. Some of it, anyway.`,
+  ],
+  good: [
+    (u) => `${u} unique words. Either you read voraciously or you own a very good thesaurus.`,
+    (u) => `With ${u} distinct words, you're in the top tier. Don't let it go to your head.`,
+    (u) => `${u} words. Genuinely impressive. Your vocabulary could bully most LinkedIn posts.`,
+    (u) => `${u} unique words. You might actually be literate. We're as surprised as you are.`,
+    (u) => `Your ${u}-word vocabulary suggests a dangerous amount of reading. Keep going.`,
+    (u) => `${u} words. This is what happens when someone pays attention in school AND keeps reading after.`,
+  ],
+  exceptional: [
+    (u) => `${u} unique words. Either you're a writer or you're showing off. Both are acceptable.`,
+    (u) => `With ${u} distinct words, your vocabulary is genuinely formidable. We have no insults for you. Almost.`,
+    (u) => `${u} words. You're the person everyone secretly asks to proofread their emails.`,
+    (u) => `${u} unique words. Frankly alarming range. Were you raised by dictionaries?`,
+    (u) => `Your ${u}-word vocabulary is in "tenured professor who still cares" territory.`,
+  ]
+};
+
+const READING_LEVELS = [
+  { max: 1, label: '1st Grade', comment: 'See Spot. See Spot run. See your career prospects run too.' },
+  { max: 2, label: '2nd Grade', comment: 'You can form sentences. Mostly short ones. Like this.' },
+  { max: 3, label: '3rd Grade', comment: 'Your writing has the complexity of a cereal box. The back of a cereal box.' },
+  { max: 4, label: '4th Grade', comment: '4th Grade With Ambition. You use periods AND commas.' },
+  { max: 5, label: '5th Grade', comment: 'The sweet spot for clickbait. Congratulations?' },
+  { max: 6, label: '6th Grade', comment: 'Middle school reading level. At least you can vote.' },
+  { max: 7, label: '7th Grade', comment: 'Average American adult level. You are average. Let that sink in.' },
+  { max: 8, label: '8th Grade', comment: 'Newspaper level. You could write for USA Today. That is not a compliment.' },
+  { max: 10, label: '9th-10th Grade', comment: 'High school level. Your sentences have structure. Some of them.' },
+  { max: 12, label: '11th-12th Grade', comment: 'You write like someone who finished high school and remembers it fondly.' },
+  { max: 14, label: 'College Level', comment: 'Educated. Your sentences have subordinate clauses and everything.' },
+  { max: 20, label: 'Graduate Level', comment: 'Either genuinely sophisticated or deliberately obscure. Hard to tell.' },
+  { max: 99, label: 'Post-Graduate', comment: 'Your writing is so dense it has its own gravitational field. Not a compliment.' },
+];
+
+const FILLER_ROASTS = [
+  (w, n) => `You said "${w}" ${n} times. We get it. You ${w} can't stop.`,
+  (w, n) => `"${w}" appeared ${n} times. It's a crutch, not a word.`,
+  (w, n) => `${n}x "${w}". Every instance screams "I had nothing real to say here."`,
+];
+
+function tokenize(text) {
+  return text.toLowerCase().replace(/[^a-z'\s-]/g, ' ').split(/\s+/).filter(w => w.length > 0);
+}
+
+function syllableCount(word) {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (word.length <= 2) return 1;
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+  word = word.replace(/^y/, '');
+  const m = word.match(/[aeiouy]{1,2}/g);
+  return m ? Math.max(m.length, 1) : 1;
+}
+
+function fleschKincaid(words, sentences) {
+  if (words.length === 0 || sentences === 0) return 1;
+  const totalSyllables = words.reduce((s, w) => s + syllableCount(w), 0);
+  const grade = 0.39 * (words.length / sentences) + 11.8 * (totalSyllables / words.length) - 15.59;
+  return Math.max(1, Math.min(20, Math.round(grade * 10) / 10));
+}
+
+function countSentences(text) {
+  const matches = text.match(/[.!?]+/g);
+  return matches ? Math.max(matches.length, 1) : 1;
+}
+
+function findFillers(words) {
+  const text = words.join(' ');
+  const found = {};
+  for (const filler of FILLERS) {
+    const regex = new RegExp('\\b' + filler.replace(/ /g, '\\s+') + '\\b', 'gi');
+    const matches = text.match(regex);
+    if (matches) found[filler] = matches.length;
+  }
+  return found;
+}
+
+function getContentWords(words) {
+  return words.filter(w => !STOP_WORDS.has(w) && w.length > 2);
+}
+
+function computeScore(uniqueCount, totalCount, avgLen, gradeLevel, fillerRatio, repetitionPenalty) {
+  const density = totalCount > 0 ? uniqueCount / totalCount : 0;
+  let score = 0;
+
+  // Unique word count (up to 30 points)
+  if (uniqueCount < 20) score += uniqueCount * 0.5;
+  else if (uniqueCount < 50) score += 10 + (uniqueCount - 20) * 0.33;
+  else if (uniqueCount < 100) score += 20 + (uniqueCount - 50) * 0.12;
+  else if (uniqueCount < 200) score += 26 + (uniqueCount - 100) * 0.03;
+  else score += Math.min(30, 29 + Math.log2(uniqueCount - 199) * 0.2);
+
+  // Density (up to 25 points) - higher density = more varied
+  score += Math.min(25, density * 50);
+
+  // Average word length (up to 15 points)
+  if (avgLen >= 4 && avgLen <= 7) score += 10 + (avgLen - 4) * 1.67;
+  else if (avgLen < 4) score += avgLen * 2.5;
+  else score += Math.max(8, 15 - (avgLen - 7) * 2);
+
+  // Reading level (up to 20 points)
+  score += Math.min(20, gradeLevel * 1.5);
+
+  // Filler penalty (up to -15)
+  score -= Math.min(15, fillerRatio * 100);
+
+  // Repetition penalty
+  score -= repetitionPenalty;
+
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function getTier(score) {
+  if (score < 20) return 'terrible';
+  if (score < 35) return 'poor';
+  if (score < 50) return 'mediocre';
+  if (score < 65) return 'decent';
+  if (score < 80) return 'good';
+  return 'exceptional';
+}
+
+function getLetterGrade(score) {
+  if (score >= 90) return 'A+';
+  if (score >= 85) return 'A';
+  if (score >= 80) return 'A-';
+  if (score >= 75) return 'B+';
+  if (score >= 70) return 'B';
+  if (score >= 65) return 'B-';
+  if (score >= 60) return 'C+';
+  if (score >= 55) return 'C';
+  if (score >= 50) return 'C-';
+  if (score >= 45) return 'D+';
+  if (score >= 40) return 'D';
+  if (score >= 30) return 'D-';
+  return 'F';
+}
+
+function getBarColor(score) {
+  if (score < 25) return '#8b1a1a';
+  if (score < 45) return '#b85c00';
+  if (score < 60) return '#b8860b';
+  if (score < 75) return '#2d6a2d';
+  return '#1a3a6b';
+}
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// Live word count
+document.getElementById('text-input').addEventListener('input', function() {
+  const words = this.value.trim().split(/\s+/).filter(w => w.length > 0);
+  document.getElementById('live-count').textContent = words.length + ' word' + (words.length !== 1 ? 's' : '');
+});
+
+let lastResult = null;
+
+function gradeText() {
+  const raw = document.getElementById('text-input').value.trim();
+  if (!raw || raw.split(/\s+/).length < 10) {
+    alert('Please paste at least 10 words. Even a tweet would do.');
+    return;
+  }
+
+  const words = tokenize(raw);
+  const totalCount = words.length;
+  const uniqueSet = new Set(words);
+  const uniqueCount = uniqueSet.size;
+  const avgLen = Math.round((words.reduce((s, w) => s + w.length, 0) / totalCount) * 10) / 10;
+  const sentences = countSentences(raw);
+  const gradeLevel = fleschKincaid(words, sentences);
+  const density = Math.round((uniqueCount / totalCount) * 1000) / 10;
+
+  // Filler analysis
+  const fillers = findFillers(words);
+  const totalFillers = Object.values(fillers).reduce((s, n) => s + n, 0);
+  const fillerRatio = totalFillers / totalCount;
+
+  // Content word frequency for repetition
+  const contentWords = getContentWords(words);
+  const freq = {};
+  contentWords.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+  const repeated = Object.entries(freq).filter(([_, c]) => c >= 3).sort((a, b) => b[1] - a[1]);
+  const repetitionPenalty = Math.min(10, repeated.length * 1.5);
+
+  // Most overused content word
+  const sortedContent = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+  const overused = sortedContent.length > 0 ? sortedContent[0] : ['--', 0];
+
+  // Score
+  const score = computeScore(uniqueCount, totalCount, avgLen, gradeLevel, fillerRatio, repetitionPenalty);
+  const tier = getTier(score);
+  const letter = getLetterGrade(score);
+
+  // Reading level
+  const rl = READING_LEVELS.find(r => gradeLevel <= r.max) || READING_LEVELS[READING_LEVELS.length - 1];
+
+  // Render
+  document.getElementById('letter-grade').textContent = letter;
+  document.getElementById('verdict').textContent = pick(ROASTS[tier])(uniqueCount);
+
+  document.getElementById('unique-words').textContent = uniqueCount;
+  document.getElementById('total-words').textContent = totalCount;
+  document.getElementById('avg-length').textContent = avgLen;
+  document.getElementById('vocab-density').textContent = density + '%';
+
+  document.getElementById('vocab-score-num').textContent = score + '/100';
+  const barFill = document.getElementById('vocab-bar-fill');
+  barFill.style.width = '0%';
+  barFill.style.background = getBarColor(score);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { barFill.style.width = score + '%'; });
+  });
+
+  document.getElementById('reading-level-text').innerHTML =
+    '<span class="reading-level-badge">' + rl.label + '</span> ' + rl.comment;
+
+  // Overused word
+  document.getElementById('overused-word').textContent = overused[0];
+  document.getElementById('overused-count').textContent = 'used ' + overused[1] + ' time' + (overused[1] !== 1 ? 's' : '');
+
+  // Fillers
+  const fillerList = document.getElementById('filler-list');
+  const fillerSection = document.getElementById('filler-section');
+  const fillerEntries = Object.entries(fillers).sort((a, b) => b[1] - a[1]);
+  if (fillerEntries.length === 0) {
+    fillerSection.style.display = 'none';
+  } else {
+    fillerSection.style.display = 'block';
+    fillerList.innerHTML = fillerEntries.map(([w, c]) =>
+      `<li><span class="word">"${w}"</span><span class="count">${c}x</span></li>`
+    ).join('');
+  }
+
+  // Repetition heat
+  const heatDiv = document.getElementById('repetition-heat');
+  const repSection = document.getElementById('repetition-section');
+  if (repeated.length === 0) {
+    repSection.style.display = 'none';
+  } else {
+    repSection.style.display = 'block';
+    const maxRep = repeated[0][1];
+    heatDiv.innerHTML = repeated.slice(0, 20).map(([w, c]) => {
+      const intensity = Math.min(1, c / maxRep);
+      const r = Math.round(139 * intensity + 80 * (1 - intensity));
+      const g = Math.round(26 * intensity + 80 * (1 - intensity));
+      const b = Math.round(26 * intensity + 120 * (1 - intensity));
+      return `<span class="heat-word" style="background:rgb(${r},${g},${b})">${w} (${c})</span>`;
+    }).join('');
+  }
+
+  lastResult = { score, letter, uniqueCount, totalCount, avgLen, density, rl, tier, overused, fillerEntries };
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function shareResult() {
+  if (!lastResult) return;
+  const r = lastResult;
+  const verdict = document.getElementById('verdict').textContent;
+  const text = [
+    `FAKE FLUENCY -- Vocabulary Report Card`,
+    ``,
+    `Grade: ${r.letter} (${r.score}/100)`,
+    `"${verdict}"`,
+    ``,
+    `Unique words: ${r.uniqueCount}`,
+    `Total words: ${r.totalCount}`,
+    `Avg word length: ${r.avgLen}`,
+    `Vocab density: ${r.density}%`,
+    `Reading level: ${r.rl.label}`,
+    `Most overused: "${r.overused[0]}" (${r.overused[1]}x)`,
+    r.fillerEntries.length > 0 ? `Filler words: ${r.fillerEntries.map(([w,c]) => `${w}(${c}x)`).join(', ')}` : '',
+    ``,
+    `fakefluency.app`
+  ].filter(Boolean).join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('share-toast');
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 3000);
+  });
+}
+</script>
+</body>
+</html>

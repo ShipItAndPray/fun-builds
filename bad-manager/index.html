@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bad Manager Translator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: #d4d4d4;
+    color: #333;
+    min-height: 100vh;
+  }
+
+  .cubicle-bg {
+    background: linear-gradient(135deg, #c8c8c8 0%, #d8d8d8 25%, #c0c0c0 50%, #d0d0d0 75%, #c4c4c4 100%);
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  .cubicle-wall {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #e8e4df;
+    border: 3px solid #999;
+    border-radius: 2px;
+    box-shadow: 4px 4px 0 #888, inset 0 0 30px rgba(0,0,0,0.05);
+    padding: 0;
+  }
+
+  .header {
+    background: linear-gradient(to right, #5a5a6e, #44445a);
+    padding: 24px 28px;
+    border-bottom: 3px solid #888;
+  }
+
+  .header h1 {
+    color: #f0e8d8;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .header p {
+    color: #b8b0a0;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .content {
+    padding: 24px 28px;
+  }
+
+  .manager-types {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .manager-btn {
+    padding: 12px 14px;
+    border: 2px solid #999;
+    border-radius: 3px;
+    background: #f0ece6;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    text-align: left;
+  }
+
+  .manager-btn:hover { background: #e0dcd6; border-color: #777; }
+  .manager-btn.active { background: #44445a; color: #f0e8d8; border-color: #44445a; }
+
+  .manager-btn .emoji { font-size: 1.1rem; margin-right: 6px; }
+  .manager-btn .label { display: block; font-size: 0.7rem; font-weight: 400; margin-top: 2px; opacity: 0.7; }
+
+  .input-area {
+    margin-bottom: 20px;
+  }
+
+  .input-area label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .input-area textarea {
+    width: 100%;
+    padding: 14px;
+    border: 2px solid #bbb;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s;
+  }
+
+  .input-area textarea:focus { outline: none; border-color: #44445a; }
+
+  .translate-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(to right, #5a5a6e, #44445a);
+    color: #f0e8d8;
+    border: none;
+    border-radius: 3px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: opacity 0.15s;
+    margin-bottom: 20px;
+  }
+
+  .translate-btn:hover { opacity: 0.9; }
+  .translate-btn:active { opacity: 0.8; }
+
+  .toxicity-meter {
+    margin-bottom: 20px;
+    padding: 14px;
+    background: #f5f1eb;
+    border: 2px solid #ccc;
+    border-radius: 3px;
+  }
+
+  .toxicity-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .toxicity-label span { color: #c0392b; font-weight: 700; font-size: 0.85rem; }
+
+  .toxicity-bar {
+    height: 14px;
+    background: #ddd;
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .toxicity-fill {
+    height: 100%;
+    border-radius: 7px;
+    transition: width 0.6s ease, background 0.6s ease;
+    width: 0%;
+  }
+
+  .toxicity-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: #999;
+    margin-top: 4px;
+  }
+
+  .output-area {
+    margin-bottom: 20px;
+  }
+
+  .output-area label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .output-box {
+    width: 100%;
+    padding: 16px;
+    background: #fffcf5;
+    border: 2px solid #d4a;
+    border-radius: 3px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    min-height: 100px;
+    color: #444;
+    position: relative;
+  }
+
+  .output-box.empty {
+    color: #aaa;
+    font-style: italic;
+    border-color: #ccc;
+  }
+
+  .manager-tag {
+    display: inline-block;
+    background: #44445a;
+    color: #f0e8d8;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #bbb;
+    border-radius: 3px;
+    background: #f0ece6;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .action-btn:hover { background: #e0dcd6; border-color: #999; }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .sticky-note {
+    background: #fff9b0;
+    padding: 14px;
+    border-radius: 2px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #665;
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    transform: rotate(-0.5deg);
+    margin-top: 16px;
+  }
+
+  .sticky-note strong { color: #553; }
+
+  .examples {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px dashed #ccc;
+  }
+
+  .examples h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #888;
+    margin-bottom: 10px;
+  }
+
+  .example-chip {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #f0ece6;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    margin: 0 6px 6px 0;
+    transition: all 0.15s;
+  }
+
+  .example-chip:hover { background: #e0dcd6; border-color: #999; }
+
+  @media (max-width: 600px) {
+    .cubicle-bg { padding: 10px; }
+    .content { padding: 16px; }
+    .header { padding: 18px 16px; }
+    .header h1 { font-size: 1.3rem; }
+    .manager-types { grid-template-columns: 1fr; }
+    .action-btns { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="cubicle-bg">
+<div class="cubicle-wall">
+  <div class="header">
+    <h1>Bad Manager Translator</h1>
+    <p>"Per my last email..." -- Your Manager, probably</p>
+  </div>
+
+  <div class="content">
+    <div class="manager-types" id="managerTypes">
+      <button class="manager-btn active" data-type="passive">
+        <span class="emoji">😒</span> Passive-Aggressive
+        <span class="label">Says "fine" but means war</span>
+      </button>
+      <button class="manager-btn" data-type="micro">
+        <span class="emoji">🔬</span> Micromanager
+        <span class="label">Needs to approve your font choice</span>
+      </button>
+      <button class="manager-btn" data-type="credit">
+        <span class="emoji">🦅</span> Credit-Stealer
+        <span class="label">"We" did great (I did great)</span>
+      </button>
+      <button class="manager-btn" data-type="buzzword">
+        <span class="emoji">🤖</span> Buzzword Bot
+        <span class="label">Synergizes the paradigm shifts</span>
+      </button>
+    </div>
+
+    <div class="input-area">
+      <label>Normal Human Feedback</label>
+      <textarea id="inputText" placeholder="Type something a normal, well-adjusted person might say..."></textarea>
+    </div>
+
+    <button class="translate-btn" id="translateBtn">Translate to Bad Manager Speak</button>
+
+    <div class="toxicity-meter">
+      <div class="toxicity-label">
+        Toxicity Level <span id="toxicityValue">0%</span>
+      </div>
+      <div class="toxicity-bar">
+        <div class="toxicity-fill" id="toxicityFill"></div>
+      </div>
+      <div class="toxicity-labels">
+        <span>Mildly Annoying</span>
+        <span>HR Complaint</span>
+        <span>Therapy Required</span>
+      </div>
+    </div>
+
+    <div class="output-area">
+      <label>Your Manager Says</label>
+      <div class="output-box empty" id="outputBox">Waiting for normal human input to destroy...</div>
+    </div>
+
+    <div class="action-btns">
+      <button class="action-btn" id="speakBtn" disabled>🔊 Read Condescendingly</button>
+      <button class="action-btn" id="copyBtn" disabled>📋 Copy to Clipboard</button>
+      <button class="action-btn" id="shareBtn" disabled>📤 Share</button>
+    </div>
+
+    <div class="examples">
+      <h3>Try these</h3>
+      <span class="example-chip" data-text="Good job on the report.">Good job on the report.</span>
+      <span class="example-chip" data-text="Can I take Friday off?">Can I take Friday off?</span>
+      <span class="example-chip" data-text="I finished the project early.">I finished the project early.</span>
+      <span class="example-chip" data-text="I have a great idea for the product.">I have a great idea for the product.</span>
+      <span class="example-chip" data-text="I need a raise.">I need a raise.</span>
+      <span class="example-chip" data-text="The meeting could have been an email.">The meeting could have been an email.</span>
+    </div>
+
+    <div class="sticky-note">
+      <strong>Disclaimer:</strong> If your actual manager talks like this, please update your LinkedIn immediately. No managers were harmed in the making of this translator (they were in a meeting about a meeting).
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const templates = {
+  passive: [
+    // Praise responses
+    { match: /good job|great work|well done|nice|excellent|awesome|amazing|fantastic/i,
+      responses: [
+        "The {thing} was... fine. I mean, I would have done it differently, but it's fine. Let's circle back on this at the performance review.",
+        "Oh, you finished? That's... great. I guess. I mean, I wasn't worried or anything. I just had a backup plan ready. No reason.",
+        "Interesting approach. Not how I would have done it, but I suppose not everyone can think at a strategic level.",
+        "It's good. For your level. I mean, it's good. Period. But also, for your level.",
+        "I'm not saying it's bad. I'm just saying I've seen better. Not from you, obviously. From other teams. That I also manage. Better.",
+        "Sure, it's done. I just wish someone had looped me in earlier so I could have... guided things. But no, it's fine. Really.",
+        "That's... one way to do it. I had some thoughts but I guess we're past that now, aren't we?",
+        "No no, it's fine. I just... I thought we had discussed a different direction in my head. But your way works too. I guess.",
+        "I mean, if YOU'RE happy with it, then I suppose that's what matters. Right? That's what matters.",
+        "Look, I don't want to micromanage, but I also don't NOT want to have been consulted. It's fine though. It's fine.",
+        "I'll be honest, I was surprised. Not in a bad way. Well, not entirely in a bad way.",
+        "Per my last email, I did suggest a slightly different approach. But this works. For now.",
+        "I'm sure the client will... appreciate the effort you put in. The effort is clear."
+      ]
+    },
+    // Time off requests
+    { match: /day off|time off|vacation|friday off|leave|pto|sick/i,
+      responses: [
+        "Oh, sure. I mean, I'll be here. Working. Alone. But you go ahead. Enjoy your 'day off.' Some of us have deadlines.",
+        "Must be nice. I haven't taken a day off in three years. But no, go ahead. I'm not keeping score. Well, HR is. But not me.",
+        "Absolutely. Take the time. I'll just... handle everything myself. Like I always do. No, I'm not being passive-aggressive. This IS my neutral face.",
+        "Sure, no problem. I'll just reschedule the three meetings I had planned around your availability. It's fine. I love rescheduling.",
+        "Of course. I wish I could take time off too. But SOMEONE has to keep the lights on. Metaphorically. And literally, since facilities reports to me.",
+        "I mean, I guess if your 'work-life balance' is more important than the Q3 targets, then sure."
+      ]
+    },
+    // Finished early
+    { match: /finish|done|complete|ahead of schedule|early|deliver/i,
+      responses: [
+        "Oh, you're done? Already? Huh. I guess the scope wasn't as complex as I thought. Or maybe I overestimated the requirements. Either way... great.",
+        "Interesting timing. I was JUST about to check in on that. You know, not because I was worried. Just... checking.",
+        "So you had free time this whole time? Good to know. I have a few other things that could use your... enthusiasm.",
+        "Done early? I'll review it when I get a chance. I'm very busy right now. With things. Important things. That you'll hear about eventually.",
+        "Wow. Finished early. If only everyone on the team had your... let's call it 'efficiency.' Some might call it 'rushing,' but I'll say efficiency.",
+        "That's great. I assume you double-checked everything? Because last time... well, I don't want to bring up last time. But last time."
+      ]
+    },
+    // Ideas
+    { match: /idea|suggest|think we should|proposal|pitch|concept/i,
+      responses: [
+        "That's an interesting idea. Let me think about it. And by 'think about it,' I mean 'forget about it until you bring it up three more times.'",
+        "Hmm. I actually had a very similar idea last quarter. But sure, let's explore YOUR version of it.",
+        "I love that energy. Let's put a pin in it. A very deep pin. In a very thick board. That nobody looks at.",
+        "Bold idea. I'll bring it up in the leadership meeting. Not credited to you specifically, of course. We're a team.",
+        "That's... not the worst idea I've heard today. And I've been in meetings since 8 AM. So that's saying something. Or nothing. Depending on how you look at it.",
+        "I appreciate you thinking outside the box. Now could you get back inside the box? The box has deadlines."
+      ]
+    },
+    // Raise / money
+    { match: /raise|salary|compensation|pay|money|promotion|title/i,
+      responses: [
+        "I hear you. I really do. And I've been advocating for you. Behind the scenes. Very behind. Like, you can't see it at all. But trust me.",
+        "That's a conversation we should definitely have. At your next review. Which is in... *checks calendar* ...eight months. But soon!",
+        "I totally agree you deserve more. Unfortunately, budgets. You understand. I mean, I got a raise, but that's different. Structural reasons.",
+        "Look, money isn't everything. Have you considered the value of 'exposure'? Or 'learning opportunities'? Those don't show up on a paycheck but they FEEL like money. Almost.",
+        "I wish I could help. My hands are tied. Well, not tied-tied. I could untie them if I wanted. I just... don't want to. For structural reasons.",
+        "Funny you mention that. I was JUST thinking about your compensation. And then I stopped thinking about it. But I started!"
+      ]
+    },
+    // Meeting complaints
+    { match: /meeting|email|call|sync|standup|huddle/i,
+      responses: [
+        "That's a great point. Let's schedule a meeting to discuss your feelings about meetings. I'll send a calendar invite.",
+        "I hear you on the meetings. Which is why I've scheduled a 'Meeting Optimization Workshop.' It's a two-hour meeting. Mandatory.",
+        "Some of us USE meetings to stay aligned. But I guess not everyone values alignment. It's fine. We'll align later. In a meeting.",
+        "Per my last email that you clearly didn't read, I addressed this in the meeting that you said could have been an email. Full circle.",
+        "I value that feedback. Could you put it in an email? Actually, let's discuss it in our 1:1. Wait, let's do a quick sync first."
+      ]
+    },
+    // General / catch-all
+    { match: /./,
+      responses: [
+        "Look, I appreciate you sharing that. I really do. And I'm going to take that feedback very seriously. In the sense that I'll think about it once and never again.",
+        "That's... noted. I'm noting it. Mentally. In my mental notebook. Which, full disclosure, I never review.",
+        "I just find it interesting that you'd say that. Not in a bad way. Just... interesting. Make of that what you will.",
+        "I don't disagree. I'm also not agreeing. I'm in a third place that's neither, and I live here now.",
+        "As I mentioned in my email, and in the meeting, and in the hallway, and in my dreams... but sure, let's discuss again.",
+        "I want to be supportive. I really do. I just also want to be right. And those two things are in conflict right now.",
+        "That's valid. Your feelings are valid. Your approach, however... let's workshop that.",
+        "No no, you're right. Well, not RIGHT right. But you're in the vicinity of right. The right-adjacent zone."
+      ]
+    }
+  ],
+
+  micro: [
+    { match: /good job|great work|well done|nice|excellent|awesome|amazing|fantastic/i,
+      responses: [
+        "Did you use the template I sent? Because I specifically said to use the template. If you didn't use the template, we need to talk about the template.",
+        "I'll need to review every line before I can confirm it's actually good. Can you walk me through it? Slide by slide? Word by word?",
+        "Great, but did you save it in the correct folder? With the correct naming convention? DATE_PROJECT_VERSION_FINAL_FINAL_v2? Because last time...",
+        "I'm going to need you to CC me on every email related to this. And BCC me on the ones you don't think I need to see. Especially those.",
+        "What font did you use? Because I have thoughts on fonts. Strong thoughts. Calibri thoughts.",
+        "Before I say 'good job,' I need to understand your process. Step by step. With timestamps.",
+        "I see you used a period at the end. I prefer periods with a space before them. Can you fix that across all 47 pages?",
+        "This is good, but I need you to log exactly how many hours you spent on each section. For reporting. And for me to silently judge.",
+        "I noticed you submitted this at 5:03 PM. Our deadline was end of day. Which to me means 4:30 PM. Let's align on that."
+      ]
+    },
+    { match: /day off|time off|vacation|friday off|leave|pto|sick/i,
+      responses: [
+        "Sure, but I'll need you to document your entire workflow so I can do your job while you're gone. Also, keep your phone on. And laptop. And be near WiFi.",
+        "Can you submit the request through the form, then email me, then Slack me, then come to my desk to confirm you Slacked me?",
+        "Fine, but I need a detailed out-of-office plan. Who handles what. Hour by hour. With contingency plans for the contingency plans.",
+        "I'll approve it, but I need your status updates for the day you'll be gone... sent the day before, morning of, and also somehow during.",
+        "Let me check your task list first. And your calendar. And your browser history. I mean task list.",
+        "Approved. But I need you to set up a 30-minute check-in call during your day off. Just one. Maybe two. Definitely three."
+      ]
+    },
+    { match: /finish|done|complete|ahead of schedule|early|deliver/i,
+      responses: [
+        "Done? Let me check. *Opens file* *Zooms to 200%* *Examines each pixel* Give me 4-6 business days for my review.",
+        "Can you walk me through your exact process? I want to make sure you didn't skip steps 7 through 12 of the 43-step checklist I sent.",
+        "I appreciate you finishing, but I need to see all intermediate drafts, saved under the naming convention, in the shared drive, subfolder C, sub-subfolder 2.",
+        "Before I sign off, I need a five-page post-mortem on how you completed this ahead of schedule. That concerns me.",
+        "Send me a screenshot of your desktop. I want to see how your files are organized. For the project. Not for any other reason.",
+        "Did you use version control? I need to see every save. Every keystroke, ideally. I'm looking into keystroke logging software. Unrelated."
+      ]
+    },
+    { match: /idea|suggest|think we should|proposal|pitch|concept/i,
+      responses: [
+        "Love the idea. Can you put it in a document? Using the idea template? With sections A through Q filled out? By tomorrow? With footnotes?",
+        "Interesting. I need a cost analysis, timeline, risk assessment, stakeholder map, and a prototype before I can say whether it's worth a 15-minute discussion.",
+        "Let me see your research. All of it. Printed. Double-spaced. Stapled in the upper left corner. Not the right. The LEFT.",
+        "I want to support this. First, can you attend my 'Idea Submission Framework' training? It's 6 sessions over 3 weeks. Mandatory.",
+        "Submit that through the proper channels. Which is: email me, I'll forward it to myself, I'll put it on my list, and I'll review it in a committee of one."
+      ]
+    },
+    { match: /raise|salary|compensation|pay|money|promotion|title/i,
+      responses: [
+        "I need to see a detailed log of every task you've completed this year. With time stamps. And impact metrics. In the format I specify.",
+        "Let's track your performance daily for the next 90 days and then revisit. I'll be watching. Closely. VERY closely.",
+        "Fill out the self-assessment form. The 12-page one. Then the peer review form. Then the manager assessment form that I also fill out about you, for you.",
+        "I need to verify your attendance records first. And your Slack response times. And the average word count of your emails. Standard procedure."
+      ]
+    },
+    { match: /meeting|email|call|sync|standup|huddle/i,
+      responses: [
+        "I agree we have too many meetings. Let's add a weekly 'Meeting Review Meeting' to assess which meetings we actually need.",
+        "Going forward, I need you to send me your meeting notes within 5 minutes of the meeting ending. In bullet points. With action items bolded. And dates underlined.",
+        "I've set up a shared spreadsheet to track all our meetings about meetings. Please update it before and after each meeting. And during.",
+        "From now on, all emails must follow the format: Subject, Context, Ask, Timeline, CC List (me always first). I've created a 20-slide deck explaining this."
+      ]
+    },
+    { match: /./,
+      responses: [
+        "Can you repeat that? But in writing? And then send it to me? And then set a reminder to follow up with me about whether I read it?",
+        "I'm going to need more details. And then more details about those details. Think of me as a detail fractal.",
+        "I just want to make sure we're aligned. Let me see your screen. No, share your screen. Actually, just come to my desk. Actually, I'll come to yours.",
+        "Let me check my notes on that. I keep detailed notes on everything everyone says. It's not weird. It's THOROUGH.",
+        "Before we proceed, let me verify: did you check with me before deciding to tell me this? There's a process.",
+        "That's exactly the kind of thing I need you to log in the daily activity tracker. The one I check every morning at 6 AM.",
+        "Hold on, let me get my red pen. I mean my feedback pen. It happens to be red.",
+        "I have a few minor changes. *Sends back document that's 90% red ink*"
+      ]
+    }
+  ],
+
+  credit: [
+    { match: /good job|great work|well done|nice|excellent|awesome|amazing|fantastic/i,
+      responses: [
+        "WE really knocked it out of the park on this one. I mean, the vision came from the top. You executed it. But the VISION? That was all us. Me. Us.",
+        "I'm so proud of what I've built here. This team? MY team. That project? MY direction. Your work? Well, you were there too.",
+        "When I look at this, I see the fruits of my leadership philosophy at work. You did the labor. I did the philosophy. We're a team.",
+        "I can't wait to present this to the executive team. They're going to love what I put together. I mean we. I mean what I guided.",
+        "As I told the VP yesterday -- and I'm quoting myself here -- 'I really empowered the team to deliver on MY vision.' You should be proud. Of my vision.",
+        "This is exactly what I was hoping for when I outlined the strategy in my head and told no one about it until just now.",
+        "I've already sent this to the CEO. From my email. With my name on it. But I mentioned 'the team' in the body. Third paragraph.",
+        "Remember when I said we should do it this way? No? Well, I thought it really loudly. And look -- it worked!"
+      ]
+    },
+    { match: /day off|time off|vacation|friday off|leave|pto|sick/i,
+      responses: [
+        "Sure. I mean, I never take days off because I'm so dedicated. But you do you. I'll mention at the all-hands how I held things down solo.",
+        "Go ahead. I'll use the time to take credit for whatever you left unfinished. I mean... to keep things moving.",
+        "Absolutely. When you're gone, I'll just do your job AND mine. Then I'll tell the VP about how I did both. Inspiring leadership moment.",
+        "Take the day. I'll make sure your project keeps moving. Under my name. For continuity purposes."
+      ]
+    },
+    { match: /finish|done|complete|ahead of schedule|early|deliver/i,
+      responses: [
+        "Fantastic. I'll present this at the leadership meeting tomorrow. No need for you to attend. I can represent OUR work. Trust me.",
+        "This is exactly the quality I expect from my direct reports. I've trained you well. That's going in MY performance review.",
+        "Great execution. Of course, the strategy behind it -- the REAL work -- that's been months of MY planning. But great execution.",
+        "I knew hiring you was the right call. I have great instincts. People say that about me. The CEO said that about me. I'll remind him tomorrow.",
+        "Let me add my name to the document. As a co-author. Fine, primary author. It's just protocol."
+      ]
+    },
+    { match: /idea|suggest|think we should|proposal|pitch|concept/i,
+      responses: [
+        "Interesting. That's actually very similar to something I was going to propose. Let me refine it and present it as a leadership initiative.",
+        "I like it. In fact, it reminds me of a concept I pioneered at my last company. Let me... build on it. Under my name. For clarity.",
+        "Great seed of an idea. What it needs is MY strategic framing. Don't worry, I'll make sure to mention you helped. Maybe. If there's time.",
+        "That's exactly what I've been thinking. I'll write it up and send it to the VP as 'a framework I've been developing.' You'll be in the CC. Maybe BCC.",
+        "You know what, let me take this one to the executive team. It'll have more weight coming from a director. Nothing personal. It's just politics.",
+        "That's a great idea. I'll workshop it. Under my name. Into a TED talk. You can watch from the audience."
+      ]
+    },
+    { match: /raise|salary|compensation|pay|money|promotion|title/i,
+      responses: [
+        "I hear you. Let me tell you about MY career path. I got raises because of MY results. You want a raise? Get ME better results. Then I'll advocate. For me. I mean you.",
+        "Compensation is tricky. I've been fighting for budget. For the team. Which is really for MY org. But you benefit too. Indirectly.",
+        "A raise? Let me see if I can find room in the budget. After my own compensation adjustment goes through, of course. Priorities.",
+        "I'll push for it. I need to position it as MY initiative though. 'Director builds world-class team through competitive compensation.' See? We both win."
+      ]
+    },
+    { match: /meeting|email|call|sync|standup|huddle/i,
+      responses: [
+        "I'll handle the meeting. You prep the slides. I'll present them. They'll applaud. I'll accept. We'll both know who really did the work. Me. Because presenting is the real work.",
+        "Forward me those meeting notes. I need to synthesize them into MY report for leadership. Don't worry, I'll capture the spirit of your contributions. Vaguely.",
+        "Let me take that client call. You've done the prep work. The prep is important. But the CALL is where the magic happens. MY magic."
+      ]
+    },
+    { match: /./,
+      responses: [
+        "That's a great point. I'll make sure to raise it at the leadership offsite. As my own observation. Inspired by the team. Which is me. Leading.",
+        "I was just thinking the same thing. In fact, I thought it first. Chronologically, you said it first. But spiritually, it was mine.",
+        "Let me run with this. Don't worry, your fingerprints are all over it. Metaphorically. Legally, it's my intellectual property. Standard stuff.",
+        "I appreciate the input. I'll fold it into my strategic vision document. You'll notice the themes are similar. Because great minds. And MY mind.",
+        "As I always say -- and I'll say it again in my keynote -- 'Surround yourself with great people and take credit for everything.' Wait, scratch that. 'Lead by example.'",
+        "You've inspired me. To write a LinkedIn post about how I inspire my team. Thank you for that.",
+        "Let me quote you on that. Except I'll paraphrase. And change the words. And add my name. But the SPIRIT is yours."
+      ]
+    }
+  ],
+
+  buzzword: [
+    { match: /good job|great work|well done|nice|excellent|awesome|amazing|fantastic/i,
+      responses: [
+        "This really moves the needle on our core competencies. Let's leverage this win to synergize our go-forward strategy and circle back with stakeholders.",
+        "Fantastic deliverable. This is exactly the kind of paradigm-shifting output that drives our north star metrics and creates sustainable competitive moats.",
+        "You've really demonstrated thought leadership here. Let's take this offline, do a deep dive, and align on how to scale this across verticals.",
+        "This is best-in-class work. It ladders up to our OKRs beautifully. Let's socialize this with the C-suite and leverage it for Q4 alignment.",
+        "Incredible bandwidth on display here. You've really leaned into the value proposition and delivered on our mission-critical objectives. Let's unpack this further.",
+        "This is a real force multiplier. Let's ideate on how to productize this and create a flywheel effect across our ecosystem.",
+        "You've disrupted the deliverable space. Let's pivot this into a scalable framework and evangelize it to stakeholders in the innovation pipeline."
+      ]
+    },
+    { match: /day off|time off|vacation|friday off|leave|pto|sick/i,
+      responses: [
+        "Let's table that ask and revisit when we have more bandwidth. Right now, the team needs to be laser-focused on driving synergies for the EOQ push.",
+        "I'm all about work-life integration. Let's find a cadence that optimizes your personal runway while maintaining our velocity on key deliverables.",
+        "Time off is important for sustainable value creation. Let's right-size your workload, align stakeholders, and create a seamless handoff framework.",
+        "Let me socialize this with HR. We need to make sure it's aligned with our people-first culture while maintaining operational excellence and sprint velocity."
+      ]
+    },
+    { match: /finish|done|complete|ahead of schedule|early|deliver/i,
+      responses: [
+        "Great velocity on the deliverables. Let's double-click on the learnings, capture them in a retrospective, and scale the process across the organization.",
+        "You've demonstrated real agility here. Let's leverage this momentum, pivot toward the next sprint, and keep the flywheel spinning.",
+        "Excellent throughput. This is the kind of hockey-stick execution that creates sustainable competitive advantage. Let's dogfood this approach and evangelize it.",
+        "The ROI on this is off the charts. Let's do a post-mortem to capture institutional knowledge and build a playbook for future iterations.",
+        "This is what 10x execution looks like. Let's take a step back, zoom out, and think about how to operationalize this at scale."
+      ]
+    },
+    { match: /idea|suggest|think we should|proposal|pitch|concept/i,
+      responses: [
+        "Love the blue-sky thinking. Let's pressure-test this against our north star metrics, do a SWOT analysis, and see if it has legs in the current landscape.",
+        "That's a real disruptive innovation. Let's incubate it, run it through our innovation funnel, and see if it aligns with our strategic imperatives.",
+        "Interesting value proposition. We need to validate the TAM, assess product-market fit, and create a minimum viable concept before we can greenlight the initiative.",
+        "This has real potential to move the needle. Let's workshop it, get cross-functional buy-in, and build a business case that ladders up to the C-suite vision.",
+        "You're thinking like a true intrapreneur. Let's take this to the innovation lab, do a design sprint, and see if we can create a proof of concept that scales.",
+        "That's very forward-leaning. Let's pressure-test the unit economics, validate with key stakeholders, and see if it passes the 'so what' test."
+      ]
+    },
+    { match: /raise|salary|compensation|pay|money|promotion|title/i,
+      responses: [
+        "Let's look at this through the lens of total compensation. Your growth trajectory, skill stack amplification, and brand equity within the org are all part of the package.",
+        "I want to make sure we're aligned on the value exchange. Let's build a business case for your comp adjustment that demonstrates clear ROI and stakeholder impact.",
+        "Compensation is a key lever in our talent retention strategy. Let me socialize this with the People team and see if there's room in the budget runway.",
+        "Let's be strategic about this. We need to benchmark against market comps, factor in your impact multiplier, and present a compelling narrative to the comp committee."
+      ]
+    },
+    { match: /meeting|email|call|sync|standup|huddle/i,
+      responses: [
+        "Let's optimize our meeting cadence for maximum alignment velocity. I'm thinking a daily standup, weekly sync, bi-weekly retro, and monthly strategic deep dive.",
+        "Meetings are how we drive cross-functional alignment and create shared context. Let's time-box our sessions and focus on action items that drive the needle.",
+        "I'm launching a new meeting framework: The Agile-Waterfall-Hybrid-Lean-Six-Sigma Sync. It's two hours. Weekly. Bring your OKRs.",
+        "Let's streamline our comms stack. Emails for documentation, Slack for real-time, meetings for alignment, and carrier pigeons for the truly urgent stuff."
+      ]
+    },
+    { match: /./,
+      responses: [
+        "Let's take this offline, circle back, do a deep dive, pressure-test the assumptions, and then sync up to align on next steps. I'll send a deck.",
+        "At the end of the day, it's all about creating value, driving alignment, and maintaining our velocity while staying laser-focused on the north star.",
+        "I want to unpack that. Let's put it through our strategic lens, cross-reference with our OKRs, and see how it ladders up to the bigger picture.",
+        "Let's not boil the ocean here. We need to right-size the ask, find the low-hanging fruit, and create a minimum viable strategy that moves the needle.",
+        "This is a real inflection point. Let's lean into it, leverage our core competencies, and create a go-forward plan that maximizes stakeholder value.",
+        "I'm going to push back on that. Not because you're wrong, but because I want to stress-test the hypothesis and ensure we're thinking holistically about the ecosystem.",
+        "Let's 10x this. We need to think bigger, scale faster, and create a category-defining moment that disrupts our industry vertical.",
+        "That's very on-brand. Let's amplify it across our channels, create a narrative arc, and drive engagement with key personas in our target segments."
+      ]
+    }
+  ]
+};
+
+let currentType = 'passive';
+let lastOutput = '';
+
+// Manager type selection
+document.getElementById('managerTypes').addEventListener('click', (e) => {
+  const btn = e.target.closest('.manager-btn');
+  if (!btn) return;
+  document.querySelectorAll('.manager-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentType = btn.dataset.type;
+});
+
+// Example chips
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.getElementById('inputText').value = chip.dataset.text;
+    translate();
+  });
+});
+
+// Translate button
+document.getElementById('translateBtn').addEventListener('click', translate);
+
+// Enter key
+document.getElementById('inputText').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    translate();
+  }
+});
+
+function extractThing(text) {
+  const t = text.toLowerCase().trim();
+  if (t.includes('report')) return 'report';
+  if (t.includes('project')) return 'project';
+  if (t.includes('presentation')) return 'presentation';
+  if (t.includes('code')) return 'code';
+  if (t.includes('design')) return 'design';
+  if (t.includes('analysis')) return 'analysis';
+  if (t.includes('document')) return 'document';
+  if (t.includes('work')) return 'work';
+  return 'work';
+}
+
+function translate() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) return;
+
+  const typeTemplates = templates[currentType];
+  let matchedCategory = typeTemplates[typeTemplates.length - 1]; // default to catch-all
+
+  for (let i = 0; i < typeTemplates.length - 1; i++) {
+    if (typeTemplates[i].match.test(input)) {
+      matchedCategory = typeTemplates[i];
+      break;
+    }
+  }
+
+  const responses = matchedCategory.responses;
+  let response = responses[Math.floor(Math.random() * responses.length)];
+
+  // Replace placeholders
+  const thing = extractThing(input);
+  response = response.replace(/\{thing\}/g, thing);
+
+  lastOutput = response;
+
+  // Type labels
+  const typeLabels = {
+    passive: 'Passive-Aggressive Manager',
+    micro: 'Micromanager',
+    credit: 'Credit-Stealing Manager',
+    buzzword: 'Buzzword Bot Manager'
+  };
+
+  const outputBox = document.getElementById('outputBox');
+  outputBox.classList.remove('empty');
+  outputBox.innerHTML = `<div class="manager-tag">${typeLabels[currentType]}</div><br>${response}`;
+
+  // Toxicity meter
+  const toxicity = 55 + Math.floor(Math.random() * 40);
+  const toxVal = document.getElementById('toxicityValue');
+  const toxFill = document.getElementById('toxicityFill');
+  toxVal.textContent = toxicity + '%';
+  toxFill.style.width = toxicity + '%';
+
+  if (toxicity < 65) {
+    toxFill.style.background = 'linear-gradient(to right, #f39c12, #e67e22)';
+  } else if (toxicity < 80) {
+    toxFill.style.background = 'linear-gradient(to right, #e67e22, #e74c3c)';
+  } else {
+    toxFill.style.background = 'linear-gradient(to right, #e74c3c, #8e44ad)';
+  }
+
+  // Enable action buttons
+  document.getElementById('speakBtn').disabled = false;
+  document.getElementById('copyBtn').disabled = false;
+  document.getElementById('shareBtn').disabled = false;
+}
+
+// Speech synthesis - condescending voice
+document.getElementById('speakBtn').addEventListener('click', () => {
+  if (!lastOutput || !('speechSynthesis' in window)) return;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(lastOutput);
+  utterance.rate = 0.82;
+  utterance.pitch = 0.75;
+
+  // Try to find a deeper/condescending voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /daniel|alex|tom|fred|google uk english male/i.test(v.name));
+  if (preferred) utterance.voice = preferred;
+
+  // Add dramatic pauses via SSML-like behavior
+  utterance.onboundary = (e) => {
+    if (e.name === 'sentence') {
+      // natural pause between sentences for condescension effect
+    }
+  };
+
+  window.speechSynthesis.speak(utterance);
+});
+
+// Load voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  window.speechSynthesis.getVoices();
+}
+
+// Copy
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if (!lastOutput) return;
+  navigator.clipboard.writeText(lastOutput).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy to Clipboard', 1500);
+  });
+});
+
+// Share
+document.getElementById('shareBtn').addEventListener('click', () => {
+  if (!lastOutput) return;
+  if (navigator.share) {
+    navigator.share({
+      title: 'Bad Manager Translator',
+      text: `My manager would say: "${lastOutput}"`,
+      url: window.location.href
+    }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(`My manager would say: "${lastOutput}"`).then(() => {
+      const btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied link!';
+      setTimeout(() => btn.textContent = '📤 Share', 1500);
+    });
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midlife Crisis Roadmap Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', serif;
+    background: #1a1209;
+    color: #e8d5b7;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+  header {
+    text-align: center;
+    padding: 40px 0 20px;
+  }
+  header h1 {
+    font-size: 2.2em;
+    color: #f5c542;
+    text-shadow: 0 2px 8px rgba(245, 197, 66, 0.3);
+    line-height: 1.2;
+  }
+  header p {
+    margin-top: 12px;
+    font-size: 1.1em;
+    color: #c4a36e;
+    font-style: italic;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #2d1f0e;
+    border-radius: 3px;
+    margin: 24px 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f5c542, #d4883a);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+  .question-card {
+    background: linear-gradient(135deg, #2d1f0e, #3a2815);
+    border: 1px solid #5a3d1a;
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 20px;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .question-card.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .q-number {
+    font-size: 0.85em;
+    color: #d4883a;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: 1.3em;
+    color: #f5e6cc;
+    line-height: 1.4;
+    margin-bottom: 24px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option-btn {
+    background: #1a1209;
+    border: 1px solid #5a3d1a;
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: #e8d5b7;
+    font-size: 1em;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+  }
+  .option-btn:hover {
+    background: #3a2815;
+    border-color: #f5c542;
+    color: #f5c542;
+    transform: translateX(4px);
+  }
+  .option-btn:active { transform: scale(0.98); }
+
+  /* Results */
+  #results {
+    display: none;
+    animation: fadeIn 0.6s ease;
+  }
+  .result-header {
+    text-align: center;
+    padding: 30px 0 10px;
+  }
+  .result-emoji {
+    font-size: 4em;
+    margin-bottom: 8px;
+  }
+  .result-type {
+    font-size: 1.8em;
+    color: #f5c542;
+    margin-bottom: 6px;
+  }
+  .result-tagline {
+    font-size: 1.1em;
+    color: #c4a36e;
+    font-style: italic;
+    margin-bottom: 24px;
+  }
+  .roadmap-section {
+    background: linear-gradient(135deg, #2d1f0e, #3a2815);
+    border: 1px solid #5a3d1a;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .roadmap-section h3 {
+    color: #d4883a;
+    font-size: 1.1em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .roadmap-section ul {
+    list-style: none;
+    padding: 0;
+  }
+  .roadmap-section li {
+    padding: 8px 0;
+    border-bottom: 1px solid #2d1f0e;
+    color: #e8d5b7;
+    padding-left: 20px;
+    position: relative;
+  }
+  .roadmap-section li::before {
+    content: '\25B8';
+    position: absolute;
+    left: 0;
+    color: #f5c542;
+  }
+  .roadmap-section li:last-child { border-bottom: none; }
+  .severity-meter {
+    margin: 20px 0;
+    text-align: center;
+  }
+  .severity-meter .label {
+    font-size: 0.9em;
+    color: #c4a36e;
+    margin-bottom: 8px;
+  }
+  .meter-bar {
+    height: 12px;
+    background: #1a1209;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #5a3d1a;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s ease;
+  }
+  .share-section {
+    text-align: center;
+    margin: 30px 0;
+  }
+  .share-btn {
+    background: linear-gradient(135deg, #f5c542, #d4883a);
+    color: #1a1209;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 32px;
+    font-size: 1.1em;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 6px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(245, 197, 66, 0.3);
+  }
+  .share-btn.secondary {
+    background: transparent;
+    border: 1px solid #f5c542;
+    color: #f5c542;
+  }
+  .retake-btn {
+    background: transparent;
+    border: 1px solid #5a3d1a;
+    color: #c4a36e;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 1em;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+  }
+  .retake-btn:hover {
+    border-color: #f5c542;
+    color: #f5c542;
+  }
+  .copied-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #f5c542;
+    color: #1a1209;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-family: 'Georgia', serif;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+  .copied-toast.show { transform: translateX(-50%) translateY(0); }
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    color: #5a3d1a;
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Midlife Crisis Roadmap Generator</h1>
+    <p>10 questions. Brutal honesty required. Your personalized crisis awaits.</p>
+  </header>
+
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+  <div id="quizArea"></div>
+  <div id="results"></div>
+
+  <footer>No midlife crises were harmed in the making of this quiz.</footer>
+</div>
+
+<div class="copied-toast" id="copiedToast">Copied to clipboard!</div>
+
+<script>
+const questions = [
+  {
+    text: "Have you Googled \"is it too late to become a pilot?\"",
+    options: [
+      { text: "No, but I've Googled something equally unhinged", tags: { career: 1, adventure: 1 } },
+      { text: "Yes. And I checked flight school prices.", tags: { career: 2, adventure: 2 } },
+      { text: "I've already booked a discovery flight", tags: { adventure: 3, spending: 2 } },
+      { text: "I'm a well-adjusted adult who does no such thing", tags: { denial: 3 } }
+    ]
+  },
+  {
+    text: "Do you own more than 2 types of hot sauce?",
+    options: [
+      { text: "I have a modest 3-5 collection", tags: { hobby: 1, foodie: 1 } },
+      { text: "I have a dedicated hot sauce shelf. Maybe two.", tags: { hobby: 2, foodie: 2, spending: 1 } },
+      { text: "I'm fermenting my own. I named them.", tags: { hobby: 3, foodie: 3, craft: 2 } },
+      { text: "Hot sauce is just hot sauce to me", tags: { normie: 2 } }
+    ]
+  },
+  {
+    text: "Have you considered getting a motorcycle?",
+    options: [
+      { text: "Considered? I've watched 40 hours of reviews on YouTube.", tags: { vehicle: 2, adventure: 1, spending: 1 } },
+      { text: "Already got one. And the jacket. And the boots.", tags: { vehicle: 3, spending: 3, adventure: 2 } },
+      { text: "No, but I did buy a very impractical bicycle", tags: { vehicle: 1, fitness: 1 } },
+      { text: "My spouse has explicitly forbidden this", tags: { vehicle: 1, domestic: 2 } }
+    ]
+  },
+  {
+    text: "How do you feel about your current career?",
+    options: [
+      { text: "I fantasize about opening a bookshop / coffee roastery / pottery studio", tags: { career: 3, craft: 2, escape: 2 } },
+      { text: "I've started a side project that \"could become something\"", tags: { career: 2, hustle: 2 } },
+      { text: "I've already quit once this year. In my head.", tags: { career: 2, escape: 1 } },
+      { text: "It's fine. Everything is fine.", tags: { denial: 3, career: 1 } }
+    ]
+  },
+  {
+    text: "What's your relationship with exercise right now?",
+    options: [
+      { text: "I signed up for something I'll regret (marathon / triathlon / CrossFit)", tags: { fitness: 3, challenge: 2 } },
+      { text: "I bought equipment that is now a very expensive clothes rack", tags: { fitness: 1, spending: 2 } },
+      { text: "I've become obsessed with a sport I discovered 6 months ago", tags: { fitness: 2, hobby: 2, obsession: 2 } },
+      { text: "I threw my back out doing something basic", tags: { aging: 3 } }
+    ]
+  },
+  {
+    text: "Have you recently made any splurge purchases \"for yourself\"?",
+    options: [
+      { text: "New wardrobe. Entirely. From scratch.", tags: { appearance: 3, spending: 2 } },
+      { text: "Signed up for a course in something wildly unrelated to my job", tags: { learning: 2, career: 1 } },
+      { text: "Skincare routine that has more steps than my morning standup", tags: { appearance: 2, spending: 1 } },
+      { text: "I bought a guitar / synthesizer / camera I barely use", tags: { hobby: 2, spending: 2, craft: 1 } }
+    ]
+  },
+  {
+    text: "How often do you think about \"the path not taken\"?",
+    options: [
+      { text: "Daily. Sometimes hourly.", tags: { nostalgia: 3, escape: 2 } },
+      { text: "Only when I see someone living my dream life on Instagram", tags: { nostalgia: 2, comparison: 2 } },
+      { text: "I've started actively building toward that other path", tags: { career: 2, adventure: 2, action: 2 } },
+      { text: "I'm at peace with my choices (mostly)", tags: { normie: 2, denial: 1 } }
+    ]
+  },
+  {
+    text: "What's your online shopping situation?",
+    options: [
+      { text: "Packages arrive that I don't remember ordering", tags: { spending: 3, hobby: 1 } },
+      { text: "I have 47 tabs open of things I \"need\"", tags: { spending: 2, obsession: 1 } },
+      { text: "I've gotten into a niche hobby and the gear is... extensive", tags: { hobby: 3, spending: 2, obsession: 2 } },
+      { text: "I'm actually pretty disciplined about purchases", tags: { normie: 2 } }
+    ]
+  },
+  {
+    text: "How do you feel about your living situation?",
+    options: [
+      { text: "I've been browsing cabins / tiny homes / van life conversions", tags: { escape: 3, adventure: 2 } },
+      { text: "I've remodeled or am planning to remodel everything", tags: { domestic: 2, spending: 2, control: 2 } },
+      { text: "I want to move somewhere completely different. Like another country.", tags: { escape: 3, adventure: 3 } },
+      { text: "I've started a garden and it's become my entire personality", tags: { hobby: 2, craft: 2, domestic: 1 } }
+    ]
+  },
+  {
+    text: "Pick the statement that hits closest to home:",
+    options: [
+      { text: "\"I just need ONE more hobby and I'll finally feel complete\"", tags: { hobby: 3, obsession: 2 } },
+      { text: "\"What if I sold everything and started over?\"", tags: { escape: 3, adventure: 2, career: 1 } },
+      { text: "\"I'm not old, I'm in my prime. This is my prime.\"", tags: { denial: 3, fitness: 1, aging: 1 } },
+      { text: "\"Happiness can't be bought but it CAN be kayaked\"", tags: { spending: 2, adventure: 1, hobby: 1 } }
+    ]
+  }
+];
+
+const crisisTypes = [
+  {
+    id: "sports-car",
+    name: "The Sports Car Crisis",
+    emoji: "\uD83C\uDFCE\uFE0F",
+    tagline: "Horsepower is a personality trait now.",
+    requires: { vehicle: 4, spending: 4 },
+    severity: 72,
+    roadmap: {
+      "Phase 1: Research (You Are Here)": [
+        "Watch 200 more YouTube car reviews",
+        "Visit 3 dealerships 'just to look'",
+        "Start casually mentioning 0-60 times in conversation"
+      ],
+      "Phase 2: Justification": [
+        "Build a spreadsheet proving it's 'actually cheaper long-term'",
+        "Convince yourself it's a 'smart move'",
+        "Find one article saying sports cars hold value"
+      ],
+      "Phase 3: Full Send": [
+        "Test drive something you absolutely cannot afford",
+        "Negotiate like your life depends on it",
+        "Post a photo captioned 'New chapter' (do not mention the payment plan)"
+      ]
+    }
+  },
+  {
+    id: "hobby-spiral",
+    name: "The Hobby Spiral",
+    emoji: "\uD83C\uDFA8",
+    tagline: "You don't have hobbies. Hobbies have you.",
+    requires: { hobby: 5, spending: 3 },
+    severity: 65,
+    roadmap: {
+      "Phase 1: Discovery": [
+        "Pick up a new hobby every 3 weeks",
+        "Buy all the starter gear before your first lesson",
+        "Tell everyone this is 'the one' that sticks"
+      ],
+      "Phase 2: Accumulation": [
+        "Dedicate an entire room to supplies for 6 different hobbies",
+        "Start a YouTube channel about one of them (post 2 videos, stop)",
+        "Join 14 subreddits and 9 Discord servers"
+      ],
+      "Phase 3: Acceptance": [
+        "Realize the hobby IS collecting hobbies",
+        "Open an Etsy shop (make 3 sales, declare victory)",
+        "Achieve a zen-like peace with your overflowing garage"
+      ]
+    }
+  },
+  {
+    id: "career-reinvention",
+    name: "The Career Reinvention",
+    emoji: "\uD83D\uDE80",
+    tagline: "LinkedIn says you're 'open to opportunities.' Your therapist says you're 'spiraling.'",
+    requires: { career: 5, escape: 3 },
+    severity: 78,
+    roadmap: {
+      "Phase 1: The Itch": [
+        "Update LinkedIn with a suspiciously inspirational banner",
+        "Start every sentence with 'What if I just...'",
+        "Research bootcamps for a field you discovered last Tuesday"
+      ],
+      "Phase 2: The Leap Prep": [
+        "Calculate your runway. Recalculate optimistically.",
+        "Write a resignation letter (save in drafts, do not send)",
+        "Tell 3 people about your 'vision' and gauge their panic levels"
+      ],
+      "Phase 3: The Pivot": [
+        "Actually do the thing (even if it's terrifying)",
+        "Survive the first 6 months of questioning every decision",
+        "Post a LinkedIn essay about 'betting on yourself' (minimum 47 paragraphs)"
+      ]
+    }
+  },
+  {
+    id: "fitness-obsession",
+    name: "The Fitness Obsession",
+    emoji: "\uD83C\uDFCB\uFE0F",
+    tagline: "You didn't find fitness. Fitness found you. At 2am on a Tuesday.",
+    requires: { fitness: 5, challenge: 2 },
+    severity: 60,
+    roadmap: {
+      "Phase 1: The Awakening": [
+        "Sign up for an event that terrifies you",
+        "Buy gear that costs more than your first car",
+        "Download 4 tracking apps and wear 2 fitness watches"
+      ],
+      "Phase 2: The Training Arc": [
+        "Make your diet everyone else's problem",
+        "Set an alarm for 4:45am and feel morally superior about it",
+        "Refer to rest days as 'active recovery'"
+      ],
+      "Phase 3: The Identity Merge": [
+        "Your entire wardrobe is now moisture-wicking",
+        "You've become the person who talks about heart rate zones at parties",
+        "Complete the event. Immediately sign up for a harder one."
+      ]
+    }
+  },
+  {
+    id: "escape-artist",
+    name: "The Escape Artist",
+    emoji: "\uD83C\uDFD5\uFE0F",
+    tagline: "You don't need a vacation. You need new coordinates for your existence.",
+    requires: { escape: 5, adventure: 3 },
+    severity: 82,
+    roadmap: {
+      "Phase 1: The Fantasy": [
+        "Browse real estate listings in places you've never been",
+        "Research visa requirements for 7 countries",
+        "Start saying 'we could totally do van life' unironically"
+      ],
+      "Phase 2: The Soft Launch": [
+        "Book an extended trip to 'scout locations'",
+        "Start decluttering with alarming intensity",
+        "Learn 12 words in a new language and call yourself 'conversational'"
+      ],
+      "Phase 3: The Great Elsewhere": [
+        "Actually make a move (even if it's just to a different neighborhood)",
+        "Discover that you brought yourself with you",
+        "Start a blog called something like 'Finding Home' (write 4 posts)"
+      ]
+    }
+  },
+  {
+    id: "craft-artisan",
+    name: "The Artisan Awakening",
+    emoji: "\uD83C\uDF7A",
+    tagline: "You don't just consume things. You MAKE things. From scratch. The hard way.",
+    requires: { craft: 4, hobby: 3 },
+    severity: 55,
+    roadmap: {
+      "Phase 1: The Seed": [
+        "Decide store-bought is no longer acceptable for one specific item",
+        "Watch a 3-hour documentary about traditional craftspeople",
+        "Order supplies that won't arrive for 6-8 weeks ('artisan lead times')"
+      ],
+      "Phase 2: The Deep Dive": [
+        "Convert part of your home into a workshop/studio/fermentation lab",
+        "Give homemade gifts that nobody asked for",
+        "Start using words like 'terroir' and 'provenance' at dinner"
+      ],
+      "Phase 3: The Mastery Delusion": [
+        "Achieve results that are 'actually pretty good' (your words)",
+        "Consider selling at the farmers market",
+        "Realize you've spent thousands to make a dozen jars of hot sauce"
+      ]
+    }
+  },
+  {
+    id: "tech-bro-awakening",
+    name: "The Tech Bro Awakening",
+    emoji: "\uD83D\uDCBB",
+    tagline: "You've decided to build an app. You are the target market. This is fine.",
+    requires: { hustle: 3, career: 3, spending: 2 },
+    severity: 68,
+    roadmap: {
+      "Phase 1: The Idea": [
+        "Have a shower thought that is 'basically Uber for...'",
+        "Register 5 domain names at 2am",
+        "Create a Notion workspace with 47 pages for your 'startup'"
+      ],
+      "Phase 2: The Build": [
+        "Learn to code (or pay someone, then learn anyway)",
+        "Pivot the idea 4 times before building anything",
+        "Tell everyone you're 'in stealth mode'"
+      ],
+      "Phase 3: The Launch": [
+        "Ship something to 0 users",
+        "Post on Product Hunt, get 12 upvotes (8 from family)",
+        "Describe yourself as a 'founder' and never go back"
+      ]
+    }
+  },
+  {
+    id: "nostalgia-trip",
+    name: "The Nostalgia Trip",
+    emoji: "\uD83D\uDCFC",
+    tagline: "Things were better in [decade you were 17].",
+    requires: { nostalgia: 4, denial: 2 },
+    severity: 50,
+    roadmap: {
+      "Phase 1: The Trigger": [
+        "Hear a song from high school and feel it in your bones",
+        "Start a sentence with 'back in my day' and realize what happened",
+        "Rebuy something you sold 15 years ago for triple the price"
+      ],
+      "Phase 2: The Collection": [
+        "Curate a vinyl / retro gaming / vintage clothing collection",
+        "Reconnect with old friends to confirm you were, in fact, cool once",
+        "Attend a reunion or concert for a band that peaked in 2004"
+      ],
+      "Phase 3: The Integration": [
+        "Accept that nostalgia is a valid aesthetic, not a disorder",
+        "Become the person who 'introduces' young people to good music",
+        "Find peace in the fact that some things were genuinely better back then"
+      ]
+    }
+  },
+  {
+    id: "foodie-quest",
+    name: "The Foodie Quest",
+    emoji: "\uD83C\uDF36\uFE0F",
+    tagline: "Your spice rack has more diversity than most Fortune 500 boards.",
+    requires: { foodie: 4, craft: 2 },
+    severity: 48,
+    roadmap: {
+      "Phase 1: The Palate Shift": [
+        "Decide your cooking has been 'basic' for too long",
+        "Order spices from 4 different continents",
+        "Subscribe to 3 food YouTube channels and call it 'research'"
+      ],
+      "Phase 2: The Kitchen Takeover": [
+        "Buy a cast iron pan and develop a relationship with it",
+        "Start making your own pasta / bread / kimchi / cheese",
+        "Photograph every meal. Yes, every one."
+      ],
+      "Phase 3: The Ascension": [
+        "Host dinner parties that are basically TED talks about umami",
+        "Spend more on a single meal out than your monthly utilities",
+        "Achieve inner peace through the perfect sear"
+      ]
+    }
+  },
+  {
+    id: "adventure-seeker",
+    name: "The Adventure Seeker",
+    emoji: "\u26F0\uFE0F",
+    tagline: "You're not running FROM something. You're running TOWARD... something.",
+    requires: { adventure: 5, fitness: 2 },
+    severity: 70,
+    roadmap: {
+      "Phase 1: The Bucket List": [
+        "Write a list of 50 things you 'have to do before...' (don't finish that sentence)",
+        "Book a trip involving a word like 'expedition' or 'summit'",
+        "Buy a GoPro and use it exactly twice"
+      ],
+      "Phase 2: The Escalation": [
+        "Each adventure must be slightly more unhinged than the last",
+        "Start saying things like 'you only live once' without irony",
+        "Your Instagram becomes indistinguishable from a National Geographic pitch"
+      ],
+      "Phase 3: The Legend": [
+        "Complete something genuinely impressive",
+        "Bore everyone at every dinner party with the story for 5 years",
+        "Plan the next one before the bruises heal"
+      ]
+    }
+  },
+  {
+    id: "spending-spree",
+    name: "The Retail Therapy Spiral",
+    emoji: "\uD83D\uDED2",
+    tagline: "You can't put a price on happiness. But you can certainly try.",
+    requires: { spending: 6 },
+    severity: 75,
+    roadmap: {
+      "Phase 1: The Justification": [
+        "'I work hard, I deserve nice things'",
+        "Start using the word 'quality' very loosely",
+        "Develop opinions about thread count and knife steel"
+      ],
+      "Phase 2: The Collection Phase": [
+        "Curate. Everything. Must. Be. Curated.",
+        "Discover buy-it-for-life communities and buy everything at once",
+        "Packages arrive daily. You are on a first-name basis with the delivery driver."
+      ],
+      "Phase 3: The Reckoning": [
+        "Look at your monthly totals. Look away.",
+        "Start a 'no-buy month' that lasts 11 days",
+        "Achieve enlightenment: the best things in life are free (but this knife was worth it)"
+      ]
+    }
+  },
+  {
+    id: "denial-station",
+    name: "The Denial Station",
+    emoji: "\uD83D\uDE36",
+    tagline: "Crisis? What crisis? Everything is absolutely, completely, 100% fine.",
+    requires: { denial: 6 },
+    severity: 88,
+    roadmap: {
+      "Phase 1: The Fine Zone": [
+        "Say 'I'm fine' with increasing conviction",
+        "Smile through existential dread like a professional",
+        "Wonder why everyone else seems to be having a crisis"
+      ],
+      "Phase 2: The Cracks": [
+        "Develop a sudden interest in philosophy at 11pm",
+        "Start watching documentaries about people who 'followed their dreams'",
+        "Cry at a commercial for no reason. Blame allergies."
+      ],
+      "Phase 3: The Breakthrough": [
+        "Admit, quietly, to yourself, in the shower, that something feels off",
+        "Google this quiz and take it honestly this time",
+        "Welcome to the first step. It's warm here. We have hot sauce."
+      ]
+    }
+  },
+  {
+    id: "appearance-overhaul",
+    name: "The Glow-Up Project",
+    emoji: "\u2728",
+    tagline: "New hair, new wardrobe, new skincare routine, same existential dread.",
+    requires: { appearance: 4, spending: 3 },
+    severity: 58,
+    roadmap: {
+      "Phase 1: The Mirror Moment": [
+        "Look at a photo from 5 years ago. Then look at a recent one. Then close the app.",
+        "Research hairstyles that are 'age-appropriate but still cool'",
+        "Discover that moisturizer alone won't cut it anymore"
+      ],
+      "Phase 2: The Transformation": [
+        "Build a skincare routine with more steps than a NASA launch sequence",
+        "Buy clothes that are 'a treat for yourself'",
+        "Get a haircut that makes you feel 27 again (for about 3 days)"
+      ],
+      "Phase 3: The New You": [
+        "Achieve a look you're actually happy with",
+        "Become the person who recommends serums to strangers",
+        "Realize confidence was the real glow-up all along (but the retinol helped)"
+      ]
+    }
+  },
+  {
+    id: "control-freak",
+    name: "The Home Optimization Obsession",
+    emoji: "\uD83D\uDD27",
+    tagline: "You can't control the world, but you CAN control your garage organization.",
+    requires: { domestic: 4, control: 2 },
+    severity: 52,
+    roadmap: {
+      "Phase 1: The Audit": [
+        "Walk through your house seeing only inefficiency",
+        "Watch 40 hours of home improvement content",
+        "Create a project list longer than a CVS receipt"
+      ],
+      "Phase 2: The Projects": [
+        "Start 7 projects. Finish 2.",
+        "Buy tools for a job, realize you need different tools, buy those too",
+        "Develop strong opinions about drawer organizers"
+      ],
+      "Phase 3: The Fortress": [
+        "Achieve a home so optimized it makes visitors uncomfortable",
+        "Label everything. EVERYTHING.",
+        "Stand in your perfectly organized space and feel... something. Probably satisfaction."
+      ]
+    }
+  },
+  {
+    id: "learning-machine",
+    name: "The Perpetual Student",
+    emoji: "\uD83D\uDCDA",
+    tagline: "You have 14 unfinished online courses and a thirst for knowledge that cannot be quenched.",
+    requires: { learning: 3, career: 2, hobby: 2 },
+    severity: 45,
+    roadmap: {
+      "Phase 1: The Enrollment Frenzy": [
+        "Sign up for courses on 3 different platforms in one weekend",
+        "Buy textbooks for a subject you'll study 'when things slow down'",
+        "Start a reading list that would take 4 years to complete"
+      ],
+      "Phase 2: The Deep Dive": [
+        "Actually complete one course and feel like a god",
+        "Start casually dropping your new knowledge in conversations",
+        "Consider going back to school (look up tuition, have a small panic attack)"
+      ],
+      "Phase 3: The Renaissance": [
+        "Become genuinely knowledgeable about something unexpected",
+        "Connect dots between fields that nobody asked you to connect",
+        "Accept that learning IS the hobby, and it's a pretty good one"
+      ]
+    }
+  },
+  {
+    id: "obsession-engine",
+    name: "The Obsession Engine",
+    emoji: "\uD83E\uDDE0",
+    tagline: "You don't do things casually. You do them COMPLETELY or not at all.",
+    requires: { obsession: 4, hobby: 2 },
+    severity: 63,
+    roadmap: {
+      "Phase 1: The Spark": [
+        "Discover something new on a random Tuesday",
+        "Stay up until 3am reading everything about it",
+        "Order supplies before Wednesday"
+      ],
+      "Phase 2: The Hyperfocus": [
+        "Become an expert in 2 weeks (by your own assessment)",
+        "Alienate friends and family with your enthusiasm",
+        "Consider starting a podcast about it (do not start a podcast)"
+      ],
+      "Phase 3: The Cycle": [
+        "Reach a plateau. Feel the itch for something new.",
+        "Discover something else. Repeat from Phase 1.",
+        "Accept this is just how your brain works. It's a feature, not a bug."
+      ]
+    }
+  },
+  {
+    id: "aging-rebel",
+    name: "The Aging Rebel",
+    emoji: "\u23F3",
+    tagline: "Your body is writing checks your knees can't cash.",
+    requires: { aging: 4 },
+    severity: 55,
+    roadmap: {
+      "Phase 1: The Notices": [
+        "Make a sound when you stand up. Every time.",
+        "Google symptoms that turn out to be 'aging'",
+        "Discover that hangovers now last 72 hours"
+      ],
+      "Phase 2: The Resistance": [
+        "Buy supplements with names you can't pronounce",
+        "Start stretching 'proactively' (your back still hurts)",
+        "Develop a bedtime routine because sleep is now a full-time job"
+      ],
+      "Phase 3: The Wisdom": [
+        "Realize that 8 hours of sleep is not 'giving up' but 'leveling up'",
+        "Embrace the dad/mom energy with pride",
+        "You're not old. You're vintage. Vintage is valuable."
+      ]
+    }
+  },
+  {
+    id: "comparison-trap",
+    name: "The Comparison Trap",
+    emoji: "\uD83D\uDCF1",
+    tagline: "Everyone else's highlight reel vs. your behind-the-scenes footage.",
+    requires: { comparison: 3, nostalgia: 2, escape: 2 },
+    severity: 70,
+    roadmap: {
+      "Phase 1: The Scroll": [
+        "Open Instagram. See someone your age doing better. Close Instagram.",
+        "Open Instagram again 4 minutes later.",
+        "Develop feelings about someone's kitchen renovation"
+      ],
+      "Phase 2: The Reckoning": [
+        "Realize you're comparing your Chapter 3 to someone's Chapter 12",
+        "Mute 40% of your feed and feel immediately better",
+        "Start posting authentically (get 60% fewer likes, feel 200% more human)"
+      ],
+      "Phase 3: The Liberation": [
+        "Delete one social media app. Just one. See what happens.",
+        "Focus on your own story for 30 days straight",
+        "Discover that nobody was watching as closely as you thought"
+      ]
+    }
+  },
+  {
+    id: "renaissance-human",
+    name: "The Full Renaissance",
+    emoji: "\uD83C\uDF1F",
+    tagline: "You're not having a crisis. You're having an AWAKENING. (That's what you tell people.)",
+    requires: { hobby: 3, career: 3, adventure: 3, fitness: 2 },
+    severity: 85,
+    roadmap: {
+      "Phase 1: Everything At Once": [
+        "New career direction, new hobby, new workout, new look, new diet, new philosophy",
+        "Your calendar looks like a hostage situation",
+        "Friends are 'concerned' but also 'impressed?'"
+      ],
+      "Phase 2: The Juggle": [
+        "Sleep becomes optional (this is unsustainable, you know this)",
+        "Start saying things like 'I'm reinventing myself' at brunch",
+        "Your energy is either 100% or -40%. No in-between."
+      ],
+      "Phase 3: The Integration": [
+        "Keep 3 things, drop the rest. The right 3.",
+        "Realize transformation is a marathon, not a demolition derby",
+        "Emerge genuinely, actually different. Huh. Would you look at that."
+      ]
+    }
+  },
+  {
+    id: "normie",
+    name: "The Well-Adjusted Adult",
+    emoji: "\uD83E\uDDD8",
+    tagline: "Either you're genuinely at peace, or you're the best liar we've ever seen.",
+    requires: { normie: 4 },
+    severity: 15,
+    roadmap: {
+      "Phase 1: Steady State": [
+        "Continue being suspiciously content",
+        "Watch everyone around you spiral and offer measured support",
+        "Enjoy your hobbies at a reasonable, sustainable pace"
+      ],
+      "Phase 2: The Test": [
+        "Wait for the moment that cracks the facade",
+        "It might be a song, a sunset, or a car commercial",
+        "When it comes, refer to this quiz"
+      ],
+      "Phase 3: The Truth": [
+        "Maybe you really are fine. That's allowed.",
+        "Or maybe your crisis is just quieter and more dignified",
+        "Either way, we respect it. And we'll be here when you need us."
+      ]
+    }
+  }
+];
+
+// State
+let currentQ = 0;
+let scores = {};
+
+function startQuiz() {
+  currentQ = 0;
+  scores = {};
+  document.getElementById('results').style.display = 'none';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const area = document.getElementById('quizArea');
+  const q = questions[currentQ];
+  const pct = ((currentQ) / questions.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  area.innerHTML = '<div class="question-card active">' +
+    '<div class="q-number">Question ' + (currentQ + 1) + ' of ' + questions.length + '</div>' +
+    '<div class="q-text">' + q.text + '</div>' +
+    '<div class="options">' +
+    q.options.map(function(o, i) {
+      return '<button class="option-btn" onclick="answer(' + i + ')">' + o.text + '</button>';
+    }).join('') +
+    '</div></div>';
+}
+
+function answer(idx) {
+  const tags = questions[currentQ].options[idx].tags;
+  for (const [k, v] of Object.entries(tags)) {
+    scores[k] = (scores[k] || 0) + v;
+  }
+  currentQ++;
+  if (currentQ < questions.length) {
+    renderQuestion();
+  } else {
+    document.getElementById('progressFill').style.width = '100%';
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('quizArea').innerHTML = '';
+  const crisis = matchCrisis();
+  const res = document.getElementById('results');
+  const sev = crisis.severity;
+  const meterColor = sev < 40 ? '#4caf50' : sev < 65 ? '#f5c542' : sev < 80 ? '#d4883a' : '#c0392b';
+  const severityLabel = sev < 40 ? 'Mild Wobble' : sev < 65 ? 'Moderate Recalibration' : sev < 80 ? 'Full Crisis Mode' : 'Existential Emergency';
+
+  let roadmapHTML = '';
+  for (const [phase, steps] of Object.entries(crisis.roadmap)) {
+    roadmapHTML += '<div class="roadmap-section"><h3>' + phase + '</h3><ul>' +
+      steps.map(function(s) { return '<li>' + s + '</li>'; }).join('') +
+      '</ul></div>';
+  }
+
+  res.innerHTML = '<div class="result-header">' +
+    '<div class="result-emoji">' + crisis.emoji + '</div>' +
+    '<div class="result-type">' + crisis.name + '</div>' +
+    '<div class="result-tagline">' + crisis.tagline + '</div>' +
+    '</div>' +
+    '<div class="severity-meter">' +
+    '<div class="label">Crisis Severity: ' + severityLabel + ' (' + sev + '%)</div>' +
+    '<div class="meter-bar"><div class="meter-fill" id="meterFill" style="width:0%;background:' + meterColor + '"></div></div>' +
+    '</div>' +
+    '<h3 style="color:#f5c542;margin:24px 0 12px;text-align:center;">Your Personalized Roadmap</h3>' +
+    roadmapHTML +
+    '<div class="share-section">' +
+    '<button class="share-btn" onclick="shareResult()">Copy Result to Share</button><br>' +
+    '<button class="share-btn secondary" onclick="shareTwitter()">Share on X</button><br>' +
+    '<button class="retake-btn" onclick="startQuiz()">Retake Quiz</button>' +
+    '</div>';
+
+  res.style.display = 'block';
+  // Store for sharing
+  res.dataset.crisisName = crisis.name;
+  res.dataset.crisisEmoji = crisis.emoji;
+
+  setTimeout(function() {
+    document.getElementById('meterFill').style.width = sev + '%';
+  }, 100);
+  res.scrollIntoView({ behavior: 'smooth' });
+}
+
+function matchCrisis() {
+  let bestMatch = null;
+  let bestScore = -1;
+
+  for (const c of crisisTypes) {
+    let score = 0;
+    let met = true;
+    for (const [tag, min] of Object.entries(c.requires)) {
+      const actual = scores[tag] || 0;
+      if (actual < min * 0.5) { met = false; }
+      score += Math.min(actual, min * 2);
+    }
+    if (met && score > bestScore) {
+      bestScore = score;
+      bestMatch = c;
+    }
+  }
+
+  // Fallback: if no match, find closest
+  if (!bestMatch) {
+    for (const c of crisisTypes) {
+      let score = 0;
+      for (const [tag] of Object.entries(c.requires)) {
+        score += (scores[tag] || 0);
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = c;
+      }
+    }
+  }
+
+  return bestMatch || crisisTypes[crisisTypes.length - 1];
+}
+
+function shareResult() {
+  const res = document.getElementById('results');
+  const name = res.dataset.crisisName;
+  const emoji = res.dataset.crisisEmoji;
+  const text = emoji + ' My midlife crisis type: ' + name + '\n\nTake the quiz and find your crisis roadmap:\n' + window.location.href;
+  navigator.clipboard.writeText(text).then(function() {
+    const toast = document.getElementById('copiedToast');
+    toast.classList.add('show');
+    setTimeout(function() { toast.classList.remove('show'); }, 2000);
+  });
+}
+
+function shareTwitter() {
+  const res = document.getElementById('results');
+  const name = res.dataset.crisisName;
+  const emoji = res.dataset.crisisEmoji;
+  const text = encodeURIComponent(emoji + ' My midlife crisis type: ' + name + '\n\nTake the quiz and find your crisis roadmap:');
+  const url = encodeURIComponent(window.location.href);
+  window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url, '_blank');
+}
+
+// Start
+startQuiz();
+</script>
+</body>
+</html>

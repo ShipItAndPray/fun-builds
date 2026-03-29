@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Phone Shame</title>
+<style>
+  :root {
+    --bg: #121212;
+    --surface: #1e1e1e;
+    --text: #e0e0e0;
+    --accent: #ff4444;
+    --shame-hue: 0;
+    --shame-intensity: 0;
+    --meter-pct: 0%;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    transition: background-color 0.5s;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 4px;
+    color: #ff6666;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+
+  .timer-display {
+    font-size: 4rem;
+    font-weight: 200;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+    margin: 16px 0;
+    letter-spacing: 2px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 68, 68, var(--shame-intensity));
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    font-size: 1rem;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active { transform: scale(0.95); }
+
+  .btn-start {
+    background: #ff4444;
+    color: #fff;
+  }
+  .btn-start:hover { background: #ff5555; }
+
+  .btn-stop {
+    background: #333;
+    color: #ccc;
+  }
+  .btn-stop:hover { background: #444; }
+
+  .btn-challenge {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: #fff;
+    width: 100%;
+    max-width: 340px;
+    padding: 16px;
+    font-size: 1.1rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-challenge.active {
+    background: linear-gradient(135deg, #00cc44, #009933);
+    animation: pulse-green 2s infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 204, 68, 0.4); }
+    50% { box-shadow: 0 0 0 12px rgba(0, 204, 68, 0); }
+  }
+
+  .btn-share {
+    background: #1da1f2;
+    color: #fff;
+    font-size: 0.9rem;
+    padding: 10px 20px;
+  }
+
+  .shame-meter {
+    width: 100%;
+    max-width: 340px;
+    margin: 20px 0;
+  }
+
+  .shame-meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .shame-meter-bar {
+    width: 100%;
+    height: 14px;
+    background: #2a2a2a;
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .shame-meter-fill {
+    height: 100%;
+    width: var(--meter-pct);
+    border-radius: 7px;
+    background: linear-gradient(90deg, #ffcc00, #ff8800, #ff4444, #cc0000, #880000);
+    transition: width 0.5s ease;
+  }
+
+  .shame-level-text {
+    text-align: center;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    color: #ff8888;
+    font-weight: 600;
+    min-height: 1.2em;
+  }
+
+  .message-box {
+    width: 100%;
+    max-width: 340px;
+    min-height: 100px;
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 16px 0;
+    text-align: center;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    border: 1px solid #333;
+    transition: border-color 0.5s, background 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .message-box.new-msg {
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .challenge-timer {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #00cc44;
+    text-align: center;
+    margin: 8px 0;
+    display: none;
+  }
+
+  .challenge-prompt {
+    font-size: 0.9rem;
+    color: #aaa;
+    text-align: center;
+    display: none;
+  }
+
+  .stats-section {
+    width: 100%;
+    max-width: 340px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+  }
+
+  .stats-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #999;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    border: 1px solid #2a2a2a;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ff6666;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: #777;
+    margin-top: 4px;
+  }
+
+  .history-section {
+    width: 100%;
+    max-width: 340px;
+    margin-top: 16px;
+  }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #222;
+    font-size: 0.85rem;
+    color: #999;
+  }
+
+  .reset-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: #555;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: underline;
+    padding-bottom: 40px;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>Phone Shame</h1>
+<p class="subtitle">You know you should put it down.</p>
+
+<div class="timer-display" id="timer">00:00:00</div>
+
+<div class="controls">
+  <button class="btn-start" id="startBtn" onclick="toggleTimer()">Start Tracking</button>
+  <button class="btn-stop hidden" id="stopBtn" onclick="stopTimer()">Stop</button>
+</div>
+
+<div class="shame-meter">
+  <div class="shame-meter-label">
+    <span>Mild Guilt</span>
+    <span>Peak Shame</span>
+  </div>
+  <div class="shame-meter-bar">
+    <div class="shame-meter-fill" id="meterFill"></div>
+  </div>
+  <div class="shame-level-text" id="shameLevel"></div>
+</div>
+
+<div class="message-box" id="messageBox">
+  <span id="shameMsg">Press start. We dare you.</span>
+</div>
+
+<button class="btn-challenge" id="challengeBtn" onclick="startChallenge()">
+  Put Phone Down Challenge
+</button>
+<div class="challenge-timer" id="challengeTimer">5:00</div>
+<div class="challenge-prompt" id="challengePrompt">Put your phone face-down. Don't touch it.</div>
+
+<div class="controls">
+  <button class="btn-share" onclick="shareScore()">Share Your Shame</button>
+</div>
+
+<div class="stats-section">
+  <div class="stats-title">Today's Damage Report</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="statSessions">0</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statTotal">0m</div>
+      <div class="stat-label">Total Time</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statLongest">0m</div>
+      <div class="stat-label">Longest Binge</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statShame">0</div>
+      <div class="stat-label">Shame Score</div>
+    </div>
+  </div>
+</div>
+
+<div class="history-section" id="historySection"></div>
+
+<span class="reset-link" onclick="resetStats()">Reset all data</span>
+
+<script>
+const SHAME_MESSAGES = [
+  // Level 1: Gentle (0-10 min)
+  (m) => `${m} minutes. That's ${m} minutes you'll never get back.`,
+  (m) => `You've been scrolling for ${m} minutes. Your posture is probably terrible right now.`,
+  (m) => `${m} minutes in. Still "just checking one thing"?`,
+  (m) => `${m} minutes. Your screen time report is going to be devastating.`,
+  (m) => `Congratulations on ${m} minutes of productivity avoidance.`,
+  (m) => `${m} minutes. The sun is still out there. Probably.`,
+  (m) => `${m} minutes gone. Hope that meme was worth it.`,
+  (m) => `Your phone has had your undivided attention for ${m} minutes. Relationships wish.`,
+
+  // Level 2: Getting real (10-20 min)
+  (m) => `${m} minutes. That's enough time to have done 100 pushups. But here we are.`,
+  (m) => `You've been on your phone for ${m} minutes. That's ${m} minutes your houseplant didn't get watered.`,
+  (m) => `${m} minutes. A dog could have learned a new trick by now. You scrolled.`,
+  (m) => `${m} minutes of screen time. Your ancestors crossed oceans. You scrolled Twitter.`,
+  (m) => `You've burned ${m} minutes. That book on your nightstand is judging you.`,
+  (m) => `${m} minutes. Somewhere, a person your age just finished a workout.`,
+  (m) => `${m} minutes. You could've called your mom. She misses you.`,
+  (m) => `${m} minutes staring at a rectangle. Bold choice.`,
+
+  // Level 3: Pointed (20-30 min)
+  (m) => `${m} minutes. That's half a therapy session you clearly need.`,
+  (m) => `${m} minutes. You could have cooked an actual meal instead of looking at food photos.`,
+  (m) => `A ${m}-minute phone session. Your dopamine receptors are begging for mercy.`,
+  (m) => `${m} minutes. Every second, ~4 babies are born. You watched reels.`,
+  (m) => `${m} minutes on your phone. Your laundry pile grows stronger.`,
+  (m) => `${m} minutes. Even your phone's battery is judging how long you've been on.`,
+  (m) => `${m} minutes gone. That's ${Math.floor(m/5)} songs you could have played on an instrument. If you played one.`,
+  (m) => `${m} minutes. The dishes aren't going to wash themselves. They tried.`,
+
+  // Level 4: Harsh (30-50 min)
+  (m) => `${m} minutes. At this point your thumb has more cardio than you do.`,
+  (m) => `${m} minutes. You have officially entered "phone coma" territory.`,
+  (m) => `${m} minutes of your finite human life. Spent on this. Wow.`,
+  (m) => `${m} minutes. That's roughly ${Math.round(m * 200)} pixels scrolled. Impressed yet?`,
+  (m) => `${m} minutes. Your future self is writing an angry letter right now.`,
+  (m) => `You've been staring at your phone for ${m} minutes. The void stares back.`,
+  (m) => `${m} minutes. Michelangelo painted the Sistine Chapel ceiling in 4 years. You can't put down your phone for one hour.`,
+  (m) => `${m} minutes. If phone time was rent, you'd owe your life a lot of money.`,
+
+  // Level 5: Brutal (50-70 min)
+  (m) => `${m} minutes. This is no longer a habit. This is a lifestyle. A bad one.`,
+  (m) => `${m} MINUTES. You've been on your phone for almost an hour. Read that again.`,
+  (m) => `${m} minutes. Your attention span has left the building. It took its things.`,
+  (m) => `${m} minutes. Even your phone is overheating from embarrassment.`,
+  (m) => `${m} minutes. A chicken egg almost hatched in this time. You hatched nothing.`,
+  (m) => `${m} minutes. Your eyes look like two dried tomatoes and you know it.`,
+  (m) => `${m} minutes. If this were a job, you'd be making $0/hr with full dedication.`,
+  (m) => `${m} minutes of phone. The Gita says to act without attachment. You're attached.`,
+
+  // Level 6: Nuclear (70+ min)
+  (m) => `${m} minutes. Over an hour. You should probably see someone about this. Professionally.`,
+  (m) => `${m} minutes. You've now spent more time on your phone today than sleeping last night. Probably.`,
+  (m) => `${m} minutes. At this point, just marry the phone. You spend more time with it than anyone.`,
+  (m) => `${m} minutes. If wasted time made a sound, your neighbors would be complaining.`,
+  (m) => `${m} minutes. That's ${(m/60).toFixed(1)} hours. HOURS. Of your one wild and precious life.`,
+  (m) => `${m} minutes. Civilizations have risen and fallen in less time than your screen session.`,
+  (m) => `${m} minutes. Your phone doesn't love you back. It never will.`,
+  (m) => `${m} minutes. This is an intervention. Put. The. Phone. Down.`,
+  (m) => `${m} minutes. Congratulations, you've unlocked: clinical phone addiction. There is no trophy.`,
+  (m) => `${m} minutes. You've been on your phone so long that THIS APP is worried about you.`,
+];
+
+const SHAME_LEVELS = [
+  { min: 0, label: '', color: '#444' },
+  { min: 1, label: 'Slight Guilt', color: '#888' },
+  { min: 5, label: 'Mild Shame', color: '#cccc00' },
+  { min: 10, label: 'Growing Regret', color: '#ffaa00' },
+  { min: 20, label: 'Deep Shame', color: '#ff6600' },
+  { min: 30, label: 'Existential Dread', color: '#ff3300' },
+  { min: 45, label: 'Total Disgrace', color: '#cc0000' },
+  { min: 60, label: 'Phone Addict', color: '#990000' },
+  { min: 90, label: 'Beyond Help', color: '#660000' },
+  { min: 120, label: 'Lost Cause', color: '#440000' },
+];
+
+let timerInterval = null;
+let startTime = null;
+let elapsed = 0;
+let lastMessageAt = -1;
+let challengeInterval = null;
+let challengeRemaining = 0;
+
+const STORAGE_KEY = 'phoneShameData';
+
+function getToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function loadData() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+  } catch { return {}; }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getTodayData() {
+  const data = loadData();
+  const today = getToday();
+  if (!data[today]) data[today] = { sessions: [], totalSeconds: 0, longestSeconds: 0, shameScore: 0 };
+  return { data, today, todayData: data[today] };
+}
+
+function toggleTimer() {
+  if (timerInterval) return;
+  startTime = Date.now();
+  elapsed = 0;
+  lastMessageAt = -1;
+  document.getElementById('startBtn').classList.add('hidden');
+  document.getElementById('stopBtn').classList.remove('hidden');
+
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
+}
+
+function stopTimer() {
+  if (!timerInterval) return;
+  clearInterval(timerInterval);
+  timerInterval = null;
+
+  const seconds = Math.floor(elapsed / 1000);
+  const { data, today, todayData } = getTodayData();
+  todayData.sessions.push({ start: startTime, duration: seconds });
+  todayData.totalSeconds += seconds;
+  if (seconds > todayData.longestSeconds) todayData.longestSeconds = seconds;
+  todayData.shameScore += Math.floor(seconds / 60);
+  data[today] = todayData;
+  saveData(data);
+
+  document.getElementById('startBtn').classList.remove('hidden');
+  document.getElementById('startBtn').textContent = 'Start Again (why?)';
+  document.getElementById('stopBtn').classList.add('hidden');
+
+  resetBackground();
+  updateStats();
+}
+
+function updateTimer() {
+  elapsed = Date.now() - startTime;
+  const totalSec = Math.floor(elapsed / 1000);
+  const h = String(Math.floor(totalSec / 3600)).padStart(2, '0');
+  const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0');
+  const s = String(totalSec % 60).padStart(2, '0');
+  document.getElementById('timer').textContent = `${h}:${m}:${s}`;
+
+  const minutes = totalSec / 60;
+  updateShameMeter(minutes);
+  updateBackground(minutes);
+
+  // New message every 10 minutes (and at 1 min, 5 min)
+  const messageThresholds = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 140, 160, 180];
+  const currentThreshold = messageThresholds.filter(t => minutes >= t).pop() || 0;
+  if (currentThreshold > lastMessageAt) {
+    lastMessageAt = currentThreshold;
+    showShameMessage(Math.floor(minutes));
+  }
+}
+
+function updateShameMeter(minutes) {
+  const pct = Math.min(100, (minutes / 120) * 100);
+  document.documentElement.style.setProperty('--meter-pct', pct + '%');
+  document.getElementById('meterFill').style.width = pct + '%';
+
+  let level = SHAME_LEVELS[0];
+  for (const l of SHAME_LEVELS) {
+    if (minutes >= l.min) level = l;
+  }
+  const el = document.getElementById('shameLevel');
+  el.textContent = level.label;
+  el.style.color = level.color;
+}
+
+function updateBackground(minutes) {
+  const intensity = Math.min(1, minutes / 90);
+  document.documentElement.style.setProperty('--shame-intensity', intensity);
+
+  const r = Math.floor(18 + intensity * 40);
+  const g = Math.floor(18 - intensity * 12);
+  const b = Math.floor(18 - intensity * 12);
+  document.body.style.backgroundColor = `rgb(${r}, ${Math.max(0,g)}, ${Math.max(0,b)})`;
+
+  const borderIntensity = Math.min(1, minutes / 60);
+  document.getElementById('messageBox').style.borderColor =
+    `rgba(255, ${Math.floor(68 - borderIntensity * 68)}, ${Math.floor(68 - borderIntensity * 68)}, ${0.3 + borderIntensity * 0.5})`;
+}
+
+function resetBackground() {
+  document.body.style.backgroundColor = '#121212';
+  document.documentElement.style.setProperty('--shame-intensity', 0);
+  document.getElementById('messageBox').style.borderColor = '#333';
+}
+
+function showShameMessage(minutes) {
+  let pool;
+  if (minutes < 10) pool = SHAME_MESSAGES.slice(0, 8);
+  else if (minutes < 20) pool = SHAME_MESSAGES.slice(8, 16);
+  else if (minutes < 30) pool = SHAME_MESSAGES.slice(16, 24);
+  else if (minutes < 50) pool = SHAME_MESSAGES.slice(24, 32);
+  else if (minutes < 70) pool = SHAME_MESSAGES.slice(32, 40);
+  else pool = SHAME_MESSAGES.slice(40);
+
+  const msg = pool[Math.floor(Math.random() * pool.length)](minutes);
+  const box = document.getElementById('messageBox');
+  const msgEl = document.getElementById('shameMsg');
+  msgEl.textContent = msg;
+  box.classList.remove('new-msg');
+  void box.offsetWidth; // force reflow
+  box.classList.add('new-msg');
+
+  // vibrate if supported
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+}
+
+// Challenge mode
+function startChallenge() {
+  const btn = document.getElementById('challengeBtn');
+  const timerEl = document.getElementById('challengeTimer');
+  const promptEl = document.getElementById('challengePrompt');
+
+  if (challengeInterval) {
+    clearInterval(challengeInterval);
+    challengeInterval = null;
+    btn.classList.remove('active');
+    btn.textContent = 'Put Phone Down Challenge';
+    timerEl.style.display = 'none';
+    promptEl.style.display = 'none';
+    return;
+  }
+
+  challengeRemaining = 300; // 5 minutes
+  btn.classList.add('active');
+  btn.textContent = 'Cancel Challenge';
+  timerEl.style.display = 'block';
+  promptEl.style.display = 'block';
+
+  challengeInterval = setInterval(() => {
+    challengeRemaining--;
+    const cm = Math.floor(challengeRemaining / 60);
+    const cs = String(challengeRemaining % 60).padStart(2, '0');
+    timerEl.textContent = `${cm}:${cs}`;
+
+    if (challengeRemaining <= 0) {
+      clearInterval(challengeInterval);
+      challengeInterval = null;
+      btn.classList.remove('active');
+      btn.textContent = 'Challenge Complete!';
+      timerEl.textContent = 'You did it. Now do it again.';
+      promptEl.style.display = 'none';
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+
+      // Record challenge win
+      const { data, today, todayData } = getTodayData();
+      todayData.shameScore = Math.max(0, todayData.shameScore - 10);
+      data[today] = todayData;
+      saveData(data);
+      updateStats();
+
+      setTimeout(() => {
+        btn.textContent = 'Put Phone Down Challenge';
+        timerEl.style.display = 'none';
+      }, 5000);
+    }
+  }, 1000);
+}
+
+function shareScore() {
+  const { todayData } = getTodayData();
+  const totalMin = Math.floor(todayData.totalSeconds / 60);
+  const text = `Phone Shame Report:\n${todayData.sessions.length} sessions, ${totalMin} minutes wasted, shame score: ${todayData.shameScore}\n\nI'm being publicly shamed by an app. This is where I am in life.`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Phone Shame', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-share');
+      btn.textContent = 'Copied to clipboard!';
+      setTimeout(() => btn.textContent = 'Share Your Shame', 2000);
+    }).catch(() => {
+      alert(text);
+    });
+  }
+}
+
+function updateStats() {
+  const { data, today, todayData } = getTodayData();
+  document.getElementById('statSessions').textContent = todayData.sessions.length;
+  document.getElementById('statTotal').textContent = Math.floor(todayData.totalSeconds / 60) + 'm';
+  document.getElementById('statLongest').textContent = Math.floor(todayData.longestSeconds / 60) + 'm';
+  document.getElementById('statShame').textContent = todayData.shameScore;
+
+  // Show last 7 days
+  const historyEl = document.getElementById('historySection');
+  const days = Object.keys(data).sort().reverse().slice(0, 7);
+  if (days.length > 1 || (days.length === 1 && days[0] !== today)) {
+    let html = '<div class="stats-title" style="margin-top:16px">Recent History</div>';
+    for (const day of days) {
+      if (day === today) continue;
+      const d = data[day];
+      const totalMin = Math.floor(d.totalSeconds / 60);
+      html += `<div class="history-item"><span>${day}</span><span>${d.sessions.length} sessions, ${totalMin}m, shame: ${d.shameScore}</span></div>`;
+    }
+    historyEl.innerHTML = html;
+  }
+}
+
+function resetStats() {
+  if (confirm('Reset all shame data? Your guilt remains.')) {
+    localStorage.removeItem(STORAGE_KEY);
+    updateStats();
+    document.getElementById('historySection').innerHTML = '';
+  }
+}
+
+// Init
+updateStats();
+</script>
+</body>
+</html>

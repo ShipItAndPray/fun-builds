@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ToS Drama - Dramatic Reading of Terms of Service</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Text:ital@0;1&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --curtain: #8B0000;
+    --gold: #D4AF37;
+    --stage: #1a0a0a;
+    --parchment: #f5e6c8;
+    --ink: #2c1810;
+    --spotlight: rgba(255, 220, 100, 0.15);
+  }
+
+  body {
+    background: var(--stage);
+    color: var(--parchment);
+    font-family: 'Crimson Text', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Curtain header */
+  .curtain-header {
+    background: linear-gradient(180deg, #4a0000 0%, var(--curtain) 30%, #6b0000 70%, #3a0000 100%);
+    padding: 2rem 1rem;
+    text-align: center;
+    border-bottom: 4px solid var(--gold);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .curtain-header::before,
+  .curtain-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 60px;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0,0,0,0.4), transparent);
+  }
+  .curtain-header::before { left: 0; }
+  .curtain-header::after { right: 0; transform: scaleX(-1); }
+
+  .curtain-folds {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      rgba(0,0,0,0.08) 20px,
+      transparent 40px,
+      rgba(255,255,255,0.03) 60px,
+      transparent 80px
+    );
+    pointer-events: none;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    position: relative;
+    z-index: 1;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: #ddd;
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1rem;
+    background: rgba(0,0,0,0.5);
+    border-bottom: 2px solid rgba(212,175,55,0.3);
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #999;
+  }
+
+  .stat-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  /* Main content */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem;
+  }
+
+  /* Input area */
+  .input-section {
+    margin-bottom: 2rem;
+  }
+
+  .input-section label {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+    color: var(--gold);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 200px;
+    background: rgba(245, 230, 200, 0.08);
+    border: 2px solid rgba(212,175,55,0.3);
+    border-radius: 8px;
+    color: var(--parchment);
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    padding: 1rem;
+    resize: vertical;
+    transition: border-color 0.3s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(212,175,55,0.15);
+  }
+
+  textarea::placeholder {
+    color: rgba(245,230,200,0.3);
+    font-style: italic;
+  }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0.8rem 2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .btn-dramatize {
+    background: linear-gradient(135deg, var(--curtain), #b30000);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .btn-dramatize:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 30px rgba(139,0,0,0.6);
+  }
+
+  .btn-dramatize:active { transform: scale(0.98); }
+
+  .btn-speak {
+    background: linear-gradient(135deg, #2a1a00, #4a2a00);
+    color: var(--gold);
+    border: 2px solid rgba(212,175,55,0.5);
+  }
+
+  .btn-speak:hover {
+    background: linear-gradient(135deg, #3a2a00, #5a3a00);
+    box-shadow: 0 0 20px rgba(212,175,55,0.2);
+  }
+
+  .btn-speak.speaking {
+    animation: pulse-glow 1.5s infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(212,175,55,0.3); }
+    50% { box-shadow: 0 0 30px rgba(212,175,55,0.6); }
+  }
+
+  .btn-share {
+    background: linear-gradient(135deg, #1a1a2e, #2a2a4e);
+    color: var(--parchment);
+    border: 2px solid rgba(245,230,200,0.3);
+  }
+
+  .btn-share:hover {
+    border-color: var(--parchment);
+  }
+
+  .btn-stop {
+    background: linear-gradient(135deg, #4a0000, #2a0000);
+    color: #ff6666;
+    border: 2px solid #ff6666;
+  }
+
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  /* Output area */
+  .output-section {
+    display: none;
+  }
+
+  .output-section.visible { display: block; }
+
+  .act-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: center;
+    margin: 2rem 0 1rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+  }
+
+  .act-label::before,
+  .act-label::after {
+    content: ' \2014 ';
+    color: rgba(212,175,55,0.4);
+  }
+
+  /* Dramatic text blocks */
+  .dramatic-block {
+    background: rgba(245,230,200,0.04);
+    border-left: 4px solid var(--curtain);
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    border-radius: 0 8px 8px 0;
+    position: relative;
+    line-height: 1.7;
+    font-size: 1.05rem;
+    transition: all 0.4s;
+  }
+
+  .dramatic-block:hover {
+    background: rgba(245,230,200,0.07);
+    border-left-color: var(--gold);
+  }
+
+  .dramatic-block.currently-reading {
+    background: var(--spotlight);
+    border-left-color: var(--gold);
+    box-shadow: 0 0 40px rgba(255,220,100,0.08);
+  }
+
+  .dramatic-block.outrageous {
+    border-left-color: #ff4444;
+    background: rgba(255,68,68,0.08);
+    position: relative;
+  }
+
+  .outrageous-badge {
+    position: absolute;
+    top: -12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    color: white;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    animation: badge-pulse 2s infinite;
+  }
+
+  @keyframes badge-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  /* Stage directions */
+  .stage-direction {
+    color: var(--gold);
+    font-style: italic;
+    font-weight: 700;
+    display: block;
+    margin: 0.5rem 0;
+    opacity: 0.9;
+  }
+
+  .gasp { color: #ff6b6b; font-weight: 700; }
+  .pause { color: #888; font-style: italic; letter-spacing: 3px; }
+  .twist { color: #ff4444; font-weight: 700; text-transform: uppercase; }
+  .whisper { color: #aaa; font-size: 0.85em; font-style: italic; }
+  .shout { color: #ff8800; font-weight: 700; font-size: 1.15em; text-transform: uppercase; }
+  .narrator { color: var(--gold); font-style: italic; }
+
+  /* Speed control */
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #999;
+  }
+
+  .speed-control input[type="range"] {
+    flex: 1;
+    max-width: 200px;
+    accent-color: var(--gold);
+  }
+
+  /* Share modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.visible {
+    display: flex;
+  }
+
+  .modal {
+    background: var(--stage);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    margin-bottom: 1rem;
+  }
+
+  .modal textarea {
+    min-height: 120px;
+    margin-bottom: 1rem;
+  }
+
+  .modal .btn-row {
+    justify-content: center;
+  }
+
+  .copy-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--gold);
+    color: var(--stage);
+    padding: 0.8rem 2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-family: 'Playfair Display', serif;
+    transition: transform 0.4s;
+    z-index: 200;
+  }
+
+  .copy-toast.visible {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Animations */
+  .dramatic-block { animation: fadeSlideIn 0.5s ease-out; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 1rem; }
+    .stats-bar { gap: 1rem; }
+    .stat-value { font-size: 1.4rem; }
+    .btn { padding: 0.7rem 1.2rem; font-size: 1rem; }
+    .btn-row { flex-direction: column; }
+    .btn { width: 100%; min-width: unset; }
+    textarea { min-height: 150px; }
+  }
+
+  /* Voice selector */
+  .voice-select {
+    background: rgba(245,230,200,0.08);
+    border: 1px solid rgba(212,175,55,0.3);
+    color: var(--parchment);
+    font-family: 'Crimson Text', serif;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+  }
+
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="curtain-header">
+  <div class="curtain-folds"></div>
+  <h1>ToS Drama</h1>
+  <p class="subtitle">Where Legal Prose Meets Theatrical Performance</p>
+</div>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-label">Dramatic Moments</div>
+    <div class="stat-value" id="momentCount">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Gasps Inserted</div>
+    <div class="stat-value" id="gaspCount">0</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Drama Score</div>
+    <div class="stat-value" id="dramaScore">0</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="input-section">
+    <label for="tosInput">Paste Your Boring Legal Text Below:</label>
+    <textarea id="tosInput" placeholder="Paste any Terms of Service, Privacy Policy, EULA, or legal document here...
+
+Example: &quot;By accessing or using our services, you agree to be bound by these terms. We reserve the right to modify, suspend, or discontinue any aspect of the service at any time without notice...&quot;"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-dramatize" id="dramatizeBtn" onclick="dramatize()">Dramatize!</button>
+    </div>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="controls-row">
+      <button class="btn btn-speak" id="speakBtn" onclick="toggleSpeech()">Perform Reading</button>
+      <button class="btn btn-stop" id="stopBtn" onclick="stopSpeech()" style="display:none">Stop</button>
+      <button class="btn btn-share" onclick="showShareModal()">Share</button>
+    </div>
+    <div class="controls-row">
+      <label class="speed-control">
+        Speed:
+        <input type="range" id="speedSlider" min="0.3" max="1.2" step="0.1" value="0.7">
+        <span id="speedLabel">0.7x</span>
+      </label>
+      <label style="color:#999; font-size:0.9rem;">
+        Voice:
+        <select class="voice-select" id="voiceSelect"></select>
+      </label>
+    </div>
+    <div id="dramaticOutput"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <h2>Share This Drama</h2>
+    <p style="color:#ccc; margin-bottom:1rem;">Copy the dramatic text below and share the outrage.</p>
+    <textarea id="shareText" readonly></textarea>
+    <div class="btn-row">
+      <button class="btn btn-dramatize" onclick="copyShare()">Copy to Clipboard</button>
+      <button class="btn btn-share" onclick="closeShareModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="copy-toast" id="copyToast">Copied to clipboard!</div>
+
+<script>
+// 40+ dramatic templates
+const TEMPLATES = {
+  gasps: [
+    '*audible gasp*',
+    '*the audience clutches their pearls*',
+    '*a monocle drops somewhere*',
+    '*stunned silence fills the theater*',
+    '*someone in the back row faints*',
+    '*collective intake of breath*',
+    '*a glass shatters offstage*',
+    '*the orchestra stops mid-note*',
+  ],
+  pauses: [
+    '... ... ...',
+    '*long, agonizing pause*',
+    '*the silence stretches into eternity*',
+    '*a single tear rolls down*',
+    '*holds for dramatic effect*',
+    '*stares meaningfully into the distance*',
+    '*a clock ticks loudly somewhere*',
+  ],
+  twists: [
+    'BUT WAIT -- THERE IS MORE!',
+    'PLOT TWIST!',
+    'AND THEN... THE BETRAYAL.',
+    'WHAT TREACHERY IS THIS?!',
+    'THE VILLAIN REVEALS THEIR TRUE NATURE!',
+    'DEAR READER, IT GETS WORSE.',
+    'JUST WHEN YOU THOUGHT IT WAS SAFE...',
+    'AH, BUT THE FINE PRINT... THE CURSED FINE PRINT!',
+  ],
+  whispers: [
+    '(whispered) they hoped you would not read this part...',
+    '(under breath) this is where your rights quietly vanish...',
+    '(barely audible) ...and nobody ever noticed...',
+    '(in hushed tones) the lawyers wrote this at 3am...',
+    '(softly) somewhere, a consumer advocate weeps...',
+  ],
+  narrator: [
+    'And so, the unsuspecting user scrolled past, unaware of what they had agreed to.',
+    'Little did they know, this paragraph would change everything.',
+    'The legal team rubbed their hands together with glee.',
+    'In a dimly lit office, a lawyer smiled.',
+    'Thus began the most one-sided agreement since the Louisiana Purchase.',
+    'And the people clicked "I Agree" without a second thought.',
+    'The fine print grew three sizes that day.',
+    'Somewhere, a Terms of Service generator hummed contentedly.',
+  ],
+  reactions: [
+    '[AUDIENCE MEMBER: "They can DO that?!"]',
+    '[SOMEONE SHOUTS FROM THE BALCONY: "OBJECTION!"]',
+    '[THE THEATER ERUPTS IN MURMURS]',
+    '[A LAWYER IN THE FRONT ROW NODS APPROVINGLY]',
+    '[SCATTERED BOOS FROM THE GALLERY]',
+    '[AN ELDERLY WOMAN CLUTCHES HER HANDBAG TIGHTER]',
+    '[THE GHOST OF CONSUMER PROTECTION SIGHS]',
+  ],
+  stageDirections: [
+    '[Thunder rumbles ominously]',
+    '[Lightning flashes across the stage]',
+    '[The lights dim to a single spotlight]',
+    '[Ominous organ music swells]',
+    '[A raven perches on the podium]',
+    '[Wind howls through the courtroom]',
+    '[The chandelier sways menacingly]',
+    '[Fog rolls across the stage floor]',
+  ],
+  exclamations: [
+    'THE AUDACITY!',
+    'GOOD HEAVENS!',
+    'BY WHAT DARK SORCERY--',
+    'HAVE THEY NO SHAME?!',
+    'THIS IS MADNESS!',
+    'UNBELIEVABLE!',
+    'THE SHEER NERVE!',
+  ]
+};
+
+// Trigger phrases that make clauses "dramatic"
+const TRIGGERS = [
+  { pattern: /\b(reserve[sd]?\s+the\s+right)\b/i, weight: 3, label: 'power grab' },
+  { pattern: /\b(without\s+(prior\s+)?notice)\b/i, weight: 3, label: 'stealth move' },
+  { pattern: /\b(at\s+(our|its)\s+sole\s+discretion)\b/i, weight: 4, label: 'unchecked power' },
+  { pattern: /\b(irrevocab(le|ly))\b/i, weight: 4, label: 'no take-backs' },
+  { pattern: /\b(perpetual|in\s+perpetuity)\b/i, weight: 5, label: 'forever clause' },
+  { pattern: /\b(waive|waiver|forfeiture)\b/i, weight: 4, label: 'rights vanishing' },
+  { pattern: /\b(indemnif(y|ication))\b/i, weight: 3, label: 'you pay for everything' },
+  { pattern: /\b(termina(te|tion))\b/i, weight: 2, label: 'the end' },
+  { pattern: /\b(liabilit(y|ies))\b/i, weight: 2, label: 'blame game' },
+  { pattern: /\b(arbitrat(e|ion))\b/i, weight: 3, label: 'no courts for you' },
+  { pattern: /\b(class\s+action)\b/i, weight: 4, label: 'divide and conquer' },
+  { pattern: /\b(collect|harvest|gather)\b.*\b(data|information)\b/i, weight: 3, label: 'data hoarding' },
+  { pattern: /\b(third\s+part(y|ies))\b/i, weight: 2, label: 'strangers involved' },
+  { pattern: /\b(not\s+(be\s+)?(liable|responsible))\b/i, weight: 3, label: 'blame deflection' },
+  { pattern: /\b(modify|change|alter|amend)\b.*\b(terms|agreement|policy)\b/i, weight: 3, label: 'moving goalposts' },
+  { pattern: /\b(intellectual\s+property)\b/i, weight: 2, label: 'ownership claims' },
+  { pattern: /\b(grant|license)\b.*\b(royalty-free|worldwide|sublicens)\b/i, weight: 5, label: 'they own your stuff' },
+  { pattern: /\b(consequential|incidental|punitive)\s+damages\b/i, weight: 3, label: 'damage cap' },
+  { pattern: /\b(binding)\b/i, weight: 2, label: 'no escape' },
+  { pattern: /\b(surviv(e|al))\b/i, weight: 2, label: 'clauses from beyond the grave' },
+  { pattern: /\b(warranty|guarantee)\b/i, weight: 2, label: 'promises (or lack thereof)' },
+  { pattern: /\b(as[- ]is)\b/i, weight: 3, label: 'take it or leave it' },
+  { pattern: /\b(may\s+share)\b/i, weight: 3, label: 'sharing your secrets' },
+  { pattern: /\b(consent)\b/i, weight: 2, label: 'your "agreement"' },
+  { pattern: /\b(non-?refundable)\b/i, weight: 3, label: 'money gone forever' },
+];
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function splitSentences(text) {
+  // Split on sentence boundaries but keep content together reasonably
+  const raw = text.split(/(?<=[.!?])\s+/);
+  const out = [];
+  let buf = '';
+  for (const s of raw) {
+    buf += (buf ? ' ' : '') + s;
+    if (buf.length > 60) {
+      out.push(buf);
+      buf = '';
+    }
+  }
+  if (buf) out.push(buf);
+  return out;
+}
+
+function scoreSentence(sentence) {
+  let score = 0;
+  const matched = [];
+  for (const t of TRIGGERS) {
+    if (t.pattern.test(sentence)) {
+      score += t.weight;
+      matched.push(t.label);
+    }
+  }
+  return { score, matched };
+}
+
+let dramaticData = { moments: 0, gasps: 0, blocks: [] };
+
+function dramatize() {
+  const input = document.getElementById('tosInput').value.trim();
+  if (!input) return;
+
+  stopSpeech();
+
+  const sentences = splitSentences(input);
+  const output = document.getElementById('dramaticOutput');
+  output.innerHTML = '';
+
+  let moments = 0;
+  let gasps = 0;
+  let maxScore = 0;
+  let maxScoreIdx = -1;
+  const blocks = [];
+
+  // Split into "acts"
+  const actSize = Math.max(3, Math.ceil(sentences.length / 3));
+  const acts = [];
+  for (let i = 0; i < sentences.length; i += actSize) {
+    acts.push(sentences.slice(i, i + actSize));
+  }
+
+  const actNames = ['Act I: The Illusion of Choice', 'Act II: The Tightening Grip', 'Act III: The Final Surrender'];
+
+  acts.forEach((act, actIdx) => {
+    const actLabel = document.createElement('div');
+    actLabel.className = 'act-label';
+    actLabel.textContent = actNames[actIdx] || `Act ${actIdx + 1}`;
+    output.appendChild(actLabel);
+
+    // Opening stage direction for each act
+    if (actIdx === 0) {
+      const opening = document.createElement('div');
+      opening.className = 'dramatic-block';
+      opening.innerHTML = `<span class="stage-direction">${pick(TEMPLATES.stageDirections)}</span><span class="narrator">${pick(TEMPLATES.narrator)}</span>`;
+      output.appendChild(opening);
+      blocks.push({ element: opening, text: opening.textContent });
+      moments++;
+    }
+
+    act.forEach((sentence, i) => {
+      const { score, matched } = scoreSentence(sentence);
+      const block = document.createElement('div');
+      block.className = 'dramatic-block';
+      let html = '';
+
+      // Track most outrageous
+      if (score > maxScore) {
+        maxScore = score;
+        maxScoreIdx = blocks.length;
+      }
+
+      // Pre-sentence drama based on score
+      if (score >= 4) {
+        html += `<span class="stage-direction">${pick(TEMPLATES.stageDirections)}</span>`;
+        html += `<span class="twist">${pick(TEMPLATES.twists)}</span><br><br>`;
+        moments += 2;
+      } else if (score >= 2) {
+        html += `<span class="gasp">${pick(TEMPLATES.gasps)}</span><br><br>`;
+        gasps++;
+        moments++;
+      }
+
+      // The sentence itself, with trigger words highlighted
+      let processed = sentence;
+      for (const t of TRIGGERS) {
+        processed = processed.replace(t.pattern, '<strong style="color:#ff8800;text-decoration:underline wavy #ff4444;">$&</strong>');
+      }
+      html += processed;
+
+      // Post-sentence drama
+      if (score >= 3) {
+        html += `<br><br><span class="gasp">${pick(TEMPLATES.gasps)}</span>`;
+        gasps++;
+        moments++;
+
+        if (Math.random() > 0.5) {
+          html += `<br><span class="narrator">${pick(TEMPLATES.reactions)}</span>`;
+          moments++;
+        }
+      } else if (score >= 1) {
+        if (Math.random() > 0.4) {
+          html += `<br><br><span class="pause">${pick(TEMPLATES.pauses)}</span>`;
+          moments++;
+        }
+      }
+
+      // Whisper for sneaky clauses
+      if (/without\s+(prior\s+)?notice|sole\s+discretion|irrevocab/i.test(sentence)) {
+        html += `<br><span class="whisper">${pick(TEMPLATES.whispers)}</span>`;
+        moments++;
+      }
+
+      // Random dramatic seasoning for low-score sentences
+      if (score === 0 && Math.random() > 0.6) {
+        html += `<br><br><span class="pause">${pick(TEMPLATES.pauses)}</span>`;
+        moments++;
+      }
+
+      // Matched labels as tags
+      if (matched.length > 0) {
+        html += '<div style="margin-top:0.6rem;">';
+        matched.forEach(m => {
+          html += `<span style="display:inline-block;background:rgba(139,0,0,0.4);color:#ff8888;font-size:0.75rem;padding:2px 8px;border-radius:10px;margin:2px 4px;font-family:\'Playfair Display\',serif;letter-spacing:1px;">${m}</span>`;
+        });
+        html += '</div>';
+      }
+
+      block.innerHTML = html;
+      output.appendChild(block);
+      blocks.push({ element: block, text: block.textContent, score });
+    });
+
+    // Inter-act narrator
+    if (actIdx < acts.length - 1) {
+      const interlude = document.createElement('div');
+      interlude.className = 'dramatic-block';
+      interlude.innerHTML = `<span class="narrator">${pick(TEMPLATES.narrator)}</span><br><span class="pause">${pick(TEMPLATES.pauses)}</span>`;
+      output.appendChild(interlude);
+      blocks.push({ element: interlude, text: interlude.textContent });
+      moments++;
+    }
+  });
+
+  // Finale
+  const finale = document.createElement('div');
+  finale.className = 'dramatic-block';
+  finale.innerHTML = `
+    <span class="stage-direction">[The curtain begins to fall]</span>
+    <span class="narrator">And so it was written. And so it was agreed to. And so... nobody read it.</span><br><br>
+    <span class="shout">${pick(TEMPLATES.exclamations)}</span><br><br>
+    <span class="stage-direction">[END. The audience sits in stunned silence. Someone whispers: "I just clicked Agree on one of those yesterday..."]</span>
+  `;
+  output.appendChild(finale);
+  blocks.push({ element: finale, text: finale.textContent });
+  moments++;
+
+  // Mark most outrageous
+  if (maxScoreIdx >= 0 && blocks[maxScoreIdx]) {
+    const el = blocks[maxScoreIdx].element;
+    el.classList.add('outrageous');
+    const badge = document.createElement('div');
+    badge.className = 'outrageous-badge';
+    badge.textContent = 'Most Outrageous Clause';
+    el.appendChild(badge);
+  }
+
+  // Update stats
+  dramaticData = { moments, gasps, blocks };
+  document.getElementById('momentCount').textContent = moments;
+  document.getElementById('gaspCount').textContent = gasps;
+  document.getElementById('dramaScore').textContent = Math.min(99, Math.round((moments / Math.max(1, sentences.length)) * 30 + maxScore * 5));
+
+  // Show output
+  document.getElementById('outputSection').classList.add('visible');
+  document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Speech synthesis
+let speechUtterance = null;
+let isSpeaking = false;
+let currentBlockIdx = 0;
+
+function populateVoices() {
+  const sel = document.getElementById('voiceSelect');
+  const voices = speechSynthesis.getVoices();
+  sel.innerHTML = '';
+  // Prefer dramatic-sounding voices
+  const preferred = ['Daniel', 'Samantha', 'Karen', 'Moira', 'Tessa', 'Alex'];
+  const sorted = [...voices].sort((a, b) => {
+    const ai = preferred.findIndex(p => a.name.includes(p));
+    const bi = preferred.findIndex(p => b.name.includes(p));
+    if (ai >= 0 && bi < 0) return -1;
+    if (bi >= 0 && ai < 0) return 1;
+    return a.name.localeCompare(b.name);
+  });
+  sorted.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${v.name} (${v.lang})`;
+    opt.dataset.voiceName = v.name;
+    sel.appendChild(opt);
+  });
+}
+
+speechSynthesis.onvoiceschanged = populateVoices;
+populateVoices();
+
+document.getElementById('speedSlider').addEventListener('input', function() {
+  document.getElementById('speedLabel').textContent = this.value + 'x';
+});
+
+function speakBlock(idx) {
+  if (idx >= dramaticData.blocks.length || !isSpeaking) {
+    stopSpeech();
+    return;
+  }
+
+  // Highlight current block
+  dramaticData.blocks.forEach((b, i) => {
+    b.element.classList.toggle('currently-reading', i === idx);
+  });
+
+  // Scroll into view
+  dramaticData.blocks[idx].element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  const text = dramaticData.blocks[idx].text.replace(/\*/g, '').replace(/\[.*?\]/g, '');
+  currentBlockIdx = idx;
+
+  const utt = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const sel = document.getElementById('voiceSelect');
+  if (sel.value && voices.length) {
+    const selectedIdx = parseInt(sel.value);
+    // Map back to original voices array
+    const preferred = ['Daniel', 'Samantha', 'Karen', 'Moira', 'Tessa', 'Alex'];
+    const sorted = [...voices].sort((a, b) => {
+      const ai = preferred.findIndex(p => a.name.includes(p));
+      const bi = preferred.findIndex(p => b.name.includes(p));
+      if (ai >= 0 && bi < 0) return -1;
+      if (bi >= 0 && ai < 0) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    if (sorted[selectedIdx]) utt.voice = sorted[selectedIdx];
+  }
+
+  utt.rate = parseFloat(document.getElementById('speedSlider').value);
+  utt.pitch = 0.8 + Math.random() * 0.4; // Slight pitch variation for drama
+
+  // Score-based modulation
+  const score = dramaticData.blocks[idx].score || 0;
+  if (score >= 4) {
+    utt.pitch = 1.3;
+    utt.rate = Math.max(0.3, utt.rate - 0.2);
+  } else if (score >= 2) {
+    utt.pitch = 1.1;
+  }
+
+  utt.onend = () => {
+    speakBlock(idx + 1);
+  };
+
+  speechUtterance = utt;
+  speechSynthesis.speak(utt);
+}
+
+function toggleSpeech() {
+  if (isSpeaking) {
+    stopSpeech();
+    return;
+  }
+  if (dramaticData.blocks.length === 0) return;
+
+  isSpeaking = true;
+  document.getElementById('speakBtn').textContent = 'Pause';
+  document.getElementById('speakBtn').classList.add('speaking');
+  document.getElementById('stopBtn').style.display = '';
+  speakBlock(0);
+}
+
+function stopSpeech() {
+  isSpeaking = false;
+  speechSynthesis.cancel();
+  document.getElementById('speakBtn').textContent = 'Perform Reading';
+  document.getElementById('speakBtn').classList.remove('speaking');
+  document.getElementById('stopBtn').style.display = 'none';
+  dramaticData.blocks.forEach(b => b.element.classList.remove('currently-reading'));
+}
+
+// Share
+function showShareModal() {
+  const blocks = dramaticData.blocks;
+  let text = "--- DRAMATIC READING OF TERMS OF SERVICE ---\n\n";
+  const output = document.getElementById('dramaticOutput');
+  text += output.textContent.substring(0, 2000);
+  text += "\n\n--- Generated by ToS Drama (tosdr.ama) ---";
+  text += `\n\nDramatic Moments: ${dramaticData.moments} | Gasps: ${dramaticData.gasps}`;
+
+  document.getElementById('shareText').value = text;
+  document.getElementById('shareModal').classList.add('visible');
+}
+
+function closeShareModal() {
+  document.getElementById('shareModal').classList.remove('visible');
+}
+
+function copyShare() {
+  const text = document.getElementById('shareText').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copyToast');
+    toast.classList.add('visible');
+    setTimeout(() => toast.classList.remove('visible'), 2000);
+  });
+}
+
+// Close modal on overlay click
+document.getElementById('shareModal').addEventListener('click', function(e) {
+  if (e.target === this) closeShareModal();
+});
+</script>
+
+</body>
+</html>

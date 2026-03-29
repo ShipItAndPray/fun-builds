@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PARANOIA MACHINE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --border: #222;
+    --red: #cc0000;
+    --red-dim: #660000;
+    --amber: #cc8800;
+    --text: #999;
+    --text-bright: #ccc;
+    --glow: rgba(204, 0, 0, 0.15);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Courier Prime', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scan line overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+    border-bottom: 1px solid var(--red-dim);
+    margin-bottom: 30px;
+  }
+
+  header h1 {
+    font-family: 'Special Elite', cursive;
+    font-size: 2.5rem;
+    color: var(--red);
+    letter-spacing: 8px;
+    text-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow);
+    animation: flicker 4s infinite;
+  }
+
+  header .subtitle {
+    font-size: 0.75rem;
+    color: var(--text);
+    letter-spacing: 4px;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+    98% { opacity: 0.7; }
+  }
+
+  .eye-icon {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    animation: blink 5s infinite;
+  }
+
+  @keyframes blink {
+    0%, 90%, 100% { opacity: 1; }
+    95% { opacity: 0.1; }
+  }
+
+  /* Input area */
+  .input-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+
+  textarea {
+    width: 100%;
+    background: #080808;
+    border: 1px solid var(--border);
+    color: var(--text-bright);
+    font-family: 'Courier Prime', monospace;
+    font-size: 1rem;
+    padding: 15px;
+    border-radius: 3px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  textarea:focus {
+    border-color: var(--red-dim);
+    box-shadow: 0 0 15px var(--glow);
+  }
+
+  textarea::placeholder {
+    color: #444;
+    font-style: italic;
+  }
+
+  /* Paranoia slider */
+  .slider-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .slider-header label {
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+
+  .level-display {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9rem;
+    color: var(--red);
+    min-width: 160px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(to right, #333, var(--red-dim), var(--red));
+    border-radius: 3px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--red);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px var(--glow);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--red);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 10px var(--glow);
+  }
+
+  .level-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    color: #555;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Button */
+  .analyze-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--red-dim);
+    color: var(--text-bright);
+    border: 1px solid var(--red);
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+  }
+
+  .analyze-btn:hover {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 30px var(--glow);
+  }
+
+  .analyze-btn:active {
+    transform: scale(0.98);
+  }
+
+  .analyze-btn.analyzing {
+    animation: pulse 0.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* Output */
+  .output-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 25px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .output-section.visible {
+    display: block;
+    animation: fadeIn 0.5s;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .output-header .classification {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.7rem;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-transform: uppercase;
+  }
+
+  .threat-level {
+    display: inline-block;
+    padding: 2px 10px;
+    border: 1px solid var(--red);
+    border-radius: 2px;
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--red);
+    animation: blink-slow 2s infinite;
+  }
+
+  @keyframes blink-slow {
+    0%, 70%, 100% { opacity: 1; }
+    85% { opacity: 0.4; }
+  }
+
+  .output-text {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--text-bright);
+    white-space: pre-wrap;
+  }
+
+  .output-text .highlight {
+    color: var(--red);
+    font-weight: bold;
+  }
+
+  .output-text .question {
+    color: var(--amber);
+  }
+
+  /* Share button */
+  .share-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid #444;
+    color: var(--text);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.3s;
+  }
+
+  .share-btn:hover {
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  .share-btn.copied {
+    border-color: #0a0;
+    color: #0a0;
+  }
+
+  /* Example chips */
+  .examples {
+    margin-bottom: 20px;
+  }
+
+  .examples label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 10px;
+  }
+
+  .chip {
+    display: inline-block;
+    padding: 6px 12px;
+    background: #151515;
+    border: 1px solid #282828;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: #777;
+    cursor: pointer;
+    margin: 3px;
+    transition: all 0.2s;
+  }
+
+  .chip:hover {
+    border-color: var(--red-dim);
+    color: var(--text-bright);
+  }
+
+  /* Audio toggle */
+  .audio-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    z-index: 100;
+    transition: border-color 0.3s;
+  }
+
+  .audio-toggle:hover {
+    border-color: var(--red-dim);
+  }
+
+  .audio-toggle.playing {
+    border-color: var(--red);
+    box-shadow: 0 0 15px var(--glow);
+  }
+
+  /* History */
+  .history-section {
+    margin-top: 30px;
+    border-top: 1px solid var(--border);
+    padding-top: 20px;
+  }
+
+  .history-section h3 {
+    font-family: 'Special Elite', cursive;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+  }
+
+  .history-item {
+    padding: 12px;
+    background: #0d0d0d;
+    border: 1px solid #1a1a1a;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .history-item:hover {
+    border-color: var(--red-dim);
+  }
+
+  .history-item .original {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .history-item .preview {
+    font-size: 0.75rem;
+    color: var(--red);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    header h1 { font-size: 1.8rem; letter-spacing: 4px; }
+    .input-section, .slider-section, .output-section { padding: 15px; }
+    textarea { font-size: 0.9rem; }
+  }
+
+  /* Typing animation */
+  .typing-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 16px;
+    background: var(--red);
+    animation: cursor-blink 0.6s infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes cursor-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    font-size: 0.6rem;
+    color: #333;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="eye-icon">&#x1F441;</div>
+    <h1>PARANOIA MACHINE</h1>
+    <div class="subtitle">Nothing is what it seems</div>
+  </header>
+
+  <div class="examples">
+    <label>Intercepted transmissions</label>
+    <span class="chip" onclick="useExample(this)">My neighbor smiled at me</span>
+    <span class="chip" onclick="useExample(this)">I found a penny on the ground</span>
+    <span class="chip" onclick="useExample(this)">My coworker brought donuts</span>
+    <span class="chip" onclick="useExample(this)">A bird landed on my car</span>
+    <span class="chip" onclick="useExample(this)">My phone battery died</span>
+    <span class="chip" onclick="useExample(this)">Someone liked my old photo</span>
+    <span class="chip" onclick="useExample(this)">The traffic light turned green</span>
+    <span class="chip" onclick="useExample(this)">I got a wrong number call</span>
+  </div>
+
+  <div class="input-section">
+    <label>Report the incident</label>
+    <textarea id="input" placeholder="Describe a perfectly normal event..."></textarea>
+  </div>
+
+  <div class="slider-section">
+    <div class="slider-header">
+      <label>Paranoia Level</label>
+      <span class="level-display" id="levelDisplay">Mild Suspicion</span>
+    </div>
+    <input type="range" id="paranoiaSlider" min="1" max="5" value="1" step="1">
+    <div class="level-labels">
+      <span>Mild</span>
+      <span>Uneasy</span>
+      <span>Suspicious</span>
+      <span>Alarmed</span>
+      <span>Full Conspiracy</span>
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+    &#x1F50D; ANALYZE THREAT
+  </button>
+
+  <div class="output-section" id="output">
+    <div class="output-header">
+      <span class="classification">&#x26A0; Threat Assessment</span>
+      <span class="threat-level" id="threatLevel">ELEVATED</span>
+    </div>
+    <div class="output-text" id="outputText"></div>
+    <button class="share-btn" id="shareBtn" onclick="shareResult()">&#x1F4CB; Copy to Clipboard</button>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none">
+    <h3>&#x1F4C1; Case Files</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <footer>
+    TRUST NO ONE &mdash; ESPECIALLY THIS WEBSITE
+  </footer>
+</div>
+
+<div class="audio-toggle" id="audioToggle" onclick="toggleAudio()" title="Suspicious music">
+  &#x1F50A;
+</div>
+
+<script>
+// =========================================
+// PARANOIA TEMPLATES (50+)
+// =========================================
+
+const templates = {
+
+  // ---- MILD SUSPICION (Level 1) ----
+  mild: [
+    (s,v,o) => `${s}. Interesting. But ask yourself: ${v} that really just a coincidence? Or was it... deliberate? Think about it. When was the last time that happened? Exactly.`,
+    (s,v,o) => `${s}. Sure. "Normal." But have you noticed how often these "normal" things keep happening? Almost like someone is keeping track.`,
+    (s,v,o) => `${s}. Okay. But did you notice anything... off? A hesitation? A glance? These things matter more than people think.`,
+    (s,v,o) => `${s}. Fine. But who else was around when this happened? Did you check? You should start checking.`,
+    (s,v,o) => `${s}. You took that at face value, didn't you? That's exactly what they'd want you to do.`,
+    (s,v,o) => `${s}. Maybe. Or maybe it was a test. A small one. To see how you'd react. And now they know.`,
+    (s,v,o) => `${s}. Hmm. Keep a note of the exact time and date. You'll want that later. Trust me.`,
+    (s,v,o) => `${s}. That's what you THINK happened. But what if there's a version of this story you're not seeing?`,
+    (s,v,o) => `${s}. Interesting timing, though. Right when you least expected it. That's not randomness. That's precision.`,
+    (s,v,o) => `${s}. Just... keep your eyes open for the next few days. If anything else "normal" happens, we might have a pattern.`,
+    (s,v,o) => `${s}. You know what bothers me? How UNREMARKABLE that sounds. Almost TOO unremarkable. Like it was designed to not raise suspicion.`,
+  ],
+
+  // ---- UNEASY (Level 2) ----
+  uneasy: [
+    (s,v,o) => `${s}. WHY? What do they know? Have they been watching you? When was the last time you checked your locks?`,
+    (s,v,o) => `${s}. Right. And you didn't think to question this? Who benefits from you accepting this as normal? Follow the motive.`,
+    (s,v,o) => `${s}. Have you checked if anyone else experienced the same thing recently? If so, you're part of something. If not... you were specifically targeted.`,
+    (s,v,o) => `${s}. Fascinating. Now think: what happened exactly 24 hours before this? And 24 hours after? See the pattern yet? You will.`,
+    (s,v,o) => `${s}. You should check your phone. Not for messages. For apps you didn't install. For permissions you didn't grant. Just... check.`,
+    (s,v,o) => `${s}. Notice how you're telling ME about this? That means they WANT you to talk about it. The question is: why?`,
+    (s,v,o) => `${s}. The timing here is... suspicious. Cross-reference this with local news. See if anything else "routine" happened that day.`,
+    (s,v,o) => `${s}. That's what the surface layer looks like. But scratch a little deeper. Who was there? Who WASN'T there that usually is? That's your tell.`,
+    (s,v,o) => `${s}. You know what's weird? You remembered this event specifically. Out of everything that happened today. Your subconscious is trying to tell you something.`,
+    (s,v,o) => `${s}. Okay, but have you swept your home for new objects recently? Things that weren't there before? Small things. Easily overlooked. Deliberately so.`,
+    (s,v,o) => `${s}. I don't want to alarm you, but this matches at least THREE other reports I've seen. The similarity is... uncomfortable.`,
+  ],
+
+  // ---- SUSPICIOUS (Level 3) ----
+  suspicious: [
+    (s,v,o) => `${s}. WAKE UP. This is a classic surveillance confirmation tactic. They're testing if you notice. You didn't. Until now. Close your blinds tonight.`,
+    (s,v,o) => `${s}. I've mapped this kind of incident before. It's Phase 2. Phase 1 was something you dismissed weeks ago. Phase 3... you don't want Phase 3. Start documenting everything.`,
+    (s,v,o) => `${s}. This is textbook. TEXTBOOK. They did the same thing in Operation Mockingbird. Different era, same playbook. Do your research.`,
+    (s,v,o) => `${s}. Three questions: Who benefits? Who was watching? And why do you think you're only JUST NOW noticing? They've been at this for a while.`,
+    (s,v,o) => `${s}. You need to start a log. Dates, times, locations, witnesses. Photograph everything. Store copies offline. They can't erase what they can't find.`,
+    (s,v,o) => `${s}. Coincidence? There are no coincidences. There are only events whose connections you haven't traced yet. Start tracing.`,
+    (s,v,o) => `${s}. Have you noticed your WiFi acting strange? Slower than usual? Small interruptions? That's not your router. That's packet inspection. They're watching your data.`,
+    (s,v,o) => `${s}. I ran the probability on this being random. 0.3%. ZERO POINT THREE PERCENT. You're telling me that's chance? Open your eyes.`,
+    (s,v,o) => `${s}. Here's what they DON'T want you to know: this exact scenario appears in declassified documents from the 1970s. Same method. Updated targets.`,
+    (s,v,o) => `${s}. This is a coordinated effort. Multiple actors. You're seeing one thread of a much larger web. The fact that you noticed even THIS much means you're getting close.`,
+    (s,v,o) => `${s}. You need a faraday bag for your phone. TODAY. Not tomorrow. Today. And vary your route home for the next two weeks. Different route every day. No patterns.`,
+  ],
+
+  // ---- ALARMED (Level 4) ----
+  alarmed: [
+    (s,v,o) => `${s}.\n\nSTOP. Read that again. Now read it as if you were a case officer reviewing a surveillance report. See it now? That's not an event. That's an OPERATION. You are the subject.\n\nThey've mapped your routine. They know your schedule. This was a PROBE. A deliberate, calculated probe to measure your awareness level. And you just filed it under "normal." That's exactly what they wanted.\n\nCheck your car for trackers. Under the wheel wells. Behind the bumper. Inside the gas cap cover. Do it tonight, in the dark, with a flashlight. Not your phone flashlight. A REAL flashlight.`,
+    (s,v,o) => `${s}.\n\nThis is not a coincidence. Let me be very clear: this is NOT a coincidence.\n\nI've cross-referenced this pattern across 47 documented cases. In EVERY case, what you just described was the final "innocent" event before the operation went active. You are in a window. A small one. What you do in the next 72 hours determines whether you're a spectator or a target.\n\nChange your passwords. ALL of them. Not from your home network. From a library computer. Pay cash for the printing. Leave your phone in the car.`,
+    (s,v,o) => `${s}.\n\nLet me tell you what really happened. Not the version you saw. The version that was DESIGNED for you to see.\n\nBehind that "normal" event was a team. Minimum three people. One to execute, one to observe your reaction, one to document. Your response has been cataloged. Your awareness level has been assessed. They now know exactly how much you notice.\n\nThe answer? Not enough. Until now. Start sleeping with your documents in a waterproof bag. You'll thank me later.`,
+    (s,v,o) => `${s}.\n\nRed flag. MASSIVE red flag.\n\nThis is identical to what happened to [REDACTED] in [REDACTED] before their [REDACTED] was compromised. I'm not being dramatic. I'm being precise.\n\nYour digital footprint from the last 6 months has been harvested. This "event" was the confirmation step. They needed to verify the physical matches the digital. It does. They confirmed it today.\n\nYou need an exit strategy. Not permanently. But you need one ready.`,
+    (s,v,o) => `${s}.\n\nYou're telling the wrong person. Or maybe... exactly the right person. They'd know that too.\n\nThink about everyone you've told about this. Every single person. Now ask yourself: which one of them asked a follow-up question that seemed just a LITTLE too specific? That's your leak. That's how they verify.\n\nFrom now on, tell different versions to different people. When the wrong version comes back to you, you'll know exactly who's feeding them information.`,
+  ],
+
+  // ---- FULL CONSPIRACY (Level 5) ----
+  conspiracy: [
+    (s,v,o) => `${s}.\n\n[THREAT LEVEL: OMEGA]\n\nYou think this is about you? This is about ALL of us. What you witnessed is a node in a global network that has been operating since 1954. The Bilderberg Group calls them "social calibration events." The CIA uses the term "ambient confirmation protocols." Same thing. Different stationery.\n\nEvery "normal" event you've experienced in the last YEAR has been engineered. Your reality is a controlled environment. The food you eat, the news you read, the "random" people you meet -- all curated. All designed to keep you at EXACTLY your current level of awareness.\n\nThis event? This was the stress test. They're checking the simulation boundaries. And you -- YOU -- just proved the simulation is holding.\n\nExcept now you know. And knowing changes the equation. They'll adjust. Expect something aggressively "normal" to happen within 48 hours. Something so boring, so unremarkable, that you'll be TEMPTED to ignore it. DON'T.\n\nBurn this message after reading. Clear your browser history. Then clear it again, because the first clear only removes the surface layer. The metadata persists. It ALWAYS persists.`,
+    (s,v,o) => `${s}.\n\n[CLASSIFIED // EYES ONLY // UMBRA]\n\nI've been waiting for someone to report exactly this. You're the seventh person this month. All different cities. All the same event signature.\n\nHere's what's actually happening: There is a machine. Not a metaphorical machine. A LITERAL machine. It runs predictive models on human behavior. 8.1 billion behavioral profiles, updated in real-time. What you experienced was an OUTPUT of this machine. A nudge. A micro-adjustment to keep your life trajectory within acceptable parameters.\n\nAcceptable to whom? That's the question that gets people relocated.\n\nThe satellites aren't for GPS. The 5G towers aren't for phones. Your smart devices aren't smart FOR you. They're smart ABOUT you. Every thermostat reading, every step counted, every sleep pattern tracked -- it all feeds the machine.\n\nAnd the machine decided today that you needed this particular "normal" event. Ask yourself: what decision were you about to make? What were you ABOUT to change? Because THAT'S what they're preventing.\n\nYou have a choice. Go back to sleep. Or start noticing. But know this: once you start noticing, they start noticing that you're noticing. And that changes everything.`,
+    (s,v,o) => `${s}.\n\n[SIGNAL INTERCEPT - PRIORITY ALPHA]\n\nListen very carefully. I'm only going to say this once, and I need you to not react visibly while reading this. They may be watching your screen.\n\nWhat you described is Step 7 of a 12-step protocol. Steps 1 through 6 already happened. You didn't notice because you weren't supposed to. Step 8 will happen within 5 to 7 days. It will also seem completely normal.\n\nThe protocol is called GROUNDHOG. It was developed in 1987 by a joint task force that doesn't officially exist. Its purpose: to establish a baseline reality that can be incrementally shifted without the subject's awareness.\n\nYou are the subject.\n\nThe good news: you reported it. That means some part of your pattern recognition survived the conditioning. The bad news: reporting it is Step 9. Which means you're further along than I thought.\n\nSteps 10, 11, and 12 are [REDACTED]. I physically cannot tell you. Not because I don't want to. Because the information has been removed from every accessible database. I've looked. I've looked EVERYWHERE.\n\nAll I can tell you is: trust your instincts over your logic for the next month. Your logic has been compromised. Your instincts haven't. Yet.`,
+    (s,v,o) => `${s}.\n\n[EMERGENCY BROADCAST - ALL FREQUENCIES]\n\nThis is it. This is the event I was told about. Not by a person. By a pattern. A pattern hidden in the timestamps of 14 years of "coincidences" that I've been documenting.\n\nYour "normal" event is the convergence point. Every thread I've been following -- the unexplained construction projects, the new cell towers, the facial recognition in grocery stores, the DNA collection disguised as ancestry tests, the social media algorithms that know what you want before you want it -- they ALL point to this moment.\n\nNot this type of event. THIS event. Yours. Specifically.\n\nThe probability of this being random is not low. It is ZERO. I can prove it mathematically, but the proof requires a chalkboard, three hours, and a room with no electronic devices. Because the math itself is surveilled. They have algorithms scanning for anyone who runs these specific calculations.\n\nYou are not crazy. You are not paranoid. You are AWAKE. And that makes you dangerous. Not to them. To the NARRATIVE. The story they need everyone to believe.\n\nWhat happens next depends on whether you share this with someone you trust. But first: do you REALLY trust them? How do you KNOW? When did you last verify?`,
+    (s,v,o) => `${s}.\n\n[DEAD DROP MESSAGE - AUTHENTICATE: CRIMSON FOXGLOVE]\n\nI don't have much time. The window for this transmission is 4 minutes before the routing algorithms detect the anomaly.\n\nYou reported what appears to be a mundane event. I need you to understand: there ARE no mundane events. There haven't been since 2009. That year, a system went online. No announcement. No press release. The system observes, predicts, and ENGINEERS every human interaction within its coverage area.\n\nCoverage area: Earth.\n\nYour event was generated. Not influenced. Not nudged. GENERATED. The person involved may not even know they're an asset. Most assets don't. They just feel a vague compulsion to do exactly what the system needs them to do, exactly when it needs them to do it.\n\nFree will is a luxury item. And your subscription expired the moment you connected your first device to the internet.\n\nI've managed to stay outside the system by living according to a randomized schedule generated by radioactive decay measurements. True randomness. The only thing the system can't predict. I suggest you acquire a Geiger counter.\n\nThis message will be flagged within 90 seconds of you reading it. Your device has already reported the engagement. The question is whether they act on it or file it.\n\nPray for filing. You're not ready for acting.\n\n[END TRANSMISSION]\n[SIGNAL LOST]\n[THEY KNOW]`
+  ]
+};
+
+const levelNames = ['', 'Mild Suspicion', 'Growing Unease', 'Active Suspicion', 'High Alert', 'FULL CONSPIRACY'];
+const threatLevels = ['', 'GUARDED', 'ELEVATED', 'HIGH', 'SEVERE', 'CRITICAL'];
+const levelKeys = ['', 'mild', 'uneasy', 'suspicious', 'alarmed', 'conspiracy'];
+
+let history = [];
+let audioCtx = null;
+let audioPlaying = false;
+let audioNodes = [];
+
+// Slider update
+const slider = document.getElementById('paranoiaSlider');
+const levelDisplay = document.getElementById('levelDisplay');
+
+slider.addEventListener('input', () => {
+  levelDisplay.textContent = levelNames[slider.value];
+  // Adjust page ambiance based on level
+  const intensity = slider.value / 5;
+  document.body.style.background = `rgb(${Math.floor(10 + intensity * 5)}, ${Math.floor(10 - intensity * 5)}, ${Math.floor(10 - intensity * 5)})`;
+});
+
+// Example chips
+function useExample(el) {
+  document.getElementById('input').value = el.textContent;
+  document.getElementById('input').focus();
+}
+
+// Main analysis
+function analyze() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.classList.add('analyzing');
+  btn.textContent = 'SCANNING...';
+
+  setTimeout(() => {
+    const level = parseInt(slider.value);
+    const key = levelKeys[level];
+    const pool = templates[key];
+    const template = pool[Math.floor(Math.random() * pool.length)];
+    const result = template(input, 'was', '');
+
+    displayResult(result, level, input);
+
+    btn.classList.remove('analyzing');
+    btn.innerHTML = '&#x1F50D; ANALYZE THREAT';
+  }, 800 + Math.random() * 1200);
+}
+
+function displayResult(text, level, original) {
+  const output = document.getElementById('output');
+  const outputText = document.getElementById('outputText');
+  const threatLevel = document.getElementById('threatLevel');
+
+  output.classList.add('visible');
+  threatLevel.textContent = threatLevels[level];
+
+  // Typewriter effect
+  outputText.innerHTML = '';
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'typing-cursor';
+  outputText.appendChild(cursor);
+
+  const speed = level >= 4 ? 8 : level >= 3 ? 12 : 18;
+
+  function typeChar() {
+    if (i < text.length) {
+      // Format special words
+      let char = text[i];
+      if (text[i] === '\n') {
+        outputText.insertBefore(document.createElement('br'), cursor);
+      } else {
+        const span = document.createTextNode(char);
+        outputText.insertBefore(span, cursor);
+      }
+      i++;
+      setTimeout(typeChar, speed + Math.random() * speed);
+    } else {
+      cursor.remove();
+      // Add to history
+      addToHistory(original, text);
+    }
+  }
+
+  typeChar();
+
+  // Scroll into view
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function addToHistory(original, result) {
+  history.unshift({ original, result, time: new Date().toLocaleTimeString() });
+  if (history.length > 10) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-item" onclick="replayHistory(${i})">
+      <div class="original">${h.time} - "${escapeHtml(h.original)}"</div>
+      <div class="preview">${escapeHtml(h.result.substring(0, 100))}...</div>
+    </div>
+  `).join('');
+}
+
+function replayHistory(i) {
+  const h = history[i];
+  document.getElementById('input').value = h.original;
+  const output = document.getElementById('output');
+  const outputText = document.getElementById('outputText');
+  output.classList.add('visible');
+  outputText.textContent = h.result;
+  output.scrollIntoView({ behavior: 'smooth' });
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Share
+function shareResult() {
+  const text = document.getElementById('outputText').textContent;
+  const btn = document.getElementById('shareBtn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('copied');
+    btn.innerHTML = '&#x2705; COPIED TO DEAD DROP';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '&#x1F4CB; Copy to Clipboard';
+    }, 2000);
+  });
+}
+
+// =========================================
+// SUSPICIOUS MUSIC (Web Audio API)
+// =========================================
+function createSuspenseAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Deep drone
+  const drone = audioCtx.createOscillator();
+  drone.type = 'sawtooth';
+  drone.frequency.value = 55;
+  const droneGain = audioCtx.createGain();
+  droneGain.gain.value = 0.06;
+  const droneFilter = audioCtx.createBiquadFilter();
+  droneFilter.type = 'lowpass';
+  droneFilter.frequency.value = 200;
+  drone.connect(droneFilter);
+  droneFilter.connect(droneGain);
+  droneGain.connect(audioCtx.destination);
+  drone.start();
+
+  // Slow LFO on drone pitch
+  const lfo = audioCtx.createOscillator();
+  lfo.frequency.value = 0.05;
+  const lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 3;
+  lfo.connect(lfoGain);
+  lfoGain.connect(drone.frequency);
+  lfo.start();
+
+  // Eerie high tone
+  const eerie = audioCtx.createOscillator();
+  eerie.type = 'sine';
+  eerie.frequency.value = 880;
+  const eerieGain = audioCtx.createGain();
+  eerieGain.gain.value = 0.015;
+  const eerieFilter = audioCtx.createBiquadFilter();
+  eerieFilter.type = 'bandpass';
+  eerieFilter.frequency.value = 900;
+  eerieFilter.Q.value = 20;
+  eerie.connect(eerieFilter);
+  eerieFilter.connect(eerieGain);
+  eerieGain.connect(audioCtx.destination);
+  eerie.start();
+
+  // Slow pitch sweep on eerie tone
+  const lfo2 = audioCtx.createOscillator();
+  lfo2.frequency.value = 0.08;
+  const lfo2Gain = audioCtx.createGain();
+  lfo2Gain.gain.value = 30;
+  lfo2.connect(lfo2Gain);
+  lfo2Gain.connect(eerie.frequency);
+  lfo2.start();
+
+  // Heartbeat-like pulse
+  const pulse = audioCtx.createOscillator();
+  pulse.type = 'sine';
+  pulse.frequency.value = 40;
+  const pulseGain = audioCtx.createGain();
+  pulseGain.gain.value = 0;
+  pulse.connect(pulseGain);
+  pulseGain.connect(audioCtx.destination);
+  pulse.start();
+
+  // Heartbeat rhythm
+  function heartbeat() {
+    if (!audioPlaying) return;
+    const now = audioCtx.currentTime;
+    pulseGain.gain.setValueAtTime(0, now);
+    pulseGain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+    pulseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    pulseGain.gain.setValueAtTime(0, now + 0.35);
+    pulseGain.gain.linearRampToValueAtTime(0.06, now + 0.4);
+    pulseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+    setTimeout(heartbeat, 1400);
+  }
+  heartbeat();
+
+  // Random creepy stinger
+  function randomStinger() {
+    if (!audioPlaying) return;
+    const osc = audioCtx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = 300 + Math.random() * 800;
+    const g = audioCtx.createGain();
+    g.gain.value = 0;
+    const now = audioCtx.currentTime;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.03, now + 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 2);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 2.5);
+    setTimeout(randomStinger, 5000 + Math.random() * 15000);
+  }
+  setTimeout(randomStinger, 3000);
+
+  audioNodes = [drone, lfo, eerie, lfo2, pulse, droneGain, eerieGain, pulseGain];
+}
+
+function toggleAudio() {
+  const btn = document.getElementById('audioToggle');
+  if (!audioPlaying) {
+    audioPlaying = true;
+    btn.classList.add('playing');
+    btn.innerHTML = '&#x1F50A;';
+    createSuspenseAudio();
+  } else {
+    audioPlaying = false;
+    btn.classList.remove('playing');
+    btn.innerHTML = '&#x1F507;';
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtx = null;
+    }
+  }
+}
+
+// Enter key to analyze
+document.getElementById('input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    analyze();
+  }
+});
+</script>
+</body>
+</html>

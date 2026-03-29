@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plot Hole Detector</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--surface:#13131f;--card:#1a1a2e;--accent:#e74c3c;--accent2:#c0392b;--gold:#f39c12;--text:#e8e6e3;--dim:#6b6b7b;--green:#27ae60;--blue:#3498db;--purple:#9b59b6;--border:#2a2a3e}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:800px;margin:0 auto;padding:20px}
+header{text-align:center;padding:40px 0 30px}
+header h1{font-size:2.4rem;font-weight:800;letter-spacing:-1px}
+header h1 span{color:var(--accent)}
+header p{color:var(--dim);margin-top:8px;font-size:1rem;font-style:italic}
+.input-area{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px}
+.input-area label{display:block;font-weight:600;margin-bottom:10px;font-size:.95rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+textarea{width:100%;height:180px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:16px;color:var(--text);font-size:1rem;font-family:inherit;resize:vertical;line-height:1.6}
+textarea::placeholder{color:#444}
+textarea:focus{outline:none;border-color:var(--accent)}
+.btn-row{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+button{border:none;border-radius:8px;padding:12px 24px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff;flex:1;min-width:200px}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-secondary{background:var(--card);color:var(--dim);border:1px solid var(--border)}
+.btn-secondary:hover{color:var(--text);border-color:var(--dim)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+#results{display:none}
+.score-card{background:linear-gradient(135deg,#1a0a0a,#1a1a2e);border:1px solid var(--accent);border-radius:16px;padding:32px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden}
+.score-card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(231,76,60,.05) 0%,transparent 60%);pointer-events:none}
+.score-label{color:var(--dim);text-transform:uppercase;letter-spacing:2px;font-size:.8rem;margin-bottom:8px}
+.score-value{font-size:4rem;font-weight:900;color:var(--accent);line-height:1}
+.score-verdict{margin-top:12px;font-size:1.1rem;font-style:italic;color:var(--gold)}
+.category-bar{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap}
+.cat-pill{padding:8px 16px;border-radius:20px;font-size:.85rem;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--dim);transition:all .2s}
+.cat-pill.active{color:#fff}
+.cat-pill[data-cat="timeline"].active{background:#2980b9;border-color:#3498db}
+.cat-pill[data-cat="motivation"].active{background:#8e44ad;border-color:#9b59b6}
+.cat-pill[data-cat="physics"].active{background:#27ae60;border-color:#2ecc71}
+.cat-pill[data-cat="logic"].active{background:#d35400;border-color:#e67e22}
+.cat-pill .count{background:rgba(255,255,255,.15);padding:2px 8px;border-radius:10px;margin-left:6px;font-size:.75rem}
+.hole-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;position:relative;transition:all .2s;animation:slideIn .3s ease}
+.hole-card:hover{border-color:var(--dim);transform:translateX(4px)}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.hole-cat{display:inline-block;padding:3px 10px;border-radius:10px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.hole-cat.timeline{background:rgba(52,152,219,.15);color:#3498db}
+.hole-cat.motivation{background:rgba(155,89,182,.15);color:#9b59b6}
+.hole-cat.physics{background:rgba(46,204,113,.15);color:#2ecc71}
+.hole-cat.logic{background:rgba(230,126,34,.15);color:#e67e22}
+.hole-title{font-size:1.1rem;font-weight:700;margin-bottom:8px}
+.hole-snark{color:var(--dim);font-style:italic;line-height:1.5;font-size:.95rem}
+.hole-severity{position:absolute;top:20px;right:20px;display:flex;gap:2px}
+.sev-dot{width:8px;height:8px;border-radius:50%;background:var(--border)}
+.sev-dot.on{background:var(--accent)}
+.share-section{text-align:center;padding:20px 0}
+.share-section button{margin:0 6px}
+.empty-state{text-align:center;color:var(--dim);padding:40px;font-style:italic}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-box .num{font-size:1.6rem;font-weight:800;color:var(--gold)}
+.stat-box .lbl{font-size:.7rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+@media(max-width:600px){
+  header h1{font-size:1.8rem}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .score-value{font-size:3rem}
+  .container{padding:12px}
+  textarea{height:140px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Plot <span>Hole</span> Detector</h1>
+    <p>"Every movie is perfect until you actually think about it."</p>
+  </header>
+
+  <div class="input-area">
+    <label>Paste your movie plot summary</label>
+    <textarea id="plotInput" placeholder="A hero discovers they are the chosen one. After training for a single afternoon, they defeat the ancient evil that has terrorized the world for centuries. The villain, who could have killed the hero at any time, instead captures them and explains the entire plan..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" id="analyzeBtn" onclick="analyze()">Find Plot Holes</button>
+      <button class="btn-secondary" onclick="loadExample()">Try Example</button>
+      <button class="btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="results">
+    <div class="score-card">
+      <div class="score-label">Plot Integrity Score</div>
+      <div class="score-value" id="scoreValue">--</div>
+      <div class="score-verdict" id="scoreVerdict"></div>
+    </div>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="category-bar" id="categoryBar"></div>
+
+    <div id="holesList"></div>
+
+    <div class="share-section">
+      <button class="btn-secondary" onclick="shareResults()">Copy Results</button>
+      <button class="btn-secondary" onclick="shareLink()">Share Link</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var TEMPLATES = [
+  {cat:"timeline",title:"The Speed-Run Hero",keywords:["train","training","learn","learned","master","mastered","day","hour","afternoon","quickly","fast","overnight","suddenly skilled"],snark:["So they mastered a skill in {time} that takes normal people years? Must be nice.","Ah yes, the classic training montage equals instant expertise approach. Decades of practice? Nah, one afternoon.","Apparently the laws of skill acquisition do not apply to protagonists."],severity:4},
+  {cat:"timeline",title:"Time Is an Illusion",keywords:["meanwhile","same time","at that moment","simultaneously","back at","while this happened"],snark:["The timeline here is doing gymnastics. Events happen simultaneously but somehow everyone is in the right place.","I love how meanwhile does all the heavy lifting for this plots timeline.","Time works differently in this movies universe apparently."],severity:3},
+  {cat:"timeline",title:"The Convenient Arrival",keywords:["just in time","arrived just","last moment","nick of time","showed up right","perfect timing"],snark:["Arriving just in time despite having no idea where to go or when to be there. GPS of destiny.","What impeccable timing! Almost as if someone wrote it that way.","The probability of arriving at exactly the right moment approaches zero, yet here we are."],severity:3},
+  {cat:"timeline",title:"The Forgotten Duration",keywords:["days passed","weeks later","years later","time passed","months went by","long time"],snark:["Nobody noticed they were gone for {time}? Not a single person?","So {time} pass and literally nothing else happened? The world just paused?","Interesting how {time} of zero character development just flew by."],severity:3},
+  {cat:"timeline",title:"The Age Paradox",keywords:["child","grew up","years ago","young","old","age","born","remember when"],snark:["The ages do not add up here. Someone skipped math class.","If they were a child {time} ago, the timeline does not work unless aging is optional.","The characters age at whatever speed the plot requires."],severity:4},
+  {cat:"timeline",title:"Sunrise Sunset Who Cares",keywords:["night","day","morning","evening","dark","dawn","sunset","sunrise","midnight"],snark:["It was night a second ago and now it is broad daylight. Speedrun sunset.","The sun rises and sets on command in this universe.","Day and night seem to be more of a suggestion than a rule here."],severity:2},
+  {cat:"timeline",title:"The Eternal Chase",keywords:["chase","ran","running","escape","fled","pursued","caught up"],snark:["They have been running for what feels like three acts but somehow never left the city block.","This chase scene requires the pursuer to forget they have a vehicle.","Cardio levels in this movie are either superhuman or nonexistent, depending on what the scene needs."],severity:2},
+
+  {cat:"motivation",title:"The Monologuing Villain",keywords:["villain","explained","told them","revealed","plan","evil","scheme","shared","confessed","monologue"],snark:["The villain explained their entire plan because...? Was it lonely at the top?","Ah, the classic villain move: achieve 99 percent of your evil plan, then stop to give a TED talk.","Let me explain my entire scheme to the one person who can stop me. Galaxy brain move."],severity:5},
+  {cat:"motivation",title:"Why Did They Not Just...",keywords:["could have","should have","why didn't","instead of","easily","simple","obvious"],snark:["The obvious solution was RIGHT THERE but everyone collectively agreed to ignore it.","If anyone had a single functioning brain cell, this movie would be 12 minutes long.","The plot survives solely because every character forgot how to think."],severity:4},
+  {cat:"motivation",title:"The Unmotivated Betrayal",keywords:["betray","betrayed","turned on","switched sides","traitor","double cross","backstab"],snark:["They betrayed their lifelong ally because the script said so?","This betrayal has the emotional depth of a puddle. Zero buildup, maximum plot convenience.","Switching sides with no foreshadowing. Character motivation is apparently optional."],severity:4},
+  {cat:"motivation",title:"Love at First Convenience",keywords:["fell in love","love interest","romance","attracted","kiss","together","relationship","romantic"],snark:["They fell in love after knowing each other for approximately 47 minutes of screen time.","Nothing says true love like bonding over shared near-death experiences and zero actual conversation.","This romance has all the chemistry of a damp napkin."],severity:3},
+  {cat:"motivation",title:"The Noble Sacrifice But Why",keywords:["sacrifice","died","gave their life","heroic death","saved everyone","gave up"],snark:["They sacrificed themselves even though there were at least three other solutions available.","The noble sacrifice would hit harder if it was not completely unnecessary.","Dying heroically when you could have just not. Bold choice."],severity:4},
+  {cat:"motivation",title:"The Forgotten Grudge",keywords:["forgave","forgive","friends again","made up","reconciled","forgot","let it go","moved on"],snark:["They just forgave the person who ruined their life? After one conversation?","Years of trauma resolved in a 30-second heart-to-heart. Therapy is shaking.","Apparently attempted harm is forgivable if you say sorry with enough sincerity."],severity:3},
+  {cat:"motivation",title:"Stranger Danger Never Heard of It",keywords:["trusted","stranger","just met","believed","followed","went with"],snark:["They trusted a complete stranger with their life because vibes?","Following a mysterious stranger into danger: the universal protagonist hobby.","I just met you but here is my deepest secret and complete trust. Cool cool cool."],severity:3},
+  {cat:"motivation",title:"The Reluctant Hero For 5 Minutes",keywords:["refused","didn't want","reluctant","ordinary","normal life","forced","had to"],snark:["They refused the call for approximately one scene before eagerly jumping in.","Such reluctance. Much hesitation. Anyway, they are the hero now.","The I am just a normal person act lasted shorter than a sneeze."],severity:2},
+
+  {cat:"physics",title:"Explosion Immunity",keywords:["explosion","exploded","blast","bomb","blew up","detonated","fireball"],snark:["Survived an explosion by outrunning it? Fire does not work that way. At all.","The explosion destroyed everything except the main character, who was 10 feet away. Plot armor is blast-proof.","Walking away from a fireball without looking back does not make you immune to shrapnel."],severity:5},
+  {cat:"physics",title:"The Infinite Magazine",keywords:["shot","fired","gun","bullets","shooting","weapon","ammo","rounds"],snark:["That gun has been firing for three minutes straight without a reload. Infinite ammo cheat activated.","Bullet count: roughly however many the scene needs.","Ammunition in this movie regenerates faster than the heros confidence."],severity:3},
+  {cat:"physics",title:"Gravity Is Optional",keywords:["fell","falling","jumped","drop","height","cliff","building","tower","roof"],snark:["They fell from THAT height and walked it off? Bones are suggestions apparently.","Gravity: the one law of physics this movie consistently ignores.","A fall that would end any normal human is just a minor inconvenience for the protagonist."],severity:4},
+  {cat:"physics",title:"Convenient Weather",keywords:["storm","rain","lightning","weather","wind","fog","snow","hurricane"],snark:["The weather changed to match the emotional tone of the scene. Mother Nature is a method actor.","A storm appears exactly when dramatic tension is needed. Meteorologically suspicious.","The weather in this movie has better dramatic timing than most of the cast."],severity:2},
+  {cat:"physics",title:"The Sound of Silence In Space",keywords:["space","orbit","vacuum","zero gravity","spacecraft","shuttle","asteroid"],snark:["Sound in space, fire in space, wind in space... physics took the day off.","Space operates on rule of cool physics here. Newton is rolling in his grave.","Zero gravity applies selectively: dramatic moments get gravity, boring ones do not."],severity:4},
+  {cat:"physics",title:"Superhuman Endurance",keywords:["fought","fighting","battle","hours","exhausted","kept going","wounded","injured","hurt","bleeding"],snark:["They have been fighting for hours with multiple wounds and show zero fatigue. Adrenaline is one heck of a drug.","Bleeding from several wounds but still doing parkour. The human body does not work like that.","At this point, acknowledging basic human physical limits would be refreshing."],severity:3},
+  {cat:"physics",title:"Hacking the Unhackable",keywords:["hack","hacked","computer","system","code","encrypted","firewall","virus","digital"],snark:["They hacked a military-grade system by typing really fast. That is not how encryption works.","The hacking scene involves a progress bar, green text, and zero actual computer science.","Access cracked in 30 seconds. The IT department should be fired immediately."],severity:4},
+  {cat:"physics",title:"Cars Do Not Work Like That",keywords:["car","drove","driving","crash","vehicle","chase","highway","road","truck"],snark:["That car took damage that would crumple a tank, but drove away fine.","Cars in this universe are both indestructible and explosive, depending on the scene.","The laws of automotive physics are mere guidelines in this movie."],severity:3},
+
+  {cat:"logic",title:"The Chosen One Convenience",keywords:["chosen","prophecy","destiny","foretold","the one","special","powers","gifted","born to"],snark:["They are the chosen one which conveniently explains why the plot bends around them like a pretzel.","A prophecy that specifically describes the protagonist? What are the odds! They are 100 percent, because its fiction.","Being chosen is doing a lot of work to justify why this particular person is important."],severity:4},
+  {cat:"logic",title:"Nobody Calls the Cops",keywords:["police","authorities","law","government","army","military","help","backup","call"],snark:["At no point did anyone think to call the authorities? The people whose literal job this is?","The police exist in this universe but apparently took the day off during the apocalypse.","We should handle this ourselves instead of calling the trained professionals. Solid plan."],severity:4},
+  {cat:"logic",title:"The Secret That Everyone Knows",keywords:["secret","hidden","no one knows","unknown","disguise","identity","mask","undercover"],snark:["This secret identity is hidden behind the worlds thinnest disguise. Glasses. It is always glasses.","A secret known by half the cast is not really a secret anymore.","The secret is so poorly kept that the audience figured it out before the characters."],severity:3},
+  {cat:"logic",title:"Communication Would Solve Everything",keywords:["misunderstand","misunderstood","didn't tell","didn't say","assumed","thought they","didn't explain","didn't mention"],snark:["This entire conflict could have been avoided with one honest conversation. ONE.","The plot is held together entirely by characters refusing to communicate like adults.","If only someone had said something! - the audience, for the entire second act."],severity:5},
+  {cat:"logic",title:"The Unguarded MacGuffin",keywords:["artifact","object","weapon","key","stone","ring","crystal","orb","gem","device","relic","ancient"],snark:["The most powerful object in the universe was guarded by nothing? A gentle breeze could steal it.","This world-ending artifact was just sitting there. No guards. No traps. Just vibes.","Millennia of civilization and nobody thought to put this in a safe?"],severity:3},
+  {cat:"logic",title:"Convenient Eavesdropping",keywords:["overheard","listened","heard them","eavesdrop","spying","watching","secretly"],snark:["They happened to overhear the ONE conversation that moves the plot forward. What luck!","Conveniently positioned within earshot of critical exposition. Acoustics of destiny.","The odds of overhearing exactly this conversation at exactly this time are astronomically low."],severity:3},
+  {cat:"logic",title:"Plot Armor is Thicc",keywords:["survived","alive","impossible","lucky","miracle","somehow","managed to","against all odds"],snark:["They survived that? The statistical improbability is staggering. Plot armor is undefeated.","Against all odds is doing Olympic-level heavy lifting in this sentence.","Somehow they survived. Somehow. The writers favorite word."],severity:4},
+  {cat:"logic",title:"The Expendable Army",keywords:["army","soldiers","guards","troops","minions","henchmen","warriors","forces"],snark:["An entire army of trained soldiers cannot hit one person. Stormtrooper Marksmanship Academy graduates.","The bad guys army exists solely to lose in dramatic fashion.","These soldiers trained their whole lives just to fall down when the hero looks at them funny."],severity:3},
+  {cat:"logic",title:"Infinite Resources",keywords:["unlimited","endless","infinite","never runs out","always has","somehow had","conveniently","resources","supplies"],snark:["Unlimited resources with zero explanation of where they come from.","Supplies, gadgets - all infinite when the plot demands it.","The protagonists resource pool is as fictional as the rest of this story."],severity:3},
+  {cat:"logic",title:"Nobody Has a Phone",keywords:["phone","text","message","communicate","contact","signal","reception"],snark:["In a world with smartphones, nobody thought to just call each other?","Conveniently, there is no cell signal. There is never cell signal when it would solve the plot.","Phones exist in every scene except the ones where communication would end the movie."],severity:3},
+  {cat:"logic",title:"The Expert Novice",keywords:["first time","never done","beginner","amateur","no experience","somehow knew","instinct","natural"],snark:["First time doing this and they are already better than the experts. Pure protagonist energy.","Zero experience but perfect execution. Talent is apparently a binary switch.","I have never done this before they say, before doing it perfectly."],severity:4},
+  {cat:"logic",title:"Convenient Amnesia",keywords:["forgot","memory","amnesia","remember","forgotten","can't recall","woke up","no memory"],snark:["Selective amnesia that conveniently erases only plot-relevant memories. Very efficient brain damage.","They forgot the ONE thing that would resolve the conflict immediately. How convenient.","Amnesia: the writers favorite shortcut since the dawn of lazy storytelling."],severity:3},
+  {cat:"logic",title:"The One Weakness",keywords:["weakness","vulnerable","weak point","only way","achilles","fatal flaw","allergic"],snark:["An all-powerful being with exactly one weakness that the heroes happen to know about. Convenient.","The one weakness is always something obscure yet easily accessible. Narrative balance at its finest.","Invincible except for this one specific thing. Game design, not storytelling."],severity:3},
+  {cat:"logic",title:"Children Outsmart Adults",keywords:["kid","child","children","young","teenager","teen","school","student"],snark:["The children solved what trained adults could not. Education cuts hit different in this universe.","A teenager outthinks military strategists because protagonist age demographic?","Adults in this movie exist solely to be wrong so children can be right."],severity:3},
+  {cat:"logic",title:"The Unnecessary Split-Up",keywords:["split up","separate","alone","on their own","went alone","by themselves"],snark:["Lets split up said nobody with survival instincts ever.","Splitting up in a dangerous situation: the plot hole that became a genre tradition.","They split up for no reason other than the plot needing them in different locations."],severity:3},
+  {cat:"logic",title:"Villain Could Have Won",keywords:["could have won","almost won","had the chance","opportunity","let them go","spared","mercy"],snark:["The villain had every chance to win and chose not to because the movie is not over yet.","They let the hero live for reasons. Evil hubris is the protagonists real ally.","The villains greatest weakness is not the hero, it is their own inability to finish the job."],severity:5},
+  {cat:"logic",title:"The Deus Ex Machina",keywords:["suddenly","appeared","out of nowhere","unexpected","deus ex","divine","miracle","magical","appeared from"],snark:["A solution appeared from literally nowhere. The writers painted themselves into a corner and teleported out.","Deus ex machina so blatant it should come with a neon sign.","When the plot writes itself into a corner, something magical just happens. Every. Time."],severity:5},
+  {cat:"logic",title:"Selective Technology",keywords:["technology","advanced","futuristic","tech","AI","robot","scan","surveillance","camera","satellite"],snark:["They have galaxy-spanning technology but cannot do a basic background check.","Advanced enough for interstellar travel but not for a functioning security camera.","The technology works perfectly until it would solve the plot, then it conveniently fails."],severity:3},
+  {cat:"logic",title:"The Obvious Disguise",keywords:["disguise","pretend","pose as","dress up","costume","blend in","infiltrate","sneak"],snark:["That disguise would not fool a toddler, but it fools everyone in this movie.","Infiltrating a secure facility by wearing a hat. Foolproof.","The disguise is so bad that everyones inability to see through it is the real plot hole."],severity:3}
+];
+
+var VERDICTS = [
+  {max:10,text:"This plot is Swiss cheese. Delicious, but full of holes."},
+  {max:20,text:"More holes than a golf course. Impressive, really."},
+  {max:30,text:"The plot armor is doing all the heavy lifting here."},
+  {max:40,text:"Held together by vibes and audience goodwill."},
+  {max:50,text:"Shaky, but if you do not think too hard, it is fine."},
+  {max:60,text:"Some cracks, but it mostly works if you squint."},
+  {max:70,text:"Surprisingly coherent. The writers stayed awake for this one."},
+  {max:80,text:"Pretty solid. Only a few questionable moments."},
+  {max:90,text:"Nearly watertight. Respect."},
+  {max:100,text:"Suspicious. Are you sure this is a real movie?"}
+];
+
+var EXAMPLES = [
+  "A farm boy discovers he is actually the son of a powerful dark lord who rules the galaxy. An old hermit gives him a magical sword and teaches him the ways of an ancient religion in about a day. He joins a rebellion, flies a spaceship he has never flown before, and destroys the most powerful weapon in the galaxy by shooting one precise shot into a tiny hole on his first real space battle. Meanwhile, the dark lord had the chance to destroy the rebel base multiple times but did not. The villain also did not recognize his own sons last name, even though they are both famous.",
+  "A teenager discovers she is the chosen one to save a dystopian society divided into factions. After a day of training she outperforms all the experienced fighters. The evil government has advanced surveillance technology but cannot track a group of teenagers hiding in an abandoned building. The villain captures her three times and lets her go each time. She fell in love with her instructor after knowing him for two days. Nobody calls the army that is literally stationed next door.",
+  "An archaeologist races to find an ancient artifact before the villains do. He survived multiple explosions, fell from cliffs, gets dragged behind a truck, and fights off an army of soldiers single-handedly. The villain explained their plan to use the artifact for world domination. The artifact was sitting in an unguarded temple for thousands of years. The heros love interest forgave him for abandoning her years ago after a single conversation."
+];
+
+var foundHoles = [];
+var activeFilter = "all";
+
+function analyze() {
+  var plot = document.getElementById("plotInput").value.trim().toLowerCase();
+  if (!plot) return;
+
+  var btn = document.getElementById("analyzeBtn");
+  btn.disabled = true;
+  btn.textContent = "Analyzing...";
+
+  setTimeout(function() {
+    foundHoles = [];
+    var words = plot.split(/\s+/);
+
+    TEMPLATES.forEach(function(t) {
+      var matched = false;
+      var matchedKeyword = "";
+      for (var i = 0; i < t.keywords.length; i++) {
+        if (plot.indexOf(t.keywords[i]) !== -1) {
+          matched = true;
+          matchedKeyword = t.keywords[i];
+          break;
+        }
+      }
+      if (matched) {
+        var snark = t.snark[Math.floor(Math.random() * t.snark.length)];
+        var timeMatch = plot.match(/(\d+\s*(day|hour|minute|week|month|year|afternoon|morning)s?)/i);
+        var timeStr = timeMatch ? timeMatch[1] : "no time at all";
+        foundHoles.push({
+          cat: t.cat,
+          title: t.title,
+          snark: snark.replace("{time}", timeStr),
+          severity: t.severity,
+          keyword: matchedKeyword
+        });
+      }
+    });
+
+    if (words.length < 30) {
+      foundHoles.push({cat:"logic",title:"Suspiciously Vague Plot",snark:"This plot summary is so short it is hiding something. Brevity is not always the soul of wit - sometimes it is the soul of plot holes.",severity:2,keyword:""});
+    }
+
+    var conceptCounts = {};
+    TEMPLATES.forEach(function(t) {
+      t.keywords.forEach(function(kw) {
+        var regex = new RegExp(kw, "gi");
+        var matches = plot.match(regex);
+        if (matches && matches.length > 1) {
+          if (!conceptCounts[t.title]) {
+            conceptCounts[t.title] = matches.length;
+          }
+        }
+      });
+    });
+
+    Object.keys(conceptCounts).forEach(function(title) {
+      var count = conceptCounts[title];
+      if (count > 2 && !foundHoles.find(function(h) { return h.title === "Pattern of Convenience"; })) {
+        foundHoles.push({cat:"logic",title:"Pattern of Convenience",snark:"This plot uses the same convenient trick " + count + " times. Once is coincidence, twice is suspicious, " + count + " times is lazy writing.",severity:3,keyword:""});
+      }
+    });
+
+    foundHoles.sort(function(a, b) { return b.severity - a.severity; });
+
+    renderResults();
+    btn.disabled = false;
+    btn.textContent = "Find Plot Holes";
+  }, 800 + Math.random() * 700);
+}
+
+function renderResults() {
+  var results = document.getElementById("results");
+  results.style.display = "block";
+
+  var baseScore = Math.max(5, 45 - foundHoles.length * 5 - foundHoles.reduce(function(s, h) { return s + h.severity; }, 0));
+  var score = Math.min(38, Math.max(3, baseScore + Math.floor(Math.random() * 8)));
+  document.getElementById("scoreValue").textContent = score + "/100";
+  var verdict = VERDICTS.find(function(v) { return score <= v.max; }) || VERDICTS[VERDICTS.length - 1];
+  document.getElementById("scoreVerdict").textContent = verdict.text;
+
+  var cats = {timeline:0, motivation:0, physics:0, logic:0};
+  foundHoles.forEach(function(h) { cats[h.cat]++; });
+  var statsRow = document.getElementById("statsRow");
+  var maxCat = Math.max(cats.timeline, cats.motivation, cats.physics, cats.logic);
+  statsRow.innerHTML =
+    '<div class="stat-box"><div class="num">' + foundHoles.length + '</div><div class="lbl">Plot Holes</div></div>' +
+    '<div class="stat-box"><div class="num">' + maxCat + '</div><div class="lbl">Worst Category</div></div>' +
+    '<div class="stat-box"><div class="num">' + foundHoles.filter(function(h){return h.severity>=4;}).length + '</div><div class="lbl">Critical</div></div>' +
+    '<div class="stat-box"><div class="num">' + score + '%</div><div class="lbl">Integrity</div></div>';
+
+  var catBar = document.getElementById("categoryBar");
+  catBar.innerHTML = '<div class="cat-pill active" data-cat="all" onclick="filterCat(\'all\')">All <span class="count">' + foundHoles.length + '</span></div>';
+  var catNames = ["timeline","motivation","physics","logic"];
+  catNames.forEach(function(cat) {
+    if (cats[cat] > 0) {
+      catBar.innerHTML += '<div class="cat-pill" data-cat="' + cat + '" onclick="filterCat(\'' + cat + '\')">' + cat.charAt(0).toUpperCase() + cat.slice(1) + ' <span class="count">' + cats[cat] + '</span></div>';
+    }
+  });
+
+  renderHoles("all");
+  results.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function renderHoles(filter) {
+  var list = document.getElementById("holesList");
+  var filtered = filter === "all" ? foundHoles : foundHoles.filter(function(h) { return h.cat === filter; });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="empty-state">No plot holes in this category. Suspicious.</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(function(h, i) {
+    var dots = "";
+    for (var j = 0; j < 5; j++) {
+      dots += '<div class="sev-dot' + (j < h.severity ? ' on' : '') + '"></div>';
+    }
+    return '<div class="hole-card" style="animation-delay:' + (i*0.05) + 's">' +
+      '<span class="hole-cat ' + h.cat + '">' + h.cat + '</span>' +
+      '<div class="hole-severity">' + dots + '</div>' +
+      '<div class="hole-title">' + h.title + '</div>' +
+      '<div class="hole-snark">"' + h.snark + '"</div>' +
+    '</div>';
+  }).join("");
+}
+
+function filterCat(cat) {
+  activeFilter = cat;
+  var pills = document.querySelectorAll(".cat-pill");
+  for (var i = 0; i < pills.length; i++) {
+    pills[i].classList.toggle("active", pills[i].getAttribute("data-cat") === cat);
+  }
+  renderHoles(cat);
+}
+
+function loadExample() {
+  document.getElementById("plotInput").value = EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)];
+  document.getElementById("results").style.display = "none";
+}
+
+function clearAll() {
+  document.getElementById("plotInput").value = "";
+  document.getElementById("results").style.display = "none";
+  foundHoles = [];
+}
+
+function shareResults() {
+  if (!foundHoles.length) return;
+  var scoreText = document.getElementById("scoreValue").textContent;
+  var text = "Plot Hole Detector Results\nPlot Integrity Score: " + scoreText + "\n\n";
+  foundHoles.forEach(function(h, i) {
+    text += (i+1) + ". [" + h.cat.toUpperCase() + "] " + h.title + '\n   "' + h.snark + '"\n\n';
+  });
+  navigator.clipboard.writeText(text).then(function() {
+    var btn = event.target;
+    btn.textContent = "Copied!";
+    setTimeout(function() { btn.textContent = "Copy Results"; }, 1500);
+  });
+}
+
+function shareLink() {
+  var plot = document.getElementById("plotInput").value;
+  if (!plot) return;
+  var encoded = encodeURIComponent(plot);
+  var url = window.location.origin + window.location.pathname + "?plot=" + encoded;
+  navigator.clipboard.writeText(url).then(function() {
+    var btn = event.target;
+    btn.textContent = "Link Copied!";
+    setTimeout(function() { btn.textContent = "Share Link"; }, 1500);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", function() {
+  var params = new URLSearchParams(window.location.search);
+  var plot = params.get("plot");
+  if (plot) {
+    document.getElementById("plotInput").value = decodeURIComponent(plot);
+    analyze();
+  }
+});
+</script>
+</body>
+</html>
