@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fortune Truth - Uncomfortably Real Fortune Cookies</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --red: #C41E3A;
+    --dark-red: #8B0000;
+    --gold: #FFD700;
+    --dark-gold: #DAA520;
+    --cream: #FFF8DC;
+    --cookie: #E8C872;
+    --cookie-dark: #D4A843;
+    --cookie-shadow: #B8922E;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #1a0000 0%, var(--dark-red) 40%, var(--red) 70%, #1a0000 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--cream);
+    overflow-x: hidden;
+  }
+
+  /* Chinese pattern overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(255,215,0,0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,215,0,0.03) 0%, transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(255,215,0,0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 {
+    font-family: 'Crimson Text', serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    text-shadow: 0 2px 10px rgba(255,215,0,0.3);
+    letter-spacing: 2px;
+  }
+
+  h1 .cn {
+    font-family: 'Ma Shan Zheng', cursive;
+    display: block;
+    font-size: 1.2rem;
+    color: var(--dark-gold);
+    margin-top: 4px;
+    letter-spacing: 8px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: rgba(255,248,220,0.5);
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+
+  /* Controls bar */
+  .controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem 0;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--dark-gold);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle-wrap input { display: none; }
+
+  .toggle-track {
+    width: 40px;
+    height: 22px;
+    background: rgba(255,215,0,0.15);
+    border: 1px solid var(--dark-gold);
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .toggle-track::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: var(--dark-gold);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+  }
+
+  .toggle-wrap input:checked + .toggle-track {
+    background: rgba(255,215,0,0.35);
+  }
+
+  .toggle-wrap input:checked + .toggle-track::after {
+    transform: translateX(18px);
+  }
+
+  .history-btn {
+    background: none;
+    border: 1px solid var(--dark-gold);
+    color: var(--dark-gold);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .history-btn:hover {
+    background: rgba(255,215,0,0.1);
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* Cookie area */
+  .cookie-stage {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 1rem auto;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .cookie-stage .hint {
+    position: absolute;
+    bottom: 10px;
+    font-size: 0.75rem;
+    color: rgba(255,215,0,0.4);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Whole cookie (before crack) */
+  .cookie-whole {
+    position: relative;
+    transition: transform 0.3s;
+  }
+
+  .cookie-whole:hover { transform: scale(1.05); }
+
+  .cookie-whole svg { filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4)); }
+
+  /* Cracked state */
+  .cookie-cracked {
+    display: none;
+    position: relative;
+    width: 300px;
+    height: 200px;
+  }
+
+  .cookie-half {
+    position: absolute;
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .cookie-half.left {
+    left: 0;
+    transform-origin: right center;
+  }
+
+  .cookie-half.right {
+    right: 0;
+    transform-origin: left center;
+  }
+
+  .cookie-half.left.open { transform: translateX(-30px) rotate(-15deg); }
+  .cookie-half.right.open { transform: translateX(30px) rotate(15deg); }
+
+  .cookie-half svg { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3)); }
+
+  /* Fortune paper */
+  .fortune-paper {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scaleY(0);
+    background: var(--cream);
+    color: #333;
+    padding: 1.2rem 1.5rem;
+    border-radius: 4px;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s;
+    z-index: 2;
+  }
+
+  .fortune-paper.show { transform: translate(-50%, -50%) scaleY(1); }
+
+  .fortune-text {
+    font-family: 'Crimson Text', serif;
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: #222;
+    font-style: italic;
+    margin-bottom: 0.8rem;
+  }
+
+  .fortune-text .in-bed {
+    color: var(--red);
+    font-weight: 600;
+  }
+
+  .lucky-numbers {
+    font-size: 0.7rem;
+    color: #999;
+    letter-spacing: 1px;
+    border-top: 1px solid #ddd;
+    padding-top: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .fortune-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 0.6rem;
+  }
+
+  .fortune-actions button {
+    background: none;
+    border: 1px solid #ccc;
+    color: #666;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fortune-actions button:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: transform 0.3s;
+    z-index: 100;
+  }
+
+  .share-toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* New cookie button */
+  .new-cookie-btn {
+    display: none;
+    background: linear-gradient(135deg, var(--gold), var(--dark-gold));
+    color: var(--dark-red);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 0.5rem auto;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+  }
+
+  .new-cookie-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255,215,0,0.4);
+  }
+
+  .new-cookie-btn.visible { display: block; }
+
+  /* History panel */
+  .history-panel {
+    position: fixed;
+    top: 0;
+    right: -380px;
+    width: 360px;
+    max-width: 90vw;
+    height: 100vh;
+    background: linear-gradient(180deg, #1a0000 0%, #2a0000 100%);
+    border-left: 2px solid var(--dark-gold);
+    z-index: 50;
+    transition: right 0.4s ease;
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+
+  .history-panel.open { right: 0; }
+
+  .history-panel h2 {
+    font-family: 'Crimson Text', serif;
+    color: var(--gold);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .history-close {
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  .history-item {
+    background: rgba(255,215,0,0.05);
+    border: 1px solid rgba(255,215,0,0.1);
+    border-radius: 6px;
+    padding: 0.8rem;
+    margin-bottom: 0.6rem;
+    font-family: 'Crimson Text', serif;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.4;
+  }
+
+  .history-item .h-numbers {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 0.65rem;
+    color: rgba(255,215,0,0.4);
+    margin-top: 0.4rem;
+  }
+
+  .history-item .h-time {
+    font-family: 'Inter', sans-serif;
+    font-style: normal;
+    font-size: 0.6rem;
+    color: rgba(255,248,220,0.3);
+    margin-top: 0.3rem;
+  }
+
+  .history-empty {
+    color: rgba(255,248,220,0.3);
+    font-style: italic;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  /* Overlay for history */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .overlay.show { opacity: 1; pointer-events: auto; }
+
+  /* Cookie counter */
+  .counter {
+    font-size: 0.7rem;
+    color: rgba(255,215,0,0.3);
+    text-align: center;
+    margin-top: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Decorative border top */
+  .border-top {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--dark-gold), transparent);
+    margin: 0.5rem auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Particles */
+  .particle {
+    position: fixed;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 30;
+    animation: particleFall 1s ease-out forwards;
+  }
+
+  @keyframes particleFall {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: translateY(80px) scale(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    h1 { font-size: 1.8rem; }
+    .cookie-stage { height: 280px; }
+    .fortune-paper { padding: 1rem; max-width: 280px; }
+    .fortune-text { font-size: 0.95rem; }
+  }
+
+  footer {
+    margin-top: auto;
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 0.65rem;
+    color: rgba(255,248,220,0.2);
+    position: relative;
+    z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>
+    Fortune Truth
+    <span class="cn">命运真相</span>
+  </h1>
+  <p class="subtitle">Fortunes that hit a little too close to home</p>
+</header>
+
+<div class="border-top"></div>
+
+<div class="controls">
+  <label class="toggle-wrap" id="bedToggle">
+    <span>...in bed</span>
+    <input type="checkbox" id="inBedCheck">
+    <div class="toggle-track"></div>
+  </label>
+  <button class="history-btn" id="historyBtn">History (<span id="historyCount">0</span>)</button>
+</div>
+
+<div class="cookie-stage" id="cookieStage">
+  <!-- Whole cookie -->
+  <div class="cookie-whole" id="cookieWhole">
+    <svg width="220" height="160" viewBox="0 0 220 160">
+      <defs>
+        <linearGradient id="cookieGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#F0D68A"/>
+          <stop offset="30%" style="stop-color:#E8C872"/>
+          <stop offset="70%" style="stop-color:#D4A843"/>
+          <stop offset="100%" style="stop-color:#C49A3C"/>
+        </linearGradient>
+        <filter id="cookieShadow">
+          <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00000055"/>
+        </filter>
+      </defs>
+      <!-- Cookie body - fortune cookie shape -->
+      <path d="M30,80 Q30,30 110,25 Q190,30 190,80 Q190,100 170,110 Q150,120 110,100 Q70,120 50,110 Q30,100 30,80 Z"
+            fill="url(#cookieGrad)" filter="url(#cookieShadow)" stroke="#C49A3C" stroke-width="0.5"/>
+      <!-- Fold line -->
+      <path d="M60,95 Q110,75 160,95" fill="none" stroke="#B8922E" stroke-width="1.5" opacity="0.6"/>
+      <!-- Paper peeking out -->
+      <rect x="95" y="88" width="30" height="4" rx="1" fill="#FFF8DC" opacity="0.7"/>
+      <!-- Shine -->
+      <ellipse cx="90" cy="55" rx="30" ry="15" fill="white" opacity="0.1"/>
+    </svg>
+  </div>
+
+  <!-- Cracked cookie -->
+  <div class="cookie-cracked" id="cookieCracked">
+    <div class="cookie-half left" id="halfLeft">
+      <svg width="140" height="160" viewBox="0 0 140 160">
+        <path d="M20,80 Q20,30 100,25 Q110,30 115,40 L105,80 Q100,95 90,100 Q70,110 50,100 Q20,95 20,80 Z"
+              fill="url(#cookieGrad)" stroke="#C49A3C" stroke-width="0.5"/>
+        <path d="M105,80 L115,40" fill="none" stroke="#B8922E" stroke-width="1" opacity="0.4"/>
+      </svg>
+    </div>
+    <div class="cookie-half right" id="halfRight">
+      <svg width="140" height="160" viewBox="0 0 140 160">
+        <path d="M25,40 Q30,30 110,25 Q130,30 130,80 Q130,95 110,100 Q90,110 60,100 Q40,95 35,80 L25,40 Z"
+              fill="url(#cookieGrad)" stroke="#C49A3C" stroke-width="0.5"/>
+        <path d="M35,80 L25,40" fill="none" stroke="#B8922E" stroke-width="1" opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Fortune paper -->
+  <div class="fortune-paper" id="fortunePaper">
+    <div class="fortune-text" id="fortuneText"></div>
+    <div class="lucky-numbers" id="luckyNumbers"></div>
+    <div class="fortune-actions">
+      <button id="shareBtn">Share</button>
+      <button id="copyBtn">Copy</button>
+    </div>
+  </div>
+
+  <span class="hint" id="hint">Tap the cookie</span>
+</div>
+
+<button class="new-cookie-btn" id="newCookieBtn">Crack Another</button>
+<div class="counter" id="counter"></div>
+
+<!-- History panel -->
+<div class="overlay" id="overlay"></div>
+<div class="history-panel" id="historyPanel">
+  <h2>
+    Past Fortunes
+    <button class="history-close" id="historyClose">&times;</button>
+  </h2>
+  <div id="historyList"></div>
+</div>
+
+<div class="share-toast" id="shareToast">Copied to clipboard!</div>
+
+<footer>Fortune Truth &mdash; No fortune was harmed in the making of this existential crisis</footer>
+
+<script>
+const FORTUNES = [
+  "You will Google your symptoms at 2am and convince yourself you have a rare disease.",
+  "Someone you ghosted will show up at your next social event.",
+  "That email you've been avoiding will still be there tomorrow.",
+  "You will say 'we should hang out sometime' and neither of you will follow up.",
+  "Your screen time report this week will be devastating.",
+  "You will open the fridge six more times hoping new food has appeared.",
+  "The group chat you muted 3 months ago has 847 unread messages.",
+  "You will rehearse an argument in the shower that will never happen.",
+  "That subscription you forgot to cancel just renewed.",
+  "You will type a long text, delete it all, and send 'lol ok' instead.",
+  "Someone is telling a story about you right now and getting the details wrong.",
+  "You will set 5 alarms tomorrow and snooze every single one.",
+  "Your 'quick 5-minute break' will last 2 hours.",
+  "You will buy a self-help book and never read past chapter 2.",
+  "That thing you said 7 years ago still haunts someone else too.",
+  "You will start a new hobby, buy all the gear, and quit in 3 weeks.",
+  "Your WiFi will drop at the worst possible moment in a video call.",
+  "You will say 'I'm on my way' while still in bed.",
+  "The person you're subtweeting knows it's about them.",
+  "You will open YouTube to watch one video and emerge 4 hours later.",
+  "Your plant is dying because you love it too much or not enough.",
+  "You will rehearse a phone call for 20 minutes before making a 30-second call.",
+  "Someone just screenshotted your message to show their friends.",
+  "You will promise yourself 'just one more episode' three times tonight.",
+  "That 'read' receipt with no reply is exactly what you think it means.",
+  "You will make a to-do list and lose it before completing anything.",
+  "Your Amazon cart has items from 2023 you still haven't decided on.",
+  "You will walk into a room and forget why you're there at least twice today.",
+  "The leftovers in your fridge have achieved sentience.",
+  "You will say 'I'm fine' at least 4 times today without meaning it.",
+  "Your ex's new partner just looked at your LinkedIn profile.",
+  "You will overthink this fortune cookie message.",
+  "That pile of clothes on your chair is now furniture.",
+  "You will start a diet on Monday and end it by Monday afternoon.",
+  "Someone you haven't talked to in years will text you asking for a favor.",
+  "You will spend 30 minutes choosing what to watch, then rewatch The Office.",
+  "Your browser has 47 tabs open and you need every single one of them.",
+  "You will lie about having read the terms and conditions.",
+  "That thing you're procrastinating on would take 15 minutes to actually do.",
+  "You will save a recipe on Instagram and never cook it.",
+  "Your phone battery will die at the exact moment you need GPS.",
+  "You will bump into someone and both do the awkward side-step dance.",
+  "That 'typing...' indicator that disappeared means they changed their mind.",
+  "You will laugh at a meme and then realize it's about you.",
+  "Your annual physical is overdue by the exact amount you're afraid to admit.",
+  "You will say 'noted' in an email and immediately forget it.",
+  "The unread books on your shelf are judging you.",
+  "You will clear all notifications just to make the red dot go away.",
+  "Someone remembers the embarrassing thing you did in 2016. Vividly.",
+  "You will buy groceries with a meal plan and order takeout anyway.",
+  "Your password is a variation of the same one you've used since 2012.",
+  "You will accidentally like a 3-year-old photo while deep-stalking someone.",
+  "That motivational quote you posted? You don't follow it either.",
+  "You will tell someone 'let me check my calendar' while staring at a blank week.",
+  "Your junk drawer has become junk drawers. Plural.",
+  "You will wash the same load of laundry three times because you forgot it.",
+  "Someone you know is better at your hobby than you and started 6 months ago.",
+  "You will draft an important message, then ask 3 friends to proofread it.",
+  "That free trial you signed up for was never actually free.",
+  "You will make eye contact with someone on the street and both look away forever.",
+  "Your Spotify Wrapped will expose you in ways you're not ready for.",
+  "You will say 'I never check my phone in bed' while checking your phone in bed.",
+  "The 'quick errand' will take your entire Saturday morning.",
+  "You will tell yourself 'I'll remember this' and forget it in 8 seconds.",
+  "Your New Year's resolution has the same expiration date as last year's.",
+  "You will open a new note to organize your life and forget it exists.",
+  "That weird noise your car makes will stop at the mechanic's.",
+  "You will attend a meeting that could have been an email.",
+  "Your skincare routine has 7 steps and you regularly skip 5.",
+  "You will watch a tutorial at 2x speed and understand nothing.",
+  "Someone just unfollowed you and you'll never know who.",
+  "You will say 'money isn't everything' while checking your bank balance.",
+  "That friend who 'never checks social media' just viewed your story in 3 seconds.",
+  "You will clean your desk by moving everything into a different pile.",
+  "Your gym membership costs more per visit than a personal trainer.",
+  "You will write 'hahahaha' while maintaining a completely neutral expression.",
+  "The thing you're worried about probably won't happen. Something worse will.",
+  "You will take a 'mental health day' and spend it doomscrolling.",
+  "Your smart home device has heard things it can never unhear.",
+  "You will pretend to understand crypto to someone who definitely also doesn't.",
+  "That 'networking event' is just awkward small talk with free cheese.",
+  "You will pack for a weekend trip like you're relocating internationally.",
+  "Your autocorrect has revealed your true vocabulary to your coworkers.",
+  "You will read this fortune, feel called out, and show it to a friend.",
+  "That voicemail you haven't listened to has been there for 6 weeks.",
+  "You will impulse-buy something at 1am and regret it by 9am.",
+  "Your 'morning routine' starts 40 minutes after it was supposed to.",
+  "Someone is about to send you a 'can we talk?' text about something minor.",
+  "You will promise to wake up early and set the alarm with zero conviction.",
+  "That Zoom background is hiding more than you realize.",
+  "You will explain your job to a relative and they still won't understand.",
+  "Your cart total just doubled because of 'you might also like' suggestions."
+];
+
+let history = JSON.parse(localStorage.getItem('fortuneHistory') || '[]');
+let crackCount = parseInt(localStorage.getItem('crackCount') || '0');
+let cracked = false;
+let audioCtx = null;
+
+// Elements
+const cookieStage = document.getElementById('cookieStage');
+const cookieWhole = document.getElementById('cookieWhole');
+const cookieCracked = document.getElementById('cookieCracked');
+const halfLeft = document.getElementById('halfLeft');
+const halfRight = document.getElementById('halfRight');
+const fortunePaper = document.getElementById('fortunePaper');
+const fortuneText = document.getElementById('fortuneText');
+const luckyNumbers = document.getElementById('luckyNumbers');
+const hint = document.getElementById('hint');
+const newCookieBtn = document.getElementById('newCookieBtn');
+const inBedCheck = document.getElementById('inBedCheck');
+const historyBtn = document.getElementById('historyBtn');
+const historyPanel = document.getElementById('historyPanel');
+const historyClose = document.getElementById('historyClose');
+const historyList = document.getElementById('historyList');
+const historyCountEl = document.getElementById('historyCount');
+const overlay = document.getElementById('overlay');
+const shareBtn = document.getElementById('shareBtn');
+const copyBtn = document.getElementById('copyBtn');
+const shareToast = document.getElementById('shareToast');
+const counterEl = document.getElementById('counter');
+
+updateCounter();
+updateHistoryCount();
+
+// Crack sound using Web Audio API
+function playCrackSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = audioCtx;
+
+  // Short noise burst for crack
+  const bufferSize = ctx.sampleRate * 0.15;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / bufferSize;
+    // Sharp attack, quick decay with some crunchiness
+    const envelope = Math.exp(-t * 30) * (1 - t);
+    data[i] = (Math.random() * 2 - 1) * envelope * 0.6;
+    // Add some low-frequency crunch
+    if (i % 3 === 0) data[i] *= 1.5;
+  }
+
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 800;
+  filter.Q.value = 1;
+
+  const gain = ctx.createGain();
+  gain.gain.value = 0.4;
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
+
+// Generate slightly-off lucky numbers
+function generateLuckyNumbers() {
+  const nums = [];
+  const bases = [7, 13, 21, 33, 42, 69];
+  for (let i = 0; i < 6; i++) {
+    const off = Math.random() > 0.5 ? 1 : -1;
+    const offset = Math.floor(Math.random() * 3) + 1;
+    nums.push(bases[i] + off * offset);
+  }
+  return `Lucky numbers: ${nums.join(' - ')}`;
+}
+
+// Spawn particles on crack
+function spawnParticles(x, y) {
+  const colors = ['#FFD700', '#E8C872', '#D4A843', '#FFF8DC', '#C41E3A'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = (x + (Math.random() - 0.5) * 60) + 'px';
+    p.style.top = (y + (Math.random() - 0.5) * 40) + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.width = (4 + Math.random() * 6) + 'px';
+    p.style.height = p.style.width;
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 30 + Math.random() * 60;
+    p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    p.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+    p.animate([
+      { transform: 'scale(1) translate(0,0)', opacity: 1 },
+      { transform: `scale(0) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist + 40}px)`, opacity: 0 }
+    ], { duration: 600 + Math.random() * 400, easing: 'ease-out' });
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 1000);
+  }
+}
+
+// Pick a random fortune avoiding recent repeats
+function pickFortune() {
+  const recent = history.slice(0, 10).map(h => h.text);
+  let fortune;
+  let attempts = 0;
+  do {
+    fortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+    attempts++;
+  } while (recent.includes(fortune) && attempts < 50);
+  return fortune;
+}
+
+// Crack the cookie
+function crackCookie(e) {
+  if (cracked) return;
+  cracked = true;
+
+  const rect = cookieStage.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+
+  playCrackSound();
+  spawnParticles(cx, cy);
+
+  // Hide whole, show cracked
+  cookieWhole.style.display = 'none';
+  cookieCracked.style.display = 'block';
+  hint.style.display = 'none';
+
+  // Animate halves apart
+  requestAnimationFrame(() => {
+    halfLeft.classList.add('open');
+    halfRight.classList.add('open');
+  });
+
+  // Show fortune
+  const fortune = pickFortune();
+  const inBed = inBedCheck.checked;
+  const numbers = generateLuckyNumbers();
+
+  if (inBed) {
+    fortuneText.innerHTML = fortune.replace(/\.$/, '') + ' <span class="in-bed">...in bed.</span>';
+  } else {
+    fortuneText.textContent = fortune;
+  }
+  luckyNumbers.textContent = numbers;
+
+  setTimeout(() => {
+    fortunePaper.classList.add('show');
+  }, 200);
+
+  // Save to history
+  const entry = {
+    text: fortune,
+    inBed: inBed,
+    numbers: numbers,
+    time: new Date().toISOString()
+  };
+  history.unshift(entry);
+  if (history.length > 50) history = history.slice(0, 50);
+  localStorage.setItem('fortuneHistory', JSON.stringify(history));
+
+  crackCount++;
+  localStorage.setItem('crackCount', crackCount.toString());
+  updateCounter();
+  updateHistoryCount();
+
+  // Show new cookie button
+  setTimeout(() => newCookieBtn.classList.add('visible'), 800);
+}
+
+function resetCookie() {
+  cracked = false;
+  cookieWhole.style.display = '';
+  cookieCracked.style.display = 'none';
+  halfLeft.classList.remove('open');
+  halfRight.classList.remove('open');
+  fortunePaper.classList.remove('show');
+  hint.style.display = '';
+  newCookieBtn.classList.remove('visible');
+}
+
+function updateCounter() {
+  if (crackCount > 0) {
+    counterEl.textContent = `${crackCount} cookie${crackCount === 1 ? '' : 's'} cracked`;
+  }
+}
+
+function updateHistoryCount() {
+  historyCountEl.textContent = history.length;
+}
+
+function renderHistory() {
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="history-empty">No fortunes yet. Crack a cookie!</div>';
+    return;
+  }
+  historyList.innerHTML = history.map(h => {
+    const text = h.inBed ? h.text.replace(/\.$/, '') + ' ...in bed.' : h.text;
+    const time = new Date(h.time).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    });
+    return `<div class="history-item">
+      "${text}"
+      <div class="h-numbers">${h.numbers}</div>
+      <div class="h-time">${time}</div>
+    </div>`;
+  }).join('');
+}
+
+function getShareText() {
+  const raw = fortuneText.textContent || fortuneText.innerText;
+  return `"${raw}"\n${luckyNumbers.textContent}\n\n-- Fortune Truth`;
+}
+
+async function shareFortune() {
+  const text = getShareText();
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Fortune Truth', text });
+      return;
+    } catch(e) { /* fallback to copy */ }
+  }
+  await copyFortune();
+}
+
+async function copyFortune() {
+  const text = getShareText();
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch(e) {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+  }
+  shareToast.classList.add('show');
+  setTimeout(() => shareToast.classList.remove('show'), 2000);
+}
+
+// Event listeners
+cookieStage.addEventListener('click', crackCookie);
+newCookieBtn.addEventListener('click', resetCookie);
+shareBtn.addEventListener('click', (e) => { e.stopPropagation(); shareFortune(); });
+copyBtn.addEventListener('click', (e) => { e.stopPropagation(); copyFortune(); });
+
+historyBtn.addEventListener('click', () => {
+  renderHistory();
+  historyPanel.classList.add('open');
+  overlay.classList.add('show');
+});
+
+function closeHistory() {
+  historyPanel.classList.remove('open');
+  overlay.classList.remove('show');
+}
+
+historyClose.addEventListener('click', closeHistory);
+overlay.addEventListener('click', closeHistory);
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeHistory();
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (cracked) resetCookie();
+    else crackCookie();
+  }
+});
+</script>
+</body>
+</html>

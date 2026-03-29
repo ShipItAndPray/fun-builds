@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoulder Devil vs Angel</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @keyframes hellfire {
+    0%, 100% { text-shadow: 0 0 10px #ff4444, 0 0 20px #ff0000; }
+    50% { text-shadow: 0 0 20px #ff6666, 0 0 40px #ff2222, 0 0 60px #cc0000; }
+  }
+
+  @keyframes halo {
+    0%, 100% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffec8b; }
+    50% { text-shadow: 0 0 20px #fff8dc, 0 0 40px #ffd700, 0 0 60px #daa520; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes pulseRed {
+    0%, 100% { box-shadow: 0 0 15px rgba(255,0,0,0.3); }
+    50% { box-shadow: 0 0 30px rgba(255,0,0,0.6); }
+  }
+
+  @keyframes pulseGold {
+    0%, 100% { box-shadow: 0 0 15px rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 0 30px rgba(255,215,0,0.6); }
+  }
+
+  @keyframes typewriterBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #1a1a2e;
+    color: #eee;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 15px 10px;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #0f0f23 100%);
+    border-bottom: 2px solid #333;
+  }
+
+  header h1 {
+    font-size: 2em;
+    background: linear-gradient(90deg, #ffd700, #fff, #ffd700, #ff4444, #ff0000, #ff4444);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  header p { color: #888; font-style: italic; margin-top: 5px; font-size: 0.9em; }
+
+  .input-area {
+    display: flex;
+    gap: 10px;
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 0 15px;
+  }
+
+  .input-area input {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid #444;
+    border-radius: 30px;
+    background: #16213e;
+    color: #eee;
+    font-size: 1em;
+    font-family: Georgia, serif;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .input-area input:focus { border-color: #7b68ee; }
+
+  .input-area button {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 30px;
+    background: linear-gradient(135deg, #7b68ee, #9b59b6);
+    color: white;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .input-area button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(123,104,238,0.5);
+  }
+
+  .input-area button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid #333;
+    font-size: 0.95em;
+  }
+
+  .scoreboard .angel-score { color: #ffd700; }
+  .scoreboard .devil-score { color: #ff4444; }
+  .scoreboard .streak { color: #7b68ee; }
+
+  .battle-arena {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+    min-height: 50vh;
+  }
+
+  .side {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
+  }
+
+  .angel-side {
+    background: linear-gradient(180deg, #1a1a2e 0%, #1c2340 30%, #2a2a4a 100%);
+    border-right: 2px solid rgba(255,215,0,0.2);
+  }
+
+  .devil-side {
+    background: linear-gradient(180deg, #1a1a2e 0%, #2d1520 30%, #3a1a1a 100%);
+    border-left: 2px solid rgba(255,0,0,0.2);
+  }
+
+  .side-header {
+    text-align: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 15px;
+  }
+
+  .side-header .icon { font-size: 2.5em; display: block; margin-bottom: 5px; }
+  .angel-side .side-header .icon { animation: float 2s ease-in-out infinite; }
+  .devil-side .side-header .icon { animation: float 2.5s ease-in-out infinite 0.5s; }
+
+  .angel-side .side-header h2 {
+    color: #ffd700;
+    animation: halo 2s ease-in-out infinite;
+  }
+
+  .devil-side .side-header h2 {
+    color: #ff4444;
+    animation: hellfire 2s ease-in-out infinite;
+  }
+
+  .arguments {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 5px;
+  }
+
+  .argument {
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.95em;
+    line-height: 1.5;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .argument.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .angel-side .argument {
+    background: rgba(255,215,0,0.08);
+    border-left: 3px solid #ffd700;
+    color: #e8e0c8;
+  }
+
+  .devil-side .argument {
+    background: rgba(255,0,0,0.08);
+    border-left: 3px solid #ff4444;
+    color: #e8c8c8;
+  }
+
+  .argument .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: currentColor;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: typewriterBlink 0.7s step-end infinite;
+  }
+
+  .vote-section {
+    text-align: center;
+    padding: 25px 15px;
+    display: none;
+  }
+
+  .vote-section.active { display: block; }
+
+  .vote-section h3 {
+    font-size: 1.4em;
+    margin-bottom: 15px;
+    color: #ccc;
+  }
+
+  .vote-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .vote-btn {
+    padding: 16px 36px;
+    border: 2px solid;
+    border-radius: 16px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    transition: transform 0.2s, box-shadow 0.3s;
+    min-width: 180px;
+  }
+
+  .vote-btn:hover { transform: scale(1.08); }
+
+  .vote-angel {
+    background: linear-gradient(135deg, #2a2a1a, #3a3a2a);
+    border-color: #ffd700;
+    color: #ffd700;
+    animation: pulseGold 2s infinite;
+  }
+
+  .vote-devil {
+    background: linear-gradient(135deg, #2a1a1a, #3a2020);
+    border-color: #ff4444;
+    color: #ff4444;
+    animation: pulseRed 2s infinite;
+  }
+
+  .history-section {
+    max-width: 700px;
+    margin: 30px auto;
+    padding: 0 15px 30px;
+  }
+
+  .history-section h3 {
+    text-align: center;
+    color: #888;
+    font-size: 1.1em;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+  }
+
+  .history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid #333;
+    font-size: 0.9em;
+  }
+
+  .history-item .dilemma-text {
+    flex: 1;
+    color: #aaa;
+    margin-right: 10px;
+  }
+
+  .history-item .winner-badge {
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+
+  .winner-badge.angel-won {
+    background: rgba(255,215,0,0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255,215,0,0.3);
+  }
+
+  .winner-badge.devil-won {
+    background: rgba(255,0,0,0.15);
+    color: #ff4444;
+    border: 1px solid rgba(255,0,0,0.3);
+  }
+
+  .mute-btn {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid #555;
+    background: #222;
+    color: #ccc;
+    font-size: 1.3em;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #555;
+    font-style: italic;
+    padding: 40px 20px;
+    grid-column: 1 / -1;
+    font-size: 1.1em;
+  }
+
+  @media (max-width: 700px) {
+    header h1 { font-size: 1.4em; }
+    .battle-arena { grid-template-columns: 1fr; }
+    .angel-side { border-right: none; border-bottom: 2px solid rgba(255,215,0,0.2); }
+    .devil-side { border-left: none; border-top: 2px solid rgba(255,0,0,0.2); }
+    .side { min-height: 200px; padding: 15px; }
+    .input-area { flex-direction: column; }
+    .input-area button { padding: 14px; }
+    .vote-btn { min-width: 140px; padding: 14px 24px; }
+    .scoreboard { gap: 15px; font-size: 0.85em; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Shoulder Devil vs Angel</h1>
+  <p>Enter your moral dilemma. Let them fight.</p>
+</header>
+
+<div class="scoreboard">
+  <span class="angel-score">Angel Wins: <strong id="angelWins">0</strong></span>
+  <span class="streak" id="streakDisplay"></span>
+  <span class="devil-score">Devil Wins: <strong id="devilWins">0</strong></span>
+</div>
+
+<div class="input-area">
+  <input type="text" id="dilemmaInput" placeholder="Should I eat the last slice of pizza?" autofocus>
+  <button id="fightBtn" onclick="startBattle()">FIGHT!</button>
+</div>
+
+<div class="battle-arena" id="arena">
+  <div class="empty-state">Enter a dilemma above and watch them argue...</div>
+</div>
+
+<div class="vote-section" id="voteSection">
+  <h3>Who convinced you?</h3>
+  <div class="vote-buttons">
+    <button class="vote-btn vote-angel" onclick="vote('angel')">Angel Wins</button>
+    <button class="vote-btn vote-devil" onclick="vote('devil')">Devil Wins</button>
+  </div>
+</div>
+
+<div class="history-section" id="historySection" style="display:none">
+  <h3>Past Dilemmas</h3>
+  <div id="historyList"></div>
+</div>
+
+<button class="mute-btn" id="muteBtn" onclick="toggleMute()" title="Toggle sound">&#128264;</button>
+
+<script>
+const ANGEL_TEMPLATES = [
+  d => `Think about how others would feel if you ${d}. Empathy is what separates us from animals.`,
+  d => `Your future self will thank you for NOT doing this. Trust me on that one.`,
+  d => `Is this really the person you want to be? Someone who would ${d}?`,
+  d => `Consider the ripple effects. One small act of restraint can change everything.`,
+  d => `You know the right thing to do. You've always known. Don't ignore that voice.`,
+  d => `What would your grandmother think? She raised you better than this.`,
+  d => `Every great person in history chose the harder right over the easier wrong.`,
+  d => `Sleep is precious. And you'll sleep SO much better tonight if you don't do this.`,
+  d => `This is a test of character. And character is built in these exact moments.`,
+  d => `The temporary pleasure isn't worth the permanent regret. It never is.`,
+  d => `Be the person your dog thinks you are. They believe in you unconditionally.`,
+  d => `You're stronger than this temptation. You've overcome harder things before.`,
+  d => `Think about it this way: if everyone did this, what kind of world would we live in?`,
+  d => `Discipline equals freedom. Say no now, and you earn the right to say yes later.`,
+  d => `Your integrity is the one thing nobody can take from you. Don't give it away cheaply.`,
+  d => `Take a deep breath. Count to ten. The urge will pass. It always does.`,
+  d => `Would you be comfortable if this decision was on the front page of the newspaper?`,
+  d => `There are people who look up to you. What example are you setting right now?`,
+  d => `Kindness costs nothing but pays dividends forever. Choose kindness.`,
+  d => `You have the power to break the cycle. Right here. Right now.`,
+  d => `Remember: comfort zone = danger zone for your growth as a human being.`,
+  d => `The universe is watching. And it keeps receipts.`,
+  d => `Ask yourself: does this align with my values? If not, you have your answer.`,
+  d => `Patience is a virtue for a reason. Good things come to those who wait.`,
+  d => `You'll look back on this moment. Make sure you're proud of what you chose.`,
+  d => `Think of someone you admire. Would they do this? I think not.`,
+  d => `Your conscience is speaking. It's that uncomfortable feeling. Listen to it.`,
+  d => `Short-term sacrifice, long-term gain. That's the formula for a good life.`,
+  d => `There's nobility in restraint. The strongest people are those who hold back.`,
+  d => `This is your origin story moment. Heroes make the hard choice.`,
+  d => `Imagine explaining this decision to a child. Could you justify it?`,
+  d => `Grace under pressure. That's what defines true character.`,
+  d => `The path of least resistance leads to the lowest places. Rise above.`,
+  d => `You are not your impulses. You are the one who chooses whether to follow them.`,
+  d => `Somewhere, someone is fighting a harder battle with more grace. Channel that energy.`,
+  d => `Love thy neighbor. Even when thy neighbor has the last slice.`,
+  d => `Moderation in all things. The ancient Greeks knew what they were talking about.`,
+  d => `What would Mister Rogers do? He'd want you to be the best neighbor you can be.`,
+  d => `The high road is lonelier, but the view is spectacular.`,
+  d => `Generosity is its own reward. And it comes back to you tenfold.`,
+  d => `Your body is a temple. Don't let it become a drive-through.`,
+  d => `Peace of mind is worth more than any momentary indulgence.`,
+  d => `Be the change you wish to see. Starting right now, with this decision.`,
+  d => `True strength isn't about power. It's about self-control.`,
+  d => `Every time you resist temptation, you build a muscle. Flex that moral muscle.`,
+  d => `The best things in life are earned, not grabbed impulsively.`,
+  d => `Consider: is this a want or a need? There's a big difference.`,
+  d => `Your future self is begging you. BEGGING. Please don't do this.`,
+  d => `There's a quiet dignity in doing the right thing when nobody's watching.`,
+  d => `Remember your New Year's resolution? This is where it lives or dies.`,
+  d => `Compassion. Empathy. Restraint. These aren't weaknesses. They're superpowers.`,
+  d => `The fact that you're even asking means you already know the answer. Deep down.`,
+  d => `Choose the option that lets you look in the mirror tomorrow morning without flinching.`,
+  d => `Delayed gratification is the number one predictor of success. Stanford proved it.`,
+  d => `What goes around comes around. Karma is patient but she never forgets.`,
+];
+
+const DEVIL_TEMPLATES = [
+  d => `You DESERVE this. After everything you've been through? Absolutely do it.`,
+  d => `Life is short. PAINFULLY short. Do you really want to die with regrets?`,
+  d => `Rules were made to be broken. That's literally why they exist.`,
+  d => `Nobody will ever know. It's just between you and me. And I won't tell.`,
+  d => `You know what? The angel is just jealous because THEY can't do it.`,
+  d => `YOLO isn't just a saying. It's a LIFESTYLE. Live it. DO IT.`,
+  d => `You've been good for SO long. You've earned this. Consider it a reward.`,
+  d => `Think about it: will this matter in 5 years? No. So do it NOW.`,
+  d => `Your gut is telling you yes. Your gut is ALWAYS right. Trust your gut.`,
+  d => `Everyone else does it. You're not special for holding back. You're just missing out.`,
+  d => `The angel wants you to be boring. I want you to be LEGENDARY.`,
+  d => `Regret for things done fades. Regret for things NOT done? That haunts you forever.`,
+  d => `Come on. Just this once. What's the worst that could happen? Exactly. Nothing.`,
+  d => `You're overthinking this. Stop thinking. Start DOING.`,
+  d => `Morality is a social construct. You're a free thinker. Act like one.`,
+  d => `The people who say "don't do it" are the same people who did it when they had the chance.`,
+  d => `Fortune favors the bold. And right now, you're being a coward.`,
+  d => `I believe in you. Not the "restrained" you. The REAL you. The wild one.`,
+  d => `The angel is running out of arguments. That's because they're WRONG.`,
+  d => `Picture this: you don't do it. And then you spend the next week thinking about what if. SAD.`,
+  d => `Treat yourself. You're not a monk. You're not training for the Olympics. LIVE A LITTLE.`,
+  d => `The greatest stories ever told start with someone making the "wrong" choice.`,
+  d => `Stress kills more people than bad decisions. Relax. Do the thing.`,
+  d => `Your therapist would probably say to follow your heart. And your heart says YES.`,
+  d => `Impulse is just another word for passion. And passion is BEAUTIFUL.`,
+  d => `You'll never be this young again. Don't waste it being responsible.`,
+  d => `The angel is using GUILT. That's manipulation. I'm using TRUTH. See the difference?`,
+  d => `Every successful person has a story about the time they threw caution to the wind.`,
+  d => `Being "good" all the time is exhausting. Give yourself permission to be human.`,
+  d => `You know what tastes better than virtue? Everything else.`,
+  d => `Carpe diem! Seize the day! Those aren't just words on a poster!`,
+  d => `The angel keeps talking about "others." But what about YOU? When is it YOUR turn?`,
+  d => `I'm not the bad guy here. I'm the honest one. The angel is the one lying to you.`,
+  d => `Calculated risk is just another term for smart decision-making. This is calculated.`,
+  d => `Your ancestors didn't survive ice ages and sabertooth tigers for you to play it safe.`,
+  d => `Restrictions are for people who can't handle freedom. You can handle it. Prove it.`,
+  d => `The universe rewards action. Not hesitation. Not deliberation. ACTION.`,
+  d => `Fun fact: "should I?" has never been followed by a good answer from an angel.`,
+  d => `You're already thinking about it. That means you've already decided. Just commit.`,
+  d => `Self-care isn't selfish. And THIS? This is self-care. Premium, grade-A self-care.`,
+  d => `Look, the angel wants you to suffer nobly. I want you to THRIVE chaotically.`,
+  d => `The best memories are made from the worst decisions. That's just science.`,
+  d => `Stop living for other people's approval. They're not even paying attention.`,
+  d => `DO IT. DO IT. DO IT. Your body is tingling because it KNOWS.`,
+  d => `Winners don't ask for permission. They ask for forgiveness. Sometimes.`,
+  d => `You can always start being "good" tomorrow. Today? Today is for LIVING.`,
+  d => `The angel hasn't presented a single fun argument. Notice that? Not ONE.`,
+  d => `Discipline is overrated. You know what's underrated? Joy. Pure, unfiltered joy.`,
+  d => `If you don't do it, someone else will. And then THEY get the story. Not you.`,
+  d => `This moment right here? This is what life is about. Don't waste it on moral math.`,
+  d => `Let me put it this way: on your deathbed, you won't wish you'd been MORE careful.`,
+  d => `The angel makes a lot of "what if" arguments. Here's mine: what if it's AMAZING?`,
+  d => `Chaos isn't a pit. Chaos is a LADDER. Start climbing.`,
+  d => `Just. Do. It. Even Nike agrees with me.`,
+];
+
+let state = {
+  angelWins: 0,
+  devilWins: 0,
+  history: [],
+  muted: false,
+  battling: false,
+  currentDilemma: '',
+  angelStreak: 0,
+  devilStreak: 0,
+};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('shoulderDevil');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      Object.assign(state, parsed);
+      updateScoreboard();
+      renderHistory();
+    }
+  } catch(e) {}
+}
+
+function saveState() {
+  localStorage.setItem('shoulderDevil', JSON.stringify({
+    angelWins: state.angelWins,
+    devilWins: state.devilWins,
+    history: state.history.slice(-50),
+    muted: state.muted,
+    angelStreak: state.angelStreak,
+    devilStreak: state.devilStreak,
+  }));
+}
+
+function updateScoreboard() {
+  document.getElementById('angelWins').textContent = state.angelWins;
+  document.getElementById('devilWins').textContent = state.devilWins;
+
+  const total = state.angelWins + state.devilWins;
+  let streakText = '';
+  if (state.devilStreak >= 3) {
+    streakText = `Devil Streak: ${state.devilStreak}`;
+  } else if (state.angelStreak >= 3) {
+    streakText = `Angel Streak: ${state.angelStreak}`;
+  } else if (total > 0) {
+    const devilPct = Math.round((state.devilWins / total) * 100);
+    streakText = `${devilPct}% Devil`;
+  }
+  document.getElementById('streakDisplay').textContent = streakText;
+  document.getElementById('muteBtn').innerHTML = state.muted ? '&#128263;' : '&#128264;';
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function speak(text, isDevil) {
+  if (state.muted || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = isDevil ? 0.85 : 1.1;
+  u.pitch = isDevil ? 0.4 : 1.8;
+  u.volume = 0.7;
+  speechSynthesis.speak(u);
+}
+
+function typeText(element, text, speed = 25) {
+  return new Promise(resolve => {
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    element.textContent = '';
+    element.appendChild(cursor);
+
+    function type() {
+      if (i < text.length) {
+        cursor.before(text[i]);
+        i++;
+        setTimeout(type, speed + Math.random() * 15);
+      } else {
+        cursor.remove();
+        resolve();
+      }
+    }
+    type();
+  });
+}
+
+async function startBattle() {
+  const input = document.getElementById('dilemmaInput');
+  const dilemma = input.value.trim();
+  if (!dilemma || state.battling) return;
+
+  state.battling = true;
+  state.currentDilemma = dilemma;
+  document.getElementById('fightBtn').disabled = true;
+  document.getElementById('voteSection').classList.remove('active');
+
+  const arena = document.getElementById('arena');
+  arena.innerHTML = `
+    <div class="side angel-side">
+      <div class="side-header">
+        <span class="icon">&#128519;</span>
+        <h2>Angel</h2>
+      </div>
+      <div class="arguments" id="angelArgs"></div>
+    </div>
+    <div class="side devil-side">
+      <div class="side-header">
+        <span class="icon">&#128520;</span>
+        <h2>Devil</h2>
+      </div>
+      <div class="arguments" id="devilArgs"></div>
+    </div>
+  `;
+
+  const angelTemplates = shuffle(ANGEL_TEMPLATES).slice(0, 5);
+  const devilTemplates = shuffle(DEVIL_TEMPLATES).slice(0, 5);
+
+  for (let i = 0; i < 5; i++) {
+    // Angel argues
+    const angelText = angelTemplates[i](dilemma);
+    const angelDiv = document.createElement('div');
+    angelDiv.className = 'argument';
+    document.getElementById('angelArgs').appendChild(angelDiv);
+    requestAnimationFrame(() => angelDiv.classList.add('visible'));
+    speak(angelText, false);
+    await typeText(angelDiv, angelText);
+    await delay(400);
+
+    // Devil retorts
+    const devilText = devilTemplates[i](dilemma);
+    const devilDiv = document.createElement('div');
+    devilDiv.className = 'argument';
+    document.getElementById('devilArgs').appendChild(devilDiv);
+    requestAnimationFrame(() => devilDiv.classList.add('visible'));
+    speak(devilText, true);
+    await typeText(devilDiv, devilText);
+    await delay(400);
+  }
+
+  state.battling = false;
+  document.getElementById('fightBtn').disabled = false;
+  document.getElementById('voteSection').classList.add('active');
+}
+
+function vote(winner) {
+  if (winner === 'angel') {
+    state.angelWins++;
+    state.angelStreak++;
+    state.devilStreak = 0;
+  } else {
+    state.devilWins++;
+    state.devilStreak++;
+    state.angelStreak = 0;
+  }
+
+  state.history.unshift({
+    dilemma: state.currentDilemma,
+    winner,
+    date: new Date().toLocaleDateString(),
+  });
+
+  document.getElementById('voteSection').classList.remove('active');
+  document.getElementById('dilemmaInput').value = '';
+  document.getElementById('dilemmaInput').focus();
+
+  // Victory flash
+  const flash = document.createElement('div');
+  flash.style.cssText = `
+    position: fixed; inset: 0; z-index: 999;
+    background: ${winner === 'angel' ? 'rgba(255,215,0,0.15)' : 'rgba(255,0,0,0.15)'};
+    pointer-events: none;
+    animation: fadeOut 0.8s forwards;
+  `;
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 800);
+
+  const msg = winner === 'angel'
+    ? 'The light prevails! Virtue triumphs!'
+    : 'Mwahahaha! The darkness wins!';
+  speak(msg, winner === 'devil');
+
+  updateScoreboard();
+  renderHistory();
+  saveState();
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+
+  if (state.history.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  list.innerHTML = state.history.slice(0, 20).map(h => `
+    <div class="history-item">
+      <span class="dilemma-text">${escapeHtml(h.dilemma)}</span>
+      <span class="winner-badge ${h.winner === 'angel' ? 'angel-won' : 'devil-won'}">
+        ${h.winner === 'angel' ? 'Angel' : 'Devil'}
+      </span>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function toggleMute() {
+  state.muted = !state.muted;
+  if (state.muted) speechSynthesis.cancel();
+  updateScoreboard();
+  saveState();
+}
+
+function delay(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Add fadeOut animation
+const style = document.createElement('style');
+style.textContent = `@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }`;
+document.head.appendChild(style);
+
+// Enter key triggers fight
+document.getElementById('dilemmaInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startBattle();
+});
+
+loadState();
+</script>
+</body>
+</html>

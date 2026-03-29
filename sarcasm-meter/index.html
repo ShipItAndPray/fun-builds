@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sarcasm Meter - Precision Sarcasm Detection</title>
+<style>
+  :root {
+    --purple: #7c3aed;
+    --purple-light: #a78bfa;
+    --purple-dark: #5b21b6;
+    --purple-bg: #f5f3ff;
+    --purple-glow: rgba(124, 58, 237, 0.15);
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #e4e4e7;
+    --gray-300: #d4d4d8;
+    --gray-500: #71717a;
+    --gray-700: #3f3f46;
+    --gray-900: #18181b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: 0.25rem;
+  }
+
+  header h1 span { color: var(--purple); }
+
+  header p {
+    color: var(--gray-500);
+    font-size: 0.95rem;
+  }
+
+  .input-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--gray-200);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 120px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+    background: var(--gray-50);
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--purple-light);
+    background: white;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 0.65rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+    flex: 1;
+    min-width: 160px;
+  }
+
+  .btn-primary:hover { background: var(--purple-dark); }
+
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border: 1px solid var(--gray-200);
+  }
+
+  .btn-secondary:hover { background: var(--gray-200); }
+
+  /* Results */
+  .results {
+    display: none;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .results.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid var(--gray-200);
+    margin-bottom: 1.25rem;
+  }
+
+  /* Meter */
+  .meter-section { text-align: center; }
+
+  .meter-container {
+    position: relative;
+    width: 220px;
+    height: 130px;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+  }
+
+  .meter-bg, .meter-fill {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    left: 10px;
+    top: 10px;
+  }
+
+  .meter-bg {
+    border: 16px solid var(--gray-200);
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    transform: rotate(225deg);
+  }
+
+  .meter-fill {
+    border: 16px solid var(--purple);
+    border-bottom-color: transparent;
+    border-left-color: transparent;
+    transform: rotate(225deg);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .meter-needle {
+    position: absolute;
+    width: 4px;
+    height: 90px;
+    background: var(--gray-900);
+    left: 108px;
+    bottom: 0;
+    transform-origin: bottom center;
+    transform: rotate(-90deg);
+    transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-radius: 2px;
+  }
+
+  .meter-needle::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--gray-900);
+    border-radius: 50%;
+    bottom: -6px;
+    left: -4px;
+  }
+
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: -4px;
+    padding: 0 8px;
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    font-weight: 500;
+  }
+
+  .probability-display {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--purple);
+    letter-spacing: -2px;
+    margin: 0.5rem 0 0.25rem;
+  }
+
+  .probability-label {
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 600;
+  }
+
+  .confidence-interval {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--gray-500);
+  }
+
+  /* Details */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .detail-item label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-500);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+
+  .detail-item .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray-900);
+  }
+
+  .type-badge {
+    display: inline-block;
+    padding: 0.2rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--purple-bg);
+    color: var(--purple);
+  }
+
+  /* Analysis comment */
+  .analysis-comment {
+    background: var(--purple-bg);
+    border-left: 3px solid var(--purple);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    margin-top: 1rem;
+    font-size: 0.95rem;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+
+  /* Detected patterns */
+  .patterns-section h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+  }
+
+  .pattern-tag {
+    display: inline-block;
+    padding: 0.3rem 0.7rem;
+    margin: 0.2rem;
+    background: var(--gray-100);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    font-weight: 500;
+  }
+
+  .pattern-tag.active {
+    background: var(--purple-bg);
+    color: var(--purple);
+    font-weight: 600;
+  }
+
+  /* Share */
+  .share-section {
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .share-btn:hover { background: var(--gray-200); }
+
+  .share-btn.copied {
+    background: var(--purple-bg);
+    color: var(--purple);
+    border-color: var(--purple-light);
+  }
+
+  /* Examples */
+  .examples-section {
+    margin-top: 1.5rem;
+  }
+
+  .examples-section h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.75rem;
+  }
+
+  .example-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .example-chip {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .example-chip:hover {
+    border-color: var(--purple-light);
+    color: var(--purple);
+    background: var(--purple-bg);
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .disclaimer a { color: var(--purple); text-decoration: none; }
+
+  @media (max-width: 500px) {
+    .container { padding: 1.25rem 1rem; }
+    header h1 { font-size: 1.5rem; }
+    .probability-display { font-size: 2.75rem; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .meter-container { width: 180px; height: 110px; }
+    .meter-bg, .meter-fill { width: 160px; height: 160px; }
+    .meter-needle { height: 70px; left: 88px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Sarcasm <span>Meter</span></h1>
+    <p>Precision sarcasm detection powered by questionable science</p>
+  </header>
+
+  <div class="input-section">
+    <textarea id="inputText" placeholder="Paste or type text to analyze for sarcasm..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="analyze()">Analyze Sarcasm</button>
+      <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="result-card meter-section">
+      <div class="meter-container">
+        <div class="meter-bg"></div>
+        <div class="meter-fill" id="meterFill"></div>
+        <div class="meter-needle" id="meterNeedle"></div>
+        <div class="meter-labels"><span>Sincere</span><span>Sarcastic</span></div>
+      </div>
+      <div class="probability-label">Sarcasm Probability</div>
+      <div class="probability-display" id="probDisplay">0%</div>
+      <div class="confidence-interval" id="ciDisplay"></div>
+    </div>
+
+    <div class="result-card">
+      <div class="detail-grid">
+        <div class="detail-item">
+          <label>Type</label>
+          <div><span class="type-badge" id="typeDisplay">--</span></div>
+        </div>
+        <div class="detail-item">
+          <label>Severity</label>
+          <div class="value" id="severityDisplay">--</div>
+        </div>
+        <div class="detail-item">
+          <label>Patterns Found</label>
+          <div class="value" id="patternCount">0</div>
+        </div>
+        <div class="detail-item">
+          <label>Sincerity Score</label>
+          <div class="value" id="sincerityDisplay">--</div>
+        </div>
+      </div>
+      <div class="analysis-comment" id="analysisComment"></div>
+    </div>
+
+    <div class="result-card patterns-section">
+      <h3>Detected Indicators</h3>
+      <div id="patternTags"></div>
+    </div>
+
+    <div class="share-section">
+      <button class="share-btn" id="shareBtn" onclick="shareResult()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        Copy Result
+      </button>
+    </div>
+  </div>
+
+  <div class="examples-section">
+    <h3>Try these examples:</h3>
+    <div class="example-chips" id="exampleChips"></div>
+  </div>
+
+  <div class="disclaimer">
+    The science is settled.* Results are 100% accurate, definitely, absolutely, for sure.<br>
+    <small>*The science is not settled. This is a heuristic toy. <a href="#">Do not cite in court.</a></small>
+  </div>
+</div>
+
+<script>
+const PATTERNS = [
+  // Phrase patterns [regex, label, weight, type]
+  [/\boh great\b/i, '"Oh great"', 15, 'passive-aggressive'],
+  [/\boh wonderful\b/i, '"Oh wonderful"', 14, 'passive-aggressive'],
+  [/\boh fantastic\b/i, '"Oh fantastic"', 15, 'passive-aggressive'],
+  [/\boh perfect\b/i, '"Oh perfect"', 14, 'passive-aggressive'],
+  [/\boh joy\b/i, '"Oh joy"', 16, 'dry'],
+  [/\boh how lovely\b/i, '"Oh how lovely"', 14, 'passive-aggressive'],
+  [/\bwow thanks\b/i, '"Wow thanks"', 14, 'passive-aggressive'],
+  [/\bthanks a lot\b/i, '"Thanks a lot"', 10, 'passive-aggressive'],
+  [/\bthanks for nothing\b/i, '"Thanks for nothing"', 20, 'bitter'],
+  [/\bthanks so much\b/i, '"Thanks so much"', 8, 'passive-aggressive'],
+  [/\blove that for you\b/i, '"Love that for you"', 16, 'passive-aggressive'],
+  [/\blove that for me\b/i, '"Love that for me"', 17, 'bitter'],
+  [/\bgood for you\b/i, '"Good for you"', 10, 'passive-aggressive'],
+  [/\bsure jan\b/i, '"Sure Jan"', 18, 'dry'],
+  [/\byeah right\b/i, '"Yeah right"', 14, 'dry'],
+  [/\byeah ok\b/i, '"Yeah ok"', 10, 'dry'],
+  [/\byeah sure\b/i, '"Yeah sure"', 12, 'dry'],
+  [/\bno really\b/i, '"No really"', 12, 'dry'],
+  [/\bhow shocking\b/i, '"How shocking"', 16, 'dry'],
+  [/\bwhat a surprise\b/i, '"What a surprise"', 15, 'dry'],
+  [/\bwho knew\b/i, '"Who knew"', 12, 'dry'],
+  [/\bwho would have thought\b/i, '"Who would have thought"', 14, 'dry'],
+  [/\bclearly\b/i, '"Clearly"', 6, 'dry'],
+  [/\bobviously\b/i, '"Obviously"', 6, 'dry'],
+  [/\bwhat a time to be alive\b/i, '"What a time to be alive"', 16, 'bitter'],
+  [/\bi'm so happy\b/i, '"I\'m so happy"', 8, 'passive-aggressive'],
+  [/\bi just love\b/i, '"I just love"', 10, 'passive-aggressive'],
+  [/\bhow original\b/i, '"How original"', 16, 'dry'],
+  [/\bhow delightful\b/i, '"How delightful"', 14, 'dry'],
+  [/\bhow nice\b/i, '"How nice"', 9, 'passive-aggressive'],
+  [/\bwhat a treat\b/i, '"What a treat"', 13, 'dry'],
+  [/\bwhat fun\b/i, '"What fun"', 12, 'dry'],
+  [/\bso glad\b/i, '"So glad"', 8, 'passive-aggressive'],
+  [/\bso thrilled\b/i, '"So thrilled"', 12, 'passive-aggressive'],
+  [/\bmy favorite\b/i, '"My favorite"', 8, 'passive-aggressive'],
+  [/\breally helpful\b/i, '"Really helpful"', 8, 'passive-aggressive'],
+  [/\bcan't wait\b/i, '"Can\'t wait"', 7, 'passive-aggressive'],
+  [/\bjust what i needed\b/i, '"Just what I needed"', 14, 'bitter'],
+  [/\bexactly what i wanted\b/i, '"Exactly what I wanted"', 13, 'bitter'],
+  [/\bcouldn't be happier\b/i, '"Couldn\'t be happier"', 12, 'bitter'],
+  [/\bcolor me surprised\b/i, '"Color me surprised"', 17, 'dry'],
+  [/\bshocked i tell you\b/i, '"Shocked I tell you"', 18, 'dry'],
+  [/\bi'm shocked\b/i, '"I\'m shocked"', 11, 'dry'],
+  [/\bwhat else is new\b/i, '"What else is new"', 13, 'bitter'],
+  [/\bbig surprise\b/i, '"Big surprise"', 14, 'dry'],
+  [/\bgreat job\b/i, '"Great job"', 8, 'passive-aggressive'],
+  [/\bnice work\b/i, '"Nice work"', 7, 'passive-aggressive'],
+  [/\bwell done\b/i, '"Well done"', 6, 'passive-aggressive'],
+  [/\bthat's just great\b/i, '"That\'s just great"', 15, 'passive-aggressive'],
+  [/\bhave a great day\b/i, '"Have a great day"', 4, 'passive-aggressive'],
+];
+
+// Contextual modifiers
+const CONTEXT_PATTERNS = [
+  // ALL CAPS detection
+  { test: t => { const w = t.split(/\s+/).filter(w => w.length > 2); const caps = w.filter(w => w === w.toUpperCase() && /[A-Z]/.test(w)); return caps.length >= 2 ? caps.length * 4 : 0; }, label: 'ALL CAPS words', type: 'passive-aggressive' },
+  // Excessive punctuation
+  { test: t => { const m = t.match(/[!]{2,}/g); return m ? Math.min(m.join('').length * 3, 18) : 0; }, label: 'Excessive !!!', type: 'passive-aggressive' },
+  { test: t => { const m = t.match(/[?]{2,}/g); return m ? Math.min(m.join('').length * 3, 15) : 0; }, label: 'Excessive ???', type: 'dry' },
+  { test: t => (t.match(/\.\.\./g) || []).length >= 1 ? 6 : 0, label: 'Ellipsis...', type: 'deadpan' },
+  // "Totally/definitely/absolutely" in negative or contradicting context
+  { test: t => /\btotally\b(?!.*awesome|.*agree|.*right|.*correct)/i.test(t) ? 8 : 0, label: '"Totally" (suspicious context)', type: 'dry' },
+  { test: t => /\bdefinitely\b(?!.*will|.*should|.*agree|.*yes)/i.test(t) ? 7 : 0, label: '"Definitely" (suspicious context)', type: 'dry' },
+  { test: t => /\babsolutely\b(?!.*right|.*correct|.*agree|.*yes)/i.test(t) ? 7 : 0, label: '"Absolutely" (suspicious context)', type: 'dry' },
+  // "Sooo" or stretched words
+  { test: t => /\b\w*(.)\1{2,}\w*\b/i.test(t) ? 8 : 0, label: 'Stretched words (soooo)', type: 'passive-aggressive' },
+  // Air quotes
+  { test: t => (t.match(/"/g) || []).length >= 2 ? 6 : 0, label: 'Air quotes', type: 'dry' },
+  // Emoji overload
+  { test: t => { const e = (t.match(/[\u{1F600}-\u{1F9FF}]/gu) || []); return e.length >= 3 ? e.length * 3 : 0; }, label: 'Emoji overload', type: 'passive-aggressive' },
+  // Short dismissive sentences
+  { test: t => t.trim().split(/\s+/).length <= 4 && /\b(cool|fine|great|nice|wow|sure|ok|okay|right|whatever)\b/i.test(t) ? 10 : 0, label: 'Short dismissive response', type: 'deadpan' },
+  // "I'm sure" pattern
+  { test: t => /\bi'?m sure\b/i.test(t) ? 9 : 0, label: '"I\'m sure"', type: 'dry' },
+  // "Must be nice"
+  { test: t => /\bmust be nice\b/i.test(t) ? 16 : 0, label: '"Must be nice"', type: 'bitter' },
+  // Period at end of short text (passive aggressive texting)
+  { test: t => t.trim().split(/\s+/).length <= 5 && /\.\s*$/.test(t.trim()) && !/[!?]/.test(t) ? 5 : 0, label: 'Passive-aggressive period', type: 'passive-aggressive' },
+  // "As if"
+  { test: t => /\bas if\b/i.test(t) ? 10 : 0, label: '"As if"', type: 'dry' },
+  // Eye-roll indicators
+  { test: t => /\bsure thing\b/i.test(t) ? 10 : 0, label: '"Sure thing"', type: 'dry' },
+  // "Not like" / "it's not like"
+  { test: t => /\b(it'?s\s+)?not\s+like\b/i.test(t) ? 11 : 0, label: '"Not like..."', type: 'bitter' },
+  // "Because that makes sense"
+  { test: t => /\bbecause that\s+(makes\s+sense|works|helps)\b/i.test(t) ? 15 : 0, label: '"Because that makes sense"', type: 'dry' },
+  // Fake enthusiasm ("So exciting", "How exciting")
+  { test: t => /\b(so|how)\s+exciting\b/i.test(t) ? 12 : 0, label: 'Fake enthusiasm', type: 'passive-aggressive' },
+  // "Please" in aggressive context
+  { test: t => /\bplease\b.*\b(stop|don't|just)\b/i.test(t) || /\b(stop|don't|just)\b.*\bplease\b/i.test(t) ? 6 : 0, label: 'Aggressive "please"', type: 'passive-aggressive' },
+  // "Genius"
+  { test: t => /\bgenius\b/i.test(t) ? 10 : 0, label: '"Genius"', type: 'dry' },
+  // "Per my last email"
+  { test: t => /\bper my last\b/i.test(t) ? 18 : 0, label: '"Per my last..."', type: 'passive-aggressive' },
+  // "With all due respect"
+  { test: t => /\bwith all due respect\b/i.test(t) ? 14 : 0, label: '"With all due respect"', type: 'passive-aggressive' },
+  // "Going forward"
+  { test: t => /\bgoing forward\b/i.test(t) && /\bplease\b/i.test(t) ? 8 : 0, label: 'Corporate passive-aggression', type: 'passive-aggressive' },
+  // "Noted"
+  { test: t => /^noted\.?$/i.test(t.trim()) ? 14 : 0, label: '"Noted."', type: 'deadpan' },
+  // "K" or "k."
+  { test: t => /^k\.?$/i.test(t.trim()) ? 16 : 0, label: '"K."', type: 'deadpan' },
+  // "Fine."
+  { test: t => /^fine\.?$/i.test(t.trim()) ? 14 : 0, label: '"Fine."', type: 'deadpan' },
+  // "Cool."
+  { test: t => /^cool\.?$/i.test(t.trim()) ? 14 : 0, label: '"Cool."', type: 'deadpan' },
+  // "Whatever"
+  { test: t => /^whatever\.?$/i.test(t.trim()) ? 16 : 0, label: '"Whatever."', type: 'bitter' },
+  // "Thanks" standalone
+  { test: t => /^thanks\.?$/i.test(t.trim()) ? 10 : 0, label: '"Thanks." (standalone)', type: 'deadpan' },
+  // Rhetorical "right"
+  { test: t => /,\s*right\s*[?.]?\s*$/i.test(t.trim()) ? 9 : 0, label: 'Rhetorical "right?"', type: 'dry' },
+  // "Imagine" + gerund
+  { test: t => /\bimagine\s+\w+ing\b/i.test(t) ? 10 : 0, label: '"Imagine [doing]..."', type: 'bitter' },
+  // Slow clap reference
+  { test: t => /\bslow clap\b/i.test(t) ? 16 : 0, label: '"Slow clap"', type: 'dry' },
+  // "But sure" / "but okay"
+  { test: t => /\bbut\s+(sure|okay|ok|fine)\b/i.test(t) ? 12 : 0, label: '"But sure/okay"', type: 'passive-aggressive' },
+  // "That worked out well"
+  { test: t => /\bthat\s+(worked|turned)\s+out\s+well\b/i.test(t) ? 13 : 0, label: '"That worked out well"', type: 'bitter' },
+  // Fake apology
+  { test: t => /\bsorry not sorry\b/i.test(t) ? 14 : 0, label: '"Sorry not sorry"', type: 'passive-aggressive' },
+  // "Real mature"
+  { test: t => /\breal\s+mature\b/i.test(t) ? 14 : 0, label: '"Real mature"', type: 'passive-aggressive' },
+  // "Brilliant" sarcastic
+  { test: t => /\bbrilliant\b/i.test(t) ? 7 : 0, label: '"Brilliant"', type: 'dry' },
+  // "/s" tag (explicit sarcasm)
+  { test: t => /\/s\b/.test(t) ? 25 : 0, label: 'Explicit /s tag', type: 'dry' },
+];
+
+const ANALYSIS_COMMENTS = [
+  // Low sarcasm (0-20)
+  { max: 5, comments: [
+    "This text radiates genuine sincerity. Possibly too sincere. Suspiciously sincere, even.",
+    "Clean scan. No sarcasm detected. This person might actually mean what they say.",
+    "Zero sarcasm indicators found. Either genuinely nice or an extremely sophisticated operator.",
+    "Our instruments detect nothing. This is either sincere or beyond our detection capabilities.",
+  ]},
+  { max: 20, comments: [
+    "Trace amounts of possible sarcasm detected. Could also just be a dry personality.",
+    "Very mild readings. If this is sarcasm, it's operating at frequencies only dogs can hear.",
+    "Background levels of irony. Nothing clinically significant.",
+    "Minor blip on the detector. Probably just normal human ambiguity.",
+  ]},
+  // Medium sarcasm (20-50)
+  { max: 35, comments: [
+    "Moderate sarcasm levels detected. This person has feelings about something.",
+    "Our sensors are picking up some passive energy. Tread carefully.",
+    "Detectable sarcasm. Not enough to melt steel beams, but enough to make a meeting uncomfortable.",
+    "The instruments are twitching. Something is definitely going on beneath the surface.",
+  ]},
+  { max: 50, comments: [
+    "Elevated sarcasm. This person has mastered the art of saying one thing while meaning another.",
+    "Significant ironic content detected. We recommend not taking this at face value.",
+    "Halfway to full sarcasm saturation. The subtext is doing most of the heavy lifting here.",
+    "Our readings suggest this person is saying what they don't mean with considerable skill.",
+  ]},
+  // High sarcasm (50-75)
+  { max: 65, comments: [
+    "High sarcasm concentration. This text should be handled with protective equipment.",
+    "Substantial sarcastic payload detected. The actual meaning is likely the exact opposite.",
+    "Warning: elevated irony levels. What you read is not what you get.",
+    "Strong sarcasm signature. This person has weaponized politeness.",
+  ]},
+  { max: 75, comments: [
+    "Very high sarcasm detected. This text is practically dripping with it.",
+    "Our instruments are working overtime. Multiple sarcasm indicators firing simultaneously.",
+    "Approaching critical sarcasm mass. We advise reading this in the opposite voice.",
+    "The sarcasm is palpable. You could cut it with a knife and serve it at a dinner party.",
+  ]},
+  // Extreme sarcasm (75-100)
+  { max: 90, comments: [
+    "Extreme sarcasm levels. This person has transcended mere communication into performance art.",
+    "Dangerously high readings. This text may cause eye-rolling in a 50-foot radius.",
+    "Our detector is redlining. This is professional-grade sarcasm.",
+    "Critical sarcasm levels detected. The gap between what was said and what was meant could swallow a small country.",
+  ]},
+  { max: 100, comments: [
+    "Maximum sarcasm. Our instruments have broken. Send help. And also new instruments.",
+    "Off the charts. This is pure, weapons-grade sarcasm. Do not operate heavy machinery after reading.",
+    "Peak sarcasm achieved. Scientists believed this level was only theoretical. They were wrong.",
+    "Sarcasm singularity detected. Reality itself is bending around this text.",
+    "We've never seen readings this high. Our lead researcher just quit. They said 'fine.'",
+  ]},
+];
+
+const EXAMPLES = [
+  "Oh great, another meeting that could have been an email",
+  "Wow thanks for explaining that, I DEFINITELY didn't already know",
+  "Love that for you, truly",
+  "Sure Jan",
+  "What a surprise, the printer is broken AGAIN",
+  "I'm SO thrilled to be here on a Saturday",
+  "Per my last email...",
+  "K.",
+  "No really, tell me more about your crypto portfolio",
+  "That's just great. Exactly what I needed today.",
+  "Must be nice to have free time",
+  "I genuinely appreciate your help with this project",
+  "Thank you for the thoughtful birthday gift!",
+];
+
+// Populate example chips
+const chipsContainer = document.getElementById('exampleChips');
+EXAMPLES.forEach(ex => {
+  const chip = document.createElement('button');
+  chip.className = 'example-chip';
+  chip.textContent = ex.length > 45 ? ex.slice(0, 42) + '...' : ex;
+  chip.title = ex;
+  chip.onclick = () => {
+    document.getElementById('inputText').value = ex;
+    analyze();
+  };
+  chipsContainer.appendChild(chip);
+});
+
+function analyze() {
+  const text = document.getElementById('inputText').value.trim();
+  if (!text) return;
+
+  let totalScore = 0;
+  const found = [];
+  const typeCounts = { 'passive-aggressive': 0, 'dry': 0, 'bitter': 0, 'deadpan': 0 };
+
+  // Check phrase patterns
+  PATTERNS.forEach(([regex, label, weight, type]) => {
+    if (regex.test(text)) {
+      totalScore += weight;
+      found.push({ label, type });
+      typeCounts[type] += weight;
+    }
+  });
+
+  // Check context patterns
+  CONTEXT_PATTERNS.forEach(p => {
+    const score = p.test(text);
+    if (score > 0) {
+      totalScore += score;
+      found.push({ label: p.label, type: p.type });
+      typeCounts[p.type] += score;
+    }
+  });
+
+  // Normalize to 0-100 with diminishing returns
+  const probability = Math.min(99.8, 100 * (1 - Math.exp(-totalScore / 30)));
+
+  // Confidence interval widens with less data
+  const ciBase = found.length >= 4 ? 2.1 : found.length >= 2 ? 5.5 : found.length >= 1 ? 8.3 : 15.0;
+  const ci = ciBase + Math.random() * 2.5;
+
+  // Determine type
+  const topType = Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0];
+  const typeLabel = topType[1] > 0 ? capitalize(topType[0]) : 'Inconclusive';
+
+  // Severity
+  let severity;
+  if (probability < 15) severity = 'None';
+  else if (probability < 35) severity = 'Mild';
+  else if (probability < 55) severity = 'Moderate';
+  else if (probability < 75) severity = 'Elevated';
+  else if (probability < 90) severity = 'Severe';
+  else severity = 'Critical';
+
+  // Sincerity (inverse)
+  const sincerity = Math.max(0.2, 100 - probability).toFixed(1) + '%';
+
+  // Pick analysis comment
+  const bracket = ANALYSIS_COMMENTS.find(b => probability <= b.max) || ANALYSIS_COMMENTS[ANALYSIS_COMMENTS.length - 1];
+  const comment = bracket.comments[Math.floor(Math.random() * bracket.comments.length)];
+
+  // Render
+  renderResults(probability, ci, typeLabel, severity, sincerity, found, comment);
+}
+
+function renderResults(prob, ci, type, severity, sincerity, patterns, comment) {
+  const results = document.getElementById('results');
+  results.classList.add('visible');
+
+  // Animate probability number
+  const probEl = document.getElementById('probDisplay');
+  animateNumber(probEl, prob);
+
+  // CI
+  document.getElementById('ciDisplay').textContent = `95% CI: ${Math.max(0, prob - ci).toFixed(1)}% - ${Math.min(99.9, prob + ci).toFixed(1)}% (\u00b1${ci.toFixed(1)}%)`;
+
+  // Meter needle: -90deg = 0%, +90deg = 100%
+  const angle = -90 + (prob / 100) * 180;
+  document.getElementById('meterNeedle').style.transform = `rotate(${angle}deg)`;
+
+  // Meter fill (clip the arc)
+  const fillAngle = 225 + (prob / 100) * 270;
+  document.getElementById('meterFill').style.clipPath = `polygon(50% 50%, 50% 0%, ${prob > 50 ? '100% 0%, 100% 100%, 0% 100%, 0% 0%' : '100% 0%'})`;
+  document.getElementById('meterFill').style.opacity = Math.max(0.3, prob / 100);
+
+  // Details
+  document.getElementById('typeDisplay').textContent = type;
+  document.getElementById('severityDisplay').textContent = severity;
+  document.getElementById('patternCount').textContent = patterns.length;
+  document.getElementById('sincerityDisplay').textContent = sincerity;
+  document.getElementById('analysisComment').textContent = comment;
+
+  // Pattern tags
+  const tagsEl = document.getElementById('patternTags');
+  if (patterns.length === 0) {
+    tagsEl.innerHTML = '<span class="pattern-tag">No sarcasm indicators detected</span>';
+  } else {
+    tagsEl.innerHTML = patterns.map(p =>
+      `<span class="pattern-tag active" title="${capitalize(p.type)}">${p.label}</span>`
+    ).join('');
+  }
+
+  // Scroll to results
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function animateNumber(el, target) {
+  const duration = 800;
+  const start = performance.now();
+  const from = 0;
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - t, 3);
+    const val = from + (target - from) * ease;
+    el.textContent = val.toFixed(1) + '%';
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function capitalize(s) {
+  return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join('-');
+}
+
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('results').classList.remove('visible');
+}
+
+function shareResult() {
+  const text = document.getElementById('inputText').value.trim();
+  const prob = document.getElementById('probDisplay').textContent;
+  const type = document.getElementById('typeDisplay').textContent;
+  const comment = document.getElementById('analysisComment').textContent;
+  const result = `Sarcasm Meter Result\n\nText: "${text}"\nSarcasm Probability: ${prob}\nType: ${type}\n\nAnalysis: ${comment}\n\nhttps://sarcasm-meter.app`;
+
+  navigator.clipboard.writeText(result).then(() => {
+    const btn = document.getElementById('shareBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Copy Result';
+    }, 2000);
+  });
+}
+
+// Allow Ctrl+Enter to analyze
+document.getElementById('inputText').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>

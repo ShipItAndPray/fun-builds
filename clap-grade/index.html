@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clap Grade - Rhythm Challenge</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0a0a1a;
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.bg-gradient {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(ellipse at 20% 50%, rgba(120, 40, 200, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 80% 20%, rgba(255, 100, 50, 0.1) 0%, transparent 50%),
+              radial-gradient(ellipse at 50% 80%, rgba(0, 200, 255, 0.1) 0%, transparent 50%);
+  z-index: -1;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+}
+
+h1 {
+  font-size: 2.2em;
+  background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+}
+
+.subtitle { color: #888; font-size: 0.9em; margin-bottom: 20px; }
+
+/* Difficulty selector */
+.difficulty-bar {
+  display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap;
+}
+.diff-btn {
+  padding: 8px 16px; border: 2px solid #333; border-radius: 20px;
+  background: transparent; color: #aaa; font-size: 0.85em; cursor: pointer;
+  transition: all 0.2s;
+}
+.diff-btn:hover { border-color: #666; color: #fff; }
+.diff-btn.active { border-color: #ffd93d; color: #ffd93d; background: rgba(255, 217, 61, 0.1); }
+
+/* Beat track */
+.track-container {
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.track-label { font-size: 0.75em; color: #666; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 2px; }
+
+.beat-track {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-height: 50px;
+  align-items: center;
+}
+
+.beat-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7em; color: #555;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.beat-dot.clap {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: #ff6b6b;
+  color: #ff6b6b;
+}
+
+.beat-dot.rest {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
+  color: #333;
+}
+
+.beat-dot.active {
+  transform: scale(1.3);
+  box-shadow: 0 0 20px rgba(255, 217, 61, 0.5);
+  border-color: #ffd93d;
+}
+
+.beat-dot.hit-perfect { background: rgba(107, 203, 119, 0.4); border-color: #6bcb77; }
+.beat-dot.hit-great { background: rgba(77, 150, 255, 0.4); border-color: #4d96ff; }
+.beat-dot.hit-good { background: rgba(255, 217, 61, 0.4); border-color: #ffd93d; }
+.beat-dot.hit-off { background: rgba(255, 150, 50, 0.4); border-color: #ff9632; }
+.beat-dot.hit-miss { background: rgba(255, 60, 60, 0.3); border-color: #ff3c3c; }
+.beat-dot.hit-extra { background: rgba(200, 50, 50, 0.3); border-color: #c83232; }
+
+/* Stats row */
+.stats-row {
+  display: flex; justify-content: space-around; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+}
+.stat-box {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px 18px;
+  min-width: 100px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.stat-label { font-size: 0.65em; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+.stat-value { font-size: 1.6em; font-weight: 700; margin-top: 2px; }
+.stat-value.accuracy { color: #6bcb77; }
+.stat-value.grade { color: #ffd93d; }
+.stat-value.highscore { color: #ff6b6b; }
+
+/* Big button */
+.play-btn {
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  border: 3px solid #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  font-size: 1em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 20px auto;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+.play-btn:hover { background: rgba(255, 107, 107, 0.2); transform: scale(1.05); }
+.play-btn:active { transform: scale(0.95); }
+.play-btn.listening {
+  border-color: #6bcb77;
+  color: #6bcb77;
+  background: rgba(107, 203, 119, 0.1);
+  animation: pulse-ring 1.5s ease-in-out infinite;
+}
+.play-btn .icon { font-size: 2.2em; }
+.play-btn .label { font-size: 0.75em; }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(107, 203, 119, 0.4); }
+  50% { box-shadow: 0 0 0 15px rgba(107, 203, 119, 0); }
+}
+
+/* Feedback toast */
+.feedback {
+  font-size: 1.1em;
+  min-height: 50px;
+  display: flex; align-items: center; justify-content: center;
+  color: #888;
+  margin-bottom: 10px;
+  padding: 0 10px;
+  line-height: 1.4;
+}
+.feedback.show { animation: fadeInUp 0.3s ease-out; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hit flash */
+.clap-flash {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+.clap-flash.show {
+  animation: flash 0.15s ease-out;
+}
+@keyframes flash {
+  from { background: rgba(255, 255, 255, 0.08); }
+  to { background: transparent; }
+}
+
+/* Grade popup */
+.grade-popup {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 4em;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 200;
+  opacity: 0;
+  text-shadow: 0 0 40px currentColor;
+}
+.grade-popup.show {
+  animation: gradeIn 0.6s ease-out forwards;
+}
+@keyframes gradeIn {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+}
+
+/* Countdown overlay */
+.countdown-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 300;
+  font-size: 6em; font-weight: 900;
+  color: #ffd93d;
+}
+.countdown-overlay.show { display: flex; }
+.countdown-overlay .num { animation: countPop 0.8s ease-out; }
+@keyframes countPop {
+  0% { transform: scale(2); opacity: 0; }
+  30% { transform: scale(1); opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Volume meter */
+.vol-meter {
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.vol-meter .bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6bcb77, #ffd93d, #ff6b6b);
+  border-radius: 2px;
+  transition: width 0.05s;
+}
+
+/* BPM display */
+.bpm-display {
+  font-size: 0.8em; color: #555; margin-bottom: 10px;
+}
+
+/* Tempo indicator */
+.tempo-dots {
+  display: flex; gap: 4px; justify-content: center; margin-bottom: 15px;
+}
+.tempo-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  transition: background 0.1s;
+}
+.tempo-dot.tick { background: #ffd93d; }
+
+@media (max-width: 400px) {
+  h1 { font-size: 1.6em; }
+  .beat-dot { width: 28px; height: 28px; font-size: 0.6em; }
+  .play-btn { width: 110px; height: 110px; }
+  .container { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<div class="bg-gradient"></div>
+<div class="clap-flash" id="clapFlash"></div>
+<div class="grade-popup" id="gradePopup"></div>
+<div class="countdown-overlay" id="countdown"></div>
+
+<div class="container">
+  <h1>Clap Grade</h1>
+  <p class="subtitle">Can you keep a beat? Prove it.</p>
+
+  <div class="difficulty-bar" id="diffBar"></div>
+
+  <div class="bpm-display" id="bpmDisplay">120 BPM</div>
+
+  <div class="track-container">
+    <div class="track-label">Beat Pattern</div>
+    <div class="beat-track" id="beatTrack"></div>
+  </div>
+
+  <div class="vol-meter"><div class="bar" id="volBar"></div></div>
+
+  <div class="tempo-dots" id="tempoDots">
+    <div class="tempo-dot"></div><div class="tempo-dot"></div>
+    <div class="tempo-dot"></div><div class="tempo-dot"></div>
+  </div>
+
+  <button class="play-btn" id="playBtn" onclick="togglePlay()">
+    <span class="icon">&#9654;</span>
+    <span class="label">START</span>
+  </button>
+
+  <div class="feedback" id="feedback">Tap START, then clap along!</div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-label">Accuracy</div>
+      <div class="stat-value accuracy" id="accuracy">--%</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Grade</div>
+      <div class="stat-value grade" id="gradeDisplay">--</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">High Score</div>
+      <div class="stat-value highscore" id="highScore">--%</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== PATTERNS ====================
+const LEVELS = [
+  {
+    name: 'Beginner',
+    bpm: 90,
+    // 1=clap, 0=rest. 8 eighth-notes = 1 bar
+    pattern: [1,0,1,0,1,0,1,0],
+    label: '4 on the floor'
+  },
+  {
+    name: 'Easy',
+    bpm: 100,
+    pattern: [1,0,0,1,0,0,1,0],
+    label: 'Simple groove'
+  },
+  {
+    name: 'Medium',
+    bpm: 110,
+    pattern: [1,0,1,0,0,1,0,1],
+    label: 'Syncopation'
+  },
+  {
+    name: 'Hard',
+    bpm: 120,
+    pattern: [1,0,0,1,1,0,1,0, 1,0,0,1,0,1,0,0],
+    label: '2-bar funk'
+  },
+  {
+    name: 'Expert',
+    bpm: 130,
+    pattern: [1,0,1,1,0,1,0,0, 1,1,0,0,1,0,1,0],
+    label: 'Polyrhythm'
+  },
+  {
+    name: 'Insane',
+    bpm: 145,
+    pattern: [1,1,0,1,0,1,1,0, 0,1,1,0,1,0,0,1],
+    label: 'Chaos theory'
+  }
+];
+
+// ==================== FEEDBACK ====================
+const FEEDBACK = {
+  perfect: [
+    "You ARE the metronome.",
+    "Flawless. The rhythm gods bow.",
+    "NASA called. They want your timing.",
+    "Your claps could calibrate atomic clocks.",
+    "Standing ovation from your neighbors.",
+    "The metronome is learning from YOU.",
+  ],
+  great: [
+    "Smooth operator! Almost perfect.",
+    "Your hands were born for this.",
+    "A drummer would be proud.",
+    "That was tighter than a snare head.",
+    "You could join a marching band. Today.",
+    "The beat fears YOU.",
+  ],
+  good: [
+    "Not bad! Room to grow though.",
+    "You have potential. Keep clapping.",
+    "Solid B+ energy right there.",
+    "Your rhythm teacher would nod approvingly.",
+    "Decent! The beat is recognizable.",
+    "You're on the right track. Literally.",
+  ],
+  off: [
+    "You have the rhythm of a confused metronome.",
+    "Were you clapping to a different song?",
+    "Close-ish. In a parallel universe.",
+    "The beat was there. You were... nearby.",
+    "Your timing is... creative.",
+    "Somewhere, a drum machine shed a tear.",
+    "Points for enthusiasm, at least.",
+  ],
+  terrible: [
+    "Did you just slap a fish?",
+    "Your rhythm has left the chat.",
+    "That wasn't clapping. That was chaos.",
+    "A random number generator has better timing.",
+    "The sound engineer has filed a restraining order.",
+    "Congratulations, you invented a new time signature.",
+    "That sounded like a raccoon in a trash can.",
+    "Your claps filed for divorce from the beat.",
+    "Even white noise has more structure.",
+    "You clapped with the confidence of someone who can't clap.",
+    "Siri, how do I unclap?",
+    "The neighbors just called. Not to complain. To offer lessons.",
+  ]
+};
+
+// ==================== STATE ====================
+let currentLevel = 0;
+let playing = false;
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let beatIndex = 0;
+let roundResults = [];
+let expectedClaps = [];
+let userClaps = [];
+let beatStartTime = 0;
+let eighthNoteDuration = 0;
+let tickTimer = null;
+let highScores = {};
+
+// Load high scores
+try { highScores = JSON.parse(localStorage.getItem('clapgrade_scores') || '{}'); } catch(e) {}
+
+// ==================== INIT ====================
+function init() {
+  renderDiffBar();
+  selectLevel(0);
+  updateHighScoreDisplay();
+}
+
+function renderDiffBar() {
+  const bar = document.getElementById('diffBar');
+  bar.innerHTML = LEVELS.map((l, i) =>
+    `<button class="diff-btn ${i === currentLevel ? 'active' : ''}" onclick="selectLevel(${i})">${l.name}</button>`
+  ).join('');
+}
+
+function selectLevel(i) {
+  if (playing) return;
+  currentLevel = i;
+  renderDiffBar();
+  renderBeatTrack();
+  document.getElementById('bpmDisplay').textContent = LEVELS[i].bpm + ' BPM - ' + LEVELS[i].label;
+  document.getElementById('accuracy').textContent = '--%';
+  document.getElementById('gradeDisplay').textContent = '--';
+  document.getElementById('feedback').textContent = 'Tap START, then clap along!';
+}
+
+function renderBeatTrack() {
+  const track = document.getElementById('beatTrack');
+  const pat = LEVELS[currentLevel].pattern;
+  track.innerHTML = pat.map((v, i) =>
+    `<div class="beat-dot ${v ? 'clap' : 'rest'}" id="dot${i}">${v ? '\u{1F44F}' : '\u00B7'}</div>`
+  ).join('');
+}
+
+// ==================== AUDIO ====================
+async function initAudio() {
+  if (audioCtx) return true;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.3;
+    source.connect(analyser);
+    return true;
+  } catch(e) {
+    document.getElementById('feedback').textContent = 'Mic access denied. Allow microphone to play!';
+    return false;
+  }
+}
+
+// Play a click/tick sound
+function playTick(isClap) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  if (isClap) {
+    // Higher, punchier sound for clap beats
+    osc.frequency.value = 1200;
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.06);
+
+    // Add a noise burst for clap
+    const bufSize = audioCtx.sampleRate * 0.04;
+    const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buf;
+    const ng = audioCtx.createGain();
+    ng.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    ng.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    noise.connect(ng);
+    ng.connect(audioCtx.destination);
+    noise.start(audioCtx.currentTime);
+  } else {
+    // Softer tick for rests
+    osc.frequency.value = 600;
+    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.04);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.04);
+  }
+}
+
+// ==================== CLAP DETECTION ====================
+let lastClapTime = 0;
+let prevEnergy = 0;
+let energyHistory = [];
+const CLAP_COOLDOWN = 80; // ms
+
+function detectClap() {
+  if (!analyser) return false;
+  const bufLen = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufLen);
+  analyser.getByteFrequencyData(dataArray);
+
+  // Focus on mid-high frequencies (clap energy)
+  let energy = 0;
+  const startBin = Math.floor(bufLen * 0.15);
+  const endBin = Math.floor(bufLen * 0.8);
+  for (let i = startBin; i < endBin; i++) {
+    energy += dataArray[i];
+  }
+  energy /= (endBin - startBin);
+
+  // Update volume meter
+  const volPct = Math.min(100, (energy / 128) * 100);
+  document.getElementById('volBar').style.width = volPct + '%';
+
+  // Keep rolling average
+  energyHistory.push(energy);
+  if (energyHistory.length > 15) energyHistory.shift();
+  const avgEnergy = energyHistory.reduce((a, b) => a + b, 0) / energyHistory.length;
+
+  // Detect transient: sudden spike above average
+  const now = performance.now();
+  const threshold = Math.max(avgEnergy * 2.2, 25);
+  const isClap = energy > threshold && (energy - prevEnergy) > 15 && (now - lastClapTime) > CLAP_COOLDOWN;
+
+  prevEnergy = energy;
+
+  if (isClap) {
+    lastClapTime = now;
+    return true;
+  }
+  return false;
+}
+
+// ==================== GAME LOOP ====================
+async function togglePlay() {
+  if (playing) {
+    stopGame();
+    return;
+  }
+
+  const ok = await initAudio();
+  if (!ok) return;
+
+  // Reset state
+  const level = LEVELS[currentLevel];
+  const pat = level.pattern;
+  eighthNoteDuration = (60 / level.bpm) * 500; // ms per eighth note
+  beatIndex = 0;
+  roundResults = [];
+  userClaps = [];
+  expectedClaps = [];
+  energyHistory = [];
+  prevEnergy = 0;
+  lastClapTime = 0;
+
+  // Calculate expected clap times
+  pat.forEach((v, i) => {
+    if (v) expectedClaps.push({ index: i, time: i * eighthNoteDuration });
+  });
+
+  renderBeatTrack();
+
+  const btn = document.getElementById('playBtn');
+  btn.classList.add('listening');
+  btn.innerHTML = '<span class="icon">&#9209;</span><span class="label">STOP</span>';
+
+  // Countdown
+  await doCountdown(level.bpm);
+
+  playing = true;
+  beatStartTime = performance.now();
+
+  // Start beat playback and detection loop
+  runBeatLoop();
+  runDetectionLoop();
+}
+
+async function doCountdown(bpm) {
+  const overlay = document.getElementById('countdown');
+  overlay.classList.add('show');
+  const beatMs = (60 / bpm) * 1000;
+
+  for (let i = 3; i >= 1; i--) {
+    overlay.innerHTML = `<span class="num">${i}</span>`;
+    playTick(false);
+    await sleep(beatMs);
+  }
+  overlay.innerHTML = `<span class="num">GO!</span>`;
+  playTick(true);
+  await sleep(beatMs * 0.6);
+  overlay.classList.remove('show');
+}
+
+function runBeatLoop() {
+  const pat = LEVELS[currentLevel].pattern;
+  const totalBeats = pat.length;
+
+  function tick() {
+    if (!playing) return;
+    const elapsed = performance.now() - beatStartTime;
+    const currentBeat = Math.floor(elapsed / eighthNoteDuration);
+
+    if (currentBeat >= totalBeats) {
+      // Round complete
+      finishRound();
+      return;
+    }
+
+    if (currentBeat !== beatIndex && currentBeat < totalBeats) {
+      beatIndex = currentBeat;
+
+      // Update visual
+      for (let i = 0; i < totalBeats; i++) {
+        const dot = document.getElementById('dot' + i);
+        if (!dot) continue;
+        dot.classList.remove('active');
+      }
+      const activeDot = document.getElementById('dot' + currentBeat);
+      if (activeDot) activeDot.classList.add('active');
+
+      // Play tick
+      playTick(pat[currentBeat] === 1);
+
+      // Update tempo dots
+      const tempoIdx = currentBeat % 4;
+      document.querySelectorAll('.tempo-dot').forEach((d, i) => {
+        d.classList.toggle('tick', i === tempoIdx);
+      });
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+function runDetectionLoop() {
+  function detect() {
+    if (!playing) return;
+    if (detectClap()) {
+      onUserClap();
+    }
+    requestAnimationFrame(detect);
+  }
+  requestAnimationFrame(detect);
+}
+
+function onUserClap() {
+  const elapsed = performance.now() - beatStartTime;
+  userClaps.push(elapsed);
+
+  // Flash
+  const flash = document.getElementById('clapFlash');
+  flash.classList.remove('show');
+  void flash.offsetWidth;
+  flash.classList.add('show');
+
+  // Find closest expected clap
+  let bestDist = Infinity;
+  let bestIdx = -1;
+  for (let i = 0; i < expectedClaps.length; i++) {
+    const dist = Math.abs(elapsed - expectedClaps[i].time);
+    if (dist < bestDist) {
+      bestDist = dist;
+      bestIdx = i;
+    }
+  }
+
+  const tolerancePerfect = eighthNoteDuration * 0.15;
+  const toleranceGreat = eighthNoteDuration * 0.25;
+  const toleranceGood = eighthNoteDuration * 0.4;
+  const toleranceOff = eighthNoteDuration * 0.6;
+
+  let grade, color;
+  if (bestIdx >= 0 && bestDist <= toleranceOff) {
+    const dot = document.getElementById('dot' + expectedClaps[bestIdx].index);
+    if (bestDist <= tolerancePerfect) {
+      grade = 'Perfect'; color = '#6bcb77';
+      if (dot) dot.className = 'beat-dot clap hit-perfect';
+    } else if (bestDist <= toleranceGreat) {
+      grade = 'Great'; color = '#4d96ff';
+      if (dot) dot.className = 'beat-dot clap hit-great';
+    } else if (bestDist <= toleranceGood) {
+      grade = 'Good'; color = '#ffd93d';
+      if (dot) dot.className = 'beat-dot clap hit-good';
+    } else {
+      grade = 'Off'; color = '#ff9632';
+      if (dot) dot.className = 'beat-dot clap hit-off';
+    }
+    roundResults.push({ expected: bestIdx, grade, dist: bestDist });
+  } else {
+    grade = 'Extra!'; color = '#c83232';
+    // Find which dot we're near
+    const nearBeat = Math.round(elapsed / eighthNoteDuration);
+    const dot = document.getElementById('dot' + nearBeat);
+    if (dot) dot.className += ' hit-extra';
+    roundResults.push({ expected: -1, grade: 'Extra', dist: bestDist });
+  }
+
+  showGradePopup(grade, color);
+}
+
+function showGradePopup(text, color) {
+  const popup = document.getElementById('gradePopup');
+  popup.textContent = text;
+  popup.style.color = color;
+  popup.classList.remove('show');
+  void popup.offsetWidth;
+  popup.classList.add('show');
+}
+
+function finishRound() {
+  playing = false;
+  const btn = document.getElementById('playBtn');
+  btn.classList.remove('listening');
+  btn.innerHTML = '<span class="icon">&#9654;</span><span class="label">RETRY</span>';
+
+  // Calculate score
+  const totalExpected = expectedClaps.length;
+  let perfectCount = 0, greatCount = 0, goodCount = 0, offCount = 0, missCount = 0, extraCount = 0;
+
+  const hitExpected = new Set();
+  roundResults.forEach(r => {
+    if (r.expected >= 0) {
+      hitExpected.add(r.expected);
+      if (r.grade === 'Perfect') perfectCount++;
+      else if (r.grade === 'Great') greatCount++;
+      else if (r.grade === 'Good') goodCount++;
+      else if (r.grade === 'Off') offCount++;
+    } else {
+      extraCount++;
+    }
+  });
+
+  missCount = totalExpected - hitExpected.size;
+
+  // Mark missed beats
+  expectedClaps.forEach((ec, i) => {
+    if (!hitExpected.has(i)) {
+      const dot = document.getElementById('dot' + ec.index);
+      if (dot) dot.className = 'beat-dot clap hit-miss';
+    }
+  });
+
+  // Weighted score
+  const hitScore = perfectCount * 100 + greatCount * 80 + goodCount * 60 + offCount * 30;
+  const maxScore = totalExpected * 100;
+  const penalty = extraCount * 15 + missCount * 40;
+  const rawAccuracy = Math.max(0, Math.min(100, ((hitScore - penalty) / maxScore) * 100));
+  const accuracy = Math.round(rawAccuracy);
+
+  // Overall grade
+  let overallGrade, gradeCategory;
+  if (accuracy >= 95) { overallGrade = 'S+'; gradeCategory = 'perfect'; }
+  else if (accuracy >= 85) { overallGrade = 'A'; gradeCategory = 'great'; }
+  else if (accuracy >= 70) { overallGrade = 'B'; gradeCategory = 'good'; }
+  else if (accuracy >= 50) { overallGrade = 'C'; gradeCategory = 'off'; }
+  else { overallGrade = 'F'; gradeCategory = 'terrible'; }
+
+  document.getElementById('accuracy').textContent = accuracy + '%';
+  document.getElementById('gradeDisplay').textContent = overallGrade;
+
+  // Feedback
+  const pool = FEEDBACK[gradeCategory];
+  const msg = pool[Math.floor(Math.random() * pool.length)];
+  const fb = document.getElementById('feedback');
+  fb.textContent = msg;
+  fb.classList.remove('show');
+  void fb.offsetWidth;
+  fb.classList.add('show');
+
+  // High score
+  const key = 'level_' + currentLevel;
+  const prev = highScores[key] || 0;
+  if (accuracy > prev) {
+    highScores[key] = accuracy;
+    try { localStorage.setItem('clapgrade_scores', JSON.stringify(highScores)); } catch(e) {}
+  }
+  updateHighScoreDisplay();
+
+  // Big grade popup
+  const gradeColors = { 'S+': '#6bcb77', 'A': '#4d96ff', 'B': '#ffd93d', 'C': '#ff9632', 'F': '#ff3c3c' };
+  showGradePopup(overallGrade, gradeColors[overallGrade] || '#fff');
+}
+
+function stopGame() {
+  playing = false;
+  const btn = document.getElementById('playBtn');
+  btn.classList.remove('listening');
+  btn.innerHTML = '<span class="icon">&#9654;</span><span class="label">START</span>';
+  document.getElementById('feedback').textContent = 'Stopped. Tap START to try again.';
+  renderBeatTrack();
+}
+
+function updateHighScoreDisplay() {
+  const key = 'level_' + currentLevel;
+  const hs = highScores[key];
+  document.getElementById('highScore').textContent = hs ? hs + '%' : '--%';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+init();
+</script>
+</body>
+</html>

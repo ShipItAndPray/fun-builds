@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Ghost Detector PRO</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0f0a;
+    color: #00ff41;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 255, 65, 0.03) 2px,
+      rgba(0, 255, 65, 0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Vignette */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  .container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 12px;
+  }
+
+  header {
+    text-align: center;
+    padding: 16px 0 8px;
+    border-bottom: 1px solid #00ff4133;
+    margin-bottom: 12px;
+  }
+
+  header h1 {
+    font-size: 1.6em;
+    text-shadow: 0 0 20px #00ff41, 0 0 40px #00ff4188;
+    letter-spacing: 3px;
+    animation: flicker 3s infinite;
+  }
+
+  header .subtitle {
+    font-size: 0.7em;
+    color: #00ff4188;
+    margin-top: 4px;
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.7; }
+    97% { opacity: 1; }
+    98% { opacity: 0.5; }
+  }
+
+  .disclaimer {
+    text-align: center;
+    font-size: 0.6em;
+    color: #00ff4155;
+    margin-bottom: 12px;
+    font-style: italic;
+  }
+
+  /* Ghost counter */
+  .ghost-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1.1em;
+    margin-bottom: 12px;
+    padding: 8px;
+    border: 1px solid #00ff4133;
+    border-radius: 6px;
+    background: #00ff4108;
+  }
+  .ghost-counter .count {
+    font-size: 1.8em;
+    font-weight: bold;
+    text-shadow: 0 0 10px #00ff41;
+  }
+
+  /* Start button */
+  #startBtn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: #00ff4122;
+    color: #00ff41;
+    border: 2px solid #00ff41;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1.1em;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+  }
+  #startBtn:hover { background: #00ff4133; }
+  #startBtn.active {
+    background: #ff000022;
+    border-color: #ff4444;
+    color: #ff4444;
+    animation: pulse-red 1.5s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: 0 0 5px #ff444488; }
+    50% { box-shadow: 0 0 20px #ff4444cc; }
+  }
+
+  /* EMF Meter */
+  .emf-section {
+    margin-bottom: 16px;
+  }
+  .emf-label {
+    font-size: 0.8em;
+    color: #00ff4188;
+    margin-bottom: 4px;
+  }
+  .emf-meter {
+    width: 100%;
+    height: 36px;
+    background: #111;
+    border: 1px solid #00ff4144;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .emf-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.15s, background 0.3s;
+    background: linear-gradient(90deg, #00ff41, #44ff44);
+    box-shadow: 0 0 10px #00ff4188;
+    position: relative;
+  }
+  .emf-fill.medium {
+    background: linear-gradient(90deg, #ffaa00, #ffcc00);
+    box-shadow: 0 0 10px #ffaa0088;
+  }
+  .emf-fill.high {
+    background: linear-gradient(90deg, #ff4444, #ff0000);
+    box-shadow: 0 0 20px #ff000088;
+    animation: emf-pulse 0.3s infinite;
+  }
+  @keyframes emf-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  .emf-value {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85em;
+    color: #fff;
+    text-shadow: 0 0 4px #000;
+    z-index: 2;
+  }
+  .emf-ticks {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55em;
+    color: #00ff4166;
+    margin-top: 2px;
+    padding: 0 2px;
+  }
+
+  /* Sensor readouts */
+  .sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+  .sensor-box {
+    background: #00ff4108;
+    border: 1px solid #00ff4122;
+    border-radius: 4px;
+    padding: 6px;
+    text-align: center;
+  }
+  .sensor-box .label {
+    font-size: 0.55em;
+    color: #00ff4177;
+    text-transform: uppercase;
+  }
+  .sensor-box .value {
+    font-size: 0.95em;
+    margin-top: 2px;
+  }
+
+  /* Ghost alert */
+  .ghost-alert {
+    display: none;
+    text-align: center;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 2px solid #ff4444;
+    border-radius: 8px;
+    background: #ff000015;
+    animation: alert-flash 0.5s infinite;
+  }
+  .ghost-alert.show { display: block; }
+  .ghost-alert .ghost-emoji { font-size: 2.5em; }
+  .ghost-alert .ghost-name {
+    font-size: 1.2em;
+    color: #ff4444;
+    margin: 6px 0;
+    text-shadow: 0 0 10px #ff4444;
+  }
+  .ghost-alert .ghost-type {
+    font-size: 0.7em;
+    color: #ff444488;
+  }
+  @keyframes alert-flash {
+    0%, 100% { border-color: #ff4444; }
+    50% { border-color: #ff444444; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    background: #00ff4108;
+    border: 1px solid #00ff4122;
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    color: #00ff4166;
+    font-family: inherit;
+    font-size: 0.7em;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  .tab-btn.active {
+    background: #00ff4118;
+    color: #00ff41;
+    border-color: #00ff4144;
+  }
+
+  .tab-content {
+    display: none;
+    border: 1px solid #00ff4122;
+    border-radius: 0 0 6px 6px;
+    padding: 8px;
+    min-height: 180px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .tab-content.active { display: block; }
+
+  /* Activity log */
+  .log-entry {
+    font-size: 0.7em;
+    padding: 4px 0;
+    border-bottom: 1px solid #00ff4111;
+    display: flex;
+    gap: 8px;
+  }
+  .log-entry .log-time {
+    color: #00ff4155;
+    white-space: nowrap;
+  }
+  .log-entry .log-msg { color: #00ff41cc; }
+  .log-entry.ghost-log .log-msg { color: #ff4444; }
+
+  /* Hot spots grid */
+  .hotspot-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px;
+  }
+  .hotspot-cell {
+    aspect-ratio: 1;
+    background: #00ff4108;
+    border: 1px solid #00ff4118;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .hotspot-cell.hot {
+    background: #ff440033;
+    border-color: #ff4444;
+    box-shadow: 0 0 6px #ff000044;
+  }
+  .hotspot-cell.hot::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px; height: 6px;
+    background: #ff4444;
+    border-radius: 50%;
+    animation: hotspot-pulse 1s infinite;
+  }
+  @keyframes hotspot-pulse {
+    0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.6); }
+  }
+  .hotspot-legend {
+    margin-top: 6px;
+    font-size: 0.6em;
+    color: #00ff4155;
+    text-align: center;
+  }
+
+  /* Share section */
+  .share-section {
+    text-align: center;
+  }
+  .share-btn {
+    padding: 10px 24px;
+    background: #00ff4118;
+    border: 1px solid #00ff4144;
+    color: #00ff41;
+    font-family: inherit;
+    font-size: 0.8em;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 4px;
+    text-transform: uppercase;
+  }
+  .share-btn:hover { background: #00ff4128; }
+  .share-evidence {
+    margin-top: 10px;
+    padding: 10px;
+    background: #111;
+    border: 1px solid #00ff4122;
+    border-radius: 4px;
+    font-size: 0.65em;
+    text-align: left;
+    white-space: pre-wrap;
+    display: none;
+    color: #00ff41aa;
+  }
+
+  /* Sound toggle */
+  .sound-toggle {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    background: #00ff4118;
+    border: 1px solid #00ff4133;
+    color: #00ff41;
+    font-family: inherit;
+    font-size: 0.7em;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    z-index: 100;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: #0a0f0a; }
+  ::-webkit-scrollbar-thumb { background: #00ff4133; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<button class="sound-toggle" id="soundToggle">SFX: OFF</button>
+
+<div class="container">
+  <header>
+    <h1>GHOST DETECTOR</h1>
+    <div class="subtitle">Paranormal Activity Scanner v6.66</div>
+  </header>
+
+  <div class="disclaimer">FOR ENTERTAINMENT ONLY. NOT A REAL GHOST DETECTOR. OBVIOUSLY.</div>
+
+  <div class="ghost-counter">
+    <span>ENTITIES DETECTED:</span>
+    <span class="count" id="ghostCount">0</span>
+  </div>
+
+  <button id="startBtn" onclick="toggleScanning()">BEGIN SCAN</button>
+
+  <div class="emf-section">
+    <div class="emf-label">EMF FIELD INTENSITY</div>
+    <div class="emf-meter">
+      <div class="emf-fill" id="emfFill"></div>
+      <div class="emf-value" id="emfValue">0.0 mG</div>
+    </div>
+    <div class="emf-ticks">
+      <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10+</span>
+    </div>
+  </div>
+
+  <div class="sensor-grid">
+    <div class="sensor-box">
+      <div class="label">Accel X</div>
+      <div class="value" id="ax">--</div>
+    </div>
+    <div class="sensor-box">
+      <div class="label">Accel Y</div>
+      <div class="value" id="ay">--</div>
+    </div>
+    <div class="sensor-box">
+      <div class="label">Accel Z</div>
+      <div class="value" id="az">--</div>
+    </div>
+    <div class="sensor-box">
+      <div class="label">Alpha</div>
+      <div class="value" id="oa">--</div>
+    </div>
+    <div class="sensor-box">
+      <div class="label">Beta</div>
+      <div class="value" id="ob">--</div>
+    </div>
+    <div class="sensor-box">
+      <div class="label">Gamma</div>
+      <div class="value" id="og">--</div>
+    </div>
+  </div>
+
+  <div class="ghost-alert" id="ghostAlert">
+    <div class="ghost-emoji">&#128123;</div>
+    <div class="ghost-name" id="ghostName">--</div>
+    <div class="ghost-type" id="ghostType">--</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('log')">Activity Log</button>
+    <button class="tab-btn" onclick="switchTab('hotspots')">Hot Spots</button>
+    <button class="tab-btn" onclick="switchTab('share')">Evidence</button>
+  </div>
+
+  <div class="tab-content active" id="tab-log">
+    <div id="logList"></div>
+  </div>
+
+  <div class="tab-content" id="tab-hotspots">
+    <div class="hotspot-grid" id="hotspotGrid"></div>
+    <div class="hotspot-legend">Tap cells to mark hot spots. Red = paranormal activity detected.</div>
+  </div>
+
+  <div class="tab-content" id="tab-share">
+    <div class="share-section">
+      <p style="font-size:0.75em; margin-bottom:10px; color:#00ff4188;">Generate a paranormal evidence report to share with fellow investigators.</p>
+      <button class="share-btn" onclick="generateEvidence()">Generate Report</button>
+      <button class="share-btn" onclick="shareEvidence()">Copy to Clipboard</button>
+      <div class="share-evidence" id="evidenceText"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ STATE ============
+let scanning = false;
+let ghostCount = 0;
+let soundEnabled = false;
+let audioCtx = null;
+let detections = [];
+let logEntries = [];
+let hotspots = new Array(64).fill(false);
+let lastDetectionTime = 0;
+let baselineAccel = { x: 0, y: 0, z: 0 };
+let baselineSet = false;
+let sampleCount = 0;
+
+// ============ GHOST NAMES ============
+const firstNames = [
+  'Bartholomew', 'Agatha', 'Cornelius', 'Mildred', 'Ezekiel', 'Prudence',
+  'Thaddeus', 'Gertrude', 'Obadiah', 'Hortense', 'Archibald', 'Eugenia',
+  'Percival', 'Winifred', 'Reginald', 'Cordelia', 'Mortimer', 'Beatrice',
+  'Ignatius', 'Clementine', 'Aldous', 'Ophelia', 'Silas', 'Temperance',
+  'Jasper', 'Elvira', 'Rupert', 'Griselda', 'Caspian', 'Millicent'
+];
+const lastNames = [
+  'Blackwood', 'Ravenscraft', 'Thornbury', 'Grimshaw', 'Nightshade',
+  'Ashworth', 'Coldwell', 'Dreadmore', 'Holloway', 'Wraith',
+  'Shadowmere', 'Darkholme', 'Gravesworth', 'Fogbottom', 'Bleakmore',
+  'Deathwhisper', 'Ghoulsby', 'Specterton', 'Phantomwick', 'Bonehill'
+];
+const ghostTypes = [
+  'Class I Residual Haunt', 'Class II Poltergeist', 'Class III Shadow Entity',
+  'Class IV Intelligent Spirit', 'Class V Demonic Presence', 'Temporal Echo',
+  'Ectoplasmic Manifestation', 'Electromagnetic Anomaly', 'Astral Projection Remnant',
+  'Spectral Imprint', 'Orb Cluster', 'Cold Spot Entity', 'Vortex Spirit',
+  'Shadow Person', 'Banshee Resonance', 'Phantom Drifter'
+];
+
+function randomGhostName() {
+  return firstNames[Math.floor(Math.random() * firstNames.length)] + ' ' +
+         lastNames[Math.floor(Math.random() * lastNames.length)];
+}
+function randomGhostType() {
+  return ghostTypes[Math.floor(Math.random() * ghostTypes.length)];
+}
+
+// ============ AUDIO ============
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playStatic(duration = 0.5, volume = 0.15) {
+  if (!soundEnabled || !audioCtx) return;
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * volume;
+  }
+  // Apply fade in/out
+  const fade = Math.floor(audioCtx.sampleRate * 0.05);
+  for (let i = 0; i < fade && i < bufferSize; i++) {
+    data[i] *= i / fade;
+    data[bufferSize - 1 - i] *= i / fade;
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const gain = audioCtx.createGain();
+  gain.gain.value = 1;
+  src.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start();
+}
+
+function playCreak() {
+  if (!soundEnabled || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.6);
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.6);
+}
+
+function playWhisper() {
+  if (!soundEnabled || !audioCtx) return;
+  const bufferSize = audioCtx.sampleRate * 1.2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / audioCtx.sampleRate;
+    const env = Math.sin(Math.PI * t / 1.2) * 0.06;
+    data[i] = (Math.random() * 2 - 1) * env;
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2000;
+  filter.Q.value = 3;
+  src.connect(filter);
+  filter.connect(audioCtx.destination);
+  src.start();
+}
+
+function playGhostAlert() {
+  if (!soundEnabled || !audioCtx) return;
+  playStatic(0.8, 0.25);
+  setTimeout(playWhisper, 300);
+  setTimeout(playCreak, 800);
+}
+
+// Ambient static loop
+let ambientInterval = null;
+function startAmbient() {
+  if (ambientInterval) return;
+  ambientInterval = setInterval(() => {
+    if (soundEnabled && scanning) {
+      playStatic(0.15, 0.03 + Math.random() * 0.03);
+    }
+  }, 2000 + Math.random() * 3000);
+}
+function stopAmbient() {
+  clearInterval(ambientInterval);
+  ambientInterval = null;
+}
+
+// ============ SENSORS ============
+function requestSensors() {
+  if (typeof DeviceMotionEvent !== 'undefined' &&
+      typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(p => {
+      if (p === 'granted') DeviceOrientationEvent.requestPermission();
+    });
+  }
+  window.addEventListener('devicemotion', handleMotion);
+  window.addEventListener('deviceorientation', handleOrientation);
+}
+
+let motionData = { x: 0, y: 0, z: 0 };
+let orientData = { a: 0, b: 0, g: 0 };
+
+function handleMotion(e) {
+  if (!scanning) return;
+  const a = e.accelerationIncludingGravity || e.acceleration || {};
+  motionData.x = a.x || 0;
+  motionData.y = a.y || 0;
+  motionData.z = a.z || 0;
+
+  // Calibrate baseline from first few samples
+  if (!baselineSet) {
+    sampleCount++;
+    baselineAccel.x += motionData.x;
+    baselineAccel.y += motionData.y;
+    baselineAccel.z += motionData.z;
+    if (sampleCount >= 10) {
+      baselineAccel.x /= sampleCount;
+      baselineAccel.y /= sampleCount;
+      baselineAccel.z /= sampleCount;
+      baselineSet = true;
+      addLog('Baseline calibrated. Scanning for anomalies...');
+    }
+  }
+}
+
+function handleOrientation(e) {
+  if (!scanning) return;
+  orientData.a = e.alpha || 0;
+  orientData.b = e.beta || 0;
+  orientData.g = e.gamma || 0;
+}
+
+// ============ EMF CALCULATION ============
+// We fake an "EMF reading" from sensor deltas + random drift
+let emfLevel = 0;
+let fakeEmfDrift = 0;
+
+function calculateEMF() {
+  if (!baselineSet) return 0;
+
+  const dx = motionData.x - baselineAccel.x;
+  const dy = motionData.y - baselineAccel.y;
+  const dz = motionData.z - baselineAccel.z;
+  const accelMag = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+  // Orientation change adds to "emf"
+  const orientMag = (Math.abs(orientData.b) + Math.abs(orientData.g)) / 180;
+
+  // Random drift for spookiness
+  fakeEmfDrift += (Math.random() - 0.5) * 0.3;
+  fakeEmfDrift *= 0.95; // decay
+
+  let raw = accelMag * 1.5 + orientMag * 2 + Math.abs(fakeEmfDrift);
+
+  // Occasional random spike for fun
+  if (Math.random() < 0.003) raw += 3 + Math.random() * 4;
+
+  // Smooth it
+  emfLevel = emfLevel * 0.7 + raw * 0.3;
+  return Math.min(emfLevel, 12);
+}
+
+// Desktop fallback: simulate sensor data with mouse movement
+let mouseX = 0, mouseY = 0, prevMouseX = 0, prevMouseY = 0;
+let hasTouchSensors = false;
+
+window.addEventListener('devicemotion', function check(e) {
+  if (e.accelerationIncludingGravity &&
+      (e.accelerationIncludingGravity.x !== null || e.accelerationIncludingGravity.y !== null)) {
+    hasTouchSensors = true;
+  }
+  window.removeEventListener('devicemotion', check);
+});
+
+document.addEventListener('mousemove', (e) => {
+  prevMouseX = mouseX; prevMouseY = mouseY;
+  mouseX = e.clientX; mouseY = e.clientY;
+});
+
+function simulateDesktopSensors() {
+  if (hasTouchSensors || !scanning) return;
+  const dx = mouseX - prevMouseX;
+  const dy = mouseY - prevMouseY;
+  motionData.x = dx * 0.3;
+  motionData.y = dy * 0.3;
+  motionData.z = 9.8 + (Math.random() - 0.5) * 0.2;
+  orientData.b = (mouseY / window.innerHeight) * 180 - 90;
+  orientData.g = (mouseX / window.innerWidth) * 90 - 45;
+  orientData.a = Date.now() % 360;
+
+  if (!baselineSet) {
+    sampleCount++;
+    baselineAccel.x += motionData.x;
+    baselineAccel.y += motionData.y;
+    baselineAccel.z += motionData.z;
+    if (sampleCount >= 10) {
+      baselineAccel.x /= sampleCount;
+      baselineAccel.y /= sampleCount;
+      baselineAccel.z /= sampleCount;
+      baselineSet = true;
+      addLog('Baseline calibrated. Scanning for anomalies...');
+    }
+  }
+}
+
+// ============ MAIN LOOP ============
+let loopInterval = null;
+
+function mainLoop() {
+  if (!scanning) return;
+
+  simulateDesktopSensors();
+
+  const emf = calculateEMF();
+
+  // Update UI
+  const pct = Math.min(emf / 10 * 100, 100);
+  const fill = document.getElementById('emfFill');
+  fill.style.width = pct + '%';
+  fill.className = 'emf-fill' + (pct > 70 ? ' high' : pct > 40 ? ' medium' : '');
+  document.getElementById('emfValue').textContent = emf.toFixed(1) + ' mG';
+
+  document.getElementById('ax').textContent = motionData.x.toFixed(2);
+  document.getElementById('ay').textContent = motionData.y.toFixed(2);
+  document.getElementById('az').textContent = motionData.z.toFixed(2);
+  document.getElementById('oa').textContent = orientData.a.toFixed(0) + '\u00B0';
+  document.getElementById('ob').textContent = orientData.b.toFixed(0) + '\u00B0';
+  document.getElementById('og').textContent = orientData.g.toFixed(0) + '\u00B0';
+
+  // Ghost detection
+  const now = Date.now();
+  if (emf > 5.5 && now - lastDetectionTime > 4000) {
+    triggerDetection(emf);
+    lastDetectionTime = now;
+  } else if (emf < 3) {
+    document.getElementById('ghostAlert').classList.remove('show');
+  }
+}
+
+function triggerDetection(emf) {
+  const name = randomGhostName();
+  const type = randomGhostType();
+  ghostCount++;
+  document.getElementById('ghostCount').textContent = ghostCount;
+
+  const alert = document.getElementById('ghostAlert');
+  alert.classList.add('show');
+  document.getElementById('ghostName').textContent = name;
+  document.getElementById('ghostType').textContent = type;
+
+  detections.push({
+    name, type, emf: emf.toFixed(1),
+    time: new Date().toLocaleTimeString(),
+    date: new Date().toLocaleDateString()
+  });
+
+  addLog('GHOST DETECTED: ' + name + ' (' + type + ') EMF: ' + emf.toFixed(1) + ' mG', true);
+
+  // Mark a random hotspot
+  const idx = Math.floor(Math.random() * 64);
+  hotspots[idx] = true;
+  renderHotspots();
+
+  playGhostAlert();
+
+  // Vibrate if available
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+
+  // Auto-hide after 3s
+  setTimeout(() => {
+    alert.classList.remove('show');
+  }, 3000);
+}
+
+// ============ SCANNING CONTROL ============
+function toggleScanning() {
+  const btn = document.getElementById('startBtn');
+
+  if (!scanning) {
+    scanning = true;
+    btn.textContent = 'STOP SCAN';
+    btn.classList.add('active');
+    baselineSet = false;
+    sampleCount = 0;
+    baselineAccel = { x: 0, y: 0, z: 0 };
+    emfLevel = 0;
+    fakeEmfDrift = 0;
+
+    initAudio();
+    requestSensors();
+    addLog('Scanner activated. Calibrating baseline...');
+    loopInterval = setInterval(mainLoop, 60);
+    startAmbient();
+  } else {
+    scanning = false;
+    btn.textContent = 'BEGIN SCAN';
+    btn.classList.remove('active');
+    clearInterval(loopInterval);
+    stopAmbient();
+    addLog('Scanner deactivated.');
+
+    document.getElementById('emfFill').style.width = '0%';
+    document.getElementById('emfValue').textContent = '0.0 mG';
+    document.getElementById('ghostAlert').classList.remove('show');
+  }
+}
+
+// ============ LOGGING ============
+function addLog(msg, isGhost = false) {
+  const time = new Date().toLocaleTimeString();
+  logEntries.unshift({ time, msg, isGhost });
+  if (logEntries.length > 100) logEntries.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const list = document.getElementById('logList');
+  list.innerHTML = logEntries.map(e =>
+    `<div class="log-entry${e.isGhost ? ' ghost-log' : ''}">
+       <span class="log-time">${e.time}</span>
+       <span class="log-msg">${e.msg}</span>
+     </div>`
+  ).join('');
+}
+
+// ============ HOTSPOTS ============
+function initHotspots() {
+  const grid = document.getElementById('hotspotGrid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 64; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'hotspot-cell' + (hotspots[i] ? ' hot' : '');
+    cell.onclick = () => {
+      hotspots[i] = !hotspots[i];
+      renderHotspots();
+      if (hotspots[i]) {
+        addLog('Hot spot marked at sector ' + (i + 1));
+        playCreak();
+      }
+    };
+    grid.appendChild(cell);
+  }
+}
+
+function renderHotspots() {
+  const cells = document.querySelectorAll('.hotspot-cell');
+  cells.forEach((cell, i) => {
+    cell.className = 'hotspot-cell' + (hotspots[i] ? ' hot' : '');
+  });
+}
+
+// ============ TABS ============
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tabName).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase().includes(tabName.substring(0, 3))) b.classList.add('active');
+  });
+}
+
+// ============ EVIDENCE SHARING ============
+function generateEvidence() {
+  const hotCount = hotspots.filter(Boolean).length;
+  let report = `========================================\n`;
+  report += `  PARANORMAL INVESTIGATION REPORT\n`;
+  report += `  Ghost Detector PRO v6.66\n`;
+  report += `========================================\n\n`;
+  report += `Date: ${new Date().toLocaleDateString()}\n`;
+  report += `Time: ${new Date().toLocaleTimeString()}\n`;
+  report += `Entities Detected: ${ghostCount}\n`;
+  report += `Hot Spots Identified: ${hotCount}/64 sectors\n\n`;
+
+  if (detections.length > 0) {
+    report += `--- ENTITY MANIFEST ---\n\n`;
+    detections.forEach((d, i) => {
+      report += `#${i + 1}: ${d.name}\n`;
+      report += `    Type: ${d.type}\n`;
+      report += `    EMF Reading: ${d.emf} mG\n`;
+      report += `    Time: ${d.time}\n\n`;
+    });
+  } else {
+    report += `No entities detected yet. Keep scanning!\n\n`;
+  }
+
+  report += `--- DISCLAIMER ---\n`;
+  report += `This report was generated by Ghost Detector PRO,\n`;
+  report += `a novelty app. No actual ghosts were harmed\n`;
+  report += `(or detected) in the making of this report.\n`;
+
+  const el = document.getElementById('evidenceText');
+  el.textContent = report;
+  el.style.display = 'block';
+}
+
+function shareEvidence() {
+  const el = document.getElementById('evidenceText');
+  if (!el.textContent) generateEvidence();
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'Ghost Detector PRO - Evidence Report',
+      text: el.textContent
+    }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(el.textContent).then(() => {
+      addLog('Evidence report copied to clipboard!');
+    });
+  }
+}
+
+// ============ SOUND TOGGLE ============
+document.getElementById('soundToggle').addEventListener('click', () => {
+  initAudio();
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = 'SFX: ' + (soundEnabled ? 'ON' : 'OFF');
+  if (soundEnabled) playStatic(0.2, 0.1);
+});
+
+// ============ INIT ============
+initHotspots();
+addLog('Ghost Detector PRO initialized.');
+addLog('Tap BEGIN SCAN to start hunting.');
+</script>
+
+</body>
+</html>

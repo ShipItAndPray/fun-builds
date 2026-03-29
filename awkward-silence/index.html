@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Awkward Silence Generator</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: #1a1a1e;
+  color: #b0b0b8;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.container {
+  text-align: center;
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+}
+h1 {
+  font-size: 1.6rem;
+  color: #7a7a88;
+  margin-bottom: 0.3rem;
+  letter-spacing: 0.05em;
+}
+.subtitle {
+  font-size: 0.85rem;
+  color: #55555f;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+.timer {
+  font-size: 5rem;
+  font-weight: 200;
+  color: #e0e0e8;
+  margin: 1rem 0;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.5s;
+}
+.timer.mild { color: #c8c878; }
+.timer.uncomfortable { color: #d4a040; }
+.timer.painful { color: #d06030; }
+.timer.horror { color: #cc2020; text-shadow: 0 0 20px rgba(200,0,0,0.4); }
+.milestone {
+  font-size: 1.1rem;
+  min-height: 2.5em;
+  margin: 1rem 0;
+  color: #9090a0;
+  transition: all 0.3s;
+  line-height: 1.4;
+}
+.btn {
+  padding: 14px 36px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0.5rem;
+  transition: all 0.2s;
+  font-weight: 600;
+}
+.btn-start {
+  background: #3a3a48;
+  color: #d0d0d8;
+  border: 2px solid #4a4a58;
+}
+.btn-start:hover { background: #4a4a58; }
+.btn-panic {
+  background: #882020;
+  color: #fff;
+  display: none;
+  animation: pulse 1.5s infinite;
+}
+.btn-panic:hover { background: #aa3030; }
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.btn-stop {
+  background: #444450;
+  color: #ccc;
+  display: none;
+  font-size: 0.9rem;
+  padding: 10px 24px;
+}
+.scores {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  font-size: 0.85rem;
+  color: #606068;
+}
+.scores span { color: #8888a0; }
+.vignette {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  transition: box-shadow 2s;
+}
+.applause-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(40, 80, 40, 0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  color: #80ff80;
+  z-index: 10;
+  pointer-events: none;
+}
+.instructions {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: #44444e;
+}
+</style>
+</head>
+<body>
+<div class="vignette" id="vignette"></div>
+<div class="applause-overlay" id="applause">SOMEONE SPOKE! *applause*</div>
+<div class="container">
+  <h1>The Awkward Silence Generator</h1>
+  <p class="subtitle">How long can you endure the silence?</p>
+  <div class="timer" id="timer">0.0</div>
+  <div class="milestone" id="milestone">Press start. Say nothing. Suffer.</div>
+  <div>
+    <button class="btn btn-start" id="startBtn" onclick="toggleSilence()">Start Silence</button>
+    <button class="btn btn-panic" id="panicBtn" onclick="panicButton()">SOMEONE SAY SOMETHING!</button>
+    <button class="btn btn-stop" id="stopBtn" onclick="stopSilence()">Tap to End Silence</button>
+  </div>
+  <div class="scores">
+    <div>This session: <span id="currentScore">0s</span></div>
+    <div>High score: <span id="highScore">0s</span></div>
+  </div>
+  <div class="instructions" id="instructions">Tap anywhere or press any key to end the silence</div>
+</div>
+
+<script>
+let audioCtx = null;
+let running = false;
+let startTime = 0;
+let elapsed = 0;
+let animFrame = null;
+let highScore = parseFloat(localStorage.getItem('awkward-high') || '0');
+let activeNodes = [];
+
+document.getElementById('highScore').textContent = highScore.toFixed(1) + 's';
+
+const milestones = [
+  [1, "..."],
+  [3, "The silence has been noticed."],
+  [5, "Someone just looked at their phone."],
+  [7, "A nervous cough echoes."],
+  [10, "Eye contact has been broken."],
+  [13, "Someone is studying the ceiling intently."],
+  [16, "A stomach growls. Loudly."],
+  [20, "The clock on the wall has never been louder."],
+  [25, "Someone whispers 'so...' but doesn't finish."],
+  [30, "Three people reach for their drinks simultaneously."],
+  [35, "You can hear the fluorescent lights buzzing."],
+  [40, "A tumbleweed blows through the room."],
+  [45, "Somewhere, a cricket begins to chirp."],
+  [50, "The silence has achieved physical mass."],
+  [55, "Your ancestors are disappointed."],
+  [60, "This silence could fossilize."],
+  [70, "Congratulations. You've weaponized awkwardness."],
+  [80, "The silence has its own zip code now."],
+  [90, "NASA has detected this silence from orbit."],
+  [100, "You have transcended social norms entirely."],
+  [120, "The Geneva Convention may prohibit this."],
+  [150, "This silence has gained sentience."],
+  [180, "Three minutes. You are a monument to discomfort."],
+  [240, "Four minutes. Marriages have ended for less."],
+  [300, "Five minutes. You absolute legend of awkwardness."]
+];
+
+let lastMilestoneIdx = -1;
+
+function getPhase(t) {
+  if (t < 5) return 'ambient';
+  if (t < 15) return 'drone';
+  if (t < 30) return 'detuned';
+  if (t < 60) return 'strings';
+  return 'horror';
+}
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function stopAllNodes() {
+  activeNodes.forEach(n => {
+    try { n.stop ? n.stop() : null; } catch(e) {}
+    try { n.disconnect(); } catch(e) {}
+  });
+  activeNodes = [];
+}
+
+function createOsc(freq, type, gainVal, detune) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.value = freq;
+  if (detune) osc.detune.value = detune;
+  gain.gain.value = gainVal;
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  activeNodes.push(osc, gain);
+  return { osc, gain };
+}
+
+function createNoise(vol) {
+  const bufferSize = audioCtx.sampleRate * 2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const src = audioCtx.createBufferSource();
+  src.buffer = buffer;
+  src.loop = true;
+  const gain = audioCtx.createGain();
+  gain.gain.value = vol;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 200;
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start();
+  activeNodes.push(src, gain, filter);
+  return { src, gain, filter };
+}
+
+let musicState = { phase: null, nodes: {} };
+
+function updateMusic(t) {
+  if (!audioCtx) return;
+  const phase = getPhase(t);
+
+  if (phase !== musicState.phase) {
+    stopAllNodes();
+    musicState.phase = phase;
+
+    if (phase === 'ambient') {
+      // Quiet, barely-there room tone
+      createNoise(0.008);
+      createOsc(60, 'sine', 0.015);
+    }
+    else if (phase === 'drone') {
+      // Low unsettling drone
+      createOsc(55, 'sine', 0.06);
+      createOsc(55.5, 'sine', 0.05); // slight beat frequency
+      createOsc(82.5, 'sine', 0.03);
+      createNoise(0.015);
+    }
+    else if (phase === 'detuned') {
+      // Detuned piano-like tones (using triangle waves)
+      const notes = [261.6, 265, 329.6, 333, 392]; // C4 slightly detuned, E4 detuned, G4
+      notes.forEach((f, i) => {
+        const n = createOsc(f, 'triangle', 0.025);
+        // Slow wobble
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = 0.3 + i * 0.1;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 3;
+        lfo.connect(lfoGain);
+        lfoGain.connect(n.osc.frequency);
+        lfo.start();
+        activeNodes.push(lfo, lfoGain);
+      });
+      createOsc(110, 'sawtooth', 0.02);
+      createNoise(0.02);
+    }
+    else if (phase === 'strings') {
+      // Tense string section - dissonant intervals
+      const stringNotes = [220, 233.08, 277.18, 293.66, 349.23, 369.99];
+      stringNotes.forEach((f, i) => {
+        const n = createOsc(f, 'sawtooth', 0.018);
+        // Vibrato
+        const vib = audioCtx.createOscillator();
+        vib.frequency.value = 4 + i * 0.5;
+        const vibGain = audioCtx.createGain();
+        vibGain.gain.value = 5 + i;
+        vib.connect(vibGain);
+        vibGain.connect(n.osc.frequency);
+        vib.start();
+        activeNodes.push(vib, vibGain);
+      });
+      // Low rumble
+      createOsc(40, 'sine', 0.08);
+      createOsc(41, 'sine', 0.07);
+      createNoise(0.025);
+    }
+    else if (phase === 'horror') {
+      musicState.nodes = {};
+    }
+  }
+
+  // Horror phase: continuously evolving chaos
+  if (phase === 'horror') {
+    const intensity = Math.min((t - 60) / 120, 1); // ramps over 2 min
+    // Rebuild periodically for evolution
+    if (Math.floor(t * 2) % 8 === 0 && activeNodes.length < 30) {
+      const baseFreq = 80 + Math.sin(t * 0.1) * 30;
+      createOsc(baseFreq, 'sawtooth', 0.02 + intensity * 0.03);
+
+      // Dissonant cluster
+      const cluster = [1, 1.059, 1.122, 1.498, 1.587]; // minor 2nd, aug 4th
+      cluster.forEach(r => {
+        createOsc(baseFreq * r * (2 + Math.floor(Math.random() * 2)),
+          ['sawtooth','square','triangle'][Math.floor(Math.random()*3)],
+          0.008 + intensity * 0.012,
+          Math.random() * 40 - 20);
+      });
+
+      // Heartbeat-like pulse
+      if (activeNodes.length < 15) {
+        const pulse = createOsc(50, 'sine', 0.06 + intensity * 0.04);
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = 1.2 + intensity * 0.8; // heartbeat speeds up
+        const lfoG = audioCtx.createGain();
+        lfoG.gain.value = 0.06 + intensity * 0.04;
+        lfo.connect(lfoG);
+        lfoG.connect(pulse.gain.gain);
+        lfo.start();
+        activeNodes.push(lfo, lfoG);
+      }
+
+      createNoise(0.01 + intensity * 0.025);
+    }
+
+    // Randomly add shrieks
+    if (Math.random() < 0.003 * (1 + intensity)) {
+      const shriek = createOsc(800 + Math.random() * 2000, 'sine', 0.04);
+      setTimeout(() => {
+        try { shriek.gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5); } catch(e) {}
+      }, 100);
+    }
+  }
+
+  // Continuously modulate existing oscillators for unease
+  activeNodes.forEach(n => {
+    if (n.frequency && Math.random() < 0.02) {
+      try {
+        n.frequency.value += (Math.random() - 0.5) * 2 * (t / 30);
+      } catch(e) {}
+    }
+  });
+}
+
+function toggleSilence() {
+  if (running) return;
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  running = true;
+  startTime = performance.now();
+  lastMilestoneIdx = -1;
+
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('panicBtn').style.display = 'inline-block';
+  document.getElementById('stopBtn').style.display = 'inline-block';
+  document.getElementById('milestone').textContent = 'The silence begins...';
+  document.getElementById('instructions').style.display = 'block';
+
+  update();
+}
+
+function update() {
+  if (!running) return;
+  elapsed = (performance.now() - startTime) / 1000;
+
+  document.getElementById('timer').textContent = elapsed.toFixed(1);
+  document.getElementById('currentScore').textContent = elapsed.toFixed(1) + 's';
+
+  // Timer color class
+  const timerEl = document.getElementById('timer');
+  timerEl.className = 'timer';
+  if (elapsed >= 60) timerEl.classList.add('horror');
+  else if (elapsed >= 30) timerEl.classList.add('painful');
+  else if (elapsed >= 15) timerEl.classList.add('uncomfortable');
+  else if (elapsed >= 5) timerEl.classList.add('mild');
+
+  // Vignette
+  const vig = document.getElementById('vignette');
+  const shadow = Math.min(elapsed / 60, 1) * 200;
+  vig.style.boxShadow = `inset 0 0 ${shadow}px ${shadow/2}px rgba(0,0,0,0.7)`;
+
+  // Background shift
+  const r = Math.floor(26 - Math.min(elapsed / 120, 1) * 16);
+  const g = Math.floor(26 - Math.min(elapsed / 120, 1) * 20);
+  const b = Math.floor(30 - Math.min(elapsed / 120, 1) * 18);
+  document.body.style.background = `rgb(${r},${g},${b})`;
+
+  // Milestones
+  for (let i = milestones.length - 1; i >= 0; i--) {
+    if (elapsed >= milestones[i][0] && i > lastMilestoneIdx) {
+      lastMilestoneIdx = i;
+      document.getElementById('milestone').textContent = milestones[i][1];
+      break;
+    }
+  }
+
+  // Update music
+  if (Math.floor(elapsed * 4) % 2 === 0) {
+    updateMusic(elapsed);
+  }
+
+  animFrame = requestAnimationFrame(update);
+}
+
+function stopSilence() {
+  if (!running) return;
+  running = false;
+  cancelAnimationFrame(animFrame);
+  stopAllNodes();
+
+  if (elapsed > highScore) {
+    highScore = elapsed;
+    localStorage.setItem('awkward-high', highScore.toFixed(1));
+    document.getElementById('highScore').textContent = highScore.toFixed(1) + 's';
+    document.getElementById('milestone').textContent = 'NEW HIGH SCORE of awkwardness! ' + elapsed.toFixed(1) + 's';
+  } else {
+    document.getElementById('milestone').textContent = 'Sweet relief after ' + elapsed.toFixed(1) + 's of agony.';
+  }
+
+  document.getElementById('startBtn').style.display = 'inline-block';
+  document.getElementById('startBtn').textContent = 'Endure Again';
+  document.getElementById('panicBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.body.style.background = '#1a1a1e';
+  document.getElementById('vignette').style.boxShadow = 'none';
+  document.getElementById('timer').className = 'timer';
+}
+
+function panicButton() {
+  if (!running) return;
+  stopSilence();
+
+  // Play applause
+  playApplause();
+
+  const overlay = document.getElementById('applause');
+  overlay.style.display = 'flex';
+  setTimeout(() => overlay.style.display = 'none', 2000);
+
+  document.getElementById('milestone').textContent =
+    'PANIC at ' + elapsed.toFixed(1) + 's! The sweet sound of someone speaking!';
+}
+
+function playApplause() {
+  if (!audioCtx) return;
+  // Synthesized applause: layered noise bursts
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const bufSize = audioCtx.sampleRate * 0.08;
+      const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let j = 0; j < bufSize; j++) {
+        d[j] = (Math.random() * 2 - 1) * (1 - j / bufSize);
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.15;
+      const f = audioCtx.createBiquadFilter();
+      f.type = 'bandpass';
+      f.frequency.value = 2000 + Math.random() * 3000;
+      f.Q.value = 0.5;
+      src.connect(f);
+      f.connect(g);
+      g.connect(audioCtx.destination);
+      src.start();
+    }, i * 60 + Math.random() * 80);
+  }
+
+  // Cheerful chord
+  [261.6, 329.6, 392, 523.2].forEach(freq => {
+    const osc = audioCtx.createOscillator();
+    osc.frequency.value = freq;
+    osc.type = 'triangle';
+    const g = audioCtx.createGain();
+    g.gain.value = 0.08;
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.5);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 1.5);
+  });
+}
+
+// Tap/click/key anywhere to stop (except on buttons)
+document.addEventListener('keydown', (e) => {
+  if (running && e.key !== 'Tab') stopSilence();
+});
+document.addEventListener('click', (e) => {
+  if (running && !e.target.classList.contains('btn')) stopSilence();
+});
+
+// Prevent double-tap zoom on mobile
+document.addEventListener('touchend', (e) => {
+  if (running && !e.target.classList.contains('btn')) {
+    e.preventDefault();
+    stopSilence();
+  }
+}, { passive: false });
+</script>
+</body>
+</html>

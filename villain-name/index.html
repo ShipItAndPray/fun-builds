@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Villain Name Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Bangers&family=Special+Elite&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Special Elite', monospace;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(120, 0, 0, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(80, 0, 120, 0.1) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  h1 {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(2.2rem, 7vw, 3.5rem);
+    text-align: center;
+    color: #ff2222;
+    text-shadow: 0 0 20px rgba(255, 0, 0, 0.5), 0 0 40px rgba(255, 0, 0, 0.2), 3px 3px 0 #000;
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #777;
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+    font-style: italic;
+  }
+
+  .input-section {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 14px 18px;
+    font-size: 1.1rem;
+    font-family: 'Special Elite', monospace;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    color: #e0e0e0;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  input[type="text"]:focus {
+    border-color: #ff2222;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
+  }
+
+  input::placeholder { color: #555; }
+
+  .btn {
+    padding: 14px 24px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.15rem;
+    letter-spacing: 1.5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-generate {
+    background: linear-gradient(135deg, #cc0000, #880000);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(200, 0, 0, 0.3);
+  }
+  .btn-generate:hover {
+    background: linear-gradient(135deg, #ee1111, #aa0000);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(200, 0, 0, 0.5);
+  }
+
+  .btn-regen {
+    background: linear-gradient(135deg, #333, #222);
+    color: #ccc;
+    border: 1px solid #444;
+  }
+  .btn-regen:hover {
+    background: linear-gradient(135deg, #444, #333);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .btn-share {
+    background: linear-gradient(135deg, #4a0080, #2a0050);
+    color: #dda0ff;
+    border: 1px solid #6a20a0;
+    font-size: 0.95rem;
+    padding: 10px 18px;
+  }
+  .btn-share:hover {
+    background: linear-gradient(135deg, #6a10a0, #4a0080);
+    color: #fff;
+  }
+
+  .btn-speak {
+    background: linear-gradient(135deg, #004444, #002222);
+    color: #44dddd;
+    border: 1px solid #006666;
+    font-size: 0.95rem;
+    padding: 10px 18px;
+  }
+  .btn-speak:hover {
+    background: linear-gradient(135deg, #006666, #004444);
+    color: #fff;
+  }
+
+  /* VILLAIN CARD */
+  #card {
+    display: none;
+    background: #111;
+    border: 2px solid #aa0000;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(170, 0, 0, 0.2), 0 10px 40px rgba(0,0,0,0.6);
+    animation: cardReveal 0.6s ease-out;
+  }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: scale(0.9) rotateX(10deg); }
+    to { opacity: 1; transform: scale(1) rotateX(0); }
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, #220000, #110000);
+    padding: 24px 20px 16px;
+    text-align: center;
+    border-bottom: 2px solid #aa0000;
+    position: relative;
+  }
+
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff0000, transparent);
+  }
+
+  .villain-name {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(1.8rem, 6vw, 2.8rem);
+    color: #ff3333;
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.4), 2px 2px 0 #000;
+    line-height: 1.2;
+  }
+
+  .villain-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    color: #bb88ff;
+    letter-spacing: 2px;
+    margin-top: 6px;
+    text-shadow: 1px 1px 0 #000;
+  }
+
+  .card-body { padding: 20px; }
+
+  .stat-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #222;
+  }
+  .stat-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+
+  .stat-icon {
+    font-size: 1.4rem;
+    min-width: 30px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .stat-content { flex: 1; }
+
+  .stat-label {
+    font-family: 'Bangers', cursive;
+    font-size: 0.85rem;
+    color: #aa0000;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+
+  .stat-value {
+    font-size: 0.95rem;
+    color: #ccc;
+    line-height: 1.5;
+  }
+
+  /* STAT BARS */
+  .stat-bars {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #222;
+  }
+
+  .bar-item { }
+
+  .bar-label {
+    font-family: 'Bangers', cursive;
+    font-size: 0.7rem;
+    color: #888;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+
+  .bar-track {
+    height: 8px;
+    background: #1a1a1a;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease-out;
+    width: 0;
+  }
+
+  .bar-fill.evil { background: linear-gradient(90deg, #ff0000, #ff4444); }
+  .bar-fill.intel { background: linear-gradient(90deg, #8800ff, #bb44ff); }
+  .bar-fill.chaos { background: linear-gradient(90deg, #ff6600, #ffaa00); }
+  .bar-fill.fear { background: linear-gradient(90deg, #00aa44, #00ff66); }
+
+  .card-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px;
+    background: #0d0d0d;
+    border-top: 1px solid #222;
+    flex-wrap: wrap;
+  }
+
+  .real-name-tag {
+    font-size: 0.75rem;
+    color: #555;
+    text-align: center;
+    padding: 8px;
+    font-style: italic;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #222;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 6px;
+    border: 1px solid #aa0000;
+    font-family: 'Special Elite', monospace;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Lightning flash */
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.08);
+    z-index: 100;
+    pointer-events: none;
+    animation: flashAnim 0.15s ease-out;
+  }
+  @keyframes flashAnim {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 480px) {
+    .input-section { flex-direction: column; }
+    .stat-bars { grid-template-columns: 1fr; }
+    .card-actions { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Villain Name Generator</h1>
+  <p class="subtitle">Every hero has an origin story... but so does every villain.</p>
+
+  <div class="input-section">
+    <input type="text" id="nameInput" placeholder="Enter your real name..." autofocus>
+    <button class="btn btn-generate" id="generateBtn" onclick="generate()">Unleash Evil</button>
+  </div>
+
+  <div id="card">
+    <div class="card-header">
+      <div class="villain-name" id="vName"></div>
+      <div class="villain-title" id="vTitle"></div>
+    </div>
+    <div class="card-body">
+      <div class="stat-bars">
+        <div class="bar-item">
+          <div class="bar-label">Evil</div>
+          <div class="bar-track"><div class="bar-fill evil" id="barEvil"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Intellect</div>
+          <div class="bar-track"><div class="bar-fill intel" id="barIntel"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Chaos</div>
+          <div class="bar-track"><div class="bar-fill chaos" id="barChaos"></div></div>
+        </div>
+        <div class="bar-item">
+          <div class="bar-label">Fear Factor</div>
+          <div class="bar-track"><div class="bar-fill fear" id="barFear"></div></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-icon">&#9760;</div>
+        <div class="stat-content">
+          <div class="stat-label">Origin Story</div>
+          <div class="stat-value" id="vOrigin"></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-icon">&#9889;</div>
+        <div class="stat-content">
+          <div class="stat-label">Superpower</div>
+          <div class="stat-value" id="vPower"></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-icon">&#128148;</div>
+        <div class="stat-content">
+          <div class="stat-label">Weakness</div>
+          <div class="stat-value" id="vWeakness"></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-icon">&#9876;</div>
+        <div class="stat-content">
+          <div class="stat-label">Arch-Nemesis</div>
+          <div class="stat-value" id="vNemesis"></div>
+        </div>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-icon">&#127984;</div>
+        <div class="stat-content">
+          <div class="stat-label">Evil Lair</div>
+          <div class="stat-value" id="vLair"></div>
+        </div>
+      </div>
+
+      <div class="real-name-tag" id="vRealName"></div>
+    </div>
+
+    <div class="card-actions">
+      <button class="btn btn-regen" onclick="generate()">Regenerate</button>
+      <button class="btn btn-speak" onclick="speakIntro()">Announce</button>
+      <button class="btn btn-share" onclick="shareCard()">Share Card</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA: 50+ name components =====
+const darkPrefixes = [
+  'Shadow','Dread','Venom','Crimson','Phantom','Obsidian','Void','Grave','Wrath',
+  'Doom','Blight','Scourge','Night','Ash','Ruin','Sorrow','Malice','Grim','Iron',
+  'Blood','Dark','Nether','Infernal','Fell','Thorn','Bone','Storm','Dusk','Hollow',
+  'Dire','Murk','Vile','Bleak','Umber','Umbra','Sin','Hex','Rot','Cinder','Ghast',
+  'Morbid','Lich','Raven','Tyrant','Specter','Plague','Serpent','Havoc','Abyss',
+  'Onyx','Carnage','Sable','Fury','Reaper'
+];
+
+const nameTwists = [
+  n => n.split('').reverse().join(''),
+  n => n[0] + 'yx',
+  n => n.slice(0,2) + 'rath',
+  n => n.slice(0,3) + 'ius',
+  n => n.slice(0,2) + 'ombra',
+  n => 'X' + n.slice(1).toLowerCase(),
+  n => n.slice(0,3) + 'vex',
+  n => n.slice(0,2) + 'anthor',
+  n => n[0] + 'oulbane',
+  n => n.slice(0,2) + 'ixor',
+  n => n.slice(0,3) + 'ax',
+  n => 'Dr. ' + n.slice(0,3) + 'icide',
+  n => n.slice(0,2) + 'orpheus',
+  n => n.slice(0,3) + 'lock',
+  n => n[0] + 'estrix',
+  n => n.slice(0,2) + 'agoth',
+  n => 'Baron ' + n.slice(0,3) + 'os',
+  n => n.slice(0,3) + 'maul',
+  n => n[0] + 'alvorn',
+  n => n.slice(0,2) + 'ecron',
+];
+
+const nameFormats = [
+  (p, t) => `${p} ${t}`,
+  (p, t) => `The ${p} ${t}`,
+  (p, t) => `${t} the ${p}`,
+  (p, t) => `${p}${t}`,
+  (p, t) => `${t}, the ${p}`,
+];
+
+// ===== TITLES =====
+const titles = [
+  'Harbinger of Eternal Night','Architect of Despair','Lord of Unraveling',
+  'Master of the Void','Sovereign of Suffering','Warden of the Abyss',
+  'Conductor of Chaos','Herald of Entropy','Monarch of Misery',
+  'Commander of Shadows','Overlord of the Forsaken','Keeper of Dark Secrets',
+  'Bringer of the Final Dawn','Chancellor of Ruin','Vizier of Venom',
+  'Duke of Desolation','Emissary of Dread','Prophet of Pandemonium',
+  'Regent of the Rotting Throne','Catalyst of Catastrophe',
+  'Weaver of Nightmares','Sculptor of Screams','Baron of Broken Worlds',
+  'Tyrant of the Thirteenth Hour','Emperor of Ashes',
+];
+
+// ===== 40+ POWERS =====
+const powers = [
+  'Can rewrite the memories of anyone within eyesight',
+  'Generates localized gravity wells that crush matter to a singularity',
+  'Emits a frequency that turns machines against their operators',
+  'Summons sentient shadow constructs that obey only malice',
+  'Blood transforms into corrosive acid on contact with air',
+  'Can stop time for exactly 13 seconds \u2014 enough to end anyone',
+  'Telepathically implants irrational fear of the dark',
+  'Skin becomes living obsidian armor under threat',
+  'Controls all insects within a 3-mile radius',
+  'Absorbs kinetic energy and redirects it as concussive blasts',
+  'Speaks in a voice that shatters glass and paralyzes the nervous system',
+  'Can phase through solid matter, leaving corrosion in their wake',
+  'Generates electromagnetic pulses that disable all technology',
+  'Conjures illusions so real they can cause physical harm',
+  'Has a gaze that induces crippling existential dread',
+  'Can taste lies and identify the liar from a mile away',
+  'Transforms organic matter into crystalline structures with a touch',
+  'Commands weather patterns \u2014 specializes in black lightning',
+  'Heals from any wound by consuming the life force of nearby plants',
+  'Can split into seven identical copies, each slightly more unhinged',
+  'Emits toxic pheromones that turn allies against each other',
+  'Manipulates probability \u2014 makes the worst-case scenario inevitable',
+  'Can hack any system by whispering to it in binary',
+  'Generates force fields from pure spite',
+  'Sees every possible future and always chooses the cruelest one',
+  'Converts sound into physical projectiles',
+  'Controls rust and decay \u2014 can age metal to dust in seconds',
+  'Breathes a mist that induces vivid waking nightmares',
+  'Can teleport through any reflective surface',
+  'Bones are laced with an alien metal harder than diamond',
+  'Commands an army of nanobots that devour infrastructure',
+  'Can mimic any voice perfectly after hearing one syllable',
+  'Radiates an aura that suppresses all superhuman abilities',
+  'Turns invisible \u2014 but only when someone is afraid of them',
+  'Blood can be weaponized into hardened projectiles',
+  'Can control the temperature of anything they touch, from absolute zero to plasma',
+  'Absorbs light, creating zones of absolute darkness',
+  'Secretes a neurotoxin that causes permanent amnesia',
+  'Can animate the dead with a single word: "Rise"',
+  'Possesses perfect muscle memory \u2014 masters any fighting style on sight',
+  'Generates portals to pocket dimensions used as prisons',
+  'Psychic scream that causes brain hemorrhaging at close range',
+];
+
+// ===== 30+ WEAKNESSES =====
+const weaknesses = [
+  'Uncontrollable weeping when hearing a lullaby',
+  'Cannot harm anyone who genuinely compliments them',
+  'Allergic to the color yellow \u2014 breaks out in hives',
+  'Loses all power during a full moon',
+  'Compulsively counts scattered objects, even mid-battle',
+  'Cannot cross running water',
+  'A single childhood photograph renders them catatonic',
+  'Crippling fear of house cats',
+  'Powers fail completely when they laugh',
+  'Silver harmonicas emit a frequency that paralyzes them',
+  'Must monologue their plan before executing it \u2014 physically compelled',
+  'Terrible sense of direction \u2014 gets lost in their own lair',
+  'Powers drain rapidly in direct sunlight',
+  'Cannot resist a game of chess, even at the worst time',
+  'The smell of fresh bread makes them nostalgic and docile',
+  'Kryptonite-level weakness to dad jokes',
+  'Mirror reflections show their true, vulnerable form',
+  'Honest kindness temporarily disables their abilities',
+  'Severely claustrophobic \u2014 cannot operate in enclosed spaces',
+  'Prone to dramatic monologues that reveal critical intel',
+  'An irrational attachment to a childhood stuffed animal',
+  'Becomes powerless if someone says "please" sincerely',
+  'Classical music causes involuntary dancing',
+  'Cannot lie when directly asked a yes-or-no question',
+  'Needs exactly 10 hours of sleep or powers malfunction',
+  'The sight of a rainbow causes temporary blindness',
+  'Old technology (rotary phones, typewriters) jams their powers',
+  'Peanut butter causes temporary power inversion',
+  'Cannot use powers on Tuesdays \u2014 an ancient curse',
+  'Emotional vulnerability to rescue animals',
+  'Completely disarmed by a sincere apology',
+  'An old wound that flares up during thunderstorms',
+];
+
+// ===== ORIGIN TEMPLATES =====
+const origins = [
+  (n) => `Once known as ${n}, a brilliant but overlooked scientist, they were betrayed by the very institution they served. The explosion that was meant to kill them instead fused dark energy into their cells.`,
+  (n) => `${n} was an ordinary person until they discovered an ancient artifact in their grandmother's attic. The whispers started that night, and by dawn, ${n} was gone.`,
+  (n) => `Born during a solar eclipse, ${n} always felt the pull of something darker. After being left for dead by their closest ally, they finally answered the call.`,
+  (n) => `A freak accident in a classified government lab merged ${n}'s consciousness with an interdimensional entity. The human part screams. The entity laughs.`,
+  (n) => `${n} made a deal with something that doesn't have a name. The price? Their empathy. The reward? Power that terrifies even the ones who granted it.`,
+  (n) => `After 7 years of wrongful imprisonment, ${n} emerged changed. Something in the darkness of solitary confinement had taught them to see \u2014 really see \u2014 the rot in the world.`,
+  (n) => `${n} was the city's most decorated hero until they learned the truth: every rescue was staged, every villain was manufactured. The betrayal broke something fundamental.`,
+  (n) => `A childhood prodigy, ${n} was consumed by the failure of their greatest invention. They rebuilt it using forbidden methods, and it rebuilt them in return.`,
+  (n) => `${n} died on a Tuesday. They came back on a Wednesday. What returned wasn't entirely ${n} anymore.`,
+  (n) => `Exiled from a secret society for asking dangerous questions, ${n} found answers in places no sane mind would look. The answers found them right back.`,
+  (n) => `${n} simply snapped one day after being told their parking ticket was non-negotiable. Witnesses say the streetlights exploded first.`,
+  (n) => `After being struck by cosmic radiation during a routine satellite repair, ${n}'s DNA rewrote itself. Their former employer tried to contain them. Their former employer no longer exists.`,
+];
+
+// ===== NEMESES =====
+const nemeses = [
+  'Captain Valor \u2014 an annoyingly optimistic hero with perfect hair',
+  'The Beacon \u2014 a sentient lighthouse that judges everyone',
+  'Lady Fortitude \u2014 has never lost a fight or a staring contest',
+  'The Arbiter \u2014 a vigilante judge who literally weighs souls',
+  'Sergeant Sunbeam \u2014 weaponizes positivity (it hurts)',
+  'Dr. Goodheart \u2014 heals everything, including your grudges',
+  'The Conscience \u2014 an ethereal voice only the villain can hear',
+  'Major Decency \u2014 fights crime with manners and guilt trips',
+  'The Paladin \u2014 a reformed villain who became insufferably heroic',
+  'Ms. Veritas \u2014 a journalist who always finds the truth',
+  'The Guardian \u2014 appears wherever innocent people are in danger',
+  'Professor Uplift \u2014 a motivational speaker with actual superpowers',
+  'Agent Tomorrow \u2014 a time traveler who keeps undoing your best work',
+  'The Radiant \u2014 literally too bright to look at, metaphorically too pure',
+  'Kid Kindness \u2014 an 11-year-old who is genuinely unstoppable',
+];
+
+// ===== EVIL LAIRS =====
+const lairs = [
+  'A hollowed-out volcano on an uncharted Pacific island',
+  'Beneath the abandoned subway tunnels of a decaying metropolis',
+  'An inverted skyscraper built into the floor of the Mariana Trench',
+  'A decommissioned Soviet space station, still orbiting',
+  'Inside a pocket dimension accessible only through a specific bathroom mirror',
+  'A frozen castle in the Antarctic, invisible to satellites',
+  'The top 40 floors of a skyscraper everyone thinks is abandoned',
+  'A sprawling underground network beneath a children\'s theme park',
+  'A gothic mansion that exists simultaneously in 3 different countries',
+  'Inside the server farms of a "legitimate" tech company',
+  'A dimension where time moves 10x slower \u2014 perfect for plotting',
+  'An oil rig converted into a floating fortress in the North Sea',
+  'A labyrinth carved into the roots of an ancient redwood forest',
+  'The dark side of the moon \u2014 yes, literally',
+  'A sentient building in downtown Chicago that rearranges itself',
+  'Beneath a perfectly normal-looking suburban house with a white picket fence',
+  'An airship that never lands, cloaked above the clouds',
+  'Inside an active volcano, cooled by stolen cryogenic tech',
+  'A derelict cathedral converted into a high-tech command center',
+  'A network of caves in the Carpathian Mountains, complete with pipe organ',
+];
+
+// ===== HELPERS =====
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function twistName(name) {
+  const cap = name.charAt(0).toUpperCase() + name.slice(1);
+  const twist = pick(nameTwists);
+  return twist(cap);
+}
+
+function generateVillainName(name) {
+  const prefix = pick(darkPrefixes);
+  const twisted = twistName(name);
+  const format = pick(nameFormats);
+  return format(prefix, twisted);
+}
+
+// ===== MAIN GENERATE =====
+function generate() {
+  const input = document.getElementById('nameInput').value.trim();
+  if (!input) {
+    showToast('Enter your name, mortal.');
+    document.getElementById('nameInput').focus();
+    return;
+  }
+
+  // Flash effect
+  const flash = document.createElement('div');
+  flash.className = 'flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 150);
+
+  const villainName = generateVillainName(input);
+  const title = pick(titles);
+  const origin = pick(origins)(input);
+  const power = pick(powers);
+  const weakness = pick(weaknesses);
+  const nemesis = pick(nemeses);
+  const lair = pick(lairs);
+
+  document.getElementById('vName').textContent = villainName;
+  document.getElementById('vTitle').textContent = title;
+  document.getElementById('vOrigin').textContent = origin;
+  document.getElementById('vPower').textContent = power;
+  document.getElementById('vWeakness').textContent = weakness;
+  document.getElementById('vNemesis').textContent = nemesis;
+  document.getElementById('vLair').textContent = lair;
+  document.getElementById('vRealName').textContent = `Formerly known as: ${input}`;
+
+  const card = document.getElementById('card');
+  card.style.display = 'block';
+  card.style.animation = 'none';
+  card.offsetHeight; // reflow
+  card.style.animation = 'cardReveal 0.6s ease-out';
+
+  // Animate stat bars
+  setTimeout(() => {
+    document.getElementById('barEvil').style.width = rand(60, 100) + '%';
+    document.getElementById('barIntel').style.width = rand(40, 100) + '%';
+    document.getElementById('barChaos').style.width = rand(30, 100) + '%';
+    document.getElementById('barFear').style.width = rand(50, 100) + '%';
+  }, 200);
+
+  // Store for speech
+  window._villain = { villainName, title, power, nemesis };
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ===== SPEECH =====
+function speakIntro() {
+  if (!window._villain) return;
+  const v = window._villain;
+  const text = `Tremble, mortals! Behold the arrival of ${v.villainName}, ${v.title}! Wielding the terrifying power of ${v.power.toLowerCase()}! None shall stop them... except perhaps ${v.nemesis.split(' \u2014 ')[0]}.`;
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.85;
+    u.pitch = 0.6;
+    // Try to get a deep voice
+    const voices = window.speechSynthesis.getVoices();
+    const deep = voices.find(v => /daniel|thomas|male|alex/i.test(v.name));
+    if (deep) u.voice = deep;
+    window.speechSynthesis.speak(u);
+  } else {
+    showToast('Speech not supported in this browser.');
+  }
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ===== SHARE =====
+async function shareCard() {
+  if (!window._villain) return;
+  const v = window._villain;
+  const text = `My supervillain alter ego: ${v.villainName} \u2014 ${v.title}! Power: ${v.power}. Fear me.`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'My Villain Card', text });
+    } catch(e) { /* user cancelled */ }
+  } else if (navigator.clipboard) {
+    await navigator.clipboard.writeText(text);
+    showToast('Villain card copied to clipboard!');
+  } else {
+    showToast('Share not supported \u2014 copy manually.');
+  }
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Enter key
+document.getElementById('nameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>

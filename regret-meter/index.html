@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regret Meter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Georgia', serif;
+    background: #0a0a0f;
+    color: #c8c0b8;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 2.2em;
+    color: #8b7355;
+    margin-bottom: 5px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    text-align: center;
+    font-style: italic;
+    color: #5a4e3e;
+    margin-bottom: 30px;
+    font-size: 0.9em;
+  }
+  .total-regret {
+    text-align: center;
+    background: linear-gradient(135deg, #1a1520, #201018);
+    border: 1px solid #3a2030;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  .total-regret .label { color: #6a5a4a; font-size: 0.85em; text-transform: uppercase; letter-spacing: 3px; }
+  .total-regret .score { font-size: 3.5em; color: #c44; font-weight: bold; text-shadow: 0 0 20px rgba(200,60,60,0.3); }
+  .total-regret .rank { color: #7a6a5a; font-size: 0.9em; margin-top: 5px; }
+
+  .input-section {
+    background: #111118;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .input-section label { display: block; color: #8b7355; margin-bottom: 8px; font-size: 0.9em; }
+  .input-section input[type="text"], .input-section select {
+    width: 100%;
+    padding: 12px;
+    background: #0a0a10;
+    border: 1px solid #2a2a35;
+    border-radius: 8px;
+    color: #c8c0b8;
+    font-size: 1em;
+    font-family: inherit;
+    margin-bottom: 18px;
+  }
+  .input-section input:focus, .input-section select:focus { outline: none; border-color: #8b7355; }
+  .input-section select option { background: #111; }
+
+  .slider-container { margin-bottom: 20px; }
+  .slider-label {
+    display: flex; justify-content: space-between; color: #5a5a65;
+    font-size: 0.8em; margin-bottom: 5px;
+  }
+  .slider-value {
+    text-align: center; font-size: 2.5em; font-weight: bold;
+    margin-bottom: 8px; transition: color 0.3s;
+  }
+  input[type="range"] {
+    -webkit-appearance: none; width: 100%; height: 8px;
+    border-radius: 4px; outline: none;
+    background: linear-gradient(90deg, #2a4a2a, #4a4a2a, #6a3a2a, #8a2020);
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px;
+    border-radius: 50%; background: #c8c0b8; cursor: pointer;
+    border: 2px solid #8b7355;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: #c8c0b8; cursor: pointer; border: 2px solid #8b7355;
+  }
+
+  .btn {
+    display: block; width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #3a2020, #4a2525);
+    border: 1px solid #5a3030; border-radius: 8px;
+    color: #c8a080; font-size: 1.1em; cursor: pointer;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .btn:hover { background: linear-gradient(135deg, #4a2525, #5a3030); border-color: #7a4040; }
+
+  .commentary {
+    text-align: center; padding: 20px; margin-bottom: 30px;
+    font-style: italic; font-size: 1.15em; color: #a08060;
+    min-height: 60px; display: none;
+    max-width: 600px; margin-left: auto; margin-right: auto;
+  }
+
+  .section-title {
+    color: #8b7355; font-size: 1.1em; margin-bottom: 15px;
+    border-bottom: 1px solid #222; padding-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 2px; font-size: 0.85em;
+  }
+
+  .leaderboard { margin-bottom: 30px; }
+  .leaderboard-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 15px; background: #111118; border: 1px solid #1a1a22;
+    border-radius: 8px; margin-bottom: 6px; transition: all 0.2s;
+  }
+  .leaderboard-item:hover { border-color: #2a2a35; }
+  .leaderboard-item .rank-num { color: #c44; font-weight: bold; margin-right: 12px; font-size: 1.1em; min-width: 25px; }
+  .leaderboard-item .decision-text { flex: 1; font-size: 0.95em; }
+  .leaderboard-item .category-tag {
+    font-size: 0.7em; padding: 3px 8px; border-radius: 10px;
+    margin-left: 10px; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .cat-dating { background: #2a1525; color: #c77a9a; }
+  .cat-career { background: #1a2025; color: #7aa0c7; }
+  .cat-food { background: #252518; color: #b8b070; }
+  .cat-purchases { background: #1a2518; color: #70b878; }
+  .leaderboard-item .regret-score { color: #c44; font-weight: bold; font-size: 1.2em; margin-left: 10px; }
+  .leaderboard-item .fine-btn {
+    background: none; border: 1px solid #2a3a2a; color: #5a8a5a;
+    padding: 4px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 0.75em; margin-left: 10px; font-family: inherit; white-space: nowrap;
+  }
+  .leaderboard-item .fine-btn:hover { background: #1a2a1a; border-color: #3a5a3a; }
+
+  .chart-section { margin-bottom: 30px; }
+  canvas { width: 100% !important; max-height: 250px; background: #111118; border-radius: 12px; border: 1px solid #1a1a22; }
+
+  .empty-state { text-align: center; color: #3a3a45; padding: 40px; font-style: italic; }
+
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.6em; }
+    .total-regret .score { font-size: 2.5em; }
+    .input-section { padding: 18px; }
+    .leaderboard-item { flex-wrap: wrap; gap: 5px; }
+    .leaderboard-item .fine-btn { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+
+<h1>The Regret Meter</h1>
+<p class="subtitle">"The only thing I regret is not regretting sooner."</p>
+
+<div class="total-regret">
+  <div class="label">Total Lifetime Regret</div>
+  <div class="score" id="totalScore">0</div>
+  <div class="rank" id="regretRank">Blissfully Ignorant</div>
+</div>
+
+<div class="input-section">
+  <label for="decision">Describe your past decision</label>
+  <input type="text" id="decision" placeholder="e.g. Texted my ex at 2am..." maxlength="120">
+
+  <label for="category">Category</label>
+  <select id="category">
+    <option value="dating">Dating</option>
+    <option value="career">Career</option>
+    <option value="food">Food</option>
+    <option value="purchases">Purchases</option>
+  </select>
+
+  <div class="slider-container">
+    <label>How much do you regret it?</label>
+    <div class="slider-value" id="sliderValue">5</div>
+    <input type="range" id="regretSlider" min="1" max="10" value="5">
+    <div class="slider-label">
+      <span>Meh</span>
+      <span>Haunts me nightly</span>
+    </div>
+  </div>
+
+  <button class="btn" onclick="addRegret()">Log This Regret</button>
+</div>
+
+<div class="commentary" id="commentary"></div>
+
+<div class="leaderboard">
+  <div class="section-title">Worst Decisions Leaderboard</div>
+  <div id="leaderboardList"><div class="empty-state">No regrets yet. Must be nice.</div></div>
+</div>
+
+<div class="chart-section">
+  <div class="section-title">Regret Over Time</div>
+  <canvas id="regretChart"></canvas>
+</div>
+
+<script>
+const SNARKY = {
+  1: [
+    "That's barely a regret. More of a passing thought.",
+    "A 1? Why even bother logging this? Go outside.",
+    "This is the emotional equivalent of lukewarm water.",
+    "You'll forget about this by Tuesday.",
+    "If all your regrets were this mild, you'd be a monk.",
+  ],
+  2: [
+    "Okay, a tiny sting. Like stepping on a Lego with socks on.",
+    "This is the regret equivalent of getting the wrong coffee order.",
+    "A 2? Your subconscious barely flinched.",
+    "This wouldn't even make the B-roll of your life's blooper reel.",
+    "Mildly inconvenient. Not regret. You'll live.",
+  ],
+  3: [
+    "Now we're entering 'think about it in the shower' territory.",
+    "A 3. The kind of thing you remember at 11pm but forget by morning.",
+    "This one will age like milk, but slowly.",
+    "Your future self winces slightly. Slightly.",
+    "Not your finest hour, but also not your worst. Yet.",
+  ],
+  4: [
+    "A solid 4. This one pops up during boring meetings.",
+    "Starting to feel real now, isn't it?",
+    "This decision has a permanent seat at the back of your mind.",
+    "A 4 says 'I knew better but chose chaos anyway.'",
+    "Welcome to the zone where hindsight actually hurts.",
+  ],
+  5: [
+    "Right down the middle. Can't decide if it was dumb or just human.",
+    "A 5 is the most honest regret. You know you'd probably do it again.",
+    "The crossroads of 'whatever' and 'oh no.'",
+    "Perfectly balanced regret. As all things should be.",
+    "A 5. You cringe, but you also kinda laugh.",
+  ],
+  6: [
+    "Now we're talking. This one stings at 3am.",
+    "A 6 means you've told at least two friends about this mistake.",
+    "This decision has its own recurring nightmare slot.",
+    "You can feel the weight of this one in your chest, can't you?",
+    "A 6. The kind of regret that changes your autopilot.",
+  ],
+  7: [
+    "A 7. This one rewired your personality a little bit.",
+    "You've rehearsed time-travel scenarios about this, haven't you?",
+    "This decision plays on a loop when you can't sleep.",
+    "A 7 is 'I physically cannot drive past that location anymore.'",
+    "Congratulations, this regret has its own chapter in your memoir.",
+  ],
+  8: [
+    "An 8. This is a load-bearing regret in your psyche.",
+    "You've considered therapy specifically because of this one.",
+    "This decision fundamentally altered your trust in yourself.",
+    "An 8. The kind of thing you accidentally confess to strangers.",
+    "Your brain has filed this under 'core trauma, do not touch.'",
+  ],
+  9: [
+    "A 9. This one changed the trajectory of your entire life.",
+    "You don't talk about this one. You just stare at walls.",
+    "This decision has its own gravitational pull on every choice since.",
+    "A 9 means you've rage-cried about this at least once.",
+    "This regret isn't a memory. It's a roommate.",
+  ],
+  10: [
+    "A perfect 10. This is the regret that defines you.",
+    "You'd sell a kidney to undo this one, wouldn't you?",
+    "This decision haunts your bloodline. Your grandchildren will feel it.",
+    "A 10. The atomic bomb of bad decisions. There is no recovery.",
+    "Congratulations. You've peaked. This is your magnum opus of failure.",
+    "A 10? You didn't just burn the bridge, you salted the earth.",
+    "This regret is so heavy it has its own ZIP code.",
+  ],
+};
+
+const RANKS = [
+  [0, "Blissfully Ignorant"],
+  [10, "Mildly Haunted"],
+  [25, "Casually Tormented"],
+  [50, "Professionally Regretful"],
+  [75, "Existential Crisis Mode"],
+  [100, "Walking Cautionary Tale"],
+  [150, "Human Disaster Exhibit"],
+  [200, "Regret Sommelier"],
+  [300, "Living Cautionary Tale"],
+  [500, "Patron Saint of Bad Choices"],
+  [750, "The Regret Singularity"],
+  [1000, "Beyond Regret. You Are Regret."],
+];
+
+let regrets = JSON.parse(localStorage.getItem('regrets') || '[]');
+
+const slider = document.getElementById('regretSlider');
+const sliderValue = document.getElementById('sliderValue');
+
+slider.addEventListener('input', () => {
+  const v = parseInt(slider.value);
+  sliderValue.textContent = v;
+  const colors = ['#4a8a4a','#5a8a3a','#7a8a2a','#9a8a20','#aa7a18','#bb6a15','#cc5510','#dd3a0a','#cc2222','#aa0000'];
+  sliderValue.style.color = colors[v - 1];
+});
+
+function addRegret() {
+  const decision = document.getElementById('decision').value.trim();
+  if (!decision) return;
+  const rating = parseInt(slider.value);
+  const category = document.getElementById('category').value;
+  const entry = { decision, rating, category, date: new Date().toISOString(), id: Date.now() };
+  regrets.push(entry);
+  save();
+
+  const pool = SNARKY[rating];
+  const comment = pool[Math.floor(Math.random() * pool.length)];
+  const el = document.getElementById('commentary');
+  el.textContent = `"${comment}"`;
+  el.style.display = 'block';
+
+  document.getElementById('decision').value = '';
+  slider.value = 5;
+  sliderValue.textContent = '5';
+  sliderValue.style.color = '#aa7a18';
+
+  render();
+}
+
+function removeRegret(id) {
+  regrets = regrets.filter(r => r.id !== id);
+  save();
+  const el = document.getElementById('commentary');
+  const msgs = [
+    "Fine. Denial is a valid coping mechanism.",
+    "Sure, pretend it never happened. That always works.",
+    "Regret removed. The memory? Not so much.",
+    "Alright, we'll call it a 'learning experience.'",
+    "Gone from the app. Still lives rent-free in your head.",
+  ];
+  el.textContent = `"${msgs[Math.floor(Math.random() * msgs.length)]}"`;
+  el.style.display = 'block';
+  render();
+}
+
+function save() { localStorage.setItem('regrets', JSON.stringify(regrets)); }
+
+function render() {
+  const total = regrets.reduce((s, r) => s + r.rating, 0);
+  document.getElementById('totalScore').textContent = total;
+
+  let rank = RANKS[0][1];
+  for (const [threshold, label] of RANKS) { if (total >= threshold) rank = label; }
+  document.getElementById('regretRank').textContent = rank;
+
+  const sorted = [...regrets].sort((a, b) => b.rating - a.rating);
+  const list = document.getElementById('leaderboardList');
+  if (sorted.length === 0) {
+    list.innerHTML = '<div class="empty-state">No regrets yet. Must be nice.</div>';
+  } else {
+    list.innerHTML = sorted.map((r, i) => `
+      <div class="leaderboard-item">
+        <span class="rank-num">#${i + 1}</span>
+        <span class="decision-text">${esc(r.decision)}</span>
+        <span class="category-tag cat-${r.category}">${r.category}</span>
+        <span class="regret-score">${r.rating}</span>
+        <button class="fine-btn" onclick="removeRegret(${r.id})">Actually That Was Fine</button>
+      </div>
+    `).join('');
+  }
+
+  drawChart();
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+function drawChart() {
+  const canvas = document.getElementById('regretChart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 250 * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 250;
+  ctx.clearRect(0, 0, W, H);
+
+  if (regrets.length < 2) {
+    ctx.fillStyle = '#3a3a45';
+    ctx.font = 'italic 14px Georgia';
+    ctx.textAlign = 'center';
+    ctx.fillText('Add more regrets to see your descent into despair.', W / 2, H / 2);
+    return;
+  }
+
+  const sorted = [...regrets].sort((a, b) => new Date(a.date) - new Date(b.date));
+  let cumulative = [];
+  let sum = 0;
+  for (const r of sorted) { sum += r.rating; cumulative.push(sum); }
+
+  const pad = { top: 25, right: 20, bottom: 35, left: 45 };
+  const gW = W - pad.left - pad.right;
+  const gH = H - pad.top - pad.bottom;
+  const maxVal = Math.max(...cumulative);
+
+  // Grid lines
+  ctx.strokeStyle = '#1a1a22';
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (gH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+    ctx.fillStyle = '#3a3a45';
+    ctx.font = '11px Georgia';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(maxVal - (maxVal / 4) * i), pad.left - 8, y + 4);
+  }
+
+  // Line
+  ctx.beginPath();
+  ctx.strokeStyle = '#c44';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  for (let i = 0; i < cumulative.length; i++) {
+    const x = pad.left + (i / (cumulative.length - 1)) * gW;
+    const y = pad.top + gH - (cumulative[i] / maxVal) * gH;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Fill under
+  const lastX = pad.left + gW;
+  const lastY = pad.top + gH - (cumulative[cumulative.length - 1] / maxVal) * gH;
+  ctx.lineTo(lastX, pad.top + gH);
+  ctx.lineTo(pad.left, pad.top + gH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + gH);
+  grad.addColorStop(0, 'rgba(200,60,60,0.25)');
+  grad.addColorStop(1, 'rgba(200,60,60,0.02)');
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Dots
+  for (let i = 0; i < cumulative.length; i++) {
+    const x = pad.left + (i / (cumulative.length - 1)) * gW;
+    const y = pad.top + gH - (cumulative[i] / maxVal) * gH;
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#c44'; ctx.fill();
+    ctx.strokeStyle = '#0a0a0f'; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  // X labels
+  ctx.fillStyle = '#3a3a45';
+  ctx.font = '10px Georgia';
+  ctx.textAlign = 'center';
+  const step = Math.max(1, Math.floor(sorted.length / 5));
+  for (let i = 0; i < sorted.length; i += step) {
+    const x = pad.left + (i / (cumulative.length - 1)) * gW;
+    const d = new Date(sorted[i].date);
+    ctx.fillText(`${d.getMonth()+1}/${d.getDate()}`, x, H - 8);
+  }
+}
+
+window.addEventListener('resize', drawChart);
+render();
+
+// Trigger slider color on load
+slider.dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>
