@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nerd Translate</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+
+:root{
+  --bg:#0a0a0a;--surface:#111;--surface2:#1a1a1a;--border:#222;
+  --green:#00ff41;--green2:#00cc33;--green-dim:#003300;
+  --text:#e0e0e0;--text2:#888;--accent:#00ff41;
+}
+
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;
+  min-height:100vh;overflow-x:hidden;
+}
+
+/* Matrix rain canvas */
+#matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.06;pointer-events:none}
+
+.container{
+  max-width:800px;margin:0 auto;padding:20px;position:relative;z-index:1;
+}
+
+header{text-align:center;padding:30px 0 20px}
+header h1{
+  font-family:'JetBrains Mono',monospace;font-size:clamp(1.8rem,5vw,2.8rem);
+  color:var(--green);text-shadow:0 0 20px rgba(0,255,65,.3);
+  margin-bottom:4px;
+}
+header h1 span.blink{animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+header p{color:var(--text2);font-size:.9rem;font-family:'JetBrains Mono',monospace}
+
+.actually-counter{
+  text-align:center;margin:12px 0 20px;
+  font-family:'JetBrains Mono',monospace;font-size:.85rem;color:var(--green2);
+  background:var(--green-dim);border:1px solid #004400;
+  border-radius:8px;padding:8px 16px;display:inline-block;
+  margin-left:50%;transform:translateX(-50%);
+}
+.actually-counter .num{font-size:1.4rem;font-weight:700;color:var(--green)}
+
+/* Nerdiness slider */
+.slider-section{margin:16px 0 20px;text-align:center}
+.slider-section label{
+  font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text2);
+  display:block;margin-bottom:8px;
+}
+.slider-wrap{display:flex;align-items:center;gap:12px;justify-content:center}
+.slider-wrap span{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text2);min-width:90px}
+.slider-wrap span:last-child{text-align:left}
+.slider-wrap span:first-child{text-align:right}
+input[type=range]{
+  -webkit-appearance:none;width:200px;height:6px;
+  background:linear-gradient(90deg,var(--green-dim),var(--green));
+  border-radius:3px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:20px;height:20px;
+  background:var(--green);border-radius:50%;cursor:pointer;
+  box-shadow:0 0 10px rgba(0,255,65,.5);
+}
+.level-label{
+  font-family:'JetBrains Mono',monospace;font-size:1rem;
+  color:var(--green);margin-top:6px;
+}
+
+/* Input area */
+.input-section{margin-bottom:16px}
+.input-section textarea{
+  width:100%;height:120px;background:var(--surface);
+  border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:1rem;padding:14px;
+  font-family:'Inter',sans-serif;resize:vertical;
+  transition:border-color .2s;
+}
+.input-section textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 12px rgba(0,255,65,.15)}
+.input-section textarea::placeholder{color:var(--text2)}
+
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.btn{
+  padding:10px 20px;border:none;border-radius:8px;cursor:pointer;
+  font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:600;
+  transition:all .2s;
+}
+.btn-primary{
+  background:var(--green);color:#000;flex:1;
+}
+.btn-primary:hover{box-shadow:0 0 20px rgba(0,255,65,.4);transform:translateY(-1px)}
+.btn-secondary{
+  background:var(--surface2);color:var(--green);border:1px solid var(--border);
+}
+.btn-secondary:hover{border-color:var(--green);background:var(--green-dim)}
+.btn-speak{background:var(--surface2);color:var(--green);border:1px solid var(--border)}
+.btn-speak:hover{border-color:var(--green)}
+
+/* Output */
+.output-section{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:16px;min-height:80px;
+  margin-bottom:12px;position:relative;display:none;
+}
+.output-section.visible{display:block}
+.output-section .label{
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;
+  color:var(--green2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;
+}
+.output-text{
+  font-size:1rem;line-height:1.7;color:var(--text);white-space:pre-wrap;
+}
+.output-text .actually{color:var(--green);font-weight:700}
+.output-text .footnote-ref{
+  color:var(--green);font-size:.7rem;vertical-align:super;cursor:help;font-weight:700;
+}
+
+/* Footnotes */
+.footnotes{
+  margin-top:16px;padding-top:12px;border-top:1px solid var(--border);
+  font-size:.8rem;color:var(--text2);line-height:1.6;display:none;
+}
+.footnotes.visible{display:block}
+.footnotes .fn{margin-bottom:4px}
+.footnotes .fn-num{color:var(--green);font-weight:700}
+
+/* Stats bar */
+.stats-bar{
+  display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;display:none;
+}
+.stats-bar.visible{display:flex}
+.stat{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;color:var(--text2);flex:1;min-width:100px;text-align:center;
+}
+.stat .val{color:var(--green);font-size:1.1rem;font-weight:700;display:block;margin-bottom:2px}
+
+/* Examples */
+.examples{margin-top:30px}
+.examples h3{
+  font-family:'JetBrains Mono',monospace;font-size:.85rem;
+  color:var(--green2);margin-bottom:12px;
+}
+.example-chip{
+  display:inline-block;background:var(--surface2);border:1px solid var(--border);
+  border-radius:20px;padding:6px 14px;margin:4px;font-size:.8rem;color:var(--text2);
+  cursor:pointer;transition:all .2s;
+}
+.example-chip:hover{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+
+footer{
+  text-align:center;padding:30px 0 20px;
+  font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#333;
+}
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div class="container">
+  <header>
+    <h1>&gt; nerd_translate<span class="blink">_</span></h1>
+    <p>// casual -&gt; maximum pedantry</p>
+  </header>
+
+  <div class="actually-counter">
+    "Actually..." count: <span class="num" id="actuallyCount">0</span>
+  </div>
+
+  <div class="slider-section">
+    <label>NERDINESS_LEVEL</label>
+    <div class="slider-wrap">
+      <span>1: Mild</span>
+      <input type="range" id="nerdLevel" min="1" max="5" value="3">
+      <span>5: Incomprehensible</span>
+    </div>
+    <div class="level-label" id="levelLabel">Level 3: Verbose</div>
+  </div>
+
+  <div class="input-section">
+    <textarea id="input" placeholder="Type a casual sentence... e.g. &quot;That was a good movie.&quot;"></textarea>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="translateBtn">TRANSLATE TO NERD</button>
+    <button class="btn btn-speak" id="speakBtn" title="Read aloud in nasally voice">&#x1f50a; Speak</button>
+    <button class="btn btn-secondary" id="shareBtn">Share</button>
+    <button class="btn btn-secondary" id="randomBtn">Random</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat"><span class="val" id="statWords">0</span>Word inflation</div>
+    <div class="stat"><span class="val" id="statSyllables">0</span>Avg syllables/word</div>
+    <div class="stat"><span class="val" id="statFootnotes">0</span>Footnotes</div>
+    <div class="stat"><span class="val" id="statActually">0</span>"Actually..."s</div>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="label">// translated output</div>
+    <div class="output-text" id="output"></div>
+    <div class="footnotes" id="footnotes"></div>
+  </div>
+
+  <div class="examples">
+    <h3>// try these</h3>
+    <div id="exampleChips"></div>
+  </div>
+
+  <footer>nerd_translate v1.0.0 // pedantry_engine initialized</footer>
+</div>
+
+<script>
+// ── Matrix rain ──
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+resizeCanvas();window.addEventListener('resize',resizeCanvas);
+const cols=Math.floor(canvas.width/14);
+const drops=Array(cols).fill(1);
+const chars='01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+function drawMatrix(){
+  ctx.fillStyle='rgba(10,10,10,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#00ff41';ctx.font='12px monospace';
+  for(let i=0;i<drops.length;i++){
+    const t=chars[Math.floor(Math.random()*chars.length)];
+    ctx.fillText(t,i*14,drops[i]*14);
+    if(drops[i]*14>canvas.height&&Math.random()>.975)drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix,50);
+
+// ── Level labels ──
+const levelLabels = {
+  1:'Level 1: Mildly Pedantic',
+  2:'Level 2: Unnecessarily Precise',
+  3:'Level 3: Verbose & Citations',
+  4:'Level 4: Academic Paper',
+  5:'Level 5: Incomprehensible'
+};
+const nerdSlider = document.getElementById('nerdLevel');
+const levelLabel = document.getElementById('levelLabel');
+nerdSlider.addEventListener('input',()=>levelLabel.textContent=levelLabels[nerdSlider.value]);
+
+// ── Global actually counter ──
+let totalActuallys = parseInt(localStorage.getItem('nerdActuallys')||'0');
+document.getElementById('actuallyCount').textContent = totalActuallys;
+
+// ── 50+ transformation patterns ──
+const patterns = [
+  // Greetings & basics
+  {r:/\bhey\b/gi, n:[
+    'salutations','greetings, fellow carbon-based entity',
+    'I acknowledge your presence within my sensory detection radius',
+    'Pursuant to social protocol RFC-7231, I hereby initiate a conversational handshake',
+    'I extend electromagnetic vibrations in the audible frequency range as a socially-encoded greeting signal'
+  ]},
+  {r:/\bhello\b/gi, n:[
+    'salutations','greetings, fellow sapient being',
+    'I hereby formally acknowledge your existence within this spatiotemporal locality',
+    'Per the Geneva Convention on Social Pleasantries (Article IV, Section 2), I offer the customary verbal acknowledgment',
+    'Initiating conversational TCP/IP handshake... SYN-ACK received. Greetings established.'
+  ]},
+  {r:/\bhi\b/gi, n:[
+    'greetings','salutations',
+    'I register your presence and reciprocate with the appropriate social protocol',
+    'Acknowledging your electromagnetic presence — hello, fellow participant in the human condition',
+    'Per Dunbar\'s social grooming theory, I initiate this phatic communion — greetings'
+  ]},
+  // Agreement
+  {r:/\byeah\b/gi, n:[
+    'indeed','affirmative',
+    'I concur with the proposition as stated, pending further empirical verification',
+    'Your assertion aligns with my independently-derived analysis within acceptable confidence intervals',
+    'The Boolean evaluation of your statement returns TRUE across all tested edge cases'
+  ]},
+  {r:/\byes\b/gi, n:[
+    'affirmative','correct, within the given parameters',
+    'I validate your assertion with a confidence interval of approximately 95%',
+    'Your proposition satisfies all necessary and sufficient conditions for truthfulness',
+    'Affirmative — your statement has been peer-reviewed by my internal committee and accepted without revisions'
+  ]},
+  {r:/\bok\b/gi, n:[
+    'acknowledged','I find this acceptable within defined parameters',
+    'Your proposal has been evaluated and falls within the acceptable bounds of my tolerance function',
+    'Noted. I have allocated the requisite cognitive resources to process this acknowledgment',
+    'The status code of my response is 200 OK — request processed, no errors encountered in the semantic pipeline'
+  ]},
+  // Disagreement
+  {r:/\bno\b/gi, n:[
+    'negative','I must respectfully dissent',
+    'I find the evidence insufficient to support that conclusion, actually',
+    'Upon rigorous analysis, your proposition fails to satisfy the necessary preconditions — I must register my formal objection',
+    'The null hypothesis of your claim cannot be rejected, thus I return FALSE with p < 0.001'
+  ]},
+  {r:/\bwrong\b/gi, n:[
+    'factually inaccurate','empirically unsupported',
+    'actually, that assertion fails basic logical consistency checks',
+    'I must invoke Cunningham\'s Law here — your statement is demonstrably incorrect, as I shall now exhaustively prove',
+    'Your claim has been submitted to my internal peer-review board and rejected with major revisions required — see attached 47-page rebuttal'
+  ]},
+  // Movie/entertainment
+  {r:/\bgood movie\b/gi, n:[
+    'cinematically competent film','well-constructed cinematic narrative',
+    'a cinematic experience exhibiting commendable execution of character arcs — 7.8/10 on the IMDb-adjusted Nerdworth Scale',
+    'a film demonstrating narrative coherence within the three-act paradigm, with a Rotten Tomatoes freshness quotient exceeding the 75th percentile',
+    'a motion picture whose diegetic and non-diegetic elements achieve a Pareto-optimal configuration of entertainment utility, scoring 0.82 on the normalized Kubrick-Spielberg Artistic Merit Index'
+  ]},
+  {r:/\bbad movie\b/gi, n:[
+    'cinematically underwhelming film','narratively deficient motion picture',
+    'a film whose plot holes exceed its runtime in both quantity and depth — 2.1/10',
+    'a cinematic artifact demonstrating negative correlation between budget allocation and narrative coherence',
+    'a motion picture whose existence constitutes a thermodynamic violation — it somehow increased entropy in the audience\'s neural substrate beyond what should be physically possible'
+  ]},
+  {r:/\bfunny\b/gi, n:[
+    'humorous','comedically effective',
+    'that triggered an involuntary diaphragmatic contraction consistent with the humor response',
+    'I experienced a statistically significant dopamine release event consistent with the neurological humor cascade',
+    'the comedic payload successfully bypassed my prefrontal cortex\'s irony firewall and triggered limbic system reward circuitry — ROFL coefficient: 0.94'
+  ]},
+  {r:/\bscary\b/gi, n:[
+    'psychologically unsettling','amygdala-activating',
+    'that stimulus triggered a measurable cortisol spike and sympathetic nervous system activation',
+    'the fear-inducing properties of said stimulus activated my fight-or-flight response with a latency of approximately 200ms',
+    'my hypothalamic-pituitary-adrenal axis achieved maximum activation — heart rate elevated 47 BPM above resting baseline, consistent with Type II terror classification'
+  ]},
+  // Food
+  {r:/\bgood food\b/gi, n:[
+    'palatable sustenance','culinarily satisfactory provisions',
+    'nutrient delivery systems exhibiting above-average gustatory properties',
+    'the Maillard reaction products and flavor compound distribution achieved near-optimal palatability scores',
+    'the biochemical composition of the ingested matter triggered an optimal cascade of taste receptor activation across all five gustatory modalities — umami dominance ratio: 1.3:1'
+  ]},
+  {r:/\bdelicious\b/gi, n:[
+    'exceptionally palatable','gastronomically superior',
+    'the gustatory experience exceeded baseline expectations by approximately 2.3 standard deviations',
+    'the flavor profile demonstrates a masterful manipulation of the five basic taste modalities, achieving near-perfect hedonic optimization',
+    'the molecular gastronomy of this preparation has achieved what I can only describe as a gustatory singularity — every taste bud reports maximum satisfaction simultaneously'
+  ]},
+  {r:/\bhungry\b/gi, n:[
+    'experiencing caloric deficit','in a state of metabolic resource scarcity',
+    'my ghrelin levels indicate an urgent need for macronutrient replenishment',
+    'my hypothalamus is broadcasting hunger signals at increasing amplitude — estimated time to cognitive impairment: 47 minutes',
+    'I am experiencing a critical glycogen depletion event — my prefrontal cortex has initiated emergency calorie-seeking subroutines and all non-essential cognitive functions have been suspended'
+  ]},
+  // Weather
+  {r:/\bhot\b/gi, n:[
+    'thermally elevated','experiencing above-average ambient temperature',
+    'the current thermal conditions exceed my homeostatic comfort threshold',
+    'ambient temperature readings indicate a deviation of +2.7 standard deviations from seasonal norms',
+    'the local atmospheric thermal energy density has exceeded the parameters within which my thermoregulatory mechanisms can maintain optimal core body temperature'
+  ]},
+  {r:/\bcold\b/gi, n:[
+    'thermally diminished','experiencing sub-optimal ambient temperature',
+    'the current thermal environment is insufficiently energetic for comfortable homeostasis',
+    'ambient temperature has fallen below the Goldilocks zone for unaugmented human thermoregulation',
+    'the local thermodynamic equilibrium has shifted such that my peripheral vasculature has initiated emergency vasoconstriction protocols — entropy wins again'
+  ]},
+  {r:/\bnice weather\b/gi, n:[
+    'favorable atmospheric conditions','meteorologically pleasant circumstances',
+    'the current atmospheric parameters fall within optimal ranges for outdoor bipedal locomotion',
+    'barometric pressure, humidity, and solar irradiance have converged on a configuration that maximizes human comfort indices',
+    'the atmosphere has achieved a rare multi-variable optimization across temperature, humidity, UV index, and wind speed — a meteorological Pareto frontier event that occurs approximately 3.7% of days annually'
+  ]},
+  // Emotions
+  {r:/\bhappy\b/gi, n:[
+    'experiencing positive affect','in a state of elevated serotonin',
+    'my neurochemical balance currently favors dopaminergic and serotonergic activity',
+    'I am experiencing a sustained period of positive valence emotional processing, likely mediated by endorphin release',
+    'my limbic system reports a multi-neurotransmitter optimization event — serotonin, dopamine, oxytocin, and endorphin levels simultaneously exceeding baseline by statistically significant margins'
+  ]},
+  {r:/\bsad\b/gi, n:[
+    'experiencing negative affect','in a state of diminished serotonergic activity',
+    'my emotional state registers a significant downward deviation from hedonic baseline',
+    'the serotonin-to-cortisol ratio in my neural substrate has achieved a configuration consistent with melancholic affect',
+    'I am experiencing a multi-dimensional negative valence event characterized by anterior cingulate cortex hyperactivity and prefrontal hypoactivation — commonly classified as "the big sad" in informal nosology'
+  ]},
+  {r:/\btired\b/gi, n:[
+    'experiencing fatigue','in a state of reduced cognitive bandwidth',
+    'my adenosine receptors indicate an urgent need for a sleep cycle',
+    'accumulated sleep debt has degraded my prefrontal cortex function to approximately 73% of peak capacity',
+    'my circadian oscillator is broadcasting urgent shutdown signals — melatonin production has commenced, ATP reserves are critically depleted, and my cognitive throughput has degraded to that of a moderately caffeinated sloth'
+  ]},
+  {r:/\bangry\b/gi, n:[
+    'experiencing elevated cortisol','in a state of sympathetic nervous system arousal',
+    'my amygdala has initiated a threat-response cascade resulting in suboptimal emotional regulation',
+    'norepinephrine levels have spiked beyond the threshold for rational discourse — engaging prefrontal override protocols',
+    'my limbic system has declared martial law on my prefrontal cortex — all diplomatic channels are closed and my sympathetic nervous system is mobilizing for a full stress response'
+  ]},
+  {r:/\bbored\b/gi, n:[
+    'experiencing understimulation','in a state of insufficient cognitive engagement',
+    'my dopaminergic reward circuitry reports a critical novelty deficit',
+    'the current stimulus environment fails to meet the minimum threshold for sustained attentional engagement',
+    'my default mode network has seized control from the task-positive network due to catastrophic understimulation — I am now involuntarily generating counterfactual scenarios and existential questions'
+  ]},
+  // Activities
+  {r:/\bsleep\b/gi, n:[
+    'enter a period of unconscious neural consolidation','initiate a sleep cycle',
+    'engage in the circadian-regulated process of synaptic downscaling and memory consolidation',
+    'I shall now voluntarily enter a state of reversible unconsciousness for approximately 7-9 hours as recommended by the National Sleep Foundation',
+    'I am about to undergo a multi-phase neural maintenance cycle involving REM and non-REM stages, during which my glymphatic system will flush accumulated metabolic waste products from my cerebrospinal fluid'
+  ]},
+  {r:/\beat\b/gi, n:[
+    'ingest caloric matter','consume biomass for energy extraction',
+    'acquire and process organic compounds for ATP synthesis via cellular respiration',
+    'initiate the mechanical and enzymatic decomposition of macronutrient substrates for metabolic fuel extraction',
+    'commence the multi-stage biochemical processing pipeline: mastication, enzymatic hydrolysis, peristaltic transport, chyme formation, and finally, villous absorption of constituent nutrients'
+  ]},
+  {r:/\brun\b/gi, n:[
+    'engage in rapid bipedal locomotion','perform sustained aerobic exercise',
+    'execute a sequence of ballistic single-leg stance phases at elevated velocity',
+    'initiate a sustained period of bipedal ground-reaction-force generation exceeding 2.5x body weight per stride',
+    'engage my Type I and Type IIa muscle fibers in a coordinated oscillatory contraction pattern optimized for sustained forward propulsion through three-dimensional Euclidean space'
+  ]},
+  {r:/\bwalk\b/gi, n:[
+    'ambulate','engage in bipedal locomotion',
+    'traverse physical space via controlled sequential falling in a forward direction',
+    'execute the biomechanically complex process of inverted-pendulum gait dynamics',
+    'initiate a series of controlled gravitational energy exchanges between potential and kinetic states, resulting in forward displacement of my center of mass through an alternating double-stance gait cycle'
+  ]},
+  // Social
+  {r:/\bfriend\b/gi, n:[
+    'associate','socially-bonded individual',
+    'a member of my Dunbar-number-limited social cohort with whom I share reciprocal altruistic bonds',
+    'an individual with whom I maintain a sustained bilateral oxytocin-mediated attachment bond',
+    'a fellow Homo sapiens who has satisfied the multi-year vetting process required for inclusion in my inner Dunbar sphere — trust coefficient: 0.89, betrayal probability: acceptably low'
+  ]},
+  {r:/\blove\b/gi, n:[
+    'experience strong positive attachment','harbor deep interpersonal affinity',
+    'I experience a neurochemical cocktail of oxytocin, dopamine, and vasopressin in their presence',
+    'the combination of phenylethylamine, norepinephrine, and serotonin modulation I experience constitutes what is colloquially termed "love"',
+    'I am experiencing a multi-system neurobiological bonding event involving ventral tegmental area activation, caudate nucleus engagement, and anterior cingulate resonance — this is indistinguishable from what poets have inadequately attempted to describe for millennia'
+  ]},
+  {r:/\bhate\b/gi, n:[
+    'harbor strong negative affect toward','experience significant aversion regarding',
+    'my amygdala generates a robust threat/disgust response upon encountering',
+    'I experience a sustained negative-valence emotional state characterized by insula and anterior cingulate hyperactivation',
+    'my neural substrate generates a compound aversive response integrating disgust, contempt, and hostility circuits — the computational equivalent of a segfault in my social processing module'
+  ]},
+  // Technology
+  {r:/\bphone\b/gi, n:[
+    'personal computing device','handheld telecommunications apparatus',
+    'my pocket-sized supercomputer that I primarily use to look at pictures of cats',
+    'a System-on-Chip-based portable computing platform running approximately 3 billion transistors, which I inexplicably use primarily for doom-scrolling',
+    'a lithium-polymer-powered 5nm-process semiconductor marvel containing more computational power than the entire Apollo program, which I am neurologically addicted to checking every 4.7 minutes on average'
+  ]},
+  {r:/\bcomputer\b/gi, n:[
+    'computational device','electronic computation engine',
+    'a deterministic finite automaton with sufficient memory to approximate a Turing machine',
+    'a silicon-based information processing system executing approximately 10^12 floating-point operations per second',
+    'an artifact of collective human ingenuity containing billions of lithographically-etched logic gates arranged in a Von Neumann architecture, which I primarily use to argue with strangers on the internet'
+  ]},
+  {r:/\binternet\b/gi, n:[
+    'the global information network','the worldwide packet-switched communications infrastructure',
+    'the interconnected network of autonomous systems communicating via the TCP/IP protocol suite',
+    'the emergent global information substrate consisting of approximately 5.4 billion connected nodes exchanging data via standardized protocols',
+    'the planet-spanning electromagnetic nervous system of human civilization — a self-organizing complex adaptive system that somehow simultaneously hosts the sum of all human knowledge AND an unfathomable quantity of cat videos'
+  ]},
+  // Common phrases
+  {r:/\bI think\b/gi, n:[
+    'I hypothesize','I posit',
+    'based on my current information set, I tentatively conclude',
+    'my Bayesian prior, updated with available evidence, suggests',
+    'after running a Monte Carlo simulation across 10,000 possible interpretive frameworks, my maximum likelihood estimate suggests'
+  ]},
+  {r:/\bI don't know\b/gi, n:[
+    'I lack sufficient data','the answer lies beyond my current knowledge domain',
+    'my internal knowledge base returns null for that query',
+    'I must confess an epistemic gap in my understanding — further research is warranted before I can offer a defensible position',
+    'I have exhaustively queried every accessible knowledge store and the result set is empty — this constitutes a known unknown, and I refuse to confabulate an answer where none exists'
+  ]},
+  {r:/\bmaybe\b/gi, n:[
+    'there exists a non-trivial probability','the outcome is probabilistically indeterminate',
+    'I assign a roughly 50% prior probability to that proposition, pending additional evidence',
+    'the probability distribution of outcomes includes that scenario, though I lack sufficient data to compute a precise Bayesian posterior',
+    'quantum superposition of possible outcomes prevents me from collapsing the wave function of this decision without additional observational data — Schrödinger\'s "maybe," if you will'
+  ]},
+  {r:/\bwhatever\b/gi, n:[
+    'I am indifferent to the outcome','the result is immaterial to my utility function',
+    'my preference function returns equal values for all available options',
+    'I have evaluated all possible outcomes and find them thermodynamically equivalent — entropy doesn\'t care, and neither do I',
+    'my decision-theoretic analysis yields a perfectly flat utility surface across all available options — I am experiencing decision-paralysis-by-indifference, the most rational form of apathy'
+  ]},
+  // Intensifiers
+  {r:/\bvery\b/gi, n:[
+    'exceedingly','to a statistically significant degree',
+    'with a magnitude exceeding two standard deviations from the norm',
+    'to an extent that would achieve p < 0.01 significance in a properly controlled experiment',
+    'with an effect size that would make even the most conservative statistician raise an eyebrow — Cohen\'s d > 1.5'
+  ]},
+  {r:/\breally\b/gi, n:[
+    'genuinely','in a manner that withstands empirical scrutiny',
+    'to an extent verifiable through independent replication',
+    'in a way that would survive a rigorous meta-analysis with funnel plot asymmetry correction',
+    'with a verisimilitude coefficient so high that even the most pathological skeptic would be forced to update their priors'
+  ]},
+  {r:/\ba lot\b/gi, n:[
+    'a substantial quantity','a non-trivial amount',
+    'a quantity exceeding the median by a significant margin',
+    'an amount that, if plotted on a log-normal distribution, would reside comfortably in the right tail',
+    'a quantity so far into the right tail of the distribution that it constitutes a legitimate outlier by both the IQR method and Grubbs\' test'
+  ]},
+  // Actions
+  {r:/\bgo\b/gi, n:[
+    'proceed','relocate',
+    'initiate translocation to the specified coordinates',
+    'commence directed displacement through physical space toward the designated destination',
+    'execute a spatio-temporal trajectory optimization algorithm and begin traversing the resulting minimum-cost path through Euclidean space'
+  ]},
+  {r:/\bstop\b/gi, n:[
+    'cease','discontinue the current operation',
+    'terminate the ongoing process and return to an idle state',
+    'immediately invoke a halt instruction on all active subroutines and enter a quiescent state',
+    'SIGTERM all running processes, flush output buffers, release allocated resources, and transition to a zero-velocity equilibrium state — do not pass Go, do not collect $200'
+  ]},
+  {r:/\bwait\b/gi, n:[
+    'pause','maintain current state temporarily',
+    'enter a holding pattern until further input is received',
+    'suspend execution and poll for the satisfaction of the unspecified blocking condition',
+    'enter an indeterminate busy-wait loop while repeatedly checking whether the precondition for the next state transition has been satisfied — estimated time to resolution: undefined'
+  ]},
+  {r:/\blook\b/gi, n:[
+    'observe','direct visual attention toward',
+    'orient the ocular apparatus toward the specified stimulus',
+    'perform a saccadic eye movement to foveate on the indicated region of the visual field',
+    'execute a coordinated vergence-accommodation response to bring the target stimulus into optimal focus on the foveal pit, then initiate a feature-extraction cascade through the ventral visual stream'
+  ]},
+  // States
+  {r:/\bcool\b/gi, n:[
+    'noteworthy','possessing above-average interestingness',
+    'that registers favorably on my subjective assessment of novelty and quality',
+    'I must acknowledge that this exhibits properties that trigger my ventral striatum\'s reward circuitry',
+    'this achieves a rare simultaneous activation of both my analytical appreciation circuits and my aesthetic evaluation networks — a phenomenon I classify as "genuinely cool" using the revised Fonzarelli Scale'
+  ]},
+  {r:/\bweird\b/gi, n:[
+    'atypical','statistically anomalous',
+    'that deviates from expected parameters by a notable margin',
+    'this observation falls approximately 2.8 standard deviations from my predictive model\'s mean',
+    'my Bayesian surprise metric just hit maximum — the likelihood of this observation under my prior model is approximately 0.003, suggesting a fundamental model update is required'
+  ]},
+  {r:/\beasy\b/gi, n:[
+    'straightforward','computationally trivial',
+    'this falls within polynomial time complexity — O(n) at worst',
+    'the cognitive load required is well below the threshold of my working memory capacity',
+    'this problem belongs to complexity class P and can be solved by a deterministic Turing machine in polynomial time — I assign it a difficulty rating of 1.2 on the Kolmogorov Complexity-Adjusted Effort Scale'
+  ]},
+  {r:/\bhard\b/gi, n:[
+    'non-trivial','of considerable complexity',
+    'this problem exhibits characteristics suggesting NP-hardness',
+    'the solution space is sufficiently vast that brute-force enumeration is computationally intractable',
+    'this problem is suspected to be NP-complete by reduction from 3-SAT, meaning that unless P=NP (which would be worth a million dollars to prove), no efficient general solution exists'
+  ]},
+  {r:/\bstupid\b/gi, n:[
+    'suboptimal','exhibiting diminished cognitive performance',
+    'demonstrating reasoning that would not survive even the most cursory logical analysis',
+    'this reflects a systematic failure of the heuristic processing system, suggesting over-reliance on System 1 thinking as described by Kahneman',
+    'this decision exhibits a confluence of cognitive biases so dense — anchoring, confirmation, Dunning-Kruger, and availability heuristic simultaneously — that it deserves its own case study in a behavioral economics textbook'
+  ]},
+  {r:/\bsmart\b/gi, n:[
+    'intellectually capable','exhibiting high cognitive throughput',
+    'demonstrating fluid intelligence that likely exceeds the 90th percentile',
+    'this individual\'s working memory capacity and processing speed suggest placement in the upper quartile of the general factor of intelligence',
+    'this entity exhibits a rare convergence of crystallized and fluid intelligence, with pattern recognition capabilities that would likely achieve a ceiling effect on standard psychometric instruments'
+  ]},
+  // Time
+  {r:/\blater\b/gi, n:[
+    'at a subsequent temporal coordinate','at an as-yet-unspecified future time',
+    'at some point along the positive direction of the temporal axis',
+    'at a future moment whose exact timestamp remains to be determined by the intersection of schedule constraints and motivational threshold functions',
+    'at a temporal coordinate T+delta where delta is a positive real number drawn from a heavy-tailed distribution reflecting my chronic tendency toward procrastination'
+  ]},
+  {r:/\bnow\b/gi, n:[
+    'at this present moment','at the current temporal coordinate',
+    'at this precise point in the space-time continuum',
+    'at the infinitesimally narrow boundary between the remembered past and the anticipated future',
+    'at the singular point on the temporal manifold designated as t=0 in my local reference frame, acknowledging that simultaneity is observer-dependent per special relativity'
+  ]},
+  {r:/\bsoon\b/gi, n:[
+    'in the near future','within a temporally proximate interval',
+    'at a future time whose expected value is relatively small',
+    'within a timeframe that, while unspecified, falls within the near-term planning horizon',
+    'at a temporal coordinate whose probability density function is concentrated in the immediate future, though the exact moment cannot be determined without solving the halting problem of my procrastination algorithm'
+  ]},
+  // Misc common
+  {r:/\bthing\b/gi, n:[
+    'entity','discrete object or concept',
+    'a particular instantiation within the ontological category of "stuff"',
+    'an entity whose precise taxonomic classification I am currently electing not to specify',
+    'a referent whose ontological status I deliberately leave ambiguous — it could be a physical object, an abstract concept, or a Platonic form, and frankly the distinction is irrelevant to this discourse'
+  ]},
+  {r:/\bstuff\b/gi, n:[
+    'miscellaneous items','an assortment of entities',
+    'a heterogeneous collection of objects and/or concepts not warranting individual enumeration',
+    'a set of n items where n is unspecified and the type parameter is wildcard',
+    'an unordered, heterogeneously-typed collection of referents whose individual descriptions have been omitted in the interest of conversational efficiency — think of it as a void pointer to the general concept of "things"'
+  ]},
+  {r:/\bproblem\b/gi, n:[
+    'challenge','non-trivial obstacle',
+    'a constraint satisfaction scenario with no immediately obvious solution',
+    'an instance of a decision problem whose solution requires non-trivial computational resources',
+    'a formally underdetermined system of constraints whose resolution demands the application of domain-specific heuristics and possibly divine intervention'
+  ]},
+  {r:/\bawesome\b/gi, n:[
+    'commendable','exceeding baseline expectations',
+    'registering a score of 9.2 on my internal awesomeness index',
+    'this achieves a rare state of multi-dimensional excellence that triggers simultaneous activation of my reward circuitry across all evaluation axes',
+    'my hedonic treadmill has been temporarily shattered — this stimulus has produced a genuine, non-adapted positive emotional response that defies the usual logarithmic decay of amazement'
+  ]},
+  {r:/\bbig\b/gi, n:[
+    'of considerable magnitude','substantially above the geometric mean',
+    'occupying a volume or representing a quantity that exceeds typical parameters by a notable factor',
+    'exhibiting dimensional properties that place it firmly in the upper percentile of the relevant size distribution',
+    'possessing spatial or quantitative properties so far beyond the population mean that it constitutes a statistical outlier — this is what we in the field call "scientifically chonky"'
+  ]},
+  {r:/\bsmall\b/gi, n:[
+    'of diminished magnitude','below the population median in size',
+    'occupying a volume or representing a quantity at the lower end of the relevant distribution',
+    'exhibiting dimensional properties that would be classified as "microscale" relative to the contextually appropriate reference class',
+    'possessing spatial properties so diminished that they approach — but do not quite reach — the threshold below which the Heisenberg uncertainty principle would render precise measurement meaningless'
+  ]},
+  {r:/\bfast\b/gi, n:[
+    'operating at elevated velocity','exhibiting high throughput',
+    'achieving a velocity that places it in the upper quartile of comparable entities',
+    'demonstrating a rate of displacement per unit time that significantly exceeds the population mean',
+    'traversing the relevant metric space at a velocity that, while not relativistic, is sufficient to invoke time dilation effects if one were to be extremely generous with significant figures'
+  ]},
+  {r:/\bslow\b/gi, n:[
+    'operating at reduced velocity','exhibiting suboptimal throughput',
+    'proceeding at a rate that tests the patience of any observer',
+    'demonstrating a velocity that would be outperformed by continental drift on a geological timescale',
+    'the rate of progress here is so low that I have had time to contemplate the heat death of the universe, reconsider my life choices, and calculate pi to 50 digits — and we are still only 12% complete'
+  ]},
+  {r:/\bpretty\b/gi, n:[
+    'aesthetically favorable','exhibiting visual properties that activate reward circuitry',
+    'possessing an arrangement of features that achieves high scores on computational aesthetics metrics',
+    'demonstrating a golden-ratio-adjacent proportion set that triggers the ventral visual stream\'s beauty-detection heuristics',
+    'achieving a rare convergence of symmetry, complexity, and novelty that maximizes the aesthetic utility function as described in Ramachandran\'s "Eight Laws of Artistic Experience"'
+  ]},
+  {r:/\bugly\b/gi, n:[
+    'aesthetically suboptimal','failing standard visual palatability metrics',
+    'possessing an arrangement of features that my visual cortex flags for immediate aversion',
+    'exhibiting properties that score in the bottom decile of any reasonable computational aesthetics benchmark',
+    'achieving a remarkable anti-aesthetic that violates so many principles of visual harmony simultaneously that it actually becomes interesting from a theoretical standpoint — a Gestalt violation of the highest order'
+  ]},
+  {r:/\bfine\b/gi, n:[
+    'adequate','within acceptable parameters',
+    'meeting the minimum threshold for satisfactory classification',
+    'achieving a score of exactly 5.0 on a 10-point scale — the mathematical embodiment of "meh"',
+    'occupying that precise region of the quality spectrum where further expenditure of evaluative effort yields diminishing returns — it is neither good enough to celebrate nor bad enough to complain about, a true thermodynamic equilibrium of mediocrity'
+  ]},
+];
+
+// ── Footnote banks ──
+const footnoteBank = [
+  'See: Kahneman, D. (2011). Thinking, Fast and Slow. Farrar, Straus and Giroux.',
+  'cf. Shannon, C.E. (1948). "A Mathematical Theory of Communication." Bell System Technical Journal.',
+  'This claim has not been peer-reviewed but the author feels strongly about it.',
+  'Pursuant to RFC 2119, the word "MUST" is used in the normative sense.',
+  'The author acknowledges a potential Type I error in this assessment.',
+  'For a rigorous treatment, see: Knuth, D. The Art of Computer Programming, Vol. 1-4A.',
+  'Statistical significance does not imply practical significance. See: Wasserstein et al. (2019).',
+  'This observation is consistent with the Many-Worlds interpretation but incompatible with Copenhagen.',
+  'The sample size (n=1, the author\'s personal experience) limits generalizability.',
+  'Feynman, R. (1965): "If you think you understand quantum mechanics, you don\'t understand quantum mechanics."',
+  'Error bars omitted for clarity. The author regrets this decision.',
+  'This footnote intentionally left blank. Actually, no it isn\'t. That\'s the joke.',
+  'The P-value for this claim is estimated at 0.049. Make of that what you will.',
+  'According to my calculations, which I performed on a napkin and subsequently lost.',
+  'Citation needed. Honestly, I just made this up, but it sounds plausible.',
+  'As my thesis advisor once said before walking out: "This is why we can\'t have nice things."',
+  'Technically correct — the best kind of correct. (Futurama, S02E11)',
+  'I would cite a source, but the WiFi is down and I refuse to use mobile data.',
+  'The astute reader will note that this contradicts footnote 2. The author is aware.',
+  'For the mathematically inclined: this is left as an exercise for the reader.',
+  'Heisenberg might have been here. We can\'t be certain.',
+  'In the immortal words of Donald Knuth: "Premature optimization is the root of all evil."',
+  'The author was drinking coffee while writing this. Correlation with quality is unclear.',
+  'See also: the entire Wikipedia disambiguation page for this concept.',
+  'This claim holds if and only if we ignore all the evidence to the contrary.',
+];
+
+// ── Citation banks ──
+const citationBank = [
+  'Nature 587, 410-413 (2020)',
+  'arXiv:2301.07041',
+  'Physical Review Letters, 129(24)',
+  'Proceedings of NeurIPS 2023',
+  'Journal of Irreproducible Results, Vol. 42',
+  'Stack Overflow, retrieved at 3:47 AM',
+  'Wikipedia [citation needed]',
+  'Unpublished manuscript, found on a Post-it note',
+  'XKCD #927',
+  'The Hitchhiker\'s Guide to the Galaxy, p. 42',
+];
+
+// ── Sentence wrappers by level ──
+function wrapSentence(text, level) {
+  if (level <= 2) return text;
+  const prefixes = [
+    '', '',
+    ['Furthermore, ', 'Moreover, ', 'It bears noting that ', 'One might observe that ', 'It is worth mentioning that '],
+    ['Upon careful examination, ', 'From a rigorous analytical perspective, ', 'In accordance with established principles, ', 'As documented in the literature, '],
+    ['Per my extensive — though admittedly incomplete — survey of the relevant interdisciplinary literature, ', 'I feel compelled, in the interest of intellectual honesty, to preface this with the caveat that ', 'Notwithstanding the inherent epistemological limitations of subjective assessment, ']
+  ];
+  const suffixes = [
+    '', '',
+    ['.', ', so to speak.', ', if you will.'],
+    [', as one would expect.', ', which is entirely consistent with theory.', ' — obviously.'],
+    [' (QED).', ', and I will entertain no further objections on this matter.', ' — though I suspect this will require a follow-up paper to fully articulate.', ', and if you disagree, I have prepared a 40-slide PowerPoint.']
+  ];
+  const pArr = prefixes[level - 1];
+  const sArr = suffixes[level - 1];
+  if (!pArr || !sArr) return text;
+  const p = pArr[Math.floor(Math.random() * pArr.length)];
+  const s = sArr[Math.floor(Math.random() * sArr.length)];
+  // Remove trailing period from text if suffix adds one
+  let clean = text.replace(/\.\s*$/, '');
+  return p + clean + s;
+}
+
+// ── Main translation engine ──
+function translate(input, level) {
+  let text = input.trim();
+  if (!text) return { text: '', footnotes: [], actuallys: 0, citations: [] };
+
+  // Split into sentences
+  let sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  let footnotes = [];
+  let citations = [];
+  let actuallys = 0;
+  let fnIndex = 1;
+
+  let translated = sentences.map((sentence, si) => {
+    let s = sentence.trim();
+    if (!s) return '';
+
+    // Apply pattern replacements
+    for (const pat of patterns) {
+      if (pat.r.test(s)) {
+        const idx = Math.min(level - 1, pat.n.length - 1);
+        const replacement = pat.n[idx];
+        s = s.replace(pat.r, replacement);
+        pat.r.lastIndex = 0; // reset global regex
+      }
+    }
+
+    // Wrap with level-appropriate verbosity
+    s = wrapSentence(s, level);
+
+    // Add "Actually..." prefix based on level
+    if (level >= 2 && Math.random() < (level * 0.15)) {
+      const actuallyForms = [
+        'Actually, ', 'Well, actually, ', 'Actually — and I cannot stress this enough — ',
+        'Actually (and I say this with all due respect), ',
+        'Actually, and I feel this is important to clarify, '
+      ];
+      const aIdx = Math.min(level - 1, actuallyForms.length - 1);
+      s = actuallyForms[Math.floor(Math.random() * (aIdx + 1))] + s.charAt(0).toLowerCase() + s.slice(1);
+      actuallys++;
+    }
+
+    // Add footnotes based on level
+    if (level >= 3 && Math.random() < (level * 0.2)) {
+      const fn = footnoteBank[Math.floor(Math.random() * footnoteBank.length)];
+      footnotes.push({ num: fnIndex, text: fn });
+      s += `<sup class="footnote-ref" title="${fn}">[${fnIndex}]</sup>`;
+      fnIndex++;
+    }
+
+    // Add inline citations at higher levels
+    if (level >= 4 && Math.random() < 0.3) {
+      const cite = citationBank[Math.floor(Math.random() * citationBank.length)];
+      citations.push(cite);
+      s += ` (${cite})`;
+    }
+
+    return s;
+  }).filter(Boolean);
+
+  // At level 5, add a parenthetical meta-commentary
+  if (level >= 5 && translated.length > 0) {
+    translated.push('(The author reserves the right to revise this assessment pending additional data, a larger sample size, and at least two cups of coffee.)');
+  }
+
+  // Ensure sentences end with periods
+  let result = translated.join(' ').replace(/\s+/g, ' ').trim();
+
+  return { text: result, footnotes, actuallys, citations };
+}
+
+// ── Count syllables ──
+function countSyllables(word) {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!word) return 0;
+  if (word.length <= 3) return 1;
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+  word = word.replace(/^y/, '');
+  const m = word.match(/[aeiouy]{1,2}/g);
+  return m ? m.length : 1;
+}
+
+// ── UI Logic ──
+const inputEl = document.getElementById('input');
+const outputSection = document.getElementById('outputSection');
+const outputEl = document.getElementById('output');
+const footnotesEl = document.getElementById('footnotes');
+const statsBar = document.getElementById('statsBar');
+
+document.getElementById('translateBtn').addEventListener('click', doTranslate);
+inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doTranslate(); }});
+
+function doTranslate() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  const level = parseInt(nerdSlider.value);
+  const result = translate(text, level);
+  if (!result.text) return;
+
+  // Highlight "Actually" prefixes
+  let displayText = result.text.replace(/(Actually[\s,—]*(?:and[^,]*,\s*)?)/g, '<span class="actually">$1</span>');
+
+  outputEl.innerHTML = displayText;
+  outputSection.classList.add('visible');
+
+  // Footnotes
+  if (result.footnotes.length > 0) {
+    footnotesEl.innerHTML = result.footnotes.map(fn =>
+      `<div class="fn"><span class="fn-num">[${fn.num}]</span> ${fn.text}</div>`
+    ).join('');
+    footnotesEl.classList.add('visible');
+  } else {
+    footnotesEl.classList.remove('visible');
+  }
+
+  // Stats
+  const origWords = text.split(/\s+/).length;
+  const nerdWords = result.text.replace(/<[^>]*>/g, '').split(/\s+/).length;
+  const allWords = result.text.replace(/<[^>]*>/g, '').split(/\s+/);
+  const totalSyllables = allWords.reduce((sum, w) => sum + countSyllables(w), 0);
+  const avgSyllables = (totalSyllables / allWords.length).toFixed(1);
+
+  document.getElementById('statWords').textContent = `${origWords} → ${nerdWords}`;
+  document.getElementById('statSyllables').textContent = avgSyllables;
+  document.getElementById('statFootnotes').textContent = result.footnotes.length;
+  document.getElementById('statActually').textContent = result.actuallys;
+  statsBar.classList.add('visible');
+
+  // Update global actually counter
+  totalActuallys += result.actuallys;
+  localStorage.setItem('nerdActuallys', totalActuallys);
+  document.getElementById('actuallyCount').textContent = totalActuallys;
+}
+
+// ── Speech Synthesis (nasally voice) ──
+document.getElementById('speakBtn').addEventListener('click', () => {
+  const text = outputEl?.innerText;
+  if (!text || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.85;
+  utter.pitch = 1.8; // high pitch = nasally
+  // Try to find a suitable voice
+  const voices = speechSynthesis.getVoices();
+  const nerdVoice = voices.find(v => /alex|daniel|fred|junior|ralph/i.test(v.name)) || voices[0];
+  if (nerdVoice) utter.voice = nerdVoice;
+  speechSynthesis.speak(utter);
+});
+// Preload voices
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// ── Share ──
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const text = outputEl?.innerText;
+  if (!text) return;
+  if (navigator.share) {
+    navigator.share({ title: 'Nerd Translation', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Share', 2000);
+    });
+  }
+});
+
+// ── Random examples ──
+const examples = [
+  "That was a good movie.",
+  "I'm hungry, let's eat.",
+  "It's really hot outside.",
+  "I think maybe we should stop.",
+  "Hello, how are you? I'm fine.",
+  "That's a weird thing to say.",
+  "I love my phone.",
+  "I don't know, whatever.",
+  "That was really funny, awesome!",
+  "Let's go, it's getting late.",
+  "My friend is very smart.",
+  "The internet is slow today.",
+  "I'm tired and bored.",
+  "That's a big problem.",
+  "Yes, that's pretty cool.",
+  "I hate waking up early.",
+];
+
+const chipsEl = document.getElementById('exampleChips');
+examples.forEach(ex => {
+  const chip = document.createElement('div');
+  chip.className = 'example-chip';
+  chip.textContent = ex;
+  chip.addEventListener('click', () => {
+    inputEl.value = ex;
+    doTranslate();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+  chipsEl.appendChild(chip);
+});
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+  inputEl.value = examples[Math.floor(Math.random() * examples.length)];
+  doTranslate();
+});
+</script>
+</body>
+</html>
