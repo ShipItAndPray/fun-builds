@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Baby Translator - Nature Documentary Edition</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    width: 100%;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    color: #89c4e8;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 400;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    color: #667;
+    margin-top: 0.3rem;
+    font-style: italic;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    padding: 0.8rem;
+    margin: 0.5rem 1rem;
+    background: #12121a;
+    border-radius: 12px;
+    border: 1px solid #1e1e2e;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    color: #89c4e8;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+  }
+
+  .stat-label {
+    font-size: 0.65rem;
+    color: #556;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .visualizer-container {
+    width: 90%;
+    max-width: 500px;
+    height: 80px;
+    margin: 1rem auto;
+    position: relative;
+  }
+
+  canvas#visualizer {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+  }
+
+  .volume-indicator {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    font-size: 0.7rem;
+    color: #556;
+    font-family: monospace;
+  }
+
+  #startBtn {
+    background: linear-gradient(135deg, #2a4a6b, #1a3a5b);
+    color: #89c4e8;
+    border: 2px solid #3a6a9b;
+    padding: 1rem 3rem;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+    margin: 1rem 0;
+  }
+
+  #startBtn:hover {
+    background: linear-gradient(135deg, #3a5a7b, #2a4a6b);
+    transform: scale(1.03);
+  }
+
+  #startBtn.listening {
+    background: linear-gradient(135deg, #6b2a2a, #5b1a1a);
+    border-color: #9b3a3a;
+    color: #e88989;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(137,68,68,0.4); }
+    50% { box-shadow: 0 0 20px 5px rgba(137,68,68,0.2); }
+  }
+
+  .subtitle-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 700px;
+    min-height: 200px;
+  }
+
+  .classification-badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 0.3rem 1rem;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    background: #1a1a2a;
+    border: 1px solid #2a2a3a;
+    color: #89c4e8;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .classification-badge.visible { opacity: 1; }
+
+  .subtitle-text {
+    font-size: 1.3rem;
+    line-height: 1.6;
+    text-align: center;
+    color: #d0d0d0;
+    font-style: italic;
+    min-height: 4rem;
+    padding: 0 1rem;
+    opacity: 0;
+    transition: opacity 0.8s;
+  }
+
+  .subtitle-text.visible {
+    opacity: 1;
+  }
+
+  .subtitle-text.dramatic {
+    color: #e8a889;
+    font-size: 1.5rem;
+  }
+
+  .subtitle-text.epic {
+    color: #e88989;
+    font-size: 1.7rem;
+    text-shadow: 0 0 30px rgba(232,137,137,0.3);
+  }
+
+  .history {
+    width: 90%;
+    max-width: 600px;
+    margin: 1rem auto 2rem;
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a3a #0a0a0f;
+  }
+
+  .history-item {
+    font-size: 0.8rem;
+    color: #445;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #15151f;
+    font-style: italic;
+  }
+
+  .history-item .timestamp {
+    color: #334;
+    font-family: monospace;
+    font-style: normal;
+    margin-right: 0.5rem;
+  }
+
+  .idle-message {
+    color: #334;
+    font-size: 0.9rem;
+    text-align: center;
+    font-style: italic;
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.2rem; }
+    .subtitle-text { font-size: 1.1rem; }
+    .subtitle-text.dramatic { font-size: 1.25rem; }
+    .subtitle-text.epic { font-size: 1.4rem; }
+    .stat-value { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Baby Translator</h1>
+  <p>A Nature Documentary Experience</p>
+</header>
+
+<div class="stats-bar">
+  <div class="stat">
+    <div class="stat-value" id="dramaMinutes">0:00</div>
+    <div class="stat-label">Minutes of Drama</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="outburstCount">0</div>
+    <div class="stat-label">Outbursts</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="dramaLevel">Calm</div>
+    <div class="stat-label">Drama Level</div>
+  </div>
+</div>
+
+<div class="visualizer-container">
+  <canvas id="visualizer"></canvas>
+  <div class="volume-indicator" id="volumeDisplay">VOL: 0</div>
+</div>
+
+<button id="startBtn">Start Listening</button>
+
+<div class="subtitle-area">
+  <div class="classification-badge" id="badge">Awaiting Specimen</div>
+  <div class="subtitle-text" id="subtitle">
+    <span class="idle-message">Press start and place near infant subject for field observations.</span>
+  </div>
+</div>
+
+<div class="history" id="history"></div>
+
+<script>
+const TEMPLATES = {
+  hungry: [
+    "And here we observe the infant, who despite receiving milk {minutes} minutes ago, has entered what scientists call 'the hunger delusion.'",
+    "The small human emits a distress call remarkably similar to one who hasn't eaten in days. It has, in fact, been {minutes} minutes.",
+    "Notice the urgency. The desperation. One would think resources were scarce. They are not. The refrigerator is fully stocked.",
+    "In the wild, this cry would summon the entire pack. In suburbia, it summons one exhausted parent with a bottle.",
+    "The infant has concluded, through rigorous analysis, that it is starving. The evidence suggests otherwise, but the infant is unmoved.",
+    "A primal hunger call echoes through the dwelling. The last feeding concluded mere moments ago, yet the creature insists famine is imminent.",
+    "Remarkable. The small mammal has no concept of 'you just ate.' It exists in a perpetual state of pre-meal anticipation.",
+    "The vocal pattern suggests extreme hunger, the kind typically associated with being stranded at sea. The nursery, however, is well-provisioned.",
+    "The infant issues a formal complaint to management regarding meal frequency. Management is currently hiding in the bathroom.",
+    "Scientists have yet to determine the bottomless nature of the infant stomach. Current evidence suggests it may violate thermodynamics.",
+    "This particular cry translates roughly to: 'I require sustenance immediately, or I shall perish.' Narrator's note: it shall not perish.",
+    "The hunger signal intensifies. Somewhere, a bottle is being warmed at what the infant considers an unconscionable pace.",
+    "Like a tiny food critic, the infant expresses displeasure not at the quality, but at the unacceptable delay between courses.",
+    "The creature has entered hour {hours} of what it believes is a hunger strike. In reality, it simply wants a third helping.",
+    "Notice how it combines the hunger cry with accusatory eye contact. A sophisticated guilt-delivery mechanism perfected over millennia.",
+  ],
+  tired: [
+    "The infant has been awake for what it considers an eternity. It has been forty-five minutes.",
+    "We witness the paradox of the exhausted infant: desperately tired, yet violently opposed to the concept of sleep.",
+    "The small human fights consciousness like a boxer in the twelfth round, refusing to go down despite every biological signal.",
+    "Sustained vocalization indicates fatigue. The irony, of course, is that the crying itself is what's keeping it awake.",
+    "The infant enters what researchers call 'the overtired doom spiral.' Each cry makes it more tired, which makes it cry more.",
+    "Observe the rubbing of the eyes, the drooping of the lids. All signs point to sleep. The infant, however, has other plans.",
+    "Like a tiny philosopher, the infant rages against the dying of the light. Specifically, it rages against naptime.",
+    "The exhausted creature emits a continuous low wail, the mammalian equivalent of a laptop running on 2% battery.",
+    "Sleep deprivation has set in. Not for the infant, mind you. The infant will sleep eventually. The parents are another matter entirely.",
+    "The sustained protest suggests the infant views sleep as a form of defeat. It will not go gentle into that good nap.",
+    "Hour {hours} of the standoff. The infant is clearly exhausted. The parent is clearly more exhausted. Biology will prevail shortly.",
+    "The tired cry has a distinctive wobble to it, like a transmission from a ship slowly sinking beneath the waves of consciousness.",
+  ],
+  bored: [
+    "The infant has surveyed its kingdom of toys, blankets, and sensory objects, and found them all... insufficient.",
+    "An intermittent cry of dissatisfaction. The creature has grown weary of its environment, despite being surrounded by more stimulation than a casino.",
+    "The small human has apparently exhausted all entertainment options in a room containing forty-seven toys. It took eleven minutes.",
+    "Notice the pattern: cry, pause, look around hopefully, cry again. The infant is essentially channel-surfing through emotions.",
+    "The sporadic nature of this vocalization suggests not distress, but rather a profound existential ennui. The infant is, simply put, bored.",
+    "The creature emits what can only be described as a sigh wrapped in a whimper. It has seen everything this playmat has to offer.",
+    "Like a tiny aristocrat, the infant demands entertainment, waves of servants, perhaps a jester. A plastic rattle is offered instead.",
+    "The intermittent complaint suggests the infant has mentally catalogued every ceiling tile and found the collection wanting.",
+    "Observe how it cries, then stops to see if anyone noticed. This is not distress. This is performance art.",
+    "The infant has entered what developmental scientists call 'the entertainment void.' Every object is boring. Every face is boring. Existence is boring.",
+    "A brief vocalization, then silence. Then another. The infant is essentially sending Morse code for 'amuse me, peasants.'",
+    "The pattern is unmistakable: three seconds of crying, seven seconds of observation. It's not upset. It's conducting a social experiment.",
+  ],
+  existential: [
+    "AND NOW THE INFANT UNLEASHES THE FULL MAGNITUDE OF ITS DISPLEASURE UPON AN UNSUSPECTING HOUSEHOLD.",
+    "What we're witnessing can only be described as the infant equivalent of a volcanic eruption. Vesuvius has nothing on this child.",
+    "The volume has reached levels previously thought achievable only by jet engines and particularly enthusiastic rock concerts.",
+    "THIS. This is the cry that echoes through the ages. The primordial scream. The infant questions the very nature of its existence.",
+    "The small human has apparently discovered the fundamental absurdity of being alive and is expressing a reasonable response.",
+    "At this volume, neighboring wildlife has been alerted. Dogs are howling in solidarity. Cats have evacuated the premises.",
+    "The infant has transcended mere hunger or fatigue. It has entered what philosophers call 'the wail of being.' Why are we here? Why is anything?",
+    "REMARKABLE. The creature has discovered that increasing volume does not, in fact, alter the fabric of reality. It persists regardless.",
+    "The scream reaches a frequency that seems to vibrate the very foundations of the house. Also of the parents' sanity.",
+    "We are now in what scientists classify as 'Category 5 meltdown.' There is no reasoning. There is no negotiation. There is only scream.",
+    "The infant has filed a formal grievance with the universe. The universe has not responded. The screaming continues.",
+    "This level of vocal commitment is typically reserved for discovering that one's sock has come off. The devastation is real.",
+    "The sheer acoustic output suggests the infant could, if properly harnessed, power a small generator. Research continues.",
+    "Extraordinary. The infant has maintained peak volume for {minutes} consecutive seconds. A personal best.",
+    "At this point, the infant is no longer crying about anything specific. It is crying about the concept of concepts.",
+  ],
+  escalation: [
+    "And so we enter minute {minutes} of what historians will surely call 'The Great Meltdown of the Living Room.'",
+    "The drama intensifies. What began as a simple complaint has evolved into a full theatrical production, complete with tears and trembling lip.",
+    "We are now {minutes} minutes into the episode. The infant shows no signs of relenting. Nor does it remember what started this.",
+    "The situation has escalated beyond all reasonable parameters. Negotiations have broken down. The pacifier has been rejected.",
+    "Minute {minutes}. The infant's commitment to this particular outburst is, frankly, admirable. Lesser beings would have tired by now.",
+    "The performance continues with renewed vigor. If there were critics present, this would surely earn a standing ovation.",
+    "At the {minutes}-minute mark, we must acknowledge: whatever this is about, the infant is deeply, profoundly committed to it.",
+    "The crying has entered its {minutes}th minute. The parents exchange glances that convey entire novels of shared exhaustion.",
+    "We have passed the point of no return. The infant cannot stop now. It has invested too much in this performance.",
+    "Like a method actor who has lost themselves in the role, the infant can no longer distinguish between the character and the self.",
+    "Minute {minutes}. At this stage, the infant is crying about the fact that it is crying. A perfect recursive loop of infant despair.",
+    "The saga continues. Future generations will speak of this evening in hushed tones.",
+    "We are witnessing what can only be called 'the Director's Cut' of this meltdown. Extended scenes. No intermission.",
+    "The {minutes}-minute mark passes. Somewhere, a Nobel committee considers a prize for endurance.",
+  ]
+};
+
+let audioCtx, analyser, source, stream;
+let listening = false;
+let dramaStartTime = null;
+let totalDramaMs = 0;
+let outbursts = 0;
+let currentOutburstStart = null;
+let lastSpikeTime = 0;
+let consecutiveSilenceFrames = 0;
+let consecutiveLoudFrames = 0;
+let currentClassification = null;
+let subtitleTimeout = null;
+let usedTemplates = new Set();
+let escalationLevel = 0;
+let lastNarrationEnd = 0;
+let spikeHistory = [];
+
+const btn = document.getElementById('startBtn');
+const subtitleEl = document.getElementById('subtitle');
+const badgeEl = document.getElementById('badge');
+const dramaEl = document.getElementById('dramaMinutes');
+const outburstEl = document.getElementById('outburstCount');
+const dramaLevelEl = document.getElementById('dramaLevel');
+const volumeEl = document.getElementById('volumeDisplay');
+const historyEl = document.getElementById('history');
+const canvas = document.getElementById('visualizer');
+const canvasCtx = canvas.getContext('2d');
+
+const VOLUME_THRESHOLD = 35;
+const LOUD_THRESHOLD = 70;
+const SPIKE_COOLDOWN = 6000;
+const SILENCE_FRAMES_TO_RESET = 90;
+
+btn.addEventListener('click', toggleListening);
+
+function toggleListening() {
+  if (listening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+async function startListening() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.8;
+    source = audioCtx.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    listening = true;
+    btn.textContent = 'Stop Listening';
+    btn.classList.add('listening');
+    subtitleEl.innerHTML = '<span class="idle-message">Monitoring for infant vocalizations...</span>';
+
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+
+    processAudio();
+  } catch (e) {
+    alert('Microphone access is required for field research. ' + e.message);
+  }
+}
+
+function stopListening() {
+  listening = false;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  btn.textContent = 'Start Listening';
+  btn.classList.remove('listening');
+  subtitleEl.innerHTML = '<span class="idle-message">Field study paused. Press start to resume observations.</span>';
+  subtitleEl.className = 'subtitle-text';
+  badgeEl.classList.remove('visible');
+  if (currentOutburstStart) {
+    totalDramaMs += Date.now() - currentOutburstStart;
+    currentOutburstStart = null;
+  }
+}
+
+function processAudio() {
+  if (!listening) return;
+  requestAnimationFrame(processAudio);
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+  analyser.getByteFrequencyData(dataArray);
+
+  const timeData = new Uint8Array(bufferLength);
+  analyser.getByteTimeDomainData(timeData);
+
+  // Calculate volume (RMS)
+  let sum = 0;
+  for (let i = 0; i < timeData.length; i++) {
+    const v = (timeData[i] - 128) / 128;
+    sum += v * v;
+  }
+  const rms = Math.sqrt(sum / timeData.length);
+  const volume = Math.round(rms * 200);
+
+  // Estimate pitch from frequency data
+  let maxIndex = 0, maxVal = 0;
+  for (let i = 5; i < bufferLength / 2; i++) {
+    if (dataArray[i] > maxVal) {
+      maxVal = dataArray[i];
+      maxIndex = i;
+    }
+  }
+  const pitch = maxIndex * audioCtx.sampleRate / analyser.fftSize;
+
+  volumeEl.textContent = `VOL: ${volume}`;
+  drawVisualizer(dataArray, volume);
+  updateDramaTimer();
+
+  const now = Date.now();
+
+  if (volume > VOLUME_THRESHOLD) {
+    consecutiveLoudFrames++;
+    consecutiveSilenceFrames = 0;
+
+    spikeHistory.push({ time: now, volume, pitch });
+    // Keep only last 10 seconds
+    spikeHistory = spikeHistory.filter(s => now - s.time < 10000);
+
+    if (!currentOutburstStart) {
+      currentOutburstStart = now;
+      outbursts++;
+      outburstEl.textContent = outbursts;
+    }
+
+    if (now - lastNarrationEnd > SPIKE_COOLDOWN && consecutiveLoudFrames > 10) {
+      triggerSubtitle(volume, pitch, now);
+    }
+  } else {
+    consecutiveSilenceFrames++;
+    consecutiveLoudFrames = 0;
+
+    if (consecutiveSilenceFrames > SILENCE_FRAMES_TO_RESET && currentOutburstStart) {
+      totalDramaMs += now - currentOutburstStart;
+      currentOutburstStart = null;
+      escalationLevel = 0;
+      spikeHistory = [];
+      dramaLevelEl.textContent = 'Calm';
+    }
+  }
+}
+
+function triggerSubtitle(volume, pitch, now) {
+  lastNarrationEnd = now;
+  const outburstDuration = currentOutburstStart ? (now - currentOutburstStart) / 1000 : 0;
+
+  let category;
+  if (volume > LOUD_THRESHOLD) {
+    category = 'existential';
+  } else if (outburstDuration > 20) {
+    category = 'escalation';
+    escalationLevel++;
+  } else {
+    // Classify by spike pattern
+    const recentSpikes = spikeHistory.filter(s => now - s.time < 5000);
+    const gaps = [];
+    for (let i = 1; i < recentSpikes.length; i++) {
+      gaps.push(recentSpikes[i].time - recentSpikes[i - 1].time);
+    }
+    const avgGap = gaps.length > 0 ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+    const avgPitch = recentSpikes.length > 0 ? recentSpikes.reduce((a, s) => a + s.pitch, 0) / recentSpikes.length : pitch;
+
+    if (avgPitch > 800 || consecutiveLoudFrames < 30) {
+      category = 'hungry';
+    } else if (consecutiveLoudFrames > 60) {
+      category = 'tired';
+    } else {
+      category = 'bored';
+    }
+  }
+
+  const minutes = Math.round(outburstDuration / 60 * 10) / 10 || Math.floor(Math.random() * 45 + 5);
+  const hours = Math.floor(Math.random() * 3 + 1);
+
+  showSubtitle(category, minutes, hours);
+}
+
+function showSubtitle(category, minutes, hours) {
+  const templates = TEMPLATES[category];
+  // Pick one we haven't used recently
+  let available = templates.filter((_, i) => !usedTemplates.has(category + i));
+  if (available.length === 0) {
+    usedTemplates.forEach(k => { if (k.startsWith(category)) usedTemplates.delete(k); });
+    available = templates;
+  }
+  const idx = Math.floor(Math.random() * available.length);
+  const templateIdx = templates.indexOf(available[idx]);
+  usedTemplates.add(category + templateIdx);
+
+  let text = available[idx]
+    .replace(/\{minutes\}/g, String(Math.round(minutes) || Math.floor(Math.random() * 47 + 3)))
+    .replace(/\{hours\}/g, String(hours));
+
+  // Set badge
+  const badgeLabels = {
+    hungry: 'Hunger Classification',
+    tired: 'Fatigue Analysis',
+    bored: 'Ennui Detection',
+    existential: 'Existential Crisis',
+    escalation: 'Escalation Protocol'
+  };
+
+  badgeEl.textContent = badgeLabels[category] || category;
+  badgeEl.classList.add('visible');
+
+  // Drama level
+  const dramaLabels = {
+    hungry: 'Peckish',
+    tired: 'Fading',
+    bored: 'Restless',
+    existential: 'DEFCON 1',
+    escalation: 'Ascending'
+  };
+  dramaLevelEl.textContent = dramaLabels[category];
+
+  // Style based on escalation
+  subtitleEl.className = 'subtitle-text visible';
+  if (category === 'existential') {
+    subtitleEl.classList.add('epic');
+  } else if (category === 'escalation' || escalationLevel > 2) {
+    subtitleEl.classList.add('dramatic');
+  }
+
+  subtitleEl.textContent = `"${text}"`;
+
+  // Add to history
+  const histItem = document.createElement('div');
+  histItem.className = 'history-item';
+  const ts = new Date().toLocaleTimeString();
+  histItem.innerHTML = `<span class="timestamp">${ts}</span>${text.substring(0, 80)}...`;
+  historyEl.prepend(histItem);
+  if (historyEl.children.length > 20) historyEl.removeChild(historyEl.lastChild);
+
+  // Speak it
+  speakNarration(text);
+
+  // Set cooldown based on text length
+  const readTime = Math.max(text.length * 60, 8000);
+  clearTimeout(subtitleTimeout);
+  subtitleTimeout = setTimeout(() => {
+    lastNarrationEnd = Date.now();
+  }, readTime);
+}
+
+function speakNarration(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.85;
+  utterance.pitch = 0.9;
+  utterance.volume = 0.8;
+
+  // Try to find a British English voice
+  const voices = window.speechSynthesis.getVoices();
+  const british = voices.find(v => v.lang === 'en-GB' && v.name.includes('Male'))
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'));
+  if (british) utterance.voice = british;
+
+  utterance.onend = () => {
+    lastNarrationEnd = Date.now();
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Preload voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+  speechSynthesis.getVoices();
+}
+
+function updateDramaTimer() {
+  let total = totalDramaMs;
+  if (currentOutburstStart) total += Date.now() - currentOutburstStart;
+  const secs = Math.floor(total / 1000);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  dramaEl.textContent = `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function drawVisualizer(dataArray, volume) {
+  const w = canvas.width;
+  const h = canvas.height;
+  canvasCtx.clearRect(0, 0, w, h);
+
+  const barCount = 64;
+  const barWidth = w / barCount;
+  const step = Math.floor(dataArray.length / barCount);
+
+  for (let i = 0; i < barCount; i++) {
+    const val = dataArray[i * step] / 255;
+    const barH = val * h * 0.9;
+
+    const hue = 200 + val * 20;
+    const lightness = 20 + val * 30;
+    const alpha = 0.3 + val * 0.7;
+
+    if (volume > LOUD_THRESHOLD) {
+      canvasCtx.fillStyle = `hsla(0, 60%, ${lightness + 10}%, ${alpha})`;
+    } else if (volume > VOLUME_THRESHOLD) {
+      canvasCtx.fillStyle = `hsla(${hue}, 50%, ${lightness}%, ${alpha})`;
+    } else {
+      canvasCtx.fillStyle = `hsla(${hue}, 30%, ${lightness - 5}%, ${alpha * 0.6})`;
+    }
+
+    const x = i * barWidth;
+    const radius = Math.min(barWidth / 2 - 1, 3);
+    const y = h - barH;
+
+    canvasCtx.beginPath();
+    canvasCtx.roundRect(x + 1, y, barWidth - 2, barH, [radius, radius, 0, 0]);
+    canvasCtx.fill();
+  }
+}
+</script>
+</body>
+</html>

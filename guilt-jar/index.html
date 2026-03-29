@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Guilt Jar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0a;--card:#141414;--border:#1e1e1e;--green:#00ff88;--green-dim:#00cc6a;--green-dark:#004d28;--red:#ff4444;--text:#e0e0e0;--muted:#666;--accent:#00ff88}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 100px 0}
+.container{max-width:480px;margin:0 auto;padding:16px}
+h1{text-align:center;font-size:2rem;margin:20px 0 4px;color:var(--green);text-shadow:0 0 20px rgba(0,255,136,.3)}
+.subtitle{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px}
+.card h2{font-size:1rem;color:var(--green-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.input-row{display:flex;gap:8px;margin-bottom:8px}
+.input-row input{flex:1;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:1rem;outline:none;transition:border-color .2s}
+.input-row input:focus{border-color:var(--green)}
+#amount{width:100px;flex:none}
+#drop-btn{width:100%;padding:12px;background:var(--green-dark);border:2px solid var(--green);border-radius:8px;color:var(--green);font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.5px}
+#drop-btn:hover{background:var(--green);color:#000}
+#drop-btn:active{transform:scale(.97)}
+#drop-btn.dropping{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+.roast-box{background:#1a0a0a;border:1px solid #331111;border-radius:8px;padding:14px;min-height:60px;display:flex;align-items:center;justify-content:center;text-align:center;color:#ff6b6b;font-style:italic;font-size:.95rem;line-height:1.4;transition:opacity .3s}
+.roast-box.fresh{animation:roastIn .5s ease}
+@keyframes roastIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.shame-total{text-align:center;padding:20px}
+.shame-total .amount{font-size:2.5rem;font-weight:800;color:var(--red);text-shadow:0 0 15px rgba(255,68,68,.3)}
+.shame-total .label{color:var(--muted);font-size:.8rem;margin-top:4px}
+.thermometer{position:relative;height:24px;background:#1a1a1a;border-radius:12px;overflow:hidden;margin-top:8px}
+.thermo-fill{height:100%;background:linear-gradient(90deg,var(--green-dark),var(--green));border-radius:12px;transition:width .6s ease;min-width:2px}
+.thermo-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:.75rem;color:var(--muted)}
+.thermo-mock{text-align:center;margin-top:8px;font-size:.85rem;color:var(--red);font-style:italic;min-height:20px}
+.goal-input-row{display:flex;gap:8px;margin-bottom:10px}
+.goal-input-row input{flex:1;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:.9rem;outline:none}
+.goal-input-row input:focus{border-color:var(--green)}
+.goal-input-row button{background:var(--green-dark);border:1px solid var(--green);color:var(--green);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.85rem;white-space:nowrap}
+.chart-container{position:relative;height:140px;margin-top:8px}
+canvas{width:100%!important;height:100%!important}
+.leaderboard-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+.leaderboard-item:last-child{border-bottom:none}
+.lb-rank{color:var(--green);font-weight:700;width:24px}
+.lb-desc{flex:1;margin:0 10px;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-amount{color:var(--red);font-weight:700;font-size:.95rem}
+.empty-state{text-align:center;color:var(--muted);font-size:.85rem;padding:16px}
+.controls-row{display:flex;gap:8px;margin-top:8px}
+.controls-row button{flex:1;padding:8px;background:#1a1a1a;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.8rem;cursor:pointer;transition:all .2s}
+.controls-row button:hover{border-color:var(--green);color:var(--green)}
+.tab-row{display:flex;gap:4px;margin-bottom:12px}
+.tab-row button{flex:1;padding:8px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.8rem;cursor:pointer;transition:all .2s}
+.tab-row button.active{border-color:var(--green);color:var(--green);background:var(--green-dark)}
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.history-item:last-child{border-bottom:none}
+.hi-left{display:flex;flex-direction:column;gap:2px;flex:1;overflow:hidden}
+.hi-cat{font-size:.7rem;color:var(--green-dim);text-transform:uppercase;letter-spacing:1px}
+.hi-desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi-right{text-align:right;flex-shrink:0;margin-left:10px}
+.hi-amount{color:var(--red);font-weight:700}
+.hi-date{font-size:.7rem;color:var(--muted)}
+.hi-delete{background:none;border:none;color:#442;cursor:pointer;font-size:1rem;padding:2px 6px;margin-left:4px}
+.hi-delete:hover{color:var(--red)}
+#history-list{max-height:300px;overflow-y:auto}
+.mute-btn{position:fixed;bottom:16px;right:16px;background:var(--card);border:1px solid var(--border);border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.2rem;z-index:10;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>The Guilt Jar</h1>
+  <p class="subtitle">Every dollar judged. No mercy.</p>
+
+  <div class="card">
+    <h2>Log a Purchase</h2>
+    <div class="input-row">
+      <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
+      <input type="text" id="description" placeholder="What did you buy?" autocomplete="off">
+    </div>
+    <button id="drop-btn">Drop in Jar</button>
+  </div>
+
+  <div class="card">
+    <div class="roast-box" id="roast-box">Drop a purchase to get roasted...</div>
+    <div class="controls-row">
+      <button id="speak-btn">Speak Roast</button>
+      <button id="new-roast-btn">New Roast</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Shame Total</h2>
+    <div class="shame-total">
+      <div class="amount" id="shame-total">--</div>
+      <div class="label">wasted this week</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Savings Goal</h2>
+    <div class="goal-input-row">
+      <input type="number" id="goal-input" placeholder="Goal amount" step="1" min="1" inputmode="numeric">
+      <button id="set-goal-btn">Set</button>
+    </div>
+    <div class="thermometer"><div class="thermo-fill" id="thermo-fill" style="width:0%"></div></div>
+    <div class="thermo-labels"><span id="thermo-spent">--</span><span id="thermo-goal">--</span></div>
+    <div class="thermo-mock" id="thermo-mock"></div>
+  </div>
+
+  <div class="card">
+    <h2>Weekly Chart</h2>
+    <div class="chart-container"><canvas id="chart"></canvas></div>
+  </div>
+
+  <div class="card">
+    <h2>Worst Purchases</h2>
+    <div id="leaderboard"><div class="empty-state">No purchases yet. Lucky you.</div></div>
+  </div>
+
+  <div class="card">
+    <h2>History</h2>
+    <div class="tab-row">
+      <button class="active" data-filter="all">All</button>
+      <button data-filter="food">Food</button>
+      <button data-filter="tech">Tech</button>
+      <button data-filter="clothes">Clothes</button>
+      <button data-filter="subscriptions">Subs</button>
+      <button data-filter="random">Random</button>
+    </div>
+    <div id="history-list"><div class="empty-state">Nothing here yet...</div></div>
+    <div class="controls-row" style="margin-top:12px">
+      <button id="export-btn">Export CSV</button>
+      <button id="clear-btn" style="color:var(--red)">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<button class="mute-btn" id="mute-btn" title="Toggle sound">&#x1f50a;</button>
+
+<script>
+// ============ STATE ============
+const STORAGE_KEY = 'guilt_jar_data';
+const GOAL_KEY = 'guilt_jar_goal';
+let purchases = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let savingsGoal = parseFloat(localStorage.getItem(GOAL_KEY) || '0');
+let muted = localStorage.getItem('guilt_jar_muted') === 'true';
+let lastRoast = '';
+let lastPurchase = null;
+
+function fmt(n){ return n.toFixed(2); }
+
+// ============ AUDIO ============
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function ensureAudio(){if(!audioCtx) audioCtx = new AudioCtx();}
+
+function playClink(){
+  if(muted) return;
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  const o1 = audioCtx.createOscillator();
+  const g1 = audioCtx.createGain();
+  o1.type = 'sine'; o1.frequency.setValueAtTime(2400, now);
+  o1.frequency.exponentialRampToValueAtTime(1200, now+0.08);
+  g1.gain.setValueAtTime(0.3, now);
+  g1.gain.exponentialRampToValueAtTime(0.001, now+0.15);
+  o1.connect(g1); g1.connect(audioCtx.destination);
+  o1.start(now); o1.stop(now+0.15);
+  const o2 = audioCtx.createOscillator();
+  const g2 = audioCtx.createGain();
+  o2.type = 'sine'; o2.frequency.setValueAtTime(3800, now+0.02);
+  g2.gain.setValueAtTime(0.15, now+0.02);
+  g2.gain.exponentialRampToValueAtTime(0.001, now+0.3);
+  o2.connect(g2); g2.connect(audioCtx.destination);
+  o2.start(now+0.02); o2.stop(now+0.3);
+  const o3 = audioCtx.createOscillator();
+  const g3 = audioCtx.createGain();
+  o3.type = 'sine'; o3.frequency.setValueAtTime(1800, now+0.12);
+  g3.gain.setValueAtTime(0.1, now+0.12);
+  g3.gain.exponentialRampToValueAtTime(0.001, now+0.25);
+  o3.connect(g3); g3.connect(audioCtx.destination);
+  o3.start(now+0.12); o3.stop(now+0.25);
+}
+
+// ============ CATEGORIES ============
+const CAT_RULES = [
+  {cat:'food', words:['food','eat','restaurant','uber eats','doordash','grubhub','pizza','burger','sushi','coffee','starbucks','lunch','dinner','breakfast','snack','takeout','delivery','chipotle','mcdonalds','taco','boba','smoothie','bagel','sandwich','ramen','thai','chinese','indian','brunch','dessert','cake','ice cream','fries','wings']},
+  {cat:'tech', words:['phone','laptop','computer','gadget','apple','samsung','airpods','cable','charger','monitor','keyboard','mouse','tablet','ipad','iphone','macbook','gpu','headphones','earbuds','speaker','camera','drone','smartwatch','console','playstation','xbox','nintendo','switch','steam','game','gaming','software','app']},
+  {cat:'clothes', words:['shirt','pants','shoes','dress','jacket','hoodie','sneakers','nike','adidas','zara','h&m','clothes','clothing','outfit','hat','cap','sunglasses','watch','jewelry','ring','necklace','bag','purse','backpack','boots','sandals','socks','underwear','leggings','sweater','coat']},
+  {cat:'subscriptions', words:['netflix','spotify','hulu','disney','hbo','youtube premium','subscription','membership','patreon','gym','amazon prime','apple music','audible','crunchyroll','paramount','peacock','twitch','substack','medium']},
+  {cat:'amazon', words:['amazon','prime']},
+  {cat:'rideshare', words:['uber','lyft','taxi','cab','ride']},
+  {cat:'entertainment', words:['movie','concert','ticket','bar','club','drink','beer','wine','cocktail','alcohol']},
+];
+
+function detectCategory(desc){
+  const d = desc.toLowerCase();
+  for(const r of CAT_RULES){
+    if(r.words.some(w => d.includes(w))) return r.cat;
+  }
+  return 'random';
+}
+
+// ============ ROAST TEMPLATES (60+) ============
+const ROASTS = {
+  food: [
+    (a,d)=>'That is '+a+' for '+d+' that will arrive cold. Your kitchen is RIGHT THERE.',
+    (a,d)=>a+' on '+d+'. You know cooking exists, right? People do it for free.',
+    (a,d)=>a+' because walking to your own fridge was too much effort. Got it.',
+    (a,d)=>'Spent '+a+' on '+d+'. The delivery driver is building a retirement fund off you.',
+    (a,d)=>a+' for something you will forget about in 2 hours. Your toilet will remember though.',
+    (a,d)=>a+' on '+d+'? Rice and beans cost like fifty cents and have zero judgment.',
+    (a,d)=>'At '+a+' a pop for '+d+', you are basically paying someone rent with your stomach.',
+    (a,d)=>a+'. You could have made this at home and had leftovers. But no, you chose laziness.',
+    (a,d)=>'Another '+a+' on food delivery. Your DoorDash driver knows your address by heart.',
+    (a,d)=>a+' for '+d+'. That is a week of groceries for a normal person.',
+    (a,d)=>a+' to eat '+d+' in bed? At least put on pants and go get it yourself.',
+    (a,d)=>a+' on '+d+'. Your microwave is collecting dust and resentment.',
+  ],
+  tech: [
+    (a,d)=>a+' on '+d+'? The gadget you bought 3 months ago is crying in a drawer right now.',
+    (a,d)=>a+' for '+d+'. It will be obsolete in 6 months and you know it.',
+    (a,d)=>'You spent '+a+' on '+d+' like you are some kind of tech reviewer. You are not.',
+    (a,d)=>a+' on '+d+'. That is a lot for something you will use twice then forget about.',
+    (a,d)=>'Another '+a+' on tech. Your old one worked FINE. You just wanted the dopamine hit.',
+    (a,d)=>a+' for '+d+'? You are not a content creator. You are a content consumer with a card.',
+    (a,d)=>a+' on '+d+'. Bold purchase for someone who uses 5 percent of their current device.',
+    (a,d)=>a+' on new tech while your current stuff sits there like am I a joke to you.',
+    (a,d)=>a+' for '+d+'. Congrats, you just funded some CEO yacht payment.',
+    (a,d)=>a+'? Your '+d+' will be in a landfill before you finish paying it off.',
+  ],
+  clothes: [
+    (a,d)=>a+' on '+d+'? You wear the same 3 outfits every week. Who are you fooling?',
+    (a,d)=>a+' for '+d+'. You have a closet full of clothes you do not wear. This will join them.',
+    (a,d)=>'Spent '+a+' on '+d+'. You are not going anywhere fancy. Be honest with yourself.',
+    (a,d)=>a+' on '+d+'? Your laundry pile is judging you harder than I am right now.',
+    (a,d)=>a+' for clothes. Fast fashion, fast regret. Guaranteed to be donated in 8 months.',
+    (a,d)=>a+' on '+d+'. Nobody notices your outfits as much as you think they do. Sorry.',
+    (a,d)=>a+'? That '+d+' will look great crumpled on your floor chair.',
+    (a,d)=>a+' on '+d+'. You just bought a slightly different shade of something you already own.',
+  ],
+  subscriptions: [
+    (a,d)=>a+' per month for '+d+'? You have 47 tabs open and none of them are that app.',
+    (a,d)=>a+' on '+d+'. Another subscription you will forget to cancel. They are counting on it.',
+    (a,d)=>a+' for '+d+'. That is the I am too lazy to cancel tax and they love you for it.',
+    (a,d)=>a+' on '+d+'? You last opened that app during COVID. Let it go.',
+    (a,d)=>a+' per month for '+d+'. At this rate, your subscriptions cost more than your groceries.',
+    (a,d)=>a+' for '+d+'. You are basically paying rent to a company that does not know your name.',
+    (a,d)=>a+' on yet another subscription. Death by a thousand recurring charges.',
+    (a,d)=>'You have so many subscriptions, your statement reads like a SaaS portfolio. Plus '+a+' for '+d+'.',
+  ],
+  amazon: [
+    (a,d)=>a+' on Amazon? Another package? Your mailman knows you better than your therapist.',
+    (a,d)=>a+' on Amazon. Jeff just felt a tiny spark of joy. From YOUR wallet.',
+    (a,d)=>a+' to Amazon. That box will arrive tomorrow and the regret will arrive tonight.',
+    (a,d)=>a+' on Amazon. You browsed for 45 minutes just looking and here we are.',
+    (a,d)=>a+'? Your porch has more Amazon boxes than a fulfillment center.',
+    (a,d)=>a+' on Amazon. The Add to Cart button is basically your therapist replacement.',
+    (a,d)=>'Another '+a+' to Amazon. They should name a warehouse after you at this point.',
+    (a,d)=>a+' on Amazon. You bought something you did not know existed 5 minutes ago. Classic.',
+  ],
+  rideshare: [
+    (a,d)=>a+' on a ride? Your legs work. Walking is free. Fresh air is a bonus.',
+    (a,d)=>a+' for '+d+'? You just paid someone to sit in traffic for you. Luxury.',
+    (a,d)=>a+' on an Uber. That surge pricing hit different when you check your balance later.',
+    (a,d)=>a+' for a ride. Public transit exists and it builds character. Lots of character.',
+    (a,d)=>a+'? A bike is a one-time purchase. This ride costs that EVERY TIME.',
+  ],
+  entertainment: [
+    (a,d)=>a+' on '+d+'? The free version of fun is called going for a walk. Revolutionary.',
+    (a,d)=>a+' for entertainment. Your phone has infinite free entertainment. It is in your hand.',
+    (a,d)=>a+' on '+d+'. Memories are priceless. This was not.',
+    (a,d)=>'Dropped '+a+' on '+d+'. Hope the hangover is worth a day of productivity.',
+    (a,d)=>a+' on going out. Netflix was right there. Judging you. From the couch.',
+    (a,d)=>a+' on '+d+'? Water is free at most establishments. Just saying.',
+  ],
+  random: [
+    (a,d)=>a+' on '+d+'? I cannot even categorize this. That is how random your spending is.',
+    (a,d)=>a+' on '+d+'. Was this a need or a my brain turned off moment?',
+    (a,d)=>'You spent '+a+' on '+d+'. Even your wallet is confused right now.',
+    (a,d)=>a+' gone. Poof. For '+d+'. Future you is going to have QUESTIONS.',
+    (a,d)=>a+' on '+d+'. I am not mad, I am disappointed. Actually, I am both.',
+    (a,d)=>a+' on '+d+'. Somewhere a financial advisor just felt a disturbance in the force.',
+    (a,d)=>a+' on '+d+'? In this economy? Bold. Reckless. But mostly just sad.',
+    (a,d)=>a+' spent on '+d+'. Your savings called. It filed for emotional neglect.',
+    (a,d)=>a+' on '+d+'. That is real hours of work at minimum wage. Feel that yet?',
+    (a,d)=>a+'. '+d+'. Two things that did not need to meet today, yet here we are.',
+    (a,d)=>a+' on '+d+'. Your ancestors survived actual hardship for THIS.',
+    (a,d)=>a+' on '+d+'. Congrats on the financially unhinged achievement unlocked.',
+  ],
+};
+
+const AMOUNT_ROASTS_SMALL = [
+  (a,d)=>'Only '+a+'? That is not even worth judging. But I am doing it anyway.',
+  (a,d)=>a+'. Small purchases add up. That is how they GET you.',
+  (a,d)=>a+'? Death by a thousand paper cuts. This is cut number '+(purchases.length+1)+'.',
+];
+const AMOUNT_ROASTS_MED = [
+  (a,d)=>a+'. Not devastating, but multiply this by every day and you have got a car payment.',
+  (a,d)=>a+'. The it is only a few bucks mentality is EXACTLY how people go broke.',
+];
+const AMOUNT_ROASTS_HIGH = [
+  (a,d)=>a+'?! That is a tank of gas. A nice dinner at home. But sure, '+d+'.',
+  (a,d)=>a+'. Now we are getting into maybe I should think about this territory. You did not.',
+];
+const AMOUNT_ROASTS_HUGE = [
+  (a,d)=>a+'. FIFTY PLUS. On '+d+'. I need to sit down.',
+  (a,d)=>a+'?! At this rate you will be featured in a documentary about financial ruin.',
+  (a,d)=>a+' gone in a flash. That is someone weekly grocery budget. On '+d+'. Wow.',
+];
+const AMOUNT_ROASTS_MEGA = [
+  (a,d)=>a+'?!? That is RENT MONEY territory. On '+d+'. I am speechless. Almost.',
+  (a,d)=>a+'. Three digits. On '+d+'. Your ancestors survived famines for THIS?',
+  (a,d)=>a+'?! If your wallet could cry, it would be sobbing right now.',
+  (a,d)=>a+' on '+d+'. Congrats, you just unlocked the financially unhinged achievement.',
+  (a,d)=>a+'. That is not a purchase, that is a lifestyle choice. A bad one.',
+];
+
+function getAmountRoasts(amount){
+  if(amount < 5) return AMOUNT_ROASTS_SMALL;
+  if(amount < 20) return AMOUNT_ROASTS_MED;
+  if(amount < 50) return AMOUNT_ROASTS_HIGH;
+  if(amount < 100) return AMOUNT_ROASTS_HUGE;
+  return AMOUNT_ROASTS_MEGA;
+}
+
+function generateRoast(amount, desc){
+  const cat = detectCategory(desc);
+  const aStr = fmt(amount);
+  const pool = [...(ROASTS[cat]||ROASTS.random), ...ROASTS.random, ...getAmountRoasts(amount)];
+  let roast;
+  let attempts = 0;
+  do {
+    roast = pool[Math.floor(Math.random()*pool.length)](aStr, desc);
+    attempts++;
+  } while(roast === lastRoast && attempts < 5);
+  lastRoast = roast;
+  return roast;
+}
+
+// ============ THERMOMETER MOCKS ============
+const THERMO_MOCKS = [
+  (pct)=> pct === 0 ? 'Set a savings goal... if you dare.' : '',
+  (pct)=> pct > 0 && pct < 10 ? 'Wow, you have barely started. Shocking.' : '',
+  (pct)=> pct >= 10 && pct < 25 ? 'A whole ' + pct + ' percent. Your piggy bank is laughing.' : '',
+  (pct)=> pct >= 25 && pct < 50 ? pct + ' percent there. At this rate, see you in 2047.' : '',
+  (pct)=> pct >= 50 && pct < 75 ? 'Halfway? Do not celebrate. You will just spend the celebration money.' : '',
+  (pct)=> pct >= 75 && pct < 100 ? pct + ' percent and you have not given up? Suspicious.' : '',
+  (pct)=> pct >= 100 ? 'You hit your goal! ...by spending way more than it. Congrats?' : '',
+];
+
+function getThermoMock(pct){
+  const applicable = THERMO_MOCKS.map(f=>f(pct)).filter(Boolean);
+  return applicable.length ? applicable[Math.floor(Math.random()*applicable.length)] : '';
+}
+
+// ============ PERSISTENCE ============
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(purchases));
+  localStorage.setItem(GOAL_KEY, savingsGoal.toString());
+  localStorage.setItem('guilt_jar_muted', muted.toString());
+}
+
+// ============ WEEK HELPERS ============
+function getWeekStart(date){
+  const d = new Date(date);
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function isThisWeek(ts){
+  const now = new Date();
+  const weekStart = getWeekStart(now);
+  return new Date(ts) >= weekStart;
+}
+function getDayName(dayIdx){return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dayIdx];}
+
+// ============ RENDER ============
+function render(){
+  const weekTotal = purchases.filter(p=>isThisWeek(p.ts)).reduce((s,p)=>s+p.amount,0);
+  document.getElementById('shame-total').textContent = fmt(weekTotal);
+
+  const totalSpent = purchases.reduce((s,p)=>s+p.amount,0);
+  const goalEl = document.getElementById('goal-input');
+  if(savingsGoal > 0){
+    const pct = Math.min(100, (totalSpent / savingsGoal) * 100);
+    document.getElementById('thermo-fill').style.width = pct + '%';
+    document.getElementById('thermo-spent').textContent = Math.round(totalSpent);
+    document.getElementById('thermo-goal').textContent = Math.round(savingsGoal);
+    document.getElementById('thermo-mock').textContent = getThermoMock(Math.round(pct));
+    goalEl.value = savingsGoal;
+  } else {
+    document.getElementById('thermo-fill').style.width = '0%';
+    document.getElementById('thermo-spent').textContent = '0';
+    document.getElementById('thermo-goal').textContent = 'No goal';
+    document.getElementById('thermo-mock').textContent = 'Set a goal to unlock thermometer mockery.';
+  }
+
+  const sorted = [...purchases].sort((a,b)=>b.amount - a.amount);
+  const top5 = sorted.slice(0,5);
+  const lb = document.getElementById('leaderboard');
+  if(top5.length === 0){
+    lb.innerHTML = '<div class="empty-state">No purchases yet. Lucky you.</div>';
+  } else {
+    lb.innerHTML = top5.map((p,i)=>
+      '<div class="leaderboard-item">'+
+        '<span class="lb-rank">#'+(i+1)+'</span>'+
+        '<span class="lb-desc">'+escHtml(p.desc)+'</span>'+
+        '<span class="lb-amount">'+fmt(p.amount)+'</span>'+
+      '</div>'
+    ).join('');
+  }
+
+  drawChart();
+  renderHistory();
+}
+
+function renderHistory(filter){
+  if(!filter) filter = 'all';
+  const list = document.getElementById('history-list');
+  let items = [...purchases].reverse();
+  if(filter !== 'all') items = items.filter(p=>detectCategory(p.desc)===filter);
+  if(items.length === 0){
+    list.innerHTML = '<div class="empty-state">Nothing here yet...</div>';
+    return;
+  }
+  list.innerHTML = items.map(p=>{
+    const d = new Date(p.ts);
+    const dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return '<div class="history-item">'+
+      '<div class="hi-left">'+
+        '<span class="hi-cat">'+detectCategory(p.desc)+'</span>'+
+        '<span class="hi-desc">'+escHtml(p.desc)+'</span>'+
+      '</div>'+
+      '<div class="hi-right">'+
+        '<span class="hi-amount">'+fmt(p.amount)+'</span>'+
+        '<div class="hi-date">'+dateStr+'</div>'+
+      '</div>'+
+      '<button class="hi-delete" onclick="deletePurchase('+p.ts+')" title="Delete">&times;</button>'+
+    '</div>';
+  }).join('');
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ============ CHART ============
+function drawChart(){
+  const canvas = document.getElementById('chart');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  ctx.clearRect(0,0,W,H);
+
+  const weekStart = getWeekStart(new Date());
+  const dailyTotals = [0,0,0,0,0,0,0];
+  purchases.forEach(p=>{
+    const d = new Date(p.ts);
+    if(d >= weekStart){
+      dailyTotals[d.getDay()] += p.amount;
+    }
+  });
+
+  const maxVal = Math.max(...dailyTotals, 10);
+  const barW = (W - 40) / 7;
+  const padL = 20, padB = 24, padT = 10;
+  const chartH = H - padB - padT;
+
+  ctx.strokeStyle = '#1e1e1e';
+  ctx.lineWidth = 1;
+  for(let i = 0; i <= 4; i++){
+    const y = padT + (chartH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  const today = new Date().getDay();
+  dailyTotals.forEach((val, i)=>{
+    const x = padL + i * barW + barW * 0.15;
+    const w = barW * 0.7;
+    const h = (val / maxVal) * chartH;
+    const y = padT + chartH - h;
+
+    const grad = ctx.createLinearGradient(x, y, x, padT + chartH);
+    if(i === today){
+      grad.addColorStop(0, '#00ff88');
+      grad.addColorStop(1, '#004d28');
+    } else {
+      grad.addColorStop(0, '#00cc6a');
+      grad.addColorStop(1, '#003318');
+    }
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    const r = 3;
+    ctx.moveTo(x+r, y);
+    ctx.lineTo(x+w-r, y);
+    ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+    ctx.lineTo(x+w, padT+chartH);
+    ctx.lineTo(x, padT+chartH);
+    ctx.lineTo(x, y+r);
+    ctx.quadraticCurveTo(x, y, x+r, y);
+    ctx.fill();
+
+    if(val > 0){
+      ctx.fillStyle = '#e0e0e0';
+      ctx.font = '10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.fillText(Math.round(val), x + w/2, y - 4);
+    }
+
+    ctx.fillStyle = i === today ? '#00ff88' : '#666';
+    ctx.font = '11px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(getDayName(i), x + w/2, H - 4);
+  });
+}
+
+// ============ SPEECH ============
+function speakRoast(text){
+  if(muted) return;
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.95;
+  u.pitch = 0.9;
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v=>v.name.includes('Daniel') || v.name.includes('Google UK English Male') || v.name.includes('Alex'));
+  if(preferred) u.voice = preferred;
+  speechSynthesis.speak(u);
+}
+
+// ============ ACTIONS ============
+function addPurchase(){
+  const amountEl = document.getElementById('amount');
+  const descEl = document.getElementById('description');
+  const amount = parseFloat(amountEl.value);
+  const desc = descEl.value.trim();
+  if(!amount || amount <= 0){amountEl.focus(); return;}
+  if(!desc){descEl.focus(); return;}
+
+  const purchase = {amount:amount, desc:desc, ts: Date.now()};
+  purchases.push(purchase);
+  lastPurchase = purchase;
+  save();
+
+  const roast = generateRoast(amount, desc);
+  const box = document.getElementById('roast-box');
+  box.textContent = roast;
+  box.classList.remove('fresh');
+  void box.offsetWidth;
+  box.classList.add('fresh');
+
+  playClink();
+  setTimeout(function(){speakRoast(roast);}, 400);
+
+  const btn = document.getElementById('drop-btn');
+  btn.classList.add('dropping');
+  setTimeout(function(){btn.classList.remove('dropping');}, 400);
+
+  amountEl.value = '';
+  descEl.value = '';
+  amountEl.focus();
+
+  render();
+}
+
+function deletePurchase(ts){
+  purchases = purchases.filter(function(p){return p.ts !== ts;});
+  save();
+  render();
+}
+
+function clearAll(){
+  if(!confirm('Delete ALL purchases? This cannot be undone.')) return;
+  purchases = [];
+  save();
+  document.getElementById('roast-box').textContent = 'Slate wiped clean. But we both know you will be back.';
+  render();
+}
+
+function exportCSV(){
+  if(purchases.length === 0) return;
+  var csv = 'Date,Amount,Description,Category\n';
+  purchases.forEach(function(p){
+    var d = new Date(p.ts).toISOString();
+    csv += '"'+d+'","'+p.amount+'","'+p.desc.replace(/"/g,'""')+'","'+detectCategory(p.desc)+'"\n';
+  });
+  var blob = new Blob([csv],{type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'guilt-jar-export.csv';
+  a.click();
+}
+
+// ============ EVENTS ============
+document.getElementById('drop-btn').addEventListener('click', addPurchase);
+document.getElementById('description').addEventListener('keydown', function(e){if(e.key==='Enter') addPurchase();});
+document.getElementById('amount').addEventListener('keydown', function(e){if(e.key==='Enter') document.getElementById('description').focus();});
+
+document.getElementById('speak-btn').addEventListener('click', function(){
+  var text = document.getElementById('roast-box').textContent;
+  if(text && !text.startsWith('Drop a purchase')) speakRoast(text);
+});
+
+document.getElementById('new-roast-btn').addEventListener('click', function(){
+  if(!lastPurchase) return;
+  var roast = generateRoast(lastPurchase.amount, lastPurchase.desc);
+  var box = document.getElementById('roast-box');
+  box.textContent = roast;
+  box.classList.remove('fresh');
+  void box.offsetWidth;
+  box.classList.add('fresh');
+});
+
+document.getElementById('set-goal-btn').addEventListener('click', function(){
+  var val = parseFloat(document.getElementById('goal-input').value);
+  if(val > 0){ savingsGoal = val; save(); render(); }
+});
+document.getElementById('goal-input').addEventListener('keydown', function(e){
+  if(e.key==='Enter') document.getElementById('set-goal-btn').click();
+});
+
+document.getElementById('clear-btn').addEventListener('click', clearAll);
+document.getElementById('export-btn').addEventListener('click', exportCSV);
+
+document.getElementById('mute-btn').addEventListener('click', function(){
+  muted = !muted;
+  document.getElementById('mute-btn').innerHTML = muted ? '&#x1f507;' : '&#x1f50a;';
+  save();
+});
+if(muted) document.getElementById('mute-btn').innerHTML = '&#x1f507;';
+
+document.querySelectorAll('.tab-row button').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.tab-row button').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    renderHistory(btn.dataset.filter);
+  });
+});
+
+window.addEventListener('resize', drawChart);
+
+if('speechSynthesis' in window) speechSynthesis.getVoices();
+
+render();
+</script>
+</body>
+</html>

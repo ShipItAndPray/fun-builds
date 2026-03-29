@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>PANIC BUTTON - Study Stress Relief</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --bg2: #16213e;
+    --accent: #e94560;
+    --accent2: #ff6b6b;
+    --calm: #0f3460;
+    --text: #e0e0e0;
+    --text-dim: #8899aa;
+    --gold: #f0c040;
+    --green: #4ecdc4;
+    --ring-bg: #2a2a4a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 1.5s ease;
+  }
+
+  /* Flash overlay */
+  #flash-overlay {
+    position: fixed; inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+    transition: opacity 0.05s;
+  }
+  #flash-overlay.flash { opacity: 1; }
+
+  /* PANIC MODE */
+  #panic-mode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+    transition: opacity 0.8s ease;
+  }
+
+  .title {
+    font-size: 1.2rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  .panic-btn {
+    width: clamp(200px, 60vw, 320px);
+    height: clamp(200px, 60vw, 320px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, var(--accent2), var(--accent), #b8001f);
+    border: 6px solid #ff4444;
+    color: white;
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    font-family: 'Impact', 'Arial Black', sans-serif;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    box-shadow:
+      0 0 40px rgba(233,69,96,0.4),
+      0 0 80px rgba(233,69,96,0.2),
+      inset 0 -8px 20px rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    animation: pulse-glow 2s ease-in-out infinite;
+    position: relative;
+  }
+
+  .panic-btn:active {
+    transform: scale(0.95);
+    box-shadow:
+      0 0 20px rgba(233,69,96,0.6),
+      0 0 40px rgba(233,69,96,0.3),
+      inset 0 4px 10px rgba(0,0,0,0.4);
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 40px rgba(233,69,96,0.4), 0 0 80px rgba(233,69,96,0.2), inset 0 -8px 20px rgba(0,0,0,0.3); }
+    50% { box-shadow: 0 0 60px rgba(233,69,96,0.6), 0 0 120px rgba(233,69,96,0.3), inset 0 -8px 20px rgba(0,0,0,0.3); }
+  }
+
+  .panic-counter {
+    margin-top: 2rem;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .panic-counter span {
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 1.4rem;
+  }
+
+  .give-up-btn {
+    margin-top: 2rem;
+    padding: 0.8rem 2rem;
+    background: transparent;
+    border: 2px solid var(--text-dim);
+    color: var(--text-dim);
+    font-family: Georgia, serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s;
+    letter-spacing: 0.1em;
+  }
+  .give-up-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  #give-up-response {
+    margin-top: 1rem;
+    font-size: 1rem;
+    color: var(--gold);
+    font-style: italic;
+    text-align: center;
+    max-width: 320px;
+    opacity: 0;
+    transition: opacity 0.5s;
+    line-height: 1.5;
+  }
+  #give-up-response.visible { opacity: 1; }
+
+  /* CALM MODE */
+  #calm-mode {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 3rem;
+    min-height: 100vh;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  #calm-mode.visible { opacity: 1; }
+
+  .calm-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .calm-header h2 {
+    font-size: 1.3rem;
+    color: var(--green);
+    letter-spacing: 0.15em;
+    font-weight: normal;
+  }
+  .calm-header p {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+  }
+
+  .back-btn {
+    position: fixed;
+    top: 1rem; left: 1rem;
+    background: none;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    z-index: 10;
+    font-family: Georgia, serif;
+  }
+
+  /* Breathing Exercise */
+  .breathing-section {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .breath-circle-container {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 1rem;
+  }
+
+  .breath-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--green), #0a8f85);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    animation: breathe 8s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(78,205,196,0.3);
+  }
+
+  .breath-ring {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 2px solid rgba(78,205,196,0.2);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(2.3); opacity: 1; }
+  }
+
+  .breath-text {
+    font-size: 1rem;
+    color: var(--green);
+    font-style: italic;
+    animation: breath-label 8s ease-in-out infinite;
+  }
+
+  @keyframes breath-label {
+    0%, 5% { opacity: 0; }
+    6%, 45% { opacity: 1; }
+    46%, 55% { opacity: 0; }
+    56%, 95% { opacity: 1; }
+    96%, 100% { opacity: 0; }
+  }
+
+  /* Quote & Tip Cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+  }
+
+  .card-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .card-content {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .card-refresh {
+    position: absolute;
+    top: 0.8rem; right: 0.8rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.3rem;
+    transition: transform 0.3s;
+  }
+  .card-refresh:hover { transform: rotate(180deg); }
+
+  .quote-card .card-content { font-style: italic; color: var(--gold); }
+  .tip-card .card-content { color: var(--green); }
+
+  /* Pomodoro Timer */
+  .timer-section {
+    text-align: center;
+    margin-top: 0.5rem;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .timer-ring-container {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 1rem;
+  }
+
+  .timer-ring-bg, .timer-ring-progress {
+    fill: none;
+    stroke-width: 8;
+    cx: 100; cy: 100; r: 88;
+  }
+  .timer-ring-bg { stroke: var(--ring-bg); }
+  .timer-ring-progress {
+    stroke: var(--green);
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke-dashoffset 1s linear;
+  }
+
+  .timer-display {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .timer-time {
+    font-size: 2.5rem;
+    font-family: 'Courier New', monospace;
+    color: var(--text);
+  }
+
+  .timer-label {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-top: 0.2rem;
+  }
+
+  .timer-controls {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .timer-btn {
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    border: none;
+    font-family: Georgia, serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .timer-btn.start { background: var(--green); color: var(--bg); }
+  .timer-btn.start:hover { background: #5de0d7; }
+  .timer-btn.pause { background: var(--gold); color: var(--bg); }
+  .timer-btn.reset { background: transparent; border: 1px solid var(--text-dim); color: var(--text-dim); }
+  .timer-btn.reset:hover { border-color: var(--accent); color: var(--accent); }
+
+  .timer-session-info {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.5rem;
+  }
+
+  /* Sound toggle */
+  .sound-toggle {
+    position: fixed;
+    bottom: 1rem; right: 1rem;
+    background: var(--bg2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-dim);
+    padding: 0.5rem 0.8rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    z-index: 10;
+    font-family: Georgia, serif;
+  }
+
+  /* Mobile optimizations */
+  @media (max-width: 480px) {
+    .panic-btn { width: 240px; height: 240px; font-size: 3rem; }
+    .breath-circle-container { width: 140px; height: 140px; }
+    .timer-ring-container { width: 180px; height: 180px; }
+    .timer-ring-bg, .timer-ring-progress { cx: 90; cy: 90; r: 78; }
+  }
+</style>
+</head>
+<body>
+
+<div id="flash-overlay"></div>
+
+<!-- PANIC MODE -->
+<div id="panic-mode">
+  <div class="title">Study Stress Relief</div>
+  <div class="subtitle">When it all feels like too much...</div>
+
+  <button class="panic-btn" id="panic-btn" aria-label="Panic Button">PANIC</button>
+
+  <div class="panic-counter">
+    Panics today: <span id="panic-count">0</span>
+  </div>
+
+  <button class="give-up-btn" id="give-up-btn">I GIVE UP</button>
+  <div id="give-up-response"></div>
+</div>
+
+<!-- CALM MODE -->
+<div id="calm-mode">
+  <button class="back-btn" id="back-btn">&larr; Back</button>
+
+  <div class="calm-header">
+    <h2>You're okay. Breathe.</h2>
+    <p>The panic is over. Let's reset.</p>
+  </div>
+
+  <div class="breathing-section">
+    <div class="breath-circle-container">
+      <div class="breath-ring"></div>
+      <div class="breath-circle"></div>
+    </div>
+    <div class="breath-text" id="breath-text">Breathe in...</div>
+  </div>
+
+  <div class="card quote-card">
+    <div class="card-label">Motivation</div>
+    <button class="card-refresh" id="refresh-quote" aria-label="New quote">&#x21bb;</button>
+    <div class="card-content" id="quote-text"></div>
+  </div>
+
+  <div class="card tip-card">
+    <div class="card-label">Study Tip</div>
+    <button class="card-refresh" id="refresh-tip" aria-label="New tip">&#x21bb;</button>
+    <div class="card-content" id="tip-text"></div>
+  </div>
+
+  <div class="timer-section">
+    <div class="card-label" style="margin-bottom:1rem;">Focus Timer</div>
+    <div class="timer-ring-container">
+      <svg viewBox="0 0 200 200" width="100%" height="100%">
+        <circle class="timer-ring-bg" cx="100" cy="100" r="88"/>
+        <circle class="timer-ring-progress" id="timer-ring" cx="100" cy="100" r="88"/>
+      </svg>
+      <div class="timer-display">
+        <div class="timer-time" id="timer-time">25:00</div>
+        <div class="timer-label" id="timer-phase">Work</div>
+      </div>
+    </div>
+    <div class="timer-controls">
+      <button class="timer-btn start" id="timer-start">Start</button>
+      <button class="timer-btn reset" id="timer-reset">Reset</button>
+    </div>
+    <div class="timer-session-info" id="timer-sessions">Sessions completed: 0</div>
+  </div>
+</div>
+
+<button class="sound-toggle" id="sound-toggle">&#x1f50a; Ambient</button>
+
+<script>
+// ========== DATA ==========
+
+const quotes = [
+  "You've survived 100% of your worst days.",
+  "It's not about being the best. It's about being better than you were yesterday.",
+  "The expert in anything was once a beginner.",
+  "You don't have to see the whole staircase, just take the first step.",
+  "Difficult roads often lead to beautiful destinations.",
+  "Your future self is counting on you right now.",
+  "Mistakes are proof that you are trying.",
+  "A diamond is just a piece of coal that handled stress exceptionally well.",
+  "The only way to do great work is to love what you do. And sometimes just survive it.",
+  "You are braver than you believe, stronger than you seem, and smarter than you think.",
+  "This too shall pass. It always does.",
+  "Progress, not perfection.",
+  "You didn't come this far to only come this far.",
+  "Rest if you must, but don't you quit.",
+  "It always seems impossible until it's done.",
+  "Fall seven times, stand up eight.",
+  "The struggle you're in today is developing the strength you need for tomorrow.",
+  "Believe you can and you're halfway there.",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+  "Start where you are. Use what you have. Do what you can.",
+  "You are enough. You have enough. You do enough.",
+  "Every accomplishment starts with the decision to try.",
+  "Don't watch the clock; do what it does. Keep going.",
+  "Your only limit is your mind.",
+  "Small progress is still progress.",
+  "The pain you feel today will be the strength you feel tomorrow.",
+  "Great things never come from comfort zones.",
+  "Doubt kills more dreams than failure ever will.",
+  "You're not behind. You're on your own timeline.",
+  "Education is the passport to the future.",
+  "The best time to start was yesterday. The next best time is now.",
+  "It does not matter how slowly you go as long as you do not stop.",
+  "What feels like the end is often the beginning.",
+  "Stars can't shine without darkness.",
+  "Be stubborn about your goals, flexible about your methods.",
+  "Knowledge is power, but enthusiasm pulls the switch.",
+  "Your GPA does not define your worth as a human being.",
+  "One day you'll look back and be glad you didn't give up.",
+  "Stressing about it won't change the outcome. Studying might.",
+  "You're not stressed because you're weak. You're stressed because you care.",
+  "The best view comes after the hardest climb.",
+  "Life is tough, but so are you.",
+  "Courage doesn't always roar. Sometimes it's the quiet voice saying 'I'll try again tomorrow.'",
+  "You can do hard things.",
+  "This exam is temporary. Your resilience is permanent.",
+  "Burnout is not a badge of honor. Rest is productive.",
+  "You are not your grades. You are not your failures. You are still becoming.",
+  "Panic is just your brain's way of saying 'I care about this.'",
+  "The semester ends. You remain.",
+  "Comparison is the thief of joy. Run your own race.",
+  "Even the darkest night will end, and the sun will rise.",
+  "You have been assigned this mountain to show others it can be moved.",
+  "Inhale confidence, exhale doubt."
+];
+
+const tips = [
+  "Try the Pomodoro technique: 25 min study, 5 min break.",
+  "Teach what you've learned to a rubber duck. Seriously.",
+  "Use active recall: close the book and write what you remember.",
+  "Spaced repetition beats cramming every single time.",
+  "Study the hardest material when your energy is highest.",
+  "Break big tasks into tiny chunks. One chunk at a time.",
+  "Drink water. Dehydration kills focus faster than anything.",
+  "Handwriting notes activates more memory pathways than typing.",
+  "Use the Feynman technique: explain it simply, find gaps, repeat.",
+  "Study in different locations to strengthen memory associations.",
+  "Test yourself instead of re-reading. Testing IS learning.",
+  "Get 7-8 hours of sleep. Your brain consolidates memory during sleep.",
+  "Use mnemonics for lists: create a story or acronym.",
+  "Exercise before studying. Even a 10-minute walk helps focus.",
+  "Remove your phone from the room, not just off the desk.",
+  "Study in 25-minute focused blocks. Your brain needs intervals.",
+  "Create a study playlist without lyrics. Lo-fi or classical works.",
+  "Start with the easiest task to build momentum.",
+  "Color-code your notes by topic for visual memory.",
+  "Summarize each chapter in 3 bullet points after reading.",
+  "Use mind maps for complex topics with many connections.",
+  "Practice past exam papers under timed conditions.",
+  "Explain the concept to someone who knows nothing about it.",
+  "Take a 5-minute walk between study sessions.",
+  "Set a specific goal for each study session, not just 'study math.'",
+  "Use the 2-minute rule: if it takes less than 2 minutes, do it now.",
+  "Review notes within 24 hours of taking them.",
+  "Group similar concepts together when studying (interleaving).",
+  "Chew the same flavor of gum while studying and during the test.",
+  "Write practice questions as you study. Be your own professor.",
+  "Use analogies to connect new concepts to things you already know.",
+  "Study in a well-lit space. Dim lighting makes you sleepy.",
+  "Try body doubling: study alongside someone, even on video call.",
+  "Create flashcards but shuffle the order each time.",
+  "Take notes in your own words, never copy verbatim.",
+  "Set a timer and race it. Urgency improves focus."
+];
+
+const giveUpResponses = [
+  "No you don't. Take a breath. You got this.",
+  "Nope. Not today. You've come too far to stop now.",
+  "Your future self would like a word with you. They say thanks for not quitting.",
+  "Giving up is a tomorrow problem. Today, you just do the next small thing.",
+  "The fact that you're stressed means you care. That's a superpower.",
+  "I refuse to accept your resignation. Back to work, champion.",
+  "You don't give up. You take breaks. There's a difference.",
+  "Plot twist: you're going to make it. The story isn't over.",
+  "Quitting? In this economy? I don't think so.",
+  "Take a deep breath. Drink some water. Then come back swinging."
+];
+
+// ========== STATE ==========
+
+let panicCount = parseInt(localStorage.getItem('panicCount_' + new Date().toDateString()) || '0');
+let timerInterval = null;
+let timerSeconds = 25 * 60;
+let timerTotal = 25 * 60;
+let timerRunning = false;
+let isWorkPhase = true;
+let sessionsCompleted = 0;
+let ambientPlaying = false;
+let audioCtx = null;
+let ambientNodes = [];
+
+document.getElementById('panic-count').textContent = panicCount;
+
+// ========== AUDIO ==========
+
+function getAudioContext() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playAlarm() {
+  const ctx = getAudioContext();
+  const now = ctx.currentTime;
+  // Short alarming beep sequence
+  for (let i = 0; i < 3; i++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 800 + i * 200;
+    gain.gain.setValueAtTime(0.15, now + i * 0.12);
+    gain.gain.exponentialDecayToValue
+    gain.gain.setTargetAtTime(0.001, now + i * 0.12 + 0.08, 0.02);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + i * 0.12);
+    osc.stop(now + i * 0.12 + 0.15);
+  }
+}
+
+function playTimerDone() {
+  const ctx = getAudioContext();
+  const now = ctx.currentTime;
+  [523, 659, 784].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.12, now + i * 0.2);
+    gain.gain.setTargetAtTime(0.001, now + i * 0.2 + 0.15, 0.05);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now + i * 0.2);
+    osc.stop(now + i * 0.2 + 0.4);
+  });
+}
+
+function startAmbient() {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  // Low drone hum
+  const drone = ctx.createOscillator();
+  const droneGain = ctx.createGain();
+  drone.type = 'sine';
+  drone.frequency.value = 85;
+  droneGain.gain.value = 0.04;
+  drone.connect(droneGain).connect(ctx.destination);
+  drone.start();
+
+  // Second harmonic
+  const drone2 = ctx.createOscillator();
+  const drone2Gain = ctx.createGain();
+  drone2.type = 'sine';
+  drone2.frequency.value = 170;
+  drone2Gain.gain.value = 0.015;
+  drone2.connect(drone2Gain).connect(ctx.destination);
+  drone2.start();
+
+  // Filtered noise for nature-like ambience
+  const bufferSize = ctx.sampleRate * 2;
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuffer;
+  noise.loop = true;
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'lowpass';
+  noiseFilter.frequency.value = 400;
+  noiseFilter.Q.value = 1;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.value = 0.025;
+  noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+  noise.start();
+
+  // Slow LFO on the noise filter for organic feel
+  const lfo = ctx.createOscillator();
+  const lfoGain = ctx.createGain();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.1;
+  lfoGain.gain.value = 150;
+  lfo.connect(lfoGain).connect(noiseFilter.frequency);
+  lfo.start();
+
+  ambientNodes = [
+    { source: drone, gain: droneGain },
+    { source: drone2, gain: drone2Gain },
+    { source: noise, gain: noiseGain },
+    { source: lfo, gain: lfoGain }
+  ];
+  ambientPlaying = true;
+}
+
+function stopAmbient() {
+  ambientNodes.forEach(n => {
+    try { n.source.stop(); } catch(e) {}
+  });
+  ambientNodes = [];
+  ambientPlaying = false;
+}
+
+// ========== BREATHING TEXT ==========
+
+function startBreathingText() {
+  const el = document.getElementById('breath-text');
+  let inhale = true;
+  function update() {
+    el.textContent = inhale ? 'Breathe in...' : 'Breathe out...';
+    inhale = !inhale;
+  }
+  update();
+  setInterval(update, 4000);
+}
+
+// ========== PANIC BUTTON ==========
+
+document.getElementById('panic-btn').addEventListener('click', function() {
+  const ctx = getAudioContext();
+  if (ctx.state === 'suspended') ctx.resume();
+
+  panicCount++;
+  localStorage.setItem('panicCount_' + new Date().toDateString(), panicCount);
+  document.getElementById('panic-count').textContent = panicCount;
+
+  // Flash
+  const flash = document.getElementById('flash-overlay');
+  flash.classList.add('flash');
+  playAlarm();
+
+  setTimeout(() => { flash.classList.remove('flash'); }, 80);
+  setTimeout(() => { flash.classList.add('flash'); }, 160);
+  setTimeout(() => { flash.classList.remove('flash'); }, 240);
+  setTimeout(() => { flash.classList.add('flash'); }, 320);
+  setTimeout(() => { flash.classList.remove('flash'); }, 400);
+
+  // Transition to calm mode
+  setTimeout(() => {
+    document.getElementById('panic-mode').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('panic-mode').style.display = 'none';
+      document.getElementById('calm-mode').style.display = 'flex';
+      document.body.style.background = '#0d1b2a';
+      showNewQuote();
+      showNewTip();
+      startBreathingText();
+
+      if (!ambientPlaying) {
+        startAmbient();
+        document.getElementById('sound-toggle').textContent = '\u{1f50a} Ambient';
+      }
+
+      requestAnimationFrame(() => {
+        document.getElementById('calm-mode').classList.add('visible');
+      });
+    }, 800);
+  }, 600);
+});
+
+// ========== GIVE UP ==========
+
+document.getElementById('give-up-btn').addEventListener('click', function() {
+  const resp = document.getElementById('give-up-response');
+  resp.textContent = giveUpResponses[Math.floor(Math.random() * giveUpResponses.length)];
+  resp.classList.remove('visible');
+  requestAnimationFrame(() => resp.classList.add('visible'));
+});
+
+// ========== BACK BUTTON ==========
+
+document.getElementById('back-btn').addEventListener('click', function() {
+  document.getElementById('calm-mode').classList.remove('visible');
+  setTimeout(() => {
+    document.getElementById('calm-mode').style.display = 'none';
+    document.getElementById('panic-mode').style.display = 'flex';
+    document.body.style.background = 'var(--bg)';
+    requestAnimationFrame(() => {
+      document.getElementById('panic-mode').style.opacity = '1';
+    });
+  }, 500);
+});
+
+// ========== QUOTES & TIPS ==========
+
+function showNewQuote() {
+  document.getElementById('quote-text').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+}
+function showNewTip() {
+  document.getElementById('tip-text').textContent = tips[Math.floor(Math.random() * tips.length)];
+}
+
+document.getElementById('refresh-quote').addEventListener('click', showNewQuote);
+document.getElementById('refresh-tip').addEventListener('click', showNewTip);
+
+// ========== POMODORO TIMER ==========
+
+const WORK_DURATION = 25 * 60;
+const BREAK_DURATION = 5 * 60;
+const CIRCUMFERENCE = 2 * Math.PI * 88;
+
+const timerRing = document.getElementById('timer-ring');
+timerRing.style.strokeDasharray = CIRCUMFERENCE;
+timerRing.style.strokeDashoffset = 0;
+
+function updateTimerDisplay() {
+  const min = Math.floor(timerSeconds / 60);
+  const sec = timerSeconds % 60;
+  document.getElementById('timer-time').textContent =
+    String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+
+  const progress = 1 - (timerSeconds / timerTotal);
+  timerRing.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+
+  document.getElementById('timer-phase').textContent = isWorkPhase ? 'Work' : 'Break';
+  timerRing.style.stroke = isWorkPhase ? 'var(--green)' : 'var(--gold)';
+}
+
+function startTimer() {
+  if (timerRunning) {
+    // Pause
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-start').textContent = 'Resume';
+    document.getElementById('timer-start').className = 'timer-btn start';
+    return;
+  }
+
+  timerRunning = true;
+  document.getElementById('timer-start').textContent = 'Pause';
+  document.getElementById('timer-start').className = 'timer-btn pause';
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds < 0) {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      playTimerDone();
+
+      if (isWorkPhase) {
+        sessionsCompleted++;
+        document.getElementById('timer-sessions').textContent = 'Sessions completed: ' + sessionsCompleted;
+        isWorkPhase = false;
+        timerSeconds = BREAK_DURATION;
+        timerTotal = BREAK_DURATION;
+      } else {
+        isWorkPhase = true;
+        timerSeconds = WORK_DURATION;
+        timerTotal = WORK_DURATION;
+      }
+      document.getElementById('timer-start').textContent = 'Start';
+      document.getElementById('timer-start').className = 'timer-btn start';
+      updateTimerDisplay();
+      return;
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isWorkPhase = true;
+  timerSeconds = WORK_DURATION;
+  timerTotal = WORK_DURATION;
+  document.getElementById('timer-start').textContent = 'Start';
+  document.getElementById('timer-start').className = 'timer-btn start';
+  updateTimerDisplay();
+}
+
+document.getElementById('timer-start').addEventListener('click', startTimer);
+document.getElementById('timer-reset').addEventListener('click', resetTimer);
+
+updateTimerDisplay();
+
+// ========== SOUND TOGGLE ==========
+
+document.getElementById('sound-toggle').addEventListener('click', function() {
+  if (ambientPlaying) {
+    stopAmbient();
+    this.textContent = '\u{1f507} Ambient';
+  } else {
+    startAmbient();
+    this.textContent = '\u{1f50a} Ambient';
+  }
+});
+
+// ========== INIT ==========
+
+// Reset panic count at midnight
+const now = new Date();
+const msUntilMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) - now;
+setTimeout(() => {
+  panicCount = 0;
+  document.getElementById('panic-count').textContent = 0;
+}, msUntilMidnight);
+
+</script>
+</body>
+</html>

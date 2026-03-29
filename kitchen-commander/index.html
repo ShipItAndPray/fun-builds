@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>KITCHEN COMMANDER</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --green: #00ff41;
+  --amber: #ffbf00;
+  --dark-green: #0a1a0a;
+  --panel-bg: #0d1f0d;
+  --red: #ff2222;
+  --dim-green: #1a3a1a;
+}
+body {
+  background: var(--dark-green);
+  color: var(--green);
+  font-family: 'Courier New', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.scanline {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,65,0.03) 2px, rgba(0,255,65,0.03) 4px);
+  pointer-events: none; z-index: 1000;
+}
+header {
+  text-align: center; padding: 12px 8px 8px;
+  border-bottom: 2px solid var(--green);
+  background: linear-gradient(180deg, #0f2a0f, var(--dark-green));
+}
+header h1 {
+  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  color: var(--amber);
+  text-shadow: 0 0 20px rgba(255,191,0,0.5);
+  letter-spacing: 4px;
+}
+header .subtitle {
+  font-size: 0.7rem; color: var(--green); opacity: 0.7;
+  letter-spacing: 2px; margin-top: 2px;
+}
+
+/* Status Board */
+#status-board {
+  border: 1px solid var(--dim-green);
+  margin: 8px;
+  padding: 8px;
+  background: rgba(0,20,0,0.6);
+  border-radius: 4px;
+}
+#status-board h2 {
+  font-size: 0.75rem; color: var(--amber); letter-spacing: 2px;
+  border-bottom: 1px solid var(--dim-green); padding-bottom: 4px; margin-bottom: 6px;
+}
+#status-board .empty-msg {
+  font-size: 0.7rem; opacity: 0.5; text-align: center; padding: 8px;
+}
+.status-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid rgba(0,255,65,0.1);
+  font-size: 0.75rem;
+}
+.status-row .name { color: var(--amber); flex: 1; }
+.status-row .time { color: var(--green); font-weight: bold; min-width: 80px; text-align: right; }
+.status-row .pct { color: var(--green); opacity: 0.6; min-width: 40px; text-align: right; }
+.status-row.red-alert .time { color: var(--red); animation: blink 0.5s infinite; }
+.status-row.complete .time { color: var(--amber); }
+
+/* Add Timer Form */
+#add-form {
+  margin: 8px; padding: 10px;
+  border: 1px solid var(--dim-green);
+  background: rgba(0,20,0,0.6);
+  border-radius: 4px;
+}
+#add-form h2 {
+  font-size: 0.75rem; color: var(--amber); letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.form-row {
+  display: flex; gap: 6px; margin-bottom: 6px;
+}
+.form-row input {
+  flex: 1; background: var(--dark-green); border: 1px solid var(--dim-green);
+  color: var(--green); font-family: 'Courier New', monospace;
+  padding: 10px 8px; font-size: 1rem; border-radius: 3px;
+  outline: none;
+}
+.form-row input:focus { border-color: var(--green); }
+.form-row input::placeholder { color: rgba(0,255,65,0.3); }
+.form-row input[type="number"] { max-width: 80px; text-align: center; }
+#btn-deploy {
+  width: 100%; padding: 12px;
+  background: var(--dim-green); border: 2px solid var(--green);
+  color: var(--amber); font-family: 'Courier New', monospace;
+  font-size: 1rem; font-weight: bold; letter-spacing: 3px;
+  cursor: pointer; border-radius: 3px;
+  text-transform: uppercase;
+}
+#btn-deploy:active { background: var(--green); color: var(--dark-green); }
+
+/* Timers */
+#timers { padding: 0 8px 100px; }
+.timer-card {
+  border: 1px solid var(--dim-green);
+  background: rgba(0,20,0,0.6);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  padding: 12px;
+  position: relative;
+  transition: border-color 0.3s;
+}
+.timer-card.red-alert {
+  border-color: var(--red);
+  animation: redPulse 0.5s infinite alternate;
+}
+.timer-card.mission-complete {
+  border-color: var(--amber);
+  background: rgba(40,30,0,0.4);
+}
+.timer-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.timer-name {
+  font-size: 0.85rem; color: var(--amber); letter-spacing: 2px;
+  text-transform: uppercase; font-weight: bold;
+}
+.timer-alarm-type { font-size: 0.6rem; opacity: 0.5; }
+.btn-abort {
+  background: none; border: 1px solid var(--red); color: var(--red);
+  font-family: 'Courier New', monospace; font-size: 0.65rem;
+  padding: 3px 8px; cursor: pointer; border-radius: 2px;
+  letter-spacing: 1px;
+}
+.btn-abort:active { background: var(--red); color: #000; }
+.timer-countdown {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  text-align: center;
+  color: var(--green);
+  text-shadow: 0 0 30px rgba(0,255,65,0.4);
+  font-weight: bold;
+  padding: 8px 0;
+}
+.timer-card.red-alert .timer-countdown { color: var(--red); text-shadow: 0 0 30px rgba(255,34,34,0.6); }
+.timer-card.mission-complete .timer-countdown { color: var(--amber); text-shadow: 0 0 30px rgba(255,191,0,0.6); }
+.progress-bar {
+  height: 6px; background: var(--dim-green); border-radius: 3px;
+  margin: 6px 0; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; background: var(--green); border-radius: 3px;
+  transition: width 0.5s linear;
+}
+.timer-card.red-alert .progress-fill { background: var(--red); }
+.timer-card.mission-complete .progress-fill { background: var(--amber); }
+.timer-status {
+  font-size: 0.7rem; text-align: center; min-height: 1.2em;
+  color: var(--amber); letter-spacing: 1px; margin-top: 4px;
+}
+
+/* Log */
+#mission-log {
+  margin: 8px; padding: 8px;
+  border: 1px solid var(--dim-green);
+  background: rgba(0,20,0,0.6);
+  border-radius: 4px;
+  max-height: 150px; overflow-y: auto;
+}
+#mission-log h2 {
+  font-size: 0.75rem; color: var(--amber); letter-spacing: 2px;
+  border-bottom: 1px solid var(--dim-green); padding-bottom: 4px; margin-bottom: 4px;
+}
+.log-entry {
+  font-size: 0.65rem; padding: 2px 0; border-bottom: 1px solid rgba(0,255,65,0.05);
+  line-height: 1.4;
+}
+.log-entry .log-time { color: var(--green); opacity: 0.5; }
+.log-entry .log-msg { color: var(--green); }
+.log-entry.alert .log-msg { color: var(--red); }
+.log-entry.victory .log-msg { color: var(--amber); }
+
+@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+@keyframes redPulse { from { box-shadow: 0 0 5px rgba(255,34,34,0.3); } to { box-shadow: 0 0 20px rgba(255,34,34,0.6); } }
+
+/* Presets */
+.presets { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.preset-btn {
+  background: var(--dim-green); border: 1px solid rgba(0,255,65,0.3);
+  color: var(--green); font-family: 'Courier New', monospace;
+  font-size: 0.65rem; padding: 4px 8px; cursor: pointer;
+  border-radius: 2px;
+}
+.preset-btn:active { background: var(--green); color: var(--dark-green); }
+
+/* Sound toggle */
+.sound-toggle {
+  position: fixed; bottom: 10px; right: 10px; z-index: 999;
+  background: var(--dim-green); border: 1px solid var(--green);
+  color: var(--green); font-family: 'Courier New', monospace;
+  font-size: 0.7rem; padding: 6px 10px; cursor: pointer; border-radius: 3px;
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<header>
+  <h1>KITCHEN COMMANDER</h1>
+  <div class="subtitle">CULINARY OPERATIONS CENTER // ALL TIMERS NOMINAL</div>
+</header>
+
+<div id="status-board">
+  <h2>// MISSION CONTROL STATUS BOARD</h2>
+  <div id="status-rows"><div class="empty-msg">NO ACTIVE OPERATIONS. DEPLOY A TIMER, SOLDIER.</div></div>
+</div>
+
+<div id="add-form">
+  <h2>// DEPLOY NEW TIMER</h2>
+  <div class="presets">
+    <button class="preset-btn" onclick="setPreset('EGGS',3)">EGGS 3m</button>
+    <button class="preset-btn" onclick="setPreset('PASTA',10)">PASTA 10m</button>
+    <button class="preset-btn" onclick="setPreset('RICE',18)">RICE 18m</button>
+    <button class="preset-btn" onclick="setPreset('CHICKEN',25)">CHICKEN 25m</button>
+    <button class="preset-btn" onclick="setPreset('STEAK',8)">STEAK 8m</button>
+    <button class="preset-btn" onclick="setPreset('BREAD',45)">BREAD 45m</button>
+    <button class="preset-btn" onclick="setPreset('POTATOES',30)">POTATOES 30m</button>
+  </div>
+  <div class="form-row">
+    <input type="text" id="inp-name" placeholder="MISSION NAME" maxlength="20" autocomplete="off">
+    <input type="number" id="inp-min" placeholder="MIN" min="0" max="999">
+    <input type="number" id="inp-sec" placeholder="SEC" min="0" max="59">
+  </div>
+  <button id="btn-deploy" onclick="deployTimer()">DEPLOY TIMER</button>
+</div>
+
+<div id="timers"></div>
+
+<div id="mission-log">
+  <h2>// MISSION LOG</h2>
+  <div id="log-entries"></div>
+</div>
+
+<button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">VOICE: ON</button>
+
+<script>
+// ---- STATE ----
+const timers = [];
+let timerIdCounter = 0;
+let audioCtx = null;
+let voiceEnabled = true;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// ---- 40+ MILITARY COOKING PHRASES ----
+const phrases = {
+  '75': [
+    "HOLDING STEADY, SOLDIER",
+    "ALL SYSTEMS NOMINAL, KEEP YOUR POST",
+    "COOKING ZONE SECURE, MAINTAIN COURSE",
+    "THERMAL PENETRATION ON SCHEDULE",
+    "MAINTAIN HEADING, HEAT IS LOCKED IN",
+    "FIRST QUARTER SECURED, STAY FROSTY",
+    "RECON REPORTS: LOOKING GOOD IN THERE",
+    "PERIMETER TEMPERATURE STABLE",
+    "PHASE ONE COMPLETE, HOLD YOUR GROUND",
+    "TARGET IS RESPONDING TO HEAT, STAND BY",
+  ],
+  '50': [
+    "HALFWAY THROUGH THE FIRE ZONE",
+    "WE'RE AT THE MIDPOINT, STAY ALERT",
+    "FIFTY PERCENT COOK ACHIEVED, NO RETREAT",
+    "THE HALFWAY MARK, DIG IN SOLDIER",
+    "MIDWAY CHECKPOINT PASSED, LOOKING SHARP",
+    "HALF THE BATTLE IS WON, KEEP PUSHING",
+    "WE'VE CROSSED THE EQUATOR, STAY ON TARGET",
+    "COOKING VELOCITY NOMINAL AT 50 PERCENT",
+    "THERMAL CORE APPROACHING OPTIMAL, HOLD FAST",
+    "MISSION HALF COMPLETE, DO NOT ABANDON POST",
+  ],
+  '25': [
+    "FINAL APPROACH, ALL HANDS ON DECK",
+    "WE'RE IN THE HOME STRETCH, STAY SHARP",
+    "ALMOST THERE, PREPARE FOR EXTRACTION",
+    "75 PERCENT COOKED, PREP YOUR PLATES",
+    "ENTERING FINAL PHASE, STAND READY",
+    "THE END IS NEAR, MAINTAIN COMPOSURE",
+    "THREE QUARTERS DOWN, FINISH STRONG",
+    "APPROACHING DONENESS, ARM THE PLATES",
+    "FINAL QUARTER SOLDIER, NO MISTAKES NOW",
+    "CLOSING IN ON TARGET, PREPARE SERVING POSITIONS",
+  ],
+  'complete': [
+    "MISSION ACCOMPLISHED! CHOW TIME!",
+    "TARGET ELIMINATED! FOOD IS READY, MOVE MOVE MOVE!",
+    "OPERATION COMPLETE! SERVE IT UP, SOLDIER!",
+    "MISSION SUCCESS! GET THAT TO THE TABLE, DOUBLE TIME!",
+    "ALL OBJECTIVES MET! DINNER IS SERVED!",
+    "EXTRACTION COMPLETE! PULL IT OUT NOW!",
+    "VICTORY! THE KITCHEN HAS BEEN CONQUERED!",
+    "THAT'S A WRAP, SOLDIER! OUTSTANDING WORK!",
+    "FOOD IS HOT AND READY! DEPLOY TO PLATES!",
+    "OPERATION KITCHEN STORM IS A SUCCESS!",
+  ],
+  'redAlert': [
+    "RED ALERT! 30 SECONDS! THIS IS NOT A DRILL!",
+    "FINAL COUNTDOWN! ALL STATIONS BATTLE READY!",
+    "CRITICAL PHASE! EYES ON THE OBJECTIVE!",
+    "DEFCON ONE! PREPARE FOR EXTRACTION!",
+  ]
+};
+
+const alarmTypes = ['bugle', 'airhorn', 'submarine'];
+let alarmIndex = 0;
+
+// ---- SOUND GENERATION (Web Audio) ----
+function playBugle() {
+  const ctx = getAudioCtx();
+  const notes = [261.6, 329.6, 392.0, 523.3, 392.0, 523.3];
+  const dur = 0.18;
+  notes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + i * dur);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + (i + 1) * dur);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + i * dur);
+    osc.stop(ctx.currentTime + (i + 1) * dur + 0.05);
+  });
+}
+
+function playAirhorn() {
+  const ctx = getAudioCtx();
+  for (let k = 0; k < 3; k++) {
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc2.type = 'square';
+    osc.frequency.value = 220 + k * 10;
+    osc2.frequency.value = 223 + k * 10;
+    gain.gain.setValueAtTime(0.2, ctx.currentTime + k * 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + k * 0.5 + 0.45);
+    osc.connect(gain).connect(ctx.destination);
+    osc2.connect(gain);
+    osc.start(ctx.currentTime + k * 0.5);
+    osc2.start(ctx.currentTime + k * 0.5);
+    osc.stop(ctx.currentTime + k * 0.5 + 0.5);
+    osc2.stop(ctx.currentTime + k * 0.5 + 0.5);
+  }
+}
+
+function playSubmarine() {
+  const ctx = getAudioCtx();
+  for (let k = 0; k < 3; k++) {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, ctx.currentTime + k * 0.7);
+    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + k * 0.7 + 0.6);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime + k * 0.7);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + k * 0.7 + 0.65);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(ctx.currentTime + k * 0.7);
+    osc.stop(ctx.currentTime + k * 0.7 + 0.7);
+  }
+}
+
+function playVictoryFanfare() {
+  const ctx = getAudioCtx();
+  const melody = [392, 392, 392, 523.3, 659.3, 783.99, 659.3, 783.99];
+  const durs =   [0.15, 0.15, 0.15, 0.3,  0.15,  0.15,   0.2,  0.5];
+  let t = ctx.currentTime;
+  melody.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + durs[i] * 0.9);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + durs[i]);
+    t += durs[i];
+  });
+}
+
+function playRedAlertBeep() {
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'square';
+  osc.frequency.value = 600;
+  gain.gain.setValueAtTime(0.15, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime + 0.15);
+}
+
+const alarmPlayers = { bugle: playBugle, airhorn: playAirhorn, submarine: playSubmarine };
+
+// ---- SPEECH ----
+function bark(text) {
+  if (!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.1;
+  u.pitch = 0.6;
+  u.volume = 1;
+  const voices = window.speechSynthesis.getVoices();
+  const male = voices.find(v => /male|daniel|alex|david|james/i.test(v.name) && !/female/i.test(v.name));
+  if (male) u.voice = male;
+  window.speechSynthesis.speak(u);
+}
+
+function toggleSound() {
+  voiceEnabled = !voiceEnabled;
+  document.getElementById('sound-toggle').textContent = 'VOICE: ' + (voiceEnabled ? 'ON' : 'OFF');
+}
+
+// ---- PRESETS ----
+function setPreset(name, min) {
+  document.getElementById('inp-name').value = name;
+  document.getElementById('inp-min').value = min;
+  document.getElementById('inp-sec').value = 0;
+}
+
+// ---- LOG ----
+function addLog(msg, type) {
+  const el = document.getElementById('log-entries');
+  const now = new Date();
+  const ts = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = 'log-entry' + (type ? ' ' + type : '');
+  div.innerHTML = `<span class="log-time">[${ts}]</span> <span class="log-msg">${msg}</span>`;
+  el.insertBefore(div, el.firstChild);
+  if (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+// ---- DEPLOY TIMER ----
+function deployTimer() {
+  const nameEl = document.getElementById('inp-name');
+  const minEl = document.getElementById('inp-min');
+  const secEl = document.getElementById('inp-sec');
+  const name = (nameEl.value.trim() || 'UNKNOWN TARGET').toUpperCase();
+  const min = parseInt(minEl.value) || 0;
+  const sec = parseInt(secEl.value) || 0;
+  const totalSec = min * 60 + sec;
+  if (totalSec < 1) return;
+
+  const alarm = alarmTypes[alarmIndex % alarmTypes.length];
+  alarmIndex++;
+
+  const timer = {
+    id: timerIdCounter++,
+    name,
+    totalSec,
+    remaining: totalSec,
+    alarm,
+    status: 'active',
+    lastReport: null,
+    redAlertAnnounced: false,
+  };
+  timers.push(timer);
+
+  nameEl.value = '';
+  minEl.value = '';
+  secEl.value = '';
+
+  addLog(`DEPLOYED: ${name} // T-MINUS ${fmtTime(totalSec)} // ALARM: ${alarm.toUpperCase()}`);
+  bark(`${name} deployed! T minus ${min > 0 ? min + ' minutes' : ''} ${sec > 0 ? sec + ' seconds' : ''}! Move it, soldier!`);
+
+  renderTimers();
+  updateStatusBoard();
+}
+
+function fmtTime(s) {
+  if (s <= 0) return '00:00';
+  const m = Math.floor(s / 60);
+  const ss = s % 60;
+  return String(m).padStart(2,'0') + ':' + String(ss).padStart(2,'0');
+}
+
+function getProgressPct(t) {
+  return Math.max(0, Math.min(100, ((t.totalSec - t.remaining) / t.totalSec) * 100));
+}
+
+function pickPhrase(category) {
+  const arr = phrases[category];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ---- RENDER ----
+function renderTimers() {
+  const container = document.getElementById('timers');
+  // Only re-create cards if count changed
+  if (container.children.length !== timers.length) {
+    container.innerHTML = '';
+    timers.forEach(t => {
+      const card = document.createElement('div');
+      card.className = 'timer-card';
+      card.id = 'timer-' + t.id;
+      card.innerHTML = `
+        <div class="timer-header">
+          <div>
+            <div class="timer-name">${t.name}</div>
+            <div class="timer-alarm-type">ALARM: ${t.alarm.toUpperCase()}</div>
+          </div>
+          <button class="btn-abort" onclick="abortTimer(${t.id})">ABORT</button>
+        </div>
+        <div class="timer-countdown" id="countdown-${t.id}">T-MINUS ${fmtTime(t.remaining)}</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-${t.id}" style="width:${getProgressPct(t)}%"></div></div>
+        <div class="timer-status" id="status-${t.id}">MISSION ACTIVE</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+}
+
+function updateTimerDisplay(t) {
+  const card = document.getElementById('timer-' + t.id);
+  if (!card) return;
+  const cdEl = document.getElementById('countdown-' + t.id);
+  const progEl = document.getElementById('prog-' + t.id);
+  const statusEl = document.getElementById('status-' + t.id);
+
+  if (t.status === 'complete') {
+    card.className = 'timer-card mission-complete';
+    cdEl.textContent = 'MISSION COMPLETE';
+    progEl.style.width = '100%';
+  } else if (t.remaining <= 30) {
+    card.className = 'timer-card red-alert';
+    cdEl.textContent = `T-MINUS ${fmtTime(t.remaining)}`;
+    progEl.style.width = getProgressPct(t) + '%';
+  } else {
+    card.className = 'timer-card';
+    cdEl.textContent = `T-MINUS ${fmtTime(t.remaining)}`;
+    progEl.style.width = getProgressPct(t) + '%';
+  }
+
+  if (t.lastStatus) statusEl.textContent = t.lastStatus;
+}
+
+function updateStatusBoard() {
+  const container = document.getElementById('status-rows');
+  const active = timers.filter(t => t.status !== 'aborted');
+  if (active.length === 0) {
+    container.innerHTML = '<div class="empty-msg">NO ACTIVE OPERATIONS. DEPLOY A TIMER, SOLDIER.</div>';
+    return;
+  }
+  container.innerHTML = active.map(t => {
+    let cls = 'status-row';
+    if (t.status === 'complete') cls += ' complete';
+    else if (t.remaining <= 30) cls += ' red-alert';
+    const pct = Math.round(getProgressPct(t));
+    const timeStr = t.status === 'complete' ? 'DONE' : `T-${fmtTime(t.remaining)}`;
+    return `<div class="${cls}">
+      <span class="name">${t.name}</span>
+      <span class="pct">${pct}%</span>
+      <span class="time">${timeStr}</span>
+    </div>`;
+  }).join('');
+}
+
+function abortTimer(id) {
+  const t = timers.find(x => x.id === id);
+  if (!t || t.status !== 'active') return;
+  t.status = 'aborted';
+  const card = document.getElementById('timer-' + t.id);
+  if (card) card.remove();
+  const idx = timers.indexOf(t);
+  if (idx > -1) timers.splice(idx, 1);
+  addLog(`ABORTED: ${t.name} // MISSION SCRUBBED`, 'alert');
+  bark(`${t.name} aborted! Mission scrubbed!`);
+  updateStatusBoard();
+}
+
+// ---- MAIN TICK ----
+function tick() {
+  timers.forEach(t => {
+    if (t.status !== 'active') return;
+    t.remaining--;
+
+    // Check progress milestones
+    const pct = getProgressPct(t);
+    const checkpoints = [
+      { pct: 25, key: '75' },
+      { pct: 50, key: '50' },
+      { pct: 75, key: '25' },
+    ];
+
+    checkpoints.forEach(cp => {
+      if (t.lastReport !== cp.key && pct >= cp.pct && pct < cp.pct + 2) {
+        t.lastReport = cp.key;
+        const phrase = pickPhrase(cp.key);
+        const msg = `${t.name}: ${phrase}`;
+        t.lastStatus = phrase;
+        addLog(msg);
+        bark(`${t.name}! ${phrase}`);
+      }
+    });
+
+    // Red alert at 30 seconds
+    if (t.remaining === 30 && !t.redAlertAnnounced) {
+      t.redAlertAnnounced = true;
+      const phrase = pickPhrase('redAlert');
+      t.lastStatus = phrase;
+      addLog(`RED ALERT: ${t.name} - ${phrase}`, 'alert');
+      bark(`Red alert! ${t.name}! ${phrase}`);
+      playRedAlertBeep();
+    }
+
+    // Red alert beeps every 5 seconds in last 30
+    if (t.remaining > 0 && t.remaining <= 30 && t.remaining % 5 === 0 && t.remaining !== 30) {
+      playRedAlertBeep();
+    }
+
+    // Final 10: count them down
+    if (t.remaining > 0 && t.remaining <= 10) {
+      t.lastStatus = `FINAL COUNTDOWN: ${t.remaining}`;
+      if (t.remaining <= 5) bark(`${t.remaining}`);
+    }
+
+    // COMPLETE
+    if (t.remaining <= 0) {
+      t.remaining = 0;
+      t.status = 'complete';
+      const phrase = pickPhrase('complete');
+      t.lastStatus = phrase;
+      addLog(`MISSION COMPLETE: ${t.name} - ${phrase}`, 'victory');
+      bark(`${t.name}! ${phrase}`);
+
+      // Play alarm sound
+      const player = alarmPlayers[t.alarm];
+      if (player) player();
+      setTimeout(playVictoryFanfare, 2000);
+    }
+
+    updateTimerDisplay(t);
+  });
+
+  updateStatusBoard();
+}
+
+// ---- INIT ----
+setInterval(tick, 1000);
+
+// Ensure voices are loaded
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// Init audio context on first interaction
+document.addEventListener('click', () => { getAudioCtx(); }, { once: true });
+
+// Enter key to deploy
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.target.id === 'inp-name' || e.target.id === 'inp-min' || e.target.id === 'inp-sec')) {
+    deployTimer();
+  }
+});
+
+addLog('KITCHEN COMMANDER ONLINE. AWAITING ORDERS.');
+</script>
+</body>
+</html>

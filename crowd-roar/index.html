@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CROWD ROAR - Hype Meter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #39ff14, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(57, 255, 20, 0.3));
+  }
+  .subtitle {
+    font-size: 0.75rem;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #666;
+    margin-top: -8px;
+  }
+
+  /* Start Button */
+  #startBtn {
+    padding: 16px 48px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border: 2px solid #39ff14;
+    background: transparent;
+    color: #39ff14;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  #startBtn:hover {
+    background: #39ff14;
+    color: #0a0a0f;
+    box-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
+  }
+  #startBtn.active {
+    background: #ff1744;
+    border-color: #ff1744;
+    color: #fff;
+  }
+  #startBtn.active:hover {
+    box-shadow: 0 0 30px rgba(255, 23, 68, 0.4);
+  }
+
+  /* Gauge */
+  .gauge-wrap {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    display: none;
+  }
+  .gauge-wrap.visible { display: block; }
+  .gauge-bg {
+    fill: none;
+    stroke: #1a1a2e;
+    stroke-width: 18;
+  }
+  .gauge-fill {
+    fill: none;
+    stroke: #39ff14;
+    stroke-width: 18;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.1s ease, stroke 0.3s;
+    filter: drop-shadow(0 0 8px rgba(57, 255, 20, 0.5));
+  }
+  .gauge-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .gauge-value {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #39ff14;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .gauge-label {
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #666;
+    margin-top: 4px;
+  }
+  .gauge-zone {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: color 0.3s;
+    min-height: 1.2em;
+  }
+
+  /* Stats Row */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    display: none;
+  }
+  .stats-row.visible { display: flex; }
+  .stat-card {
+    flex: 1;
+    background: #12121f;
+    border: 1px solid #1f1f3a;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #ffd700;
+  }
+  .stat-lbl {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  /* History Chart */
+  .chart-section {
+    width: 100%;
+    display: none;
+  }
+  .chart-section.visible { display: block; }
+  .section-title {
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 8px;
+  }
+  .chart-container {
+    width: 100%;
+    height: 120px;
+    background: #12121f;
+    border: 1px solid #1f1f3a;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+  }
+  #historyCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Highlight Button */
+  #highlightBtn {
+    padding: 14px 40px;
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border: 2px solid #ffd700;
+    background: transparent;
+    color: #ffd700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: none;
+  }
+  #highlightBtn.visible { display: block; }
+  #highlightBtn:hover {
+    background: #ffd700;
+    color: #0a0a0f;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+  }
+  #highlightBtn:active {
+    transform: scale(0.95);
+  }
+  .highlight-flash {
+    animation: flashBorder 0.5s ease;
+  }
+  @keyframes flashBorder {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), inset 0 0 20px rgba(255, 215, 0, 0.2); }
+  }
+
+  /* Highlights List */
+  .highlights-section {
+    width: 100%;
+    display: none;
+  }
+  .highlights-section.visible { display: block; }
+  .highlight-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #12121f;
+    border: 1px solid #1f1f3a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  .hl-time {
+    font-size: 0.75rem;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+  }
+  .hl-zone {
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .hl-val {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffd700;
+  }
+
+  /* Leaderboard */
+  .leaderboard-section {
+    width: 100%;
+    display: none;
+  }
+  .leaderboard-section.visible { display: block; }
+  .lb-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #12121f;
+    border: 1px solid #1f1f3a;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+  }
+  .lb-rank {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #ffd700;
+    min-width: 28px;
+    text-align: center;
+  }
+  .lb-rank.silver { color: #c0c0c0; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-rank.normal { color: #555; }
+  .lb-info { flex: 1; }
+  .lb-score {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #39ff14;
+  }
+  .lb-date {
+    font-size: 0.65rem;
+    color: #555;
+  }
+  .lb-peak {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #ffd700;
+  }
+
+  /* Share */
+  .share-section {
+    width: 100%;
+    display: none;
+    text-align: center;
+  }
+  .share-section.visible { display: block; }
+  #shareBtn {
+    padding: 12px 32px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border: 1px solid #39ff14;
+    background: transparent;
+    color: #39ff14;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  #shareBtn:hover {
+    background: rgba(57, 255, 20, 0.1);
+  }
+  .share-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #39ff14;
+    color: #0a0a0f;
+    padding: 10px 24px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .share-toast.show { opacity: 1; }
+
+  /* Screen shake at high levels */
+  .shake {
+    animation: shake 0.15s ease;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+  }
+
+  /* Glow pulse for earthquake zone */
+  .earthquake-glow {
+    box-shadow: 0 0 60px rgba(255, 23, 68, 0.3), 0 0 120px rgba(255, 23, 68, 0.1);
+  }
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <h1>Crowd Roar</h1>
+  <p class="subtitle">Hype Meter</p>
+
+  <button id="startBtn" onclick="toggleMic()">Start Measuring</button>
+
+  <!-- Gauge -->
+  <div class="gauge-wrap" id="gaugeWrap">
+    <svg viewBox="0 0 200 200" width="280" height="280">
+      <circle class="gauge-bg" cx="100" cy="100" r="85" transform="rotate(-90 100 100)"
+        stroke-dasharray="534.07" stroke-dashoffset="0"/>
+      <circle class="gauge-fill" id="gaugeFill" cx="100" cy="100" r="85" transform="rotate(-90 100 100)"
+        stroke-dasharray="534.07" stroke-dashoffset="534.07"/>
+    </svg>
+    <div class="gauge-center">
+      <div class="gauge-value" id="gaugeValue">0</div>
+      <div class="gauge-label">Hype Level</div>
+      <div class="gauge-zone" id="gaugeZone"></div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-val" id="peakVal">0</div>
+      <div class="stat-lbl">Peak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="avgVal">0</div>
+      <div class="stat-lbl">Average</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-val" id="durationVal">0:00</div>
+      <div class="stat-lbl">Duration</div>
+    </div>
+  </div>
+
+  <!-- Highlight Button -->
+  <button id="highlightBtn" onclick="markHighlight()">Highlight</button>
+
+  <!-- History Chart -->
+  <div class="chart-section" id="chartSection">
+    <div class="section-title">Noise Timeline</div>
+    <div class="chart-container">
+      <canvas id="historyCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Highlights -->
+  <div class="highlights-section" id="highlightsSection">
+    <div class="section-title">Highlights</div>
+    <div id="highlightsList"></div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-section" id="leaderboardSection">
+    <div class="section-title">Loudest Moments (All Time)</div>
+    <div id="leaderboardList"></div>
+  </div>
+
+  <!-- Share -->
+  <div class="share-section" id="shareSection">
+    <button id="shareBtn" onclick="sharePeak()">Share Your Peak</button>
+  </div>
+</div>
+
+<div class="share-toast" id="shareToast">Copied to clipboard!</div>
+
+<script>
+// Audio state
+let audioCtx, analyser, mic, stream;
+let isRunning = false;
+let animFrame;
+
+// Data
+let currentLevel = 0;
+let peakLevel = 0;
+let history = [];
+let highlights = [];
+let readings = [];
+let startTime = 0;
+const MAX_HISTORY = 300;
+
+// Threshold horn state
+let hornPlayed = false;
+let hornAudioCtx = null;
+
+// Zone config
+const ZONES = [
+  { min: 0,  max: 20, label: 'Library',         color: '#4a9eff' },
+  { min: 20, max: 40, label: 'Polite Clap',     color: '#39ff14' },
+  { min: 40, max: 60, label: 'Getting Loud',     color: '#ffd700' },
+  { min: 60, max: 80, label: 'STADIUM ENERGY',   color: '#ff9100' },
+  { min: 80, max: 100, label: 'EARTHQUAKE',      color: '#ff1744' },
+];
+
+function getZone(level) {
+  return ZONES.find(z => level >= z.min && level < z.max) || ZONES[ZONES.length - 1];
+}
+
+// Toggle microphone
+async function toggleMic() {
+  const btn = document.getElementById('startBtn');
+  if (isRunning) {
+    stopMic();
+    btn.textContent = 'Start Measuring';
+    btn.classList.remove('active');
+    saveToLeaderboard();
+    return;
+  }
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.6;
+    mic = audioCtx.createMediaStreamSource(stream);
+    mic.connect(analyser);
+
+    isRunning = true;
+    startTime = Date.now();
+    peakLevel = 0;
+    history = [];
+    highlights = [];
+    readings = [];
+    hornPlayed = false;
+
+    btn.textContent = 'Stop';
+    btn.classList.add('active');
+
+    // Show UI
+    document.getElementById('gaugeWrap').classList.add('visible');
+    document.getElementById('statsRow').classList.add('visible');
+    document.getElementById('highlightBtn').classList.add('visible');
+    document.getElementById('chartSection').classList.add('visible');
+    document.getElementById('highlightsSection').classList.add('visible');
+    document.getElementById('shareSection').classList.add('visible');
+
+    setupCanvas();
+    tick();
+  } catch (e) {
+    alert('Microphone access is required. Please allow mic access and try again.');
+  }
+}
+
+function stopMic() {
+  isRunning = false;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+}
+
+// Main loop
+function tick() {
+  if (!isRunning) return;
+  animFrame = requestAnimationFrame(tick);
+
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+
+  // Calculate RMS-like volume from frequency data
+  let sum = 0;
+  for (let i = 0; i < data.length; i++) sum += data[i];
+  const avg = sum / data.length;
+
+  // Map to 0-100 with some nonlinear scaling for drama
+  currentLevel = Math.min(100, Math.round(Math.pow(avg / 128, 0.8) * 100));
+
+  // Track peak
+  if (currentLevel > peakLevel) peakLevel = currentLevel;
+
+  // Track readings for average
+  readings.push(currentLevel);
+  if (readings.length > 600) readings.shift();
+
+  // History for chart
+  history.push(currentLevel);
+  if (history.length > MAX_HISTORY) history.shift();
+
+  // Horn at 80+
+  if (currentLevel >= 80 && !hornPlayed) {
+    playStadiumHorn();
+    hornPlayed = true;
+  }
+  if (currentLevel < 70) hornPlayed = false;
+
+  // Screen shake at high levels
+  if (currentLevel >= 80 && Math.random() > 0.7) {
+    document.getElementById('app').classList.add('shake');
+    setTimeout(() => document.getElementById('app').classList.remove('shake'), 150);
+  }
+
+  updateUI();
+  drawChart();
+}
+
+function updateUI() {
+  const zone = getZone(currentLevel);
+
+  // Gauge fill
+  const circumference = 534.07;
+  const offset = circumference - (currentLevel / 100) * circumference;
+  const gaugeFill = document.getElementById('gaugeFill');
+  gaugeFill.style.strokeDashoffset = offset;
+  gaugeFill.style.stroke = zone.color;
+  gaugeFill.style.filter = `drop-shadow(0 0 8px ${zone.color}80)`;
+
+  // Value
+  const gaugeValue = document.getElementById('gaugeValue');
+  gaugeValue.textContent = currentLevel;
+  gaugeValue.style.color = zone.color;
+
+  // Zone label
+  const gaugeZone = document.getElementById('gaugeZone');
+  gaugeZone.textContent = zone.label;
+  gaugeZone.style.color = zone.color;
+
+  // Earthquake glow
+  const gaugeWrap = document.getElementById('gaugeWrap');
+  if (currentLevel >= 80) {
+    gaugeWrap.classList.add('earthquake-glow');
+  } else {
+    gaugeWrap.classList.remove('earthquake-glow');
+  }
+
+  // Stats
+  document.getElementById('peakVal').textContent = peakLevel;
+  const avg = readings.length ? Math.round(readings.reduce((a, b) => a + b, 0) / readings.length) : 0;
+  document.getElementById('avgVal').textContent = avg;
+
+  // Duration
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+  document.getElementById('durationVal').textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+// Canvas chart
+let canvas, ctx;
+function setupCanvas() {
+  canvas = document.getElementById('historyCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+function drawChart() {
+  if (!ctx) return;
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+
+  ctx.clearRect(0, 0, w, h);
+
+  if (history.length < 2) return;
+
+  // Draw threshold lines
+  [20, 40, 60, 80].forEach(t => {
+    const y = h - (t / 100) * h;
+    ctx.strokeStyle = '#1f1f3a';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  });
+
+  // Draw highlight markers
+  highlights.forEach(hl => {
+    const idx = hl.historyIndex;
+    if (idx >= 0 && idx < history.length) {
+      const x = (idx / (MAX_HISTORY - 1)) * w;
+      ctx.strokeStyle = '#ffd70060';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+  });
+
+  // Draw waveform
+  const gradient = ctx.createLinearGradient(0, h, 0, 0);
+  gradient.addColorStop(0, '#39ff1400');
+  gradient.addColorStop(0.3, '#39ff1420');
+  gradient.addColorStop(0.6, '#ffd70030');
+  gradient.addColorStop(1, '#ff174440');
+
+  // Fill
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let i = 0; i < history.length; i++) {
+    const x = (i / (MAX_HISTORY - 1)) * w;
+    const y = h - (history[i] / 100) * h;
+    if (i === 0) ctx.lineTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(((history.length - 1) / (MAX_HISTORY - 1)) * w, h);
+  ctx.closePath();
+  ctx.fillStyle = gradient;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  for (let i = 0; i < history.length; i++) {
+    const x = (i / (MAX_HISTORY - 1)) * w;
+    const y = h - (history[i] / 100) * h;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  const zone = getZone(currentLevel);
+  ctx.strokeStyle = zone.color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// Highlight
+function markHighlight() {
+  const btn = document.getElementById('highlightBtn');
+  btn.classList.add('highlight-flash');
+  setTimeout(() => btn.classList.remove('highlight-flash'), 500);
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const zone = getZone(currentLevel);
+
+  const hl = {
+    time: timeStr,
+    level: currentLevel,
+    zone: zone.label,
+    color: zone.color,
+    historyIndex: history.length - 1,
+  };
+  highlights.unshift(hl);
+
+  renderHighlights();
+}
+
+function renderHighlights() {
+  const list = document.getElementById('highlightsList');
+  list.innerHTML = highlights.map(hl => `
+    <div class="highlight-item">
+      <span class="hl-time">${hl.time}</span>
+      <span class="hl-zone" style="color:${hl.color}">${hl.zone}</span>
+      <span class="hl-val">${hl.level}</span>
+    </div>
+  `).join('');
+}
+
+// Stadium horn sound effect (Web Audio API synthesis)
+function playStadiumHorn() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+
+    // Layer multiple oscillators for a rich horn sound
+    const freqs = [220, 277.18, 329.63, 440];
+    freqs.forEach(freq => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now);
+      osc.frequency.linearRampToValueAtTime(freq * 1.02, now + 0.8);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.05);
+      gain.gain.setValueAtTime(0.08, now + 0.6);
+      gain.gain.linearRampToValueAtTime(0, now + 1.0);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.0);
+    });
+
+    // Close context after sound finishes
+    setTimeout(() => ctx.close(), 1200);
+  } catch (e) {
+    // Silently fail if audio synthesis not supported
+  }
+}
+
+// Leaderboard
+function saveToLeaderboard() {
+  if (peakLevel === 0) return;
+
+  const entry = {
+    peak: peakLevel,
+    avg: readings.length ? Math.round(readings.reduce((a, b) => a + b, 0) / readings.length) : 0,
+    date: new Date().toLocaleDateString(),
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    duration: document.getElementById('durationVal').textContent,
+    highlights: highlights.length,
+  };
+
+  let lb = JSON.parse(localStorage.getItem('crowdroar_leaderboard') || '[]');
+  lb.push(entry);
+  lb.sort((a, b) => b.peak - a.peak);
+  lb = lb.slice(0, 10); // Keep top 10
+  localStorage.setItem('crowdroar_leaderboard', JSON.stringify(lb));
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+  const lb = JSON.parse(localStorage.getItem('crowdroar_leaderboard') || '[]');
+  if (lb.length === 0) return;
+
+  document.getElementById('leaderboardSection').classList.add('visible');
+  const list = document.getElementById('leaderboardList');
+
+  const rankColors = ['', 'silver', 'bronze'];
+  list.innerHTML = lb.map((entry, i) => {
+    const rankClass = i < 3 ? (rankColors[i] || '') : 'normal';
+    const medals = ['#1', '#2', '#3'];
+    const rank = i < 3 ? medals[i] : `#${i + 1}`;
+    return `
+      <div class="lb-item">
+        <span class="lb-rank ${rankClass}">${rank}</span>
+        <div class="lb-info">
+          <div class="lb-score">${entry.avg} avg</div>
+          <div class="lb-date">${entry.date} ${entry.time} - ${entry.duration}</div>
+        </div>
+        <span class="lb-peak">${entry.peak}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// Share
+function sharePeak() {
+  const zone = getZone(peakLevel);
+  const text = `CROWD ROAR: My peak hype level hit ${peakLevel}/100 - "${zone.label}" zone! Can you beat that?`;
+
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('shareToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  if (isRunning) setupCanvas();
+});
+
+// Load leaderboard on start
+renderLeaderboard();
+</script>
+</body>
+</html>

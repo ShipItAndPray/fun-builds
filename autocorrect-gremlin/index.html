@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autocorrect Gremlin</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gremlin-green: #4ade80;
+    --gremlin-dark: #1a1a2e;
+    --gremlin-purple: #7c3aed;
+    --gremlin-pink: #f472b6;
+    --panel-bg: #16213e;
+    --text-light: #e2e8f0;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--gremlin-dark);
+    color: var(--text-light);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+    position: relative;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--gremlin-green), var(--gremlin-purple), var(--gremlin-pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  .subtitle {
+    color: #94a3b8;
+    font-size: 1rem;
+    font-style: italic;
+  }
+
+  .gremlin-face {
+    font-size: 3.5rem;
+    display: inline-block;
+    animation: wobble 2s ease-in-out infinite;
+    cursor: default;
+    user-select: none;
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(-5deg) scale(1); }
+    25% { transform: rotate(5deg) scale(1.05); }
+    50% { transform: rotate(-3deg) scale(1); }
+    75% { transform: rotate(4deg) scale(1.02); }
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 16px;
+    background: var(--panel-bg);
+    border-radius: 12px;
+    border: 1px solid #2d3a5e;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .control-group label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 160px;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, var(--gremlin-green), var(--gremlin-pink));
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: 3px solid var(--gremlin-purple);
+  }
+
+  .chaos-value {
+    font-weight: bold;
+    font-size: 1.1rem;
+    min-width: 24px;
+    text-align: center;
+    color: var(--gremlin-green);
+  }
+
+  .stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .stat-badge {
+    background: rgba(124, 58, 237, 0.2);
+    border: 1px solid var(--gremlin-purple);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-badge .count {
+    font-weight: bold;
+    color: var(--gremlin-pink);
+    font-size: 1rem;
+  }
+
+  .escalation-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+  }
+
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #334155;
+    border-radius: 12px;
+    transition: 0.3s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+
+  .toggle-switch input:checked + .toggle-slider {
+    background: var(--gremlin-purple);
+  }
+
+  .toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+  }
+
+  .editor-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+  }
+
+  @media (max-width: 640px) {
+    .editor-section { grid-template-columns: 1fr; }
+    h1 { font-size: 1.8rem; }
+    input[type="range"] { width: 120px; }
+  }
+
+  .panel {
+    background: var(--panel-bg);
+    border-radius: 12px;
+    border: 1px solid #2d3a5e;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #2d3a5e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .panel-header.original { color: var(--gremlin-green); }
+  .panel-header.corrupted { color: var(--gremlin-pink); }
+
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-family: inherit;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea::placeholder {
+    color: #475569;
+  }
+
+  .corrupted-output {
+    padding: 16px;
+    min-height: 220px;
+    font-size: 1rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .corrupted-output .swapped {
+    color: var(--gremlin-pink);
+    font-weight: 600;
+    text-decoration: underline wavy var(--gremlin-purple);
+    text-underline-offset: 3px;
+    position: relative;
+  }
+
+  .corrupted-output .swapped::after {
+    content: attr(data-original);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gremlin-dark);
+    border: 1px solid var(--gremlin-purple);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    color: var(--gremlin-green);
+    font-weight: normal;
+    text-decoration: none;
+  }
+
+  .corrupted-output .swapped:hover::after {
+    opacity: 1;
+  }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 16px 0;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+
+  button:active { transform: scale(0.97); }
+
+  .btn-copy {
+    background: linear-gradient(135deg, var(--gremlin-purple), #6d28d9);
+    color: white;
+  }
+
+  .btn-slack {
+    background: linear-gradient(135deg, #e01e5a, #e0447a);
+    color: white;
+  }
+
+  .btn-clear {
+    background: #334155;
+    color: var(--text-light);
+  }
+
+  .btn-sound {
+    background: #334155;
+    color: var(--text-light);
+    min-width: 44px;
+  }
+
+  .slack-preview {
+    display: none;
+    background: white;
+    color: #1d1c1d;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    font-family: 'Lato', 'Segoe UI', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .slack-preview.visible { display: block; }
+
+  .slack-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .slack-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, var(--gremlin-green), var(--gremlin-purple));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .slack-name {
+    font-weight: 900;
+    color: #1d1c1d;
+  }
+
+  .slack-time {
+    color: #616061;
+    font-size: 0.75rem;
+  }
+
+  .slack-body {
+    padding-left: 44px;
+    color: #1d1c1d;
+    white-space: pre-wrap;
+  }
+
+  .mangle-flash {
+    animation: flash 0.3s ease-out;
+  }
+
+  @keyframes flash {
+    0% { background-color: rgba(244, 114, 182, 0.3); }
+    100% { background-color: transparent; }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--gremlin-purple);
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center;
+    padding: 30px 0 20px;
+    color: #475569;
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="gremlin-face" id="gremlinFace">&#x1F47E;</div>
+    <h1>Autocorrect Gremlin</h1>
+    <p class="subtitle">Type normally. Watch your words get delightfully mangled.</p>
+  </header>
+
+  <div class="controls">
+    <div class="control-group">
+      <label>Chaos Level</label>
+      <input type="range" id="chaosSlider" min="1" max="5" value="3">
+      <span class="chaos-value" id="chaosValue">3</span>
+    </div>
+
+    <div class="escalation-toggle">
+      <label class="toggle-switch">
+        <input type="checkbox" id="escalationToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+      <label for="escalationToggle" style="cursor:pointer; font-size:0.9rem;">Escalation</label>
+    </div>
+
+    <button class="btn-sound" id="soundToggle" title="Toggle sound">&#x1F50A;</button>
+
+    <div class="stats">
+      <div class="stat-badge">
+        Words Mangled: <span class="count" id="mangleCount">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="editor-section">
+    <div class="panel">
+      <div class="panel-header original">Your Text</div>
+      <textarea id="inputArea" placeholder="Start typing here... try words like meeting, email, deadline, budget, project, manager, synergy, lunch, coffee, Monday..."></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-header corrupted">
+        Gremlin's Version
+        <span style="font-size:0.8rem; opacity:0.7;">hover swapped words for original</span>
+      </div>
+      <div class="corrupted-output" id="outputArea"></div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn-copy" id="copyBtn">Copy Corrupted Text</button>
+    <button class="btn-slack" id="slackBtn">Send to Slack Preview</button>
+    <button class="btn-clear" id="clearBtn">Clear All</button>
+  </div>
+
+  <div class="slack-preview" id="slackPreview">
+    <div class="slack-header">
+      <div class="slack-avatar">&#x1F47E;</div>
+      <div>
+        <span class="slack-name">You (via Gremlin)</span>
+        <span class="slack-time" id="slackTime"></span>
+      </div>
+    </div>
+    <div class="slack-body" id="slackBody"></div>
+  </div>
+
+  <footer>The gremlin lives in your keyboard. There is no escape.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Word substitution banks ──
+const BASE_SUBS = {
+  // Office classics
+  "meeting": "jousting tournament",
+  "meetings": "jousting tournaments",
+  "email": "carrier pigeon",
+  "emails": "carrier pigeons",
+  "deadline": "doomline",
+  "deadlines": "doomlines",
+  "budget": "treasure hoard",
+  "budgets": "treasure hoards",
+  "project": "crusade",
+  "projects": "crusades",
+  "manager": "overlord",
+  "managers": "overlords",
+  "synergy": "dark magic",
+  "lunch": "feast",
+  "coffee": "survival potion",
+  "monday": "Doomsday",
+  "tuesday": "Chewsday",
+  "wednesday": "Woe-day",
+  "thursday": "Thirstday",
+  "friday": "Friyay",
+  "weekend": "freedom window",
+  "boss": "supreme commander",
+  "coworker": "fellow peasant",
+  "coworkers": "fellow peasants",
+  "colleague": "comrade-in-arms",
+  "colleagues": "comrades-in-arms",
+  "team": "fellowship",
+  "teams": "fellowships",
+  "office": "dungeon",
+  "desk": "battle station",
+  "computer": "magic rectangle",
+  "laptop": "portable spell book",
+  "phone": "pocket oracle",
+  "presentation": "dramatic performance",
+  "report": "ancient scroll",
+  "reports": "ancient scrolls",
+  "spreadsheet": "number dungeon",
+  "spreadsheets": "number dungeons",
+  "database": "knowledge vault",
+  "password": "secret incantation",
+  "passwords": "secret incantations",
+  "login": "ritual of entry",
+  "logout": "banishment",
+  "update": "prophecy revision",
+  "updates": "prophecy revisions",
+  "download": "summon from the cloud realm",
+  "upload": "sacrifice to the cloud gods",
+  "wifi": "invisible sorcery",
+  "internet": "the great web of lies",
+  "website": "digital shrine",
+  "click": "poke with intent",
+  "delete": "banish to the void",
+  "salary": "ransom",
+  "raise": "tribute increase",
+  "promotion": "ascension",
+  "fired": "exiled",
+  "hired": "conscripted",
+  "resume": "scroll of deeds",
+  "interview": "trial by interrogation",
+  "feedback": "judgment",
+  "review": "inquisition",
+  "strategy": "battle plan",
+  "schedule": "prophecy calendar",
+  "agenda": "list of demands",
+  "minutes": "sacred records",
+  "client": "patron of the realm",
+  "clients": "patrons of the realm",
+  "customer": "gold-bearing visitor",
+  "customers": "gold-bearing visitors",
+  "stakeholder": "shadowy figure",
+  "stakeholders": "shadowy figures",
+  "deadline": "doomline",
+  "workflow": "ritual sequence",
+  "process": "arcane procedure",
+  "brainstorm": "mind tornado",
+  "collaborate": "combine dark arts",
+  "optimize": "enchant",
+  "leverage": "wield",
+  "pivot": "dramatic U-turn",
+  "deliverable": "sacred artifact",
+  "deliverables": "sacred artifacts",
+  "milestone": "checkpoint of destiny",
+  "milestones": "checkpoints of destiny",
+  "kpi": "judgment metric",
+  "roi": "treasure return ratio",
+  "asap": "before the prophecy expires",
+  "eod": "before the sun dies",
+  "eow": "before the freedom window",
+  "fyi": "hark",
+  "imo": "by my reckoning",
+  "tbh": "by the old gods",
+  "thanks": "blessings upon thee",
+  "thank you": "eternal gratitude",
+  "sorry": "I beg thy pardon",
+  "please": "I beseech thee",
+  "hello": "hail",
+  "hi": "hark",
+  "hey": "hear ye",
+  "bye": "fare thee well",
+  "goodbye": "may the winds favor you",
+  "yes": "aye",
+  "no": "nay",
+  "okay": "so it shall be",
+  "ok": "so be it",
+  "problem": "catastrophe",
+  "problems": "catastrophes",
+  "issue": "calamity",
+  "issues": "calamities",
+  "bug": "gremlin spawn",
+  "bugs": "gremlin spawns",
+  "fix": "exorcism",
+  "fixed": "exorcised",
+  "urgent": "code red from the high council",
+  "important": "of grave consequence",
+  "money": "golden doubloons",
+  "cost": "blood price",
+  "profit": "plundered treasure",
+  "invoice": "ransom note",
+  "payment": "tribute"
+};
+
+// Escalation tier: wilder replacements that unlock over time
+const ESCALATED_SUBS = {
+  "meeting": "gladiatorial combat",
+  "email": "raven dispatch",
+  "deadline": "hour of reckoning",
+  "budget": "dragon's hoard",
+  "project": "holy quest",
+  "manager": "dark lord",
+  "synergy": "forbidden alchemy",
+  "lunch": "great banquet of survival",
+  "coffee": "liquid consciousness",
+  "team": "war council",
+  "office": "labyrinth of despair",
+  "computer": "sentient rectangle",
+  "phone": "cursed rectangle of notifications",
+  "boss": "final boss",
+  "presentation": "theatrical ordeal",
+  "report": "tome of prophecy",
+  "spreadsheet": "grid of eternal suffering",
+  "password": "blood oath phrase",
+  "wifi": "ethereal life force",
+  "schedule": "time prison",
+  "feedback": "trial by committee",
+  "client": "quest giver",
+  "stakeholder": "throne room specter",
+  "brainstorm": "psychic lightning storm",
+  "collaborate": "fuse souls",
+  "urgent": "THE KINGDOM IS FALLING",
+  "problem": "existential crisis",
+  "bug": "chaos imp",
+  "salary": "survival rations",
+  "sorry": "a thousand apologies, Your Majesty"
+};
+
+// ── State ──
+let mangleCount = 0;
+let soundEnabled = true;
+let escalationStart = Date.now();
+let audioCtx = null;
+
+// ── Audio: tiny gremlin giggle chirp ──
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playGiggle() {
+  if (!soundEnabled || !audioCtx) return;
+  const now = audioCtx.currentTime;
+
+  // Quick chirpy giggle: two fast ascending tones
+  [0, 0.06, 0.12].forEach((offset, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800 + i * 200 + Math.random() * 200, now + offset);
+    osc.frequency.exponentialRampToValueAtTime(1200 + i * 300, now + offset + 0.05);
+    gain.gain.setValueAtTime(0.08, now + offset);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.08);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now + offset);
+    osc.stop(now + offset + 0.1);
+  });
+}
+
+// ── Chaos percentage from slider ──
+function getChaosPercent() {
+  const level = parseInt(document.getElementById('chaosSlider').value);
+  // Level 1=5%, 2=12%, 3=20%, 4=30%, 5=40%
+  return [0, 0.05, 0.12, 0.20, 0.30, 0.40][level];
+}
+
+// ── Get current substitution map (with escalation) ──
+function getCurrentSubs() {
+  const useEscalation = document.getElementById('escalationToggle').checked;
+  if (!useEscalation) return BASE_SUBS;
+
+  const elapsed = (Date.now() - escalationStart) / 1000;
+  // After 30s start mixing in escalated subs, fully escalated by 120s
+  if (elapsed < 30) return BASE_SUBS;
+
+  const blend = Math.min(1, (elapsed - 30) / 90);
+  const merged = { ...BASE_SUBS };
+
+  for (const [word, replacement] of Object.entries(ESCALATED_SUBS)) {
+    if (Math.random() < blend) {
+      merged[word] = replacement;
+    }
+  }
+  return merged;
+}
+
+// ── Process text ──
+function processText(text) {
+  const subs = getCurrentSubs();
+  const chaosPercent = getChaosPercent();
+  let newMangles = 0;
+
+  // Split preserving whitespace and punctuation
+  const tokens = text.split(/(\s+)/);
+  const resultParts = [];
+
+  for (const token of tokens) {
+    // Whitespace tokens pass through
+    if (/^\s+$/.test(token) || token === '') {
+      resultParts.push({ text: token, swapped: false });
+      continue;
+    }
+
+    // Strip punctuation from edges for matching
+    const leadMatch = token.match(/^([^a-zA-Z]*)/);
+    const trailMatch = token.match(/([^a-zA-Z]*)$/);
+    const lead = leadMatch ? leadMatch[1] : '';
+    const trail = trailMatch ? trailMatch[1] : '';
+    const core = token.slice(lead.length, token.length - (trail.length || 0) || undefined);
+    const coreLower = core.toLowerCase();
+
+    if (subs[coreLower] && Math.random() < chaosPercent) {
+      let replacement = subs[coreLower];
+      // Try to match case of first letter
+      if (core[0] === core[0].toUpperCase() && core[0] !== core[0].toLowerCase()) {
+        replacement = replacement.charAt(0).toUpperCase() + replacement.slice(1);
+      }
+      resultParts.push({
+        text: lead + replacement + trail,
+        swapped: true,
+        original: core
+      });
+      newMangles++;
+    } else {
+      resultParts.push({ text: token, swapped: false });
+    }
+  }
+
+  return { parts: resultParts, newMangles };
+}
+
+// ── Render corrupted output ──
+function renderOutput(parts) {
+  const container = document.getElementById('outputArea');
+  container.innerHTML = '';
+
+  for (const part of parts) {
+    if (part.swapped) {
+      const span = document.createElement('span');
+      span.className = 'swapped';
+      span.textContent = part.text;
+      span.setAttribute('data-original', part.original);
+      container.appendChild(span);
+    } else {
+      container.appendChild(document.createTextNode(part.text));
+    }
+  }
+}
+
+// ── Get plain corrupted text ──
+function getCorruptedPlainText(parts) {
+  return parts.map(p => p.text).join('');
+}
+
+// ── Debounced processing ──
+let lastParts = [];
+let debounceTimer = null;
+
+function handleInput() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const text = document.getElementById('inputArea').value;
+    if (!text.trim()) {
+      document.getElementById('outputArea').innerHTML = '';
+      lastParts = [];
+      return;
+    }
+    const { parts, newMangles } = processText(text);
+    lastParts = parts;
+    renderOutput(parts);
+
+    if (newMangles > 0) {
+      mangleCount += newMangles;
+      document.getElementById('mangleCount').textContent = mangleCount;
+      playGiggle();
+      // Wiggle the gremlin
+      const face = document.getElementById('gremlinFace');
+      face.style.animation = 'none';
+      face.offsetHeight; // reflow
+      face.style.animation = 'wobble 0.4s ease-in-out';
+      setTimeout(() => face.style.animation = 'wobble 2s ease-in-out infinite', 400);
+    }
+  }, 150);
+}
+
+// ── Toast notification ──
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ── Event listeners ──
+document.getElementById('inputArea').addEventListener('input', handleInput);
+document.getElementById('inputArea').addEventListener('focus', () => initAudio());
+
+document.getElementById('chaosSlider').addEventListener('input', (e) => {
+  document.getElementById('chaosValue').textContent = e.target.value;
+  // Re-process on chaos change
+  handleInput();
+});
+
+document.getElementById('soundToggle').addEventListener('click', () => {
+  initAudio();
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? '\u{1F50A}' : '\u{1F507}';
+});
+
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const text = getCorruptedPlainText(lastParts);
+  if (!text) return showToast('Nothing to copy!');
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+});
+
+document.getElementById('slackBtn').addEventListener('click', () => {
+  const text = getCorruptedPlainText(lastParts);
+  if (!text) return showToast('Type something first!');
+  const preview = document.getElementById('slackPreview');
+  preview.classList.toggle('visible');
+  document.getElementById('slackBody').textContent = text;
+  const now = new Date();
+  document.getElementById('slackTime').textContent =
+    now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('inputArea').value = '';
+  document.getElementById('outputArea').innerHTML = '';
+  document.getElementById('slackPreview').classList.remove('visible');
+  lastParts = [];
+  mangleCount = 0;
+  document.getElementById('mangleCount').textContent = '0';
+  escalationStart = Date.now();
+});
+
+// Re-process periodically if escalation is on (so subs get wilder over time)
+setInterval(() => {
+  if (document.getElementById('escalationToggle').checked &&
+      document.getElementById('inputArea').value.trim()) {
+    handleInput();
+  }
+}, 10000);
+</script>
+</body>
+</html>

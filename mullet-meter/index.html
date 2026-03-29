@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>MULLET METER -- Rate Your Hair</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0014;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Neon grid background */
+  .bg-grid {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      linear-gradient(rgba(255,0,128,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,0,128,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: gridScroll 20s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes gridScroll {
+    0% { transform: perspective(500px) rotateX(60deg) translateY(0); }
+    100% { transform: perspective(500px) rotateX(60deg) translateY(40px); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    text-align: center;
+  }
+
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(1.4rem, 5vw, 2.2rem);
+    background: linear-gradient(180deg, #ff00ff, #ff6ec7, #ffff00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(255,0,255,0.6));
+    margin-bottom: 4px;
+    letter-spacing: 2px;
+    line-height: 1.4;
+  }
+
+  .subtitle {
+    font-size: 0.65rem;
+    color: #ff6ec7;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0.8;
+  }
+
+  /* Camera area */
+  #camera-section {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    max-height: 420px;
+    background: #110022;
+    border: 3px solid #ff00ff;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: 0 0 30px rgba(255,0,255,0.3), inset 0 0 30px rgba(255,0,255,0.1);
+  }
+
+  #video, #photo-canvas {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  #photo-canvas { display: none; }
+
+  .camera-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .camera-placeholder .icon {
+    font-size: 4rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .camera-placeholder p {
+    font-size: 0.7rem;
+    color: #ff6ec7;
+    letter-spacing: 2px;
+  }
+
+  /* Buttons */
+  .btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    padding: 16px 28px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff00ff, #8b00ff);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(255,0,255,0.4), 0 4px 15px rgba(0,0,0,0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px rgba(255,0,255,0.6), 0 6px 20px rgba(0,0,0,0.4);
+  }
+
+  .btn-primary:active { transform: translateY(1px); }
+
+  .btn-secondary {
+    background: transparent;
+    color: #ff6ec7;
+    border: 2px solid #ff6ec7;
+    margin: 8px;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,110,199,0.15);
+  }
+
+  .btn-capture {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ff4488, #ff0066);
+    border: 4px solid #fff;
+    box-shadow: 0 0 25px rgba(255,0,102,0.6);
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    cursor: pointer;
+    z-index: 5;
+    padding: 0;
+    transition: all 0.15s;
+  }
+
+  .btn-capture:active {
+    transform: translateX(-50%) scale(0.9);
+  }
+
+  .btn-capture::after {
+    content: '';
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.5);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* Loading / Analysis */
+  #analysis-section {
+    display: none;
+    padding: 40px 20px;
+  }
+
+  .loading-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    color: #ff6ec7;
+    margin-bottom: 20px;
+    min-height: 40px;
+    line-height: 1.6;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #1a0033;
+    border-radius: 6px;
+    border: 1px solid #ff00ff44;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff00ff, #ff6ec7, #ffff00);
+    border-radius: 6px;
+    transition: width 0.3s ease;
+  }
+
+  .scanner-line {
+    width: 80%;
+    max-width: 200px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff00ff, #00ffff, #ff00ff, transparent);
+    margin: 20px auto;
+    animation: scanPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scanPulse {
+    0%, 100% { opacity: 0.3; transform: scaleX(0.5); }
+    50% { opacity: 1; transform: scaleX(1); }
+  }
+
+  /* Results */
+  #results-section { display: none; }
+
+  .score-display {
+    margin: 24px 0;
+  }
+
+  .score-number {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(3rem, 12vw, 5rem);
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .score-label {
+    font-size: 0.55rem;
+    letter-spacing: 4px;
+    color: #aaa;
+    text-transform: uppercase;
+  }
+
+  /* Arcade meter */
+  .meter-container {
+    width: 100%;
+    max-width: 360px;
+    margin: 20px auto;
+    padding: 0 10px;
+  }
+
+  .meter-track {
+    width: 100%;
+    height: 32px;
+    background: #1a0033;
+    border-radius: 16px;
+    border: 2px solid #333;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 14px;
+    width: 0%;
+    transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+
+  .meter-fill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    right: 4px;
+    height: 8px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.3), transparent);
+    border-radius: 10px;
+  }
+
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.45rem;
+    color: #666;
+    margin-top: 6px;
+    font-family: 'Press Start 2P', monospace;
+  }
+
+  /* Ticks on the meter */
+  .meter-ticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 4px;
+    margin-top: 2px;
+  }
+
+  .meter-ticks span {
+    width: 2px;
+    height: 6px;
+    background: #444;
+  }
+
+  .verdict-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(0.8rem, 3vw, 1.1rem);
+    margin: 20px 0 10px;
+    line-height: 1.5;
+  }
+
+  .verdict-desc {
+    font-size: 0.75rem;
+    color: #ccc;
+    line-height: 1.8;
+    max-width: 340px;
+    margin: 0 auto 24px;
+  }
+
+  .verdict-extra {
+    font-size: 0.6rem;
+    color: #ff6ec7;
+    font-style: italic;
+    margin-bottom: 20px;
+  }
+
+  .result-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  /* Flash effect */
+  .flash {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #fff;
+    z-index: 9998;
+    animation: flashAnim 0.3s ease-out forwards;
+  }
+
+  @keyframes flashAnim {
+    0% { opacity: 0.9; }
+    100% { opacity: 0; }
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9000;
+  }
+
+  /* Neon glow text */
+  .neon-pink { color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff; }
+  .neon-cyan { color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff; }
+  .neon-yellow { color: #ffff00; text-shadow: 0 0 10px #ffff00, 0 0 20px #ffff00; }
+  .neon-green { color: #00ff00; text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00; }
+
+  /* Hidden */
+  .hidden { display: none !important; }
+
+  /* Photo thumbnail in results */
+  .photo-thumb {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #ff00ff;
+    object-fit: cover;
+    margin: 0 auto 10px;
+    display: block;
+    box-shadow: 0 0 20px rgba(255,0,255,0.4);
+  }
+
+  /* Stars decoration */
+  .stars {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+
+  /* Share toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1a0033;
+    border: 2px solid #ff00ff;
+    color: #ff6ec7;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    z-index: 10000;
+    transition: transform 0.3s ease;
+    box-shadow: 0 0 20px rgba(255,0,255,0.4);
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="bg-grid"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<div class="container">
+  <h1>MULLET METER</h1>
+  <div class="subtitle">Hair Analysis Technology Since 1987</div>
+
+  <!-- CAMERA VIEW -->
+  <div id="camera-section">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="photo-canvas"></canvas>
+    <div class="camera-placeholder" id="placeholder">
+      <div class="icon">&#128135;</div>
+      <p>Ready to judge your hair?</p>
+    </div>
+    <button class="btn-capture hidden" id="btn-capture" onclick="takePhoto()" aria-label="Take photo"></button>
+  </div>
+
+  <div id="start-controls">
+    <button class="btn btn-primary" id="btn-start" onclick="startCamera()">
+      Open Camera
+    </button>
+  </div>
+
+  <!-- ANALYSIS VIEW -->
+  <div id="analysis-section">
+    <div class="scanner-line"></div>
+    <div class="loading-text" id="loading-text">Initializing hair scanner...</div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS VIEW -->
+  <div id="results-section">
+    <canvas id="photo-thumb-canvas" class="photo-thumb"></canvas>
+    <div class="score-display">
+      <div class="score-number" id="score-number">0</div>
+      <div class="score-label">Mullet Score</div>
+    </div>
+    <div class="meter-container">
+      <div class="meter-track">
+        <div class="meter-fill" id="meter-fill"></div>
+      </div>
+      <div class="meter-labels">
+        <span>Boring</span>
+        <span>Decent</span>
+        <span>Legend</span>
+      </div>
+      <div class="meter-ticks">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span>
+      </div>
+    </div>
+    <div class="verdict-title" id="verdict-title"></div>
+    <div class="verdict-desc" id="verdict-desc"></div>
+    <div class="verdict-extra" id="verdict-extra"></div>
+    <div class="result-buttons">
+      <button class="btn btn-secondary" onclick="shareResult()">Share Result</button>
+      <button class="btn btn-secondary" onclick="tryAgain()">Try Again</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+// ============ VERDICTS DATABASE ============
+const VERDICTS = {
+  low: [ // 0-30
+    { title: "Corporate Drone", desc: "Your hair screams middle management. It probably has a 401k.", extra: "HR approved this haircut." },
+    { title: "The Accountant", desc: "Your hair files taxes on time and never jaywalks.", extra: "Spreadsheet-compatible follicles." },
+    { title: "Witness Protection", desc: "This hair is designed to be forgotten. Mission accomplished.", extra: "Even security cameras lose interest." },
+    { title: "Default Settings", desc: "You went to the barber and said 'whatever's easiest.'", extra: "Ctrl+Z your last haircut." },
+    { title: "NPC Energy", desc: "Your hair is a background character in someone else's movie.", extra: "Loading generic hairstyle #4..." },
+    { title: "Beige Incarnate", desc: "If elevator music was a hairstyle. Inoffensive. Forgettable.", extra: "Even your mirror yawns." },
+    { title: "The PTA President", desc: "This hair brings orange slices to soccer games.", extra: "Minivan-aerodynamic." },
+    { title: "Cubicle Camouflage", desc: "Your hair blends into any office environment. Stealth mode.", extra: "Invisible to upper management." },
+    { title: "The Sensible Choice", desc: "Your mother loves it. That's the problem.", extra: "Grandma-approved since birth." },
+    { title: "The Placeholder", desc: "Hair that says 'I'll deal with this later' but never does.", extra: "Permanently temporary." },
+    { title: "TPS Report Hair", desc: "Did you get the memo about your hair? Yeah... we're gonna need you to go ahead and fix that.", extra: "Lumberg would be proud." },
+    { title: "The Carpooler", desc: "Safe, reliable, gets the job done. Nobody's excited about it.", extra: "Arrives exactly on time." },
+    { title: "Department Store Mannequin", desc: "Your hair has been on display since 1994. Nobody's buying.", extra: "40% off clearance vibes." },
+    { title: "HOA Compliant", desc: "Your hair would never violate neighborhood regulations.", extra: "Lawn-height approved." },
+    { title: "The Khaki", desc: "If khaki pants achieved sentience and became a hairstyle.", extra: "Pairs well with New Balance." },
+    { title: "Passive Aggressive Hair", desc: "It's fine. Everything's fine. The hair is FINE.", extra: "Per my last email..." },
+    { title: "Copy-Paste Hair", desc: "Ctrl+C from the 'safe haircuts for job interviews' Google search.", extra: "Page 1 result energy." },
+  ],
+  mid: [ // 31-69
+    { title: "Adventurous But Safe", desc: "Your barber is doing their best with what they've got.", extra: "Baby steps toward greatness." },
+    { title: "Weekend Warrior", desc: "Business Monday-Friday, slightly less business on weekends.", extra: "Lets loose with a side part." },
+    { title: "The Almost", desc: "You're one impulsive decision away from greatness.", extra: "So close yet so far." },
+    { title: "Controlled Chaos", desc: "There's a plan here somewhere. We think. Maybe.", extra: "Organized mess." },
+    { title: "The Negotiator", desc: "Your hair is a compromise between who you are and who you pretend to be.", extra: "Meeting halfway." },
+    { title: "Trending... Locally", desc: "You're the coolest person at your local grocery store.", extra: "Aisle 7 celebrity." },
+    { title: "The Conversation Piece", desc: "Not quite iconic, but at least people notice.", extra: "Gets a mention at parties." },
+    { title: "Rising Star", desc: "Your hair shows potential. It's in its training arc.", extra: "Montage in progress." },
+    { title: "The Indie Film", desc: "Not mainstream enough to be boring, not wild enough to be memorable.", extra: "Sundance-adjacent." },
+    { title: "Brunch Hair", desc: "Too fancy for breakfast, not fancy enough for dinner.", extra: "Mimosa-tier follicles." },
+    { title: "The Fan Favorite", desc: "Your hair has a solid following. Not viral, but loyal.", extra: "Cult classic energy." },
+    { title: "Work In Progress", desc: "Your hair is mid-renovation. The potential is there. The budget is not.", extra: "Phase 2 coming soon." },
+    { title: "The Playlist", desc: "A mix of hits and deep cuts. Mostly deep cuts.", extra: "Skip rate: 40%." },
+    { title: "Solid B+", desc: "Your hair would make honor roll but not valedictorian.", extra: "Dean's list, maybe." },
+    { title: "The Understudy", desc: "Ready for the spotlight if the star calls in sick.", extra: "Waiting in the wings." },
+    { title: "Side Quest Hair", desc: "Not the main character energy, but an entertaining subplot.", extra: "+50 XP for trying." },
+    { title: "The Remix", desc: "A familiar haircut with an unexpected twist. We're cautiously optimistic.", extra: "Feat. gel and prayer." },
+  ],
+  high: [ // 70-100
+    { title: "Absolute Legend", desc: "Your hair has its own Wikipedia page. And fan fiction.", extra: "Citations needed? Never." },
+    { title: "Hair God/Goddess", desc: "The follicle deities have blessed you. Mere mortals weep.", extra: "Shampoo companies want your number." },
+    { title: "Main Character", desc: "The wind blows specifically for you. Slow-mo activated.", extra: "Background music starts playing." },
+    { title: "The Icon", desc: "People screenshot your hair and show it to their barber.", extra: "Reference photo tier." },
+    { title: "Maximum Mullet", desc: "Business in the front, ABSOLUTE RAGER in the back.", extra: "Party-to-business ratio: optimal." },
+    { title: "Rock Star Status", desc: "Your hair should be on a concert poster. With pyrotechnics.", extra: "Wakes up like this." },
+    { title: "The Phenomenon", desc: "Scientists can't explain your hair. They've stopped trying.", extra: "Defies physics and social norms." },
+    { title: "Final Boss Hair", desc: "This is what the hero sees before the ultimate battle.", extra: "Your BGM slaps." },
+    { title: "Certified Unhinged", desc: "Your hair made a choice and society has to deal with it.", extra: "No refunds, no apologies." },
+    { title: "Time Traveler", desc: "Your hair exists in 1985 and 2085 simultaneously.", extra: "Quantum follicle state." },
+    { title: "The Masterpiece", desc: "Michelangelo would weep. Your barber belongs in a museum.", extra: "UNESCO protected hair." },
+    { title: "Galaxy Brain Hair", desc: "Your hair operates on a frequency mortals can't comprehend.", extra: "IQ visible from orbit." },
+    { title: "The Renaissance", desc: "Your hair brought back an era that was dead. And it THRIVES.", extra: "History textbook pending." },
+    { title: "Anime Protagonist", desc: "Your hair defies gravity, logic, and at least 3 Geneva conventions.", extra: "Power level: over 9000." },
+    { title: "Legendary Drop", desc: "If your hair was a loot item, it would be gold-bordered with sparkles.", extra: "0.01% drop rate." },
+    { title: "Cultural Reset", desc: "Your hair just changed the conversation. Everything is before and after THIS.", extra: "Trending worldwide." },
+    { title: "The Awakening", desc: "Your hair achieved enlightenment. It radiates pure cosmic energy.", extra: "Third eye: open. Hair: immaculate." },
+  ],
+  bald: [
+    { title: "Chrome Dome Certified", desc: "Aerodynamic excellence. Wind resistance: zero. Style: maximum.", extra: "Vin Diesel sends his regards.", score: 88 },
+    { title: "Solar Panel", desc: "Your head is harvesting clean energy for the neighborhood.", extra: "Sustainable AND stylish.", score: 82 },
+    { title: "The Speed Run", desc: "You optimized your morning routine by removing hair entirely. Genius.", extra: "Shampoo companies hate this one trick.", score: 90 },
+    { title: "Mirror Finish", desc: "Your head is so shiny, birds are confused by the reflections.", extra: "SPF 50 required.", score: 75 },
+    { title: "Drag Coefficient: Zero", desc: "NASA called. They want to study your head for re-entry vehicles.", extra: "Terminal velocity: achieved.", score: 85 },
+  ],
+  hat: [
+    { title: "Nice Hat. What Are You Hiding?", desc: "We see through your textile-based deception. The truth is under there.", extra: "Remove hat for accurate scan.", score: 50 },
+    { title: "Hat Crime Detected", desc: "Obstruction of hair justice. You have the right to remain follicled.", extra: "Bail set at one hat removal.", score: 45 },
+    { title: "The Cover-Up", desc: "This is worse than Watergate but for hair.", extra: "The hat knows the truth.", score: 42 },
+    { title: "Mystery Box", desc: "What's under there? Greatness? Disaster? Schrodinger's hair.", extra: "Hat removed = reality collapses.", score: 55 },
+  ]
+};
+
+const ANALYSIS_MESSAGES = [
+  "Scanning follicles...",
+  "Measuring business-to-party ratio...",
+  "Consulting the hair gods...",
+  "Calculating strand density per square inch...",
+  "Cross-referencing with 80s yearbook database...",
+  "Analyzing cowlick trajectory...",
+  "Detecting product-to-hair ratio...",
+  "Running mullet probability algorithm...",
+  "Evaluating aerodynamic drag coefficient...",
+  "Checking for split end anomalies...",
+  "Comparing to 47,000 known hairstyles...",
+  "Consulting with ghost of David Bowie...",
+  "Measuring vibes per follicle...",
+  "Decoding your hair's zodiac sign...",
+  "Buffering... your hair is complex...",
+  "Final calibration of the mane meter...",
+];
+
+// ============ STATE ============
+let stream = null;
+let currentScore = 0;
+let currentVerdict = null;
+let photoDataUrl = null;
+
+// ============ STARS ============
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 50; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.animationDuration = (2 + Math.random() * 3) + 's';
+    container.appendChild(star);
+  }
+}
+createStars();
+
+// ============ CAMERA ============
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 960 } },
+      audio: false
+    });
+    const video = document.getElementById('video');
+    video.srcObject = stream;
+    video.style.transform = 'scaleX(-1)'; // mirror
+    document.getElementById('placeholder').classList.add('hidden');
+    document.getElementById('btn-capture').classList.remove('hidden');
+    document.getElementById('btn-start').textContent = 'Retake';
+    document.getElementById('photo-canvas').style.display = 'none';
+    document.getElementById('video').style.display = 'block';
+  } catch (err) {
+    alert('Camera access denied. Please allow camera access and try again.');
+  }
+}
+
+function takePhoto() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('photo-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext('2d');
+  // Mirror the image
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+
+  // Flash effect
+  const flash = document.createElement('div');
+  flash.className = 'flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 400);
+
+  // Show photo, hide video
+  canvas.style.display = 'block';
+  video.style.display = 'none';
+  document.getElementById('btn-capture').classList.add('hidden');
+
+  // Stop camera
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+
+  // Start analysis
+  startAnalysis();
+}
+
+// ============ ANALYSIS ============
+function startAnalysis() {
+  document.getElementById('start-controls').classList.add('hidden');
+  document.getElementById('camera-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('analysis-section').style.display = 'block';
+
+  const loadingText = document.getElementById('loading-text');
+  const progressFill = document.getElementById('progress-fill');
+
+  let msgIndex = 0;
+  const shuffled = ANALYSIS_MESSAGES.sort(() => Math.random() - 0.5).slice(0, 8);
+  const totalSteps = shuffled.length;
+  const stepTime = 600;
+
+  function nextStep() {
+    if (msgIndex >= totalSteps) {
+      showResults();
+      return;
+    }
+    loadingText.textContent = shuffled[msgIndex];
+    progressFill.style.width = ((msgIndex + 1) / totalSteps * 100) + '%';
+    msgIndex++;
+    setTimeout(nextStep, stepTime + Math.random() * 400);
+  }
+
+  progressFill.style.width = '0%';
+  nextStep();
+}
+
+// ============ RESULTS ============
+function generateResult() {
+  // 10% chance of special verdicts
+  const roll = Math.random();
+  if (roll < 0.05) {
+    // Bald
+    const v = VERDICTS.bald[Math.floor(Math.random() * VERDICTS.bald.length)];
+    return { score: v.score, verdict: v, category: 'bald' };
+  }
+  if (roll < 0.10) {
+    // Hat
+    const v = VERDICTS.hat[Math.floor(Math.random() * VERDICTS.hat.length)];
+    return { score: v.score, verdict: v, category: 'hat' };
+  }
+
+  // Normal distribution biased toward middle
+  const score = Math.round(Math.random() * 100);
+  let category, pool;
+  if (score <= 30) { category = 'low'; pool = VERDICTS.low; }
+  else if (score <= 69) { category = 'mid'; pool = VERDICTS.mid; }
+  else { category = 'high'; pool = VERDICTS.high; }
+
+  const verdict = pool[Math.floor(Math.random() * pool.length)];
+  return { score, verdict, category };
+}
+
+function getScoreColor(score) {
+  if (score <= 30) return { bg: 'linear-gradient(90deg, #ff0000, #ff4444)', text: '#ff4444' };
+  if (score <= 50) return { bg: 'linear-gradient(90deg, #ff4444, #ff8800)', text: '#ff8800' };
+  if (score <= 69) return { bg: 'linear-gradient(90deg, #ff8800, #ffff00)', text: '#ffff00' };
+  if (score <= 85) return { bg: 'linear-gradient(90deg, #ffff00, #00ff00)', text: '#00ff00' };
+  return { bg: 'linear-gradient(90deg, #00ff00, #00ffff, #ff00ff)', text: '#ff00ff' };
+}
+
+function showResults() {
+  const result = generateResult();
+  currentScore = result.score;
+  currentVerdict = result.verdict;
+
+  document.getElementById('analysis-section').style.display = 'none';
+  document.getElementById('results-section').style.display = 'block';
+
+  // Photo thumbnail
+  if (photoDataUrl) {
+    const thumbCanvas = document.getElementById('photo-thumb-canvas');
+    const img = new Image();
+    img.onload = () => {
+      thumbCanvas.width = 240;
+      thumbCanvas.height = 240;
+      const ctx = thumbCanvas.getContext('2d');
+      const size = Math.min(img.width, img.height);
+      const sx = (img.width - size) / 2;
+      const sy = (img.height - size) / 2;
+      ctx.beginPath();
+      ctx.arc(120, 120, 120, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(img, sx, sy, size, size, 0, 0, 240, 240);
+    };
+    img.src = photoDataUrl;
+  }
+
+  // Animate score counter
+  const scoreEl = document.getElementById('score-number');
+  const colors = getScoreColor(currentScore);
+  let count = 0;
+  const step = Math.max(1, Math.floor(currentScore / 30));
+  const counter = setInterval(() => {
+    count = Math.min(count + step, currentScore);
+    scoreEl.textContent = count;
+    if (count >= currentScore) {
+      clearInterval(counter);
+      scoreEl.textContent = currentScore;
+    }
+  }, 50);
+  scoreEl.style.color = colors.text;
+  scoreEl.style.textShadow = `0 0 20px ${colors.text}, 0 0 40px ${colors.text}`;
+
+  // Meter
+  const meterFill = document.getElementById('meter-fill');
+  meterFill.style.background = colors.bg;
+  setTimeout(() => { meterFill.style.width = currentScore + '%'; }, 100);
+
+  // Verdict text
+  document.getElementById('verdict-title').textContent = currentVerdict.title;
+  document.getElementById('verdict-title').style.color = colors.text;
+  document.getElementById('verdict-title').style.textShadow = `0 0 10px ${colors.text}`;
+  document.getElementById('verdict-desc').textContent = currentVerdict.desc;
+  document.getElementById('verdict-extra').textContent = currentVerdict.extra;
+
+  // Sound effect
+  playBuzzSound();
+
+  // Confetti for high scores
+  if (currentScore >= 70) {
+    launchConfetti();
+  }
+}
+
+// ============ SOUND ============
+function playBuzzSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const duration = 0.6;
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const noise = ctx.createBufferSource();
+
+    // Create noise buffer (clipper buzz)
+    const bufferSize = ctx.sampleRate * duration;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.3;
+    }
+    noise.buffer = buffer;
+
+    // Buzz oscillators
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(120, ctx.currentTime);
+    osc1.frequency.linearRampToValueAtTime(80, ctx.currentTime + duration);
+
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(60, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    noise.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc1.start(ctx.currentTime);
+    osc2.start(ctx.currentTime);
+    noise.start(ctx.currentTime);
+
+    osc1.stop(ctx.currentTime + duration);
+    osc2.stop(ctx.currentTime + duration);
+    noise.stop(ctx.currentTime + duration);
+
+    setTimeout(() => ctx.close(), 1000);
+  } catch (e) { /* audio not supported */ }
+}
+
+// ============ CONFETTI ============
+function launchConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ['#ff00ff', '#ff6ec7', '#00ffff', '#ffff00', '#ff4444', '#00ff00', '#8b00ff'];
+
+  for (let i = 0; i < 100; i++) {
+    pieces.push({
+      x: canvas.width / 2 + (Math.random() - 0.5) * 200,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 15,
+      vy: -Math.random() * 20 - 5,
+      w: Math.random() * 10 + 4,
+      h: Math.random() * 6 + 2,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 15,
+      gravity: 0.4 + Math.random() * 0.2,
+    });
+  }
+
+  let frame = 0;
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let alive = false;
+    for (const p of pieces) {
+      p.x += p.vx;
+      p.vy += p.gravity;
+      p.y += p.vy;
+      p.rotation += p.rotSpeed;
+      p.vx *= 0.99;
+
+      if (p.y < canvas.height + 50) {
+        alive = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation * Math.PI / 180);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      }
+    }
+    frame++;
+    if (alive && frame < 180) requestAnimationFrame(animate);
+    else ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  animate();
+}
+
+// ============ SHARE ============
+function shareResult() {
+  if (!currentVerdict) return;
+  const text = `MULLET METER RESULTS\n` +
+    `Score: ${currentScore}/100\n` +
+    `Verdict: ${currentVerdict.title}\n` +
+    `"${currentVerdict.desc}"\n` +
+    `${currentVerdict.extra}\n\n` +
+    `Rate your hair: mullet-meter`;
+
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => copyToClipboard(text));
+  } else {
+    copyToClipboard(text);
+  }
+}
+
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+// ============ RETRY ============
+function tryAgain() {
+  document.getElementById('results-section').style.display = 'none';
+  document.getElementById('camera-section').style.display = '';
+  document.getElementById('start-controls').classList.remove('hidden');
+  document.getElementById('btn-start').textContent = 'Open Camera';
+  document.getElementById('placeholder').classList.remove('hidden');
+  document.getElementById('video').style.display = 'block';
+  document.getElementById('photo-canvas').style.display = 'none';
+  document.getElementById('btn-capture').classList.add('hidden');
+
+  // Reset meter
+  document.getElementById('meter-fill').style.width = '0%';
+  document.getElementById('progress-fill').style.width = '0%';
+
+  currentScore = 0;
+  currentVerdict = null;
+  photoDataUrl = null;
+}
+</script>
+</body>
+</html>
