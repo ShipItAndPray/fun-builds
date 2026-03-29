@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlist Therapist</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --card: #14141f;
+    --accent: #1db954;
+    --accent2: #1ed760;
+    --text: #e8e6e3;
+    --muted: #8a8a9a;
+    --warm: #c4956a;
+    --couch: #8b6914;
+    --danger: #e74c3c;
+    --calm: #3498db;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-pattern {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(29,185,84,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(196,149,106,0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(139,105,20,0.04) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .couch-icon {
+    font-size: 2.5rem;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    background: linear-gradient(135deg, var(--accent), var(--warm));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 1.2rem;
+    color: var(--warm);
+  }
+
+  .genre-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+  }
+
+  .genre-item {
+    position: relative;
+  }
+
+  .genre-item input {
+    display: none;
+  }
+
+  .genre-item label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    background: var(--card);
+    user-select: none;
+  }
+
+  .genre-item label:hover {
+    border-color: var(--accent);
+    background: rgba(29,185,84,0.08);
+  }
+
+  .genre-item input:checked + label {
+    border-color: var(--accent);
+    background: rgba(29,185,84,0.15);
+    color: var(--accent2);
+    font-weight: 500;
+  }
+
+  .genre-item .emoji {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .analyze-btn {
+    display: block;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto 2rem;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, var(--accent), #17a34a);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.5px;
+  }
+
+  .analyze-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(29,185,84,0.3);
+  }
+
+  .analyze-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .results {
+    display: none;
+    animation: fadeUp 0.6s ease;
+  }
+
+  .results.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .diagnosis-card {
+    background: var(--card);
+    border: 1px solid #2a2a3a;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .diagnosis-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--warm), var(--accent));
+  }
+
+  .diagnosis-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--warm);
+  }
+
+  .diagnosis-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .stability-section {
+    text-align: center;
+    margin: 1.5rem 0;
+  }
+
+  .stability-bar-container {
+    width: 100%;
+    height: 20px;
+    background: #1a1a2e;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 0.75rem 0;
+    position: relative;
+  }
+
+  .stability-bar {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+    background: linear-gradient(90deg, var(--danger), #f39c12, var(--accent));
+  }
+
+  .stability-label {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: 'Playfair Display', serif;
+  }
+
+  .stability-verdict {
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+    margin-top: 0.25rem;
+  }
+
+  .prescription-card {
+    background: linear-gradient(135deg, rgba(29,185,84,0.1), rgba(196,149,106,0.08));
+    border: 1px solid rgba(29,185,84,0.3);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .prescription-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--accent2);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .rx-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .rx-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .rx-list li:last-child { border-bottom: none; }
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 50px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .share-btn:hover {
+    background: rgba(29,185,84,0.15);
+  }
+
+  .share-row {
+    text-align: center;
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--accent);
+    color: #000;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .counter {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .counter span { color: var(--accent); font-weight: 600; }
+
+  footer {
+    text-align: center;
+    padding: 2rem 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    font-family: 'Playfair Display', serif;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .genre-grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+    .genre-item label { padding: 0.55rem 0.7rem; font-size: 0.8rem; }
+    .diagnosis-card, .prescription-card { padding: 1.25rem; }
+    .container { padding: 1.25rem 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-pattern"></div>
+<div class="container">
+  <header>
+    <div class="logo">
+      <span class="couch-icon">&#128715;</span>
+    </div>
+    <h1>Playlist Therapist</h1>
+    <p class="subtitle">"Tell me what you listen to, and I'll tell you what's wrong with you."</p>
+  </header>
+
+  <h2 class="section-title">Select Your Genres</h2>
+  <p class="counter"><span id="count">0</span> selected &mdash; select at least 2 for a proper diagnosis</p>
+
+  <div class="genre-grid" id="genreGrid"></div>
+
+  <button class="analyze-btn" id="analyzeBtn" disabled>Analyze Me</button>
+
+  <div class="results" id="results">
+    <div class="diagnosis-card">
+      <div class="diagnosis-header">&#128203; Clinical Assessment</div>
+      <div class="diagnosis-text" id="diagnosisText"></div>
+    </div>
+
+    <div class="diagnosis-card stability-section">
+      <div class="diagnosis-header" style="justify-content:center;">&#129504; Emotional Stability Score</div>
+      <div class="stability-label" id="stabilityScore"></div>
+      <div class="stability-bar-container">
+        <div class="stability-bar" id="stabilityBar"></div>
+      </div>
+      <div class="stability-verdict" id="stabilityVerdict"></div>
+    </div>
+
+    <div class="prescription-card">
+      <h3>&#128138; Prescription Playlist</h3>
+      <ul class="rx-list" id="rxList"></ul>
+    </div>
+
+    <div class="share-row">
+      <button class="share-btn" onclick="copyDiagnosis()">&#128203; Copy Diagnosis</button>
+      <button class="share-btn" onclick="tweetDiagnosis()">&#120143; Share on X</button>
+      <button class="share-btn" id="reanalyzeBtn">&#128260; Re-Analyze</button>
+    </div>
+  </div>
+
+  <footer>
+    Disclaimer: This is not real therapy. But it might be more accurate than your horoscope.
+  </footer>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+const genres = [
+  { id: 'lofi', name: 'Lo-fi Hip Hop', emoji: '&#127911;' },
+  { id: 'deathmetal', name: 'Death Metal', emoji: '&#128128;' },
+  { id: 'classical', name: 'Classical', emoji: '&#127931;' },
+  { id: 'pop', name: 'Pop', emoji: '&#127775;' },
+  { id: 'jazz', name: 'Jazz', emoji: '&#127927;' },
+  { id: 'edm', name: 'EDM', emoji: '&#9889;' },
+  { id: 'country', name: 'Country', emoji: '&#129312;' },
+  { id: 'rnb', name: 'R&B', emoji: '&#128156;' },
+  { id: 'punk', name: 'Punk', emoji: '&#128293;' },
+  { id: 'indie', name: 'Indie', emoji: '&#127807;' },
+  { id: 'kpop', name: 'K-Pop', emoji: '&#127472;' },
+  { id: 'reggae', name: 'Reggae', emoji: '&#127796;' },
+  { id: 'hiphop', name: 'Hip Hop', emoji: '&#127908;' },
+  { id: 'blues', name: 'Blues', emoji: '&#127925;' },
+  { id: 'metal', name: 'Heavy Metal', emoji: '&#129304;' },
+  { id: 'folk', name: 'Folk', emoji: '&#127794;' },
+  { id: 'latin', name: 'Latin', emoji: '&#128131;' },
+  { id: 'ambient', name: 'Ambient', emoji: '&#127752;' },
+  { id: 'gospel', name: 'Gospel', emoji: '&#128591;' },
+  { id: 'techno', name: 'Techno', emoji: '&#128302;' },
+  { id: 'grunge', name: 'Grunge', emoji: '&#129490;' },
+  { id: 'ska', name: 'Ska', emoji: '&#127926;' },
+  { id: 'trap', name: 'Trap', emoji: '&#128165;' },
+  { id: 'shoegaze', name: 'Shoegaze', emoji: '&#127787;' },
+  { id: 'anime', name: 'Anime OSTs', emoji: '&#127880;' },
+  { id: 'broadway', name: 'Broadway', emoji: '&#127917;' },
+  { id: 'synthwave', name: 'Synthwave', emoji: '&#127763;' },
+  { id: 'phonk', name: 'Phonk', emoji: '&#128663;' },
+  { id: 'bollywood', name: 'Bollywood', emoji: '&#127909;' },
+  { id: 'emo', name: 'Emo', emoji: '&#128420;' },
+];
+
+// --- COMBO DIAGNOSES (40+) ---
+const comboDiagnoses = [
+  { needs: ['lofi','deathmetal'], text: "Your combination of lo-fi hip hop and death metal suggests you want to relax but are VERY angry about it. You're the person who meditates while clenching their fists." },
+  { needs: ['classical','trap'], text: "Classical and Trap? You're one Beethoven remix away from a full identity crisis. You read philosophy at the club." },
+  { needs: ['country','kpop'], text: "Country and K-Pop is a cry for help that spans two continents. You want a simple life but with impeccable choreography." },
+  { needs: ['jazz','edm'], text: "Jazz and EDM? You appreciate improvisation but also want the bass to physically assault your ribcage. You are chaos with taste." },
+  { needs: ['gospel','metal'], text: "Gospel and Metal says you're either finding God or fighting Him. Either way, you're LOUD about it." },
+  { needs: ['indie','pop'], text: "Indie and Pop? You want to be unique but also want everyone to like you. This is the musical equivalent of being a people-pleaser with a secret Tumblr." },
+  { needs: ['emo','broadway'], text: "Emo and Broadway means every emotion you have is performed at full volume. You don't have feelings, you have ACTS." },
+  { needs: ['ambient','punk'], text: "Ambient and Punk. You're either the calmest anarchist or the angriest yoga instructor. There is no in-between." },
+  { needs: ['reggae','techno'], text: "Reggae and Techno suggest you can't decide if you want to chill on a beach or grind your teeth in a warehouse. Your vacations must be exhausting." },
+  { needs: ['folk','synthwave'], text: "Folk and Synthwave? You want to live in a cabin in the woods but with LED strips and a fog machine. Cottagecore meets Bladerunner." },
+  { needs: ['blues','edm'], text: "Blues and EDM is the sound of someone crying at the rave. You process sadness at 140 BPM." },
+  { needs: ['hiphop','classical'], text: "Hip Hop and Classical means you respect both Kendrick Lamar and Chopin equally. Your brain has a split personality and honestly? Both halves are winning." },
+  { needs: ['bollywood','metal'], text: "Bollywood and Metal. You headbang to Item songs. Your Navratri playlist would terrify most people." },
+  { needs: ['shoegaze','trap'], text: "Shoegaze and Trap means you stare at your shoes... but aggressively. You're depressed but make it look cool." },
+  { needs: ['anime','grunge'], text: "Anime OSTs and Grunge? Your inner child and inner angst are in a custody battle and neither is winning." },
+  { needs: ['latin','ambient'], text: "Latin and Ambient. You're torn between dancing on a table and transcending your physical form. Your heart says salsa, your soul says dissolve into the void." },
+  { needs: ['phonk','classical'], text: "Phonk and Classical? You drift your car to Vivaldi. You are somehow both the most cultured and most unhinged person in any room." },
+  { needs: ['kpop','grunge'], text: "K-Pop and Grunge. You want perfect skin and messy hair. You stan idols while wearing flannel. This duality will define your era." },
+  { needs: ['rnb','punk'], text: "R&B and Punk means you write love letters on ripped notebook paper. Your idea of romance involves both candles AND a mosh pit." },
+  { needs: ['ska','emo'], text: "Ska and Emo? You're the only person who can cry while skanking. Your sadness has a horn section." },
+  { needs: ['pop','deathmetal'], text: "Pop and Death Metal? You're the person who sings Taylor Swift in the car then switches to Cannibal Corpse without blinking. Your passengers need therapy." },
+  { needs: ['country','techno'], text: "Country and Techno is what happens when the barn gets a DJ booth. You two-step to a four-on-the-floor beat." },
+  { needs: ['jazz','punk'], text: "Jazz and Punk tells me you respect the art but hate the system. You're an intellectual rebel. A very loud one." },
+  { needs: ['gospel','trap'], text: "Gospel and Trap? Sunday morning and Saturday night are having a very tense negotiation inside your soul." },
+  { needs: ['folk','edm'], text: "Folk and EDM. You want to sing around a campfire but the campfire is a laser show. You're a rave hobbit." },
+  { needs: ['indie','metal'], text: "Indie and Metal means your Spotify Wrapped confuses the algorithm so badly it just shows a question mark." },
+  { needs: ['blues','kpop'], text: "Blues and K-Pop? You have the soul of a 60-year-old Mississippi guitarist trapped in a stan account. This is unprecedented." },
+  { needs: ['ambient','hiphop'], text: "Ambient and Hip Hop. You want bars, but whispered. You nod your head in slow motion. Your vibe is 'enlightened but from the streets.'" },
+  { needs: ['broadway','techno'], text: "Broadway and Techno. You want the emotional arc of Les Mis at 150 BPM. You're the main character at the rave." },
+  { needs: ['synthwave','country'], text: "Synthwave and Country means you're a digital cowboy. Your horse is neon. Your hat has RGB lighting." },
+  { needs: ['reggae','emo'], text: "Reggae and Emo. 'Every little thing gonna be alright' — but you don't believe it. You cry in Jamaica." },
+  { needs: ['phonk','gospel'], text: "Phonk and Gospel. You drift into the church parking lot and ask for forgiveness before the engine stops. Peak redemption arc energy." },
+  { needs: ['bollywood','indie'], text: "Bollywood and Indie. You want the drama of a 3-hour epic but the production budget of a garage band. Your life is a low-budget blockbuster." },
+  { needs: ['anime','jazz'], text: "Anime OSTs and Jazz? You watch Cowboy Bebop on repeat and call it a personality. (Fair, honestly. That show IS a personality.)" },
+  { needs: ['lofi','classical'], text: "Lo-fi and Classical. You study to both. You are productive but make it aesthetic. Your desk setup has been photographed more than most humans." },
+  { needs: ['ska','latin'], text: "Ska and Latin. Your hips don't lie and neither does your trumpet section. Every party you throw is unhinged in the best way." },
+  { needs: ['grunge','rnb'], text: "Grunge and R&B. You're dirty and smooth at the same time. Kurt Cobain singing Usher — that's your internal monologue." },
+  { needs: ['trap','folk'], text: "Trap and Folk. You roll up to the farmers market with the bass shaking the organic kale. You're a contradiction that somehow works." },
+  { needs: ['pop','jazz'], text: "Pop and Jazz? You can enjoy both Ariana Grande and Coltrane without shame. You're emotionally mature but your playlist is having an identity crisis." },
+  { needs: ['deathmetal','ambient'], text: "Death Metal and Ambient. Your two moods are 'AAAAAARGH' and 'shhhhh.' There is nothing in between. You are a binary system of rage and peace." },
+  { needs: ['emo','kpop'], text: "Emo and K-Pop. You sob to My Chemical Romance then watch a fancam. Your For You page is an emotional warzone." },
+  { needs: ['shoegaze','folk'], text: "Shoegaze and Folk. You stare at the ground whether you're in a misty field or a reverb-drenched basement. You are melancholy as a lifestyle." },
+  { needs: ['punk','bollywood'], text: "Punk and Bollywood. You want to smash the system... but with a dance number. Your revolution has choreography and a costume change." },
+  { needs: ['edm','emo'], text: "EDM and Emo? The drop hits and you cry. You rave with mascara running down your face. You are beautiful and terrifying." },
+];
+
+// Single-genre flavors for fallback/additional color
+const soloFlavors = {
+  lofi: "Lo-fi listener: You've romanticized 'doing nothing' into a full aesthetic. Your productivity is a lie wrapped in rain sounds.",
+  deathmetal: "Death Metal devotee: You're actually really nice in person, which confuses everyone who sees your playlist.",
+  classical: "Classical enjoyer: You either play an instrument or feel guilty about quitting one. Your childhood piano teacher still haunts you.",
+  pop: "Pop fan: You know all the words but pretend you don't in public. You're a closet karaoke champion.",
+  jazz: "Jazz listener: You own at least one turtleneck. You've said 'it's about the notes they DON'T play' unironically.",
+  edm: "EDM head: Your idea of 'winding down' would send most people's heart rate to cardiac levels.",
+  country: "Country listener: You've either lived on a dirt road or desperately wish you had. Your truck is your therapist.",
+  rnb: "R&B lover: You feel things deeply and need everyone to know. Your showers are full concert performances.",
+  punk: "Punk fan: You're anti-establishment but have a 401k. The duality is eating you alive.",
+  indie: "Indie listener: You liked this band before they were cool, and you'll never let anyone forget it.",
+  kpop: "K-Pop stan: Your dedication would put Fortune 500 CEOs to shame. You've never worked harder for anything unpaid.",
+  reggae: "Reggae fan: You're the most relaxed person in every room, which makes stressed people want to fight you.",
+  hiphop: "Hip Hop head: You've had the 'is rap music' debate 47 times and you always win. Your lyrical knowledge is encyclopedic.",
+  blues: "Blues listener: You've been through some things. You're fine. You're not fine. You're fine. (You're not fine.)",
+  metal: "Metal fan: You release all your anger through music, making you paradoxically one of the most peaceful people around.",
+  folk: "Folk listener: You own a flannel that has emotional significance. You've cried at a sunset.",
+  latin: "Latin music lover: You can't NOT move when music plays. Your hips have independent consciousness.",
+  ambient: "Ambient listener: You've fallen asleep to music so often that silence now feels loud and threatening.",
+  gospel: "Gospel listener: You have FAITH and you have VOLUME. Your spirit is willing and your speakers are able.",
+  techno: "Techno fan: You've danced in a warehouse at 4am and called it a spiritual experience. You weren't wrong.",
+  grunge: "Grunge fan: It's always the 90s inside your head. You own jeans that are held together by willpower.",
+  ska: "Ska fan: You are unreasonably happy for someone in a checkered pattern. Your optimism is suspicious.",
+  trap: "Trap listener: Your bass settings would register on a seismograph. Your neighbors have considered moving.",
+  shoegaze: "Shoegaze listener: You stare at things. That's it. You stare at things and feel emotions about textures.",
+  anime: "Anime OST enjoyer: You've felt more emotions from animated characters than most people feel in real life.",
+  broadway: "Broadway fan: Every minor inconvenience in your life gets a musical number. You are your own soundtrack.",
+  synthwave: "Synthwave fan: You were born in the wrong decade and the wrong dimension. Your aesthetic is neon nostalgia for a future that never happened.",
+  phonk: "Phonk listener: You've considered drifting your Honda Civic but your insurance said no. The cowbell sustains you.",
+  bollywood: "Bollywood fan: Your emotional range spans 47 feelings per song. Your weddings are legendary.",
+  emo: "Emo listener: You're not a phase, mom. (You might be a phase.) Your eyeliner is impeccable though.",
+};
+
+const stabilityVerdicts = [
+  { max: 15, text: "You are a musical monolith. Stable, but in the way a brick is stable. Seek adventure.", color: '#e74c3c' },
+  { max: 30, text: "Narrow focus detected. You know what you like and refuse to grow. Classic avoidance.", color: '#e67e22' },
+  { max: 45, text: "Mildly diverse. You've dipped a toe into other genres but panicked and ran back.", color: '#f39c12' },
+  { max: 60, text: "Reasonably balanced. You're open-minded but still have commitment issues with new genres.", color: '#27ae60' },
+  { max: 75, text: "Impressively eclectic. Your brain processes contradictions like a champ. Well-adjusted chaos.", color: '#2ecc71' },
+  { max: 90, text: "Dangerously well-rounded. You're either a DJ, a psychopath, or both.", color: '#1db954' },
+  { max: 101, text: "You selected everything. This isn't open-mindedness, this is an inability to commit. We need to talk.", color: '#3498db' },
+];
+
+const prescriptions = {
+  anger: [
+    "1 hour of Enya, administered orally (through headphones), twice daily",
+    "Bossa nova before bedtime. Let Jobim fix what your screaming couldn't.",
+    "Mandatory whale sounds during commute. No exceptions.",
+  ],
+  sadness: [
+    "3 doses of Pharrell's 'Happy' until symptoms subside or you get annoyed. Either works.",
+    "Prescribed: one (1) dance-pop playlist. Take with water and forced enthusiasm.",
+    "Earth, Wind & Fire - 'September' on loop. Clinical-grade serotonin.",
+  ],
+  chaos: [
+    "A carefully curated 'one genre only' playlist for 7 days. You need boundaries.",
+    "Listen to ONE album front-to-back. Just one. Experience linearity for once.",
+    "Prescribed: silence. 30 minutes. Your brain needs to defrag.",
+  ],
+  pretentious: [
+    "Listen to the Billboard Hot 100 without complaining. That's the homework.",
+    "Play a 'guilty pleasures' playlist on speaker. In public. Own it.",
+    "Prescribed: One TikTok music compilation. Let go of your superiority complex.",
+  ],
+  basic: [
+    "Explore one genre you've never heard of. May we suggest: Tuvan throat singing.",
+    "Listen to an album in a language you don't speak. Feel things differently.",
+    "Prescribed: The complete works of someone you've never heard of. Surprise yourself.",
+  ],
+  identity: [
+    "Make a playlist that makes sense. If you can't, that IS the diagnosis.",
+    "Try explaining your music taste to a stranger. Record their facial expression.",
+    "Prescribed: a genre cleanse. Pick THREE genres max for one month. See who you really are.",
+  ],
+};
+
+// Build genre grid
+const grid = document.getElementById('genreGrid');
+genres.forEach(g => {
+  const div = document.createElement('div');
+  div.className = 'genre-item';
+  div.innerHTML = `<input type="checkbox" id="${g.id}" value="${g.id}"><label for="${g.id}"><span class="emoji">${g.emoji}</span>${g.name}</label>`;
+  grid.appendChild(div);
+});
+
+// Counter + button state
+const checkboxes = document.querySelectorAll('.genre-item input');
+const countEl = document.getElementById('count');
+const btn = document.getElementById('analyzeBtn');
+
+checkboxes.forEach(cb => cb.addEventListener('change', () => {
+  const n = getSelected().length;
+  countEl.textContent = n;
+  btn.disabled = n < 2;
+}));
+
+function getSelected() {
+  return Array.from(checkboxes).filter(c => c.checked).map(c => c.value);
+}
+
+// Analysis
+btn.addEventListener('click', analyze);
+document.getElementById('reanalyzeBtn').addEventListener('click', () => {
+  document.getElementById('results').classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+function analyze() {
+  const selected = getSelected();
+  if (selected.length < 2) return;
+
+  // Find matching combo diagnoses
+  const matchedCombos = comboDiagnoses.filter(d => d.needs.every(n => selected.includes(n)));
+
+  // Pick 1-3 combo diagnoses
+  const shuffled = matchedCombos.sort(() => Math.random() - 0.5);
+  const picks = shuffled.slice(0, Math.min(3, shuffled.length));
+
+  // Build diagnosis text
+  let diagParts = picks.map(p => p.text);
+
+  // Add solo flavors for genres not covered by combos
+  const coveredByCombo = new Set();
+  picks.forEach(p => p.needs.forEach(n => coveredByCombo.add(n)));
+  const uncovered = selected.filter(s => !coveredByCombo.has(s));
+  if (uncovered.length > 0) {
+    const soloP = uncovered.sort(() => Math.random() - 0.5).slice(0, 2);
+    soloP.forEach(s => { if (soloFlavors[s]) diagParts.push(soloFlavors[s]); });
+  }
+
+  // If no combos matched at all, use solo flavors
+  if (diagParts.length === 0) {
+    selected.sort(() => Math.random() - 0.5).slice(0, 3).forEach(s => {
+      if (soloFlavors[s]) diagParts.push(soloFlavors[s]);
+    });
+  }
+
+  document.getElementById('diagnosisText').innerHTML = diagParts.map(p => `<p style="margin-bottom:0.75rem">${p}</p>`).join('');
+
+  // Stability score: more genres = higher, but max at 100
+  const variety = selected.length;
+  const maxGenres = genres.length;
+  const rawScore = Math.round((variety / maxGenres) * 100);
+  const score = Math.min(rawScore, 100);
+
+  const verdict = stabilityVerdicts.find(v => score <= v.max);
+  document.getElementById('stabilityScore').textContent = `${score}/100`;
+  document.getElementById('stabilityScore').style.color = verdict.color;
+  document.getElementById('stabilityBar').style.width = `${score}%`;
+  document.getElementById('stabilityVerdict').textContent = verdict.text;
+
+  // Prescription logic
+  const rxEl = document.getElementById('rxList');
+  rxEl.innerHTML = '';
+  const rxCategories = [];
+  if (selected.some(s => ['deathmetal','metal','punk','grunge','phonk'].includes(s))) rxCategories.push('anger');
+  if (selected.some(s => ['emo','blues','shoegaze','ambient'].includes(s))) rxCategories.push('sadness');
+  if (variety >= 6) rxCategories.push('chaos');
+  if (selected.some(s => ['classical','jazz','shoegaze','indie'].includes(s)) && variety <= 4) rxCategories.push('pretentious');
+  if (variety <= 3 && selected.some(s => ['pop','edm','hiphop'].includes(s))) rxCategories.push('basic');
+  if (matchedCombos.length >= 3) rxCategories.push('identity');
+
+  if (rxCategories.length === 0) rxCategories.push(['chaos','basic','identity'][Math.floor(Math.random()*3)]);
+
+  const usedRx = new Set();
+  rxCategories.forEach(cat => {
+    const items = prescriptions[cat];
+    const pick = items[Math.floor(Math.random() * items.length)];
+    if (!usedRx.has(pick)) {
+      usedRx.add(pick);
+      const li = document.createElement('li');
+      li.textContent = pick;
+      rxEl.appendChild(li);
+    }
+  });
+
+  // Extra universal prescription
+  const universals = [
+    "Follow-up appointment recommended in 6 months or after your next breakup, whichever comes first.",
+    "Avoid making playlists while emotionally compromised. (You know what you did.)",
+    "Side effects may include: unsolicited opinions about music, alienating friends with aux cord privileges.",
+  ];
+  const uniLi = document.createElement('li');
+  uniLi.textContent = universals[Math.floor(Math.random() * universals.length)];
+  uniLi.style.fontStyle = 'italic';
+  uniLi.style.color = '#8a8a9a';
+  rxEl.appendChild(uniLi);
+
+  // Show results
+  document.getElementById('results').classList.add('show');
+  setTimeout(() => {
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// Share functions
+function getDiagnosisShareText() {
+  const diag = document.getElementById('diagnosisText').innerText;
+  const score = document.getElementById('stabilityScore').textContent;
+  return `My Playlist Therapy Diagnosis:\n\n${diag}\n\nEmotional Stability Score: ${score}\n\nGet diagnosed: `;
+}
+
+function copyDiagnosis() {
+  navigator.clipboard.writeText(getDiagnosisShareText()).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+function tweetDiagnosis() {
+  const text = encodeURIComponent(`My Playlist Therapy Diagnosis:\n\nEmotional Stability Score: ${document.getElementById('stabilityScore').textContent}\n\nGet psychoanalyzed by your music taste:`);
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+}
+</script>
+</body>
+</html>

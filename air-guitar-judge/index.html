@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Air Guitar Judge</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0a0f;
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+
+.neon-bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(255, 0, 80, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(128, 0, 255, 0.08) 0%, transparent 60%);
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px 16px;
+}
+
+h1 {
+  font-size: 2.2em;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-align: center;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #ff0050, #ff6600, #ffcc00, #ff0050);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: fireShift 3s ease infinite;
+  text-shadow: 0 0 30px rgba(255, 0, 80, 0.5);
+  filter: drop-shadow(0 0 10px rgba(255, 0, 80, 0.4));
+}
+
+@keyframes fireShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.subtitle {
+  font-size: 0.85em;
+  color: #888;
+  margin-top: 6px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+#startBtn {
+  margin-top: 40px;
+  padding: 20px 50px;
+  font-size: 1.4em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border: none;
+  border-radius: 60px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff0050, #ff6600);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(255, 0, 80, 0.5), 0 0 60px rgba(255, 0, 80, 0.2);
+  transition: all 0.3s;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+#startBtn:active {
+  transform: scale(0.95);
+}
+
+#startBtn.shredding {
+  background: linear-gradient(135deg, #ff0000, #880000);
+  animation: none;
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,0,80,0.5); }
+  50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255,0,80,0.7); }
+}
+
+.meter-container {
+  width: 90%;
+  max-width: 360px;
+  margin-top: 30px;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75em;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.meter-bar {
+  width: 100%;
+  height: 18px;
+  background: #1a1a2e;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid #333;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 9px;
+  background: linear-gradient(90deg, #00ff88, #00ccff, #ff00cc, #ff0000);
+  transition: width 0.15s ease;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+}
+
+.tier-display {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.tier-name {
+  font-size: 1.6em;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+}
+
+.tier-0 { color: #666; text-shadow: none; }
+.tier-1 { color: #00ff88; text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+.tier-2 { color: #00ccff; text-shadow: 0 0 20px rgba(0,204,255,0.5); }
+.tier-3 { color: #ff6600; text-shadow: 0 0 25px rgba(255,102,0,0.6); }
+.tier-4 {
+  color: #ff0050;
+  text-shadow: 0 0 30px rgba(255,0,80,0.8), 0 0 60px rgba(255,0,80,0.4);
+  animation: godGlow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes godGlow {
+  from { text-shadow: 0 0 30px rgba(255,0,80,0.8); transform: scale(1); }
+  to { text-shadow: 0 0 50px rgba(255,0,80,1), 0 0 80px rgba(255,102,0,0.6); transform: scale(1.03); }
+}
+
+.score-display {
+  margin-top: 12px;
+  font-size: 3em;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-box {
+  margin-top: 20px;
+  padding: 16px 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  max-width: 340px;
+  text-align: center;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.verdict-text {
+  font-size: 1em;
+  font-style: italic;
+  color: #ccc;
+  line-height: 1.4;
+}
+
+.high-score-bar {
+  margin-top: 20px;
+  font-size: 0.8em;
+  color: #ffcc00;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.high-score-bar span {
+  font-weight: 900;
+  font-size: 1.3em;
+}
+
+.stats-row {
+  margin-top: 14px;
+  display: flex;
+  gap: 20px;
+  font-size: 0.7em;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.stats-row div { text-align: center; }
+.stats-row .val { font-size: 1.5em; color: #aaa; font-weight: 700; }
+
+.mobile-warning {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #0a0a0f;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px;
+}
+
+.mobile-warning h2 {
+  font-size: 1.5em;
+  color: #ff0050;
+  margin-bottom: 16px;
+}
+
+.mobile-warning p {
+  color: #888;
+  line-height: 1.6;
+}
+
+.sparkle {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 50;
+  animation: sparkleAnim 0.6s ease-out forwards;
+}
+
+@keyframes sparkleAnim {
+  0% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0) translateY(-40px); }
+}
+
+.hidden { display: none !important; }
+
+.timer {
+  margin-top: 10px;
+  font-size: 0.9em;
+  color: #666;
+  font-variant-numeric: tabular-nums;
+}
+</style>
+</head>
+<body>
+
+<div class="neon-bg"></div>
+
+<div id="mobileWarning" class="mobile-warning hidden">
+  <h2>MOBILE ONLY</h2>
+  <p>Air Guitar Judge needs your phone's motion sensors.<br>Open this on your phone and start shredding.</p>
+</div>
+
+<div class="container" id="mainUI">
+  <h1>Air Guitar Judge</h1>
+  <p class="subtitle">Your phone knows if you rock</p>
+
+  <button id="startBtn" onclick="toggleShredding()">Start Shredding</button>
+
+  <div class="timer" id="timer">0:00</div>
+
+  <div class="meter-container">
+    <div class="meter-label">
+      <span>Chill</span>
+      <span>INSANE</span>
+    </div>
+    <div class="meter-bar">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+  </div>
+
+  <div class="tier-display">
+    <div class="tier-name tier-0" id="tierName">Ready to Rock?</div>
+  </div>
+
+  <div class="score-display" id="scoreDisplay">0</div>
+
+  <div class="verdict-box">
+    <div class="verdict-text" id="verdictText">Pick up your phone and shred like your life depends on it.</div>
+  </div>
+
+  <div class="high-score-bar">
+    Session Best: <span id="highScore">0</span>
+  </div>
+
+  <div class="stats-row">
+    <div>
+      <div class="val" id="statIntensity">0</div>
+      Intensity
+    </div>
+    <div>
+      <div class="val" id="statSpeed">0</div>
+      Speed
+    </div>
+    <div>
+      <div class="val" id="statVariety">0</div>
+      Variety
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- State ----
+let isShredding = false;
+let score = 0;
+let highScore = 0;
+let timerInterval = null;
+let startTime = 0;
+let audioCtx = null;
+let motionHistory = [];
+let lastAccel = { x: 0, y: 0, z: 0 };
+let directionChanges = 0;
+let lastDirections = { x: 0, y: 0, z: 0 };
+let intensitySmooth = 0;
+let speedSmooth = 0;
+let varietySmooth = 0;
+let currentTier = 0;
+let animFrame = null;
+let backingTrackNodes = [];
+let crowdNode = null;
+let crowdGain = null;
+
+// ---- Verdicts (30+ rock critic quotes) ----
+const verdicts = {
+  0: [
+    "Are you... checking your email right now?",
+    "That's not shredding. That's a gentle wave goodbye.",
+    "My grandmother moves faster reaching for the TV remote.",
+    "The air guitar is still in its case, apparently.",
+    "I've seen more energy in a yoga cool-down.",
+    "Even the crickets stopped chirping out of boredom.",
+    "You're holding an invisible ukulele very, very still.",
+    "That was less rock and more... gentle breeze.",
+  ],
+  1: [
+    "Okay, there's a faint pulse. Like a sleepy campfire song.",
+    "Somewhere, a garage band just felt slightly insulted.",
+    "You've discovered the guitar exists. Now USE it.",
+    "That's the energy of someone who's heard OF rock music.",
+    "A polite golf clap for your effort. Literally.",
+    "Your air guitar has training wheels and they're on.",
+    "The neighbors won't be filing any noise complaints.",
+    "Like watching someone mime playing guitar... reluctantly.",
+  ],
+  2: [
+    "NOW we're talking! The garage door is rattling!",
+    "Stadium? Not yet. But a decent bar gig? Sure.",
+    "You'd survive the first round of a talent show.",
+    "The air guitar is plugged in and the amp is warm.",
+    "Solid riffing. Your invisible roadie approves.",
+    "The audience isn't throwing roses yet, but they stopped leaving.",
+    "That's genuine rock energy. Turn it up!",
+    "You just graduated from bedroom to basement shows.",
+  ],
+  3: [
+    "THE STADIUM IS SHAKING! Lighters are OUT!",
+    "Security can't hold back the crowd anymore!",
+    "That shredding just set off three car alarms!",
+    "Your invisible guitar just caught ACTUAL fire!",
+    "Rolling Stone is calling. They want an interview.",
+    "The sound guy just turned everything to eleven.",
+    "Hendrix's ghost just nodded in quiet approval.",
+    "You just melted an imaginary face right off.",
+  ],
+  4: [
+    "GUITAR GOD DETECTED. THE PROPHECY IS FULFILLED.",
+    "The earth split open. Demons are headbanging.",
+    "NASA detected your shredding from ORBIT.",
+    "Every real guitar within 50 miles just spontaneously combusted.",
+    "The gods of rock have descended. You ARE the music.",
+    "This performance just ended THREE rival bands' careers.",
+    "The universe just got a new fundamental force: YOUR SHREDDING.",
+    "Congratulations. You've broken physics with an invisible guitar.",
+    "The laws of thermodynamics just filed a formal complaint.",
+    "Angels weep. Devils cheer. The crowd has ASCENDED.",
+  ],
+};
+
+// ---- Mobile detection ----
+function isMobile() {
+  return /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) ||
+    ('ontouchstart' in window) ||
+    (window.DeviceMotionEvent !== undefined);
+}
+
+// ---- Audio: Web Audio power chord backing track ----
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playPowerChord(freq, startTime, duration) {
+  const ctx = audioCtx;
+
+  // Root
+  const osc1 = ctx.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.value = freq;
+
+  // Fifth
+  const osc2 = ctx.createOscillator();
+  osc2.type = 'sawtooth';
+  osc2.frequency.value = freq * 1.5;
+
+  // Octave
+  const osc3 = ctx.createOscillator();
+  osc3.type = 'square';
+  osc3.frequency.value = freq * 2;
+
+  // Distortion
+  const distortion = ctx.createWaveShaper();
+  const curve = new Float32Array(256);
+  for (let i = 0; i < 256; i++) {
+    const x = (i * 2) / 256 - 1;
+    curve[i] = (Math.PI + 200) * x / (Math.PI + 200 * Math.abs(x));
+  }
+  distortion.curve = curve;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.12, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+
+  [osc1, osc2, osc3].forEach(osc => {
+    osc.connect(distortion);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+  });
+  distortion.connect(gain);
+  gain.connect(ctx.destination);
+
+  backingTrackNodes.push(osc1, osc2, osc3);
+}
+
+function startBackingTrack() {
+  if (!audioCtx) initAudio();
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+
+  // Classic rock chord progression: E5 - A5 - D5 - A5 (power chords)
+  const chords = [82.41, 110, 73.42, 110]; // E2, A2, D2, A2
+  const beatDur = 0.4;
+  const totalBars = 40; // loop long enough
+
+  for (let bar = 0; bar < totalBars; bar++) {
+    for (let i = 0; i < chords.length; i++) {
+      const t = now + (bar * chords.length + i) * beatDur;
+      playPowerChord(chords[i], t, beatDur * 0.9);
+    }
+  }
+
+  // Kick drum pattern
+  for (let i = 0; i < totalBars * 4; i++) {
+    const t = now + i * beatDur;
+    const kickOsc = ctx.createOscillator();
+    kickOsc.frequency.setValueAtTime(150, t);
+    kickOsc.frequency.exponentialRampToValueAtTime(30, t + 0.1);
+    const kickGain = ctx.createGain();
+    kickGain.gain.setValueAtTime(i % 2 === 0 ? 0.25 : 0.12, t);
+    kickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+    kickOsc.connect(kickGain);
+    kickGain.connect(ctx.destination);
+    kickOsc.start(t);
+    kickOsc.stop(t + 0.15);
+    backingTrackNodes.push(kickOsc);
+  }
+
+  // Hi-hat
+  for (let i = 0; i < totalBars * 8; i++) {
+    const t = now + i * (beatDur / 2);
+    const bufSize = ctx.sampleRate * 0.02;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let j = 0; j < bufSize; j++) data[j] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    const hiFilter = ctx.createBiquadFilter();
+    hiFilter.type = 'highpass';
+    hiFilter.frequency.value = 8000;
+    const hiGain = ctx.createGain();
+    hiGain.gain.setValueAtTime(0.04, t);
+    hiGain.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
+    noise.connect(hiFilter);
+    hiFilter.connect(hiGain);
+    hiGain.connect(ctx.destination);
+    noise.start(t);
+    noise.stop(t + 0.04);
+    backingTrackNodes.push(noise);
+  }
+}
+
+function stopBackingTrack() {
+  backingTrackNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  backingTrackNodes = [];
+}
+
+// ---- Crowd cheering (noise-based) ----
+function startCrowdCheer(intensity) {
+  if (!audioCtx) return;
+  if (crowdNode) stopCrowdCheer();
+
+  const ctx = audioCtx;
+  const bufSize = ctx.sampleRate * 2;
+  const buf = ctx.createBuffer(2, bufSize, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < bufSize; i++) {
+      // Modulated noise to sound like crowd roar
+      const mod = Math.sin(i / (ctx.sampleRate * 0.1)) * 0.5 + 0.5;
+      const mod2 = Math.sin(i / (ctx.sampleRate * 0.37)) * 0.3 + 0.7;
+      data[i] = (Math.random() * 2 - 1) * mod * mod2;
+    }
+  }
+
+  crowdNode = ctx.createBufferSource();
+  crowdNode.buffer = buf;
+  crowdNode.loop = true;
+
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 1200;
+  bandpass.Q.value = 0.5;
+
+  crowdGain = ctx.createGain();
+  crowdGain.gain.value = Math.min(intensity / 100, 1) * 0.15;
+
+  crowdNode.connect(bandpass);
+  bandpass.connect(crowdGain);
+  crowdGain.connect(ctx.destination);
+  crowdNode.start();
+}
+
+function updateCrowdVolume(score) {
+  if (crowdGain && score > 50) {
+    crowdGain.gain.value = Math.min((score - 50) / 50, 1) * 0.18;
+  } else if (crowdGain) {
+    crowdGain.gain.value = 0;
+  }
+}
+
+function stopCrowdCheer() {
+  if (crowdNode) { try { crowdNode.stop(); } catch(e){} crowdNode = null; }
+  crowdGain = null;
+}
+
+// ---- Motion handling ----
+function handleMotion(e) {
+  if (!isShredding) return;
+
+  const acc = e.accelerationIncludingGravity || e.acceleration || {};
+  const x = acc.x || 0;
+  const y = acc.y || 0;
+  const z = acc.z || 0;
+
+  // Total acceleration magnitude (minus ~gravity)
+  const magnitude = Math.sqrt(x*x + y*y + z*z);
+  const delta = Math.sqrt(
+    (x - lastAccel.x)**2 +
+    (y - lastAccel.y)**2 +
+    (z - lastAccel.z)**2
+  );
+
+  // Direction changes = variety
+  const dirs = {
+    x: x > lastAccel.x ? 1 : -1,
+    y: y > lastAccel.y ? 1 : -1,
+    z: z > lastAccel.z ? 1 : -1,
+  };
+  if (dirs.x !== lastDirections.x) directionChanges++;
+  if (dirs.y !== lastDirections.y) directionChanges++;
+  if (dirs.z !== lastDirections.z) directionChanges++;
+  lastDirections = dirs;
+
+  lastAccel = { x, y, z };
+
+  motionHistory.push({ magnitude, delta, time: Date.now() });
+  if (motionHistory.length > 100) motionHistory.shift();
+}
+
+function computeScore() {
+  if (motionHistory.length < 5) return;
+
+  const recent = motionHistory.slice(-30);
+
+  // Intensity: average magnitude of movement (subtract gravity ~9.8)
+  const avgMag = recent.reduce((s, m) => s + Math.max(0, m.magnitude - 9.8), 0) / recent.length;
+  const intensity = Math.min(avgMag / 15 * 100, 100);
+
+  // Speed: average delta between consecutive readings
+  const avgDelta = recent.reduce((s, m) => s + m.delta, 0) / recent.length;
+  const speed = Math.min(avgDelta / 12 * 100, 100);
+
+  // Variety: direction changes normalized
+  const elapsed = (Date.now() - startTime) / 1000;
+  const varietyRate = directionChanges / Math.max(elapsed, 1);
+  const variety = Math.min(varietyRate / 30 * 100, 100);
+
+  // Smooth values
+  intensitySmooth += (intensity - intensitySmooth) * 0.15;
+  speedSmooth += (speed - speedSmooth) * 0.15;
+  varietySmooth += (variety - varietySmooth) * 0.15;
+
+  // Weighted score
+  score = Math.round(intensitySmooth * 0.4 + speedSmooth * 0.35 + varietySmooth * 0.25);
+  score = Math.max(0, Math.min(100, score));
+
+  if (score > highScore) highScore = score;
+
+  updateUI();
+}
+
+// ---- UI ----
+function getTier(s) {
+  if (s >= 85) return 4;
+  if (s >= 60) return 3;
+  if (s >= 35) return 2;
+  if (s >= 15) return 1;
+  return 0;
+}
+
+const tierNames = ['Air Ukulele', 'Garage Band', 'Stadium Rock', 'STADIUM ROCK', 'GUITAR GOD'];
+
+function updateUI() {
+  const tier = getTier(score);
+  const meterFill = document.getElementById('meterFill');
+  const tierName = document.getElementById('tierName');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const verdictText = document.getElementById('verdictText');
+  const highScoreEl = document.getElementById('highScore');
+
+  meterFill.style.width = score + '%';
+  scoreDisplay.textContent = score;
+  highScoreEl.textContent = highScore;
+
+  document.getElementById('statIntensity').textContent = Math.round(intensitySmooth);
+  document.getElementById('statSpeed').textContent = Math.round(speedSmooth);
+  document.getElementById('statVariety').textContent = Math.round(varietySmooth);
+
+  if (tier !== currentTier) {
+    currentTier = tier;
+    tierName.className = 'tier-name tier-' + tier;
+    tierName.textContent = tierNames[tier];
+
+    // Pick random verdict for this tier
+    const pool = verdicts[tier];
+    verdictText.textContent = pool[Math.floor(Math.random() * pool.length)];
+
+    // Sparkle burst on tier change
+    if (tier >= 2) spawnSparkles(tier * 6);
+
+    // Crowd cheer at high tiers
+    if (tier >= 3) {
+      startCrowdCheer(score);
+    } else {
+      stopCrowdCheer();
+    }
+  }
+
+  updateCrowdVolume(score);
+
+  // Also cycle verdicts periodically within same tier
+  if (Math.random() < 0.01) {
+    const pool = verdicts[currentTier];
+    verdictText.textContent = pool[Math.floor(Math.random() * pool.length)];
+  }
+}
+
+function spawnSparkles(count) {
+  const colors = ['#ff0050', '#ffcc00', '#00ff88', '#00ccff', '#ff6600', '#ff00cc'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.style.left = (Math.random() * 100) + 'vw';
+    el.style.top = (30 + Math.random() * 40) + 'vh';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (3 + Math.random() * 5) + 'px';
+    el.style.height = el.style.width;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 600);
+  }
+}
+
+function updateTimer() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const min = Math.floor(elapsed / 60);
+  const sec = String(elapsed % 60).padStart(2, '0');
+  document.getElementById('timer').textContent = min + ':' + sec;
+}
+
+// ---- Main control ----
+async function toggleShredding() {
+  const btn = document.getElementById('startBtn');
+
+  if (isShredding) {
+    // Stop
+    isShredding = false;
+    btn.textContent = 'Start Shredding';
+    btn.classList.remove('shredding');
+    clearInterval(timerInterval);
+    window.removeEventListener('devicemotion', handleMotion);
+    stopBackingTrack();
+    stopCrowdCheer();
+    if (animFrame) cancelAnimationFrame(animFrame);
+
+    // Final verdict
+    const pool = verdicts[currentTier];
+    document.getElementById('verdictText').textContent =
+      'Final score: ' + score + '. ' + pool[Math.floor(Math.random() * pool.length)];
+    return;
+  }
+
+  // Request motion permission (iOS 13+)
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    try {
+      const perm = await DeviceMotionEvent.requestPermission();
+      if (perm !== 'granted') {
+        document.getElementById('verdictText').textContent = 'Motion permission denied. Can\'t judge what we can\'t feel!';
+        return;
+      }
+    } catch (e) {
+      document.getElementById('verdictText').textContent = 'Motion permission error. Try reloading.';
+      return;
+    }
+  }
+
+  // Start
+  isShredding = true;
+  score = 0;
+  motionHistory = [];
+  directionChanges = 0;
+  intensitySmooth = 0;
+  speedSmooth = 0;
+  varietySmooth = 0;
+  currentTier = 0;
+  lastAccel = { x: 0, y: 0, z: 0 };
+  lastDirections = { x: 0, y: 0, z: 0 };
+  startTime = Date.now();
+
+  btn.textContent = 'Stop Shredding';
+  btn.classList.add('shredding');
+  document.getElementById('tierName').className = 'tier-name tier-0';
+  document.getElementById('tierName').textContent = 'Warming Up...';
+  document.getElementById('verdictText').textContent = 'MOVE YOUR PHONE! Strum! Windmill! Go crazy!';
+
+  window.addEventListener('devicemotion', handleMotion);
+  timerInterval = setInterval(updateTimer, 1000);
+
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  startBackingTrack();
+
+  function loop() {
+    if (!isShredding) return;
+    computeScore();
+    animFrame = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+// ---- Desktop fallback: simulate with mouse movement ----
+let mouseMoving = false;
+function handleMouseFallback(e) {
+  if (!isShredding) return;
+  const magnitude = Math.sqrt(e.movementX**2 + e.movementY**2) + 9.8;
+  const delta = Math.sqrt(e.movementX**2 + e.movementY**2);
+
+  const dirs = {
+    x: e.movementX > 0 ? 1 : -1,
+    y: e.movementY > 0 ? 1 : -1,
+    z: 0,
+  };
+  if (dirs.x !== lastDirections.x) directionChanges++;
+  if (dirs.y !== lastDirections.y) directionChanges++;
+  lastDirections = dirs;
+
+  motionHistory.push({ magnitude, delta: delta * 0.8, time: Date.now() });
+  if (motionHistory.length > 100) motionHistory.shift();
+}
+
+// ---- Init ----
+window.addEventListener('DOMContentLoaded', () => {
+  // Check if truly no motion support (desktop without sensors)
+  const hasMotion = window.DeviceMotionEvent !== undefined;
+  const isMobileDevice = isMobile();
+
+  if (!isMobileDevice && !hasMotion) {
+    // Show warning but still allow with mouse fallback
+    // Actually, let's just enable mouse fallback silently
+    document.addEventListener('mousemove', handleMouseFallback);
+    document.querySelector('.subtitle').textContent = 'Move your mouse like crazy (mobile recommended)';
+  }
+
+  // Load high score from session
+  const saved = sessionStorage.getItem('airGuitarHigh');
+  if (saved) {
+    highScore = parseInt(saved);
+    document.getElementById('highScore').textContent = highScore;
+  }
+
+  // Save high score on change
+  setInterval(() => {
+    sessionStorage.setItem('airGuitarHigh', highScore);
+  }, 2000);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remix Roulette</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:#0a0a12;
+    color:#e0e0e0;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  .bg-glow{
+    position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 30%,rgba(120,40,200,.15),transparent 70%),
+               radial-gradient(ellipse at 80% 70%,rgba(200,40,80,.1),transparent 60%);
+  }
+  .container{
+    position:relative;z-index:1;
+    max-width:520px;margin:0 auto;padding:20px 16px 40px;
+    text-align:center;
+  }
+  h1{
+    font-size:2.2rem;font-weight:800;
+    background:linear-gradient(135deg,#ff6ec7,#8b5cf6,#06b6d4);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:4px;
+  }
+  .subtitle{font-size:.95rem;color:#888;margin-bottom:24px}
+
+  /* Turntable */
+  .turntable-wrap{
+    position:relative;width:260px;height:260px;margin:0 auto 28px;
+  }
+  .turntable{
+    width:100%;height:100%;
+    border-radius:50%;
+    background:conic-gradient(from 0deg,#1a1a2e,#16213e,#0f3460,#1a1a2e);
+    box-shadow:0 0 40px rgba(139,92,246,.3),inset 0 0 60px rgba(0,0,0,.6);
+    display:flex;align-items:center;justify-content:center;
+    transition:transform .1s linear;
+  }
+  .turntable.spinning{
+    animation:spin 1.2s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .turntable-label{
+    width:100px;height:100px;border-radius:50%;
+    background:radial-gradient(circle,#2a2a3e,#1a1a2e);
+    border:3px solid #8b5cf6;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.8rem;color:#c4b5fd;
+    text-align:center;line-height:1.2;
+    padding:8px;
+  }
+  .grooves{
+    position:absolute;inset:0;border-radius:50%;
+    background:repeating-radial-gradient(circle at center,transparent 0,transparent 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 9px);
+    pointer-events:none;
+  }
+  .tonearm{
+    position:absolute;top:-10px;right:20px;
+    width:6px;height:140px;
+    background:linear-gradient(to bottom,#666,#333);
+    border-radius:3px;
+    transform-origin:top center;
+    transform:rotate(25deg);
+    z-index:2;
+  }
+  .tonearm::after{
+    content:'';position:absolute;bottom:-4px;left:-4px;
+    width:14px;height:14px;border-radius:50%;
+    background:#8b5cf6;
+  }
+
+  /* Genre badge */
+  .genre-badge{
+    display:inline-block;
+    padding:8px 24px;border-radius:30px;
+    background:linear-gradient(135deg,#8b5cf6,#ec4899);
+    font-size:1.3rem;font-weight:700;
+    margin-bottom:20px;
+    opacity:0;transform:scale(.8);
+    transition:all .4s cubic-bezier(.34,1.56,.64,1);
+  }
+  .genre-badge.show{opacity:1;transform:scale(1)}
+
+  /* Buttons */
+  .btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+  button{
+    border:none;cursor:pointer;font-family:inherit;font-weight:700;
+    border-radius:14px;font-size:1rem;
+    transition:all .2s;
+  }
+  button:active{transform:scale(.95)}
+  .btn-record{
+    padding:14px 32px;
+    background:linear-gradient(135deg,#ef4444,#dc2626);
+    color:#fff;font-size:1.1rem;
+    box-shadow:0 4px 20px rgba(239,68,68,.4);
+  }
+  .btn-record.recording{
+    animation:pulse-red 1s ease-in-out infinite;
+  }
+  @keyframes pulse-red{
+    0%,100%{box-shadow:0 4px 20px rgba(239,68,68,.4)}
+    50%{box-shadow:0 4px 40px rgba(239,68,68,.8)}
+  }
+  .btn-remix{
+    padding:14px 32px;
+    background:linear-gradient(135deg,#8b5cf6,#6d28d9);
+    color:#fff;font-size:1.1rem;
+    box-shadow:0 4px 20px rgba(139,92,246,.4);
+  }
+  .btn-remix:disabled{opacity:.4;cursor:not-allowed}
+  .btn-sm{
+    padding:10px 20px;
+    background:rgba(255,255,255,.08);
+    color:#c4b5fd;font-size:.9rem;
+    border:1px solid rgba(139,92,246,.3);
+  }
+  .btn-sm:hover{background:rgba(139,92,246,.15)}
+
+  /* Playback row */
+  .playback-row{
+    display:flex;gap:12px;justify-content:center;flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .play-btn{
+    padding:10px 24px;
+    background:rgba(255,255,255,.06);
+    color:#e0e0e0;font-size:.95rem;
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:12px;
+  }
+  .play-btn.active{
+    border-color:#8b5cf6;
+    background:rgba(139,92,246,.15);
+    color:#c4b5fd;
+  }
+
+  /* Waveform */
+  .wave-container{
+    height:60px;margin:16px 0;
+    display:flex;align-items:center;justify-content:center;gap:2px;
+  }
+  .wave-bar{
+    width:3px;background:#8b5cf6;border-radius:2px;
+    transition:height .1s;
+    min-height:4px;
+  }
+
+  /* Timer */
+  .timer{
+    font-size:2rem;font-weight:700;
+    color:#ef4444;margin:8px 0 16px;
+    font-variant-numeric:tabular-nums;
+  }
+  .timer.hidden{display:none}
+
+  /* Status */
+  .status{
+    font-size:.85rem;color:#888;margin-top:12px;min-height:20px;
+  }
+
+  /* Share */
+  .share-area{margin-top:16px}
+  .share-area.hidden{display:none}
+
+  @media(max-width:400px){
+    h1{font-size:1.7rem}
+    .turntable-wrap{width:200px;height:200px}
+    .turntable-label{width:80px;height:80px;font-size:.7rem}
+    .tonearm{height:110px;right:10px}
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="container">
+  <h1>Remix Roulette</h1>
+  <p class="subtitle">Record. Spin. Get remixed.</p>
+
+  <div class="turntable-wrap">
+    <div class="turntable" id="turntable">
+      <div class="grooves"></div>
+      <div class="turntable-label" id="turntableLabel">DROP THE<br>NEEDLE</div>
+    </div>
+    <div class="tonearm"></div>
+  </div>
+
+  <div class="genre-badge" id="genreBadge"></div>
+
+  <div class="timer hidden" id="timer">3.0</div>
+
+  <div class="wave-container" id="waveform"></div>
+
+  <div class="btn-row">
+    <button class="btn-record" id="btnRecord">RECORD</button>
+    <button class="btn-remix" id="btnRemix" disabled>REMIX</button>
+  </div>
+
+  <div class="playback-row" id="playbackRow" style="display:none">
+    <button class="play-btn" id="btnOriginal">Original</button>
+    <button class="play-btn" id="btnRemixed">Remixed</button>
+  </div>
+
+  <div class="btn-row" id="extraBtns" style="display:none">
+    <button class="btn-sm" id="btnSpin">Spin Again</button>
+    <button class="btn-sm" id="btnShare">Share</button>
+  </div>
+
+  <p class="status" id="status">Tap RECORD to capture 3 seconds of audio</p>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+// State
+let originalBuffer = null;
+let remixedBuffer = null;
+let currentSource = null;
+let isRecording = false;
+
+// Waveform bars
+const waveEl = $('waveform');
+const NUM_BARS = 48;
+for(let i=0;i<NUM_BARS;i++){
+  const b = document.createElement('div');
+  b.className='wave-bar';
+  b.style.height='4px';
+  waveEl.appendChild(b);
+}
+const bars = waveEl.querySelectorAll('.wave-bar');
+
+// Genre definitions with Web Audio effect chains
+const GENRES = [
+  {
+    name: 'Jazz',
+    emoji: '🎷',
+    apply: buf => applyEffects(buf, { reverb:.6, reverbDecay:2.5, swingTempo:.85, warmth:800 })
+  },
+  {
+    name: 'EDM',
+    emoji: '🎧',
+    apply: buf => applyEffects(buf, { bassBoost:12, distortion:.3, tempo:1.3, echo:.15, echoDelay:.125 })
+  },
+  {
+    name: 'Country',
+    emoji: '🤠',
+    apply: buf => applyEffects(buf, { twang:2200, twangQ:8, reverb:.25, reverbDecay:1.0, tempo:.95 })
+  },
+  {
+    name: 'Opera',
+    emoji: '🎭',
+    apply: buf => applyEffects(buf, { reverb:.8, reverbDecay:4, pitchUp:1.15, vibrato:6 })
+  },
+  {
+    name: 'Lo-Fi',
+    emoji: '📻',
+    apply: buf => applyEffects(buf, { lowpass:800, bitcrush:8, crackle:.04, tempo:.9, warmth:600 })
+  },
+  {
+    name: 'Metal',
+    emoji: '🤘',
+    apply: buf => applyEffects(buf, { distortion:.8, bassBoost:10, highBoost:6, tempo:1.2 })
+  },
+  {
+    name: 'Reggae',
+    emoji: '🌴',
+    apply: buf => applyEffects(buf, { echo:.4, echoDelay:.375, lowpass:2000, tempo:.8, bassBoost:6 })
+  },
+  {
+    name: 'Vaporwave',
+    emoji: '🌊',
+    apply: buf => applyEffects(buf, { tempo:.7, reverb:.7, reverbDecay:3, lowpass:3000, chorus:true })
+  },
+  {
+    name: '8-Bit',
+    emoji: '👾',
+    apply: buf => applyEffects(buf, { bitcrush:4, tempo:1.1, highpass:200, distortion:.15 })
+  },
+  {
+    name: 'Bollywood',
+    emoji: '💃',
+    apply: buf => applyEffects(buf, { reverb:.5, reverbDecay:2, echo:.2, echoDelay:.2, tempo:1.1, twang:3000, twangQ:3 })
+  },
+  {
+    name: 'Punk',
+    emoji: '🏴',
+    apply: buf => applyEffects(buf, { distortion:.6, tempo:1.4, highBoost:8, bassBoost:4 })
+  },
+  {
+    name: 'Ambient',
+    emoji: '🌌',
+    apply: buf => applyEffects(buf, { reverb:.9, reverbDecay:5, lowpass:1500, tempo:.6, chorus:true })
+  }
+];
+
+// --- RECORDING ---
+$('btnRecord').onclick = async () => {
+  if(isRecording) return;
+  isRecording = true;
+  $('btnRecord').classList.add('recording');
+  $('btnRecord').textContent = 'RECORDING...';
+  $('btnRemix').disabled = true;
+  $('status').textContent = 'Listening...';
+  $('timer').classList.remove('hidden');
+  $('playbackRow').style.display = 'none';
+  $('extraBtns').style.display = 'none';
+  $('genreBadge').classList.remove('show');
+  $('turntableLabel').innerHTML = 'RECORDING';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const recorder = new MediaRecorder(stream);
+    const chunks = [];
+    recorder.ondataavailable = e => chunks.push(e.data);
+
+    // Analyser for live waveform
+    const srcNode = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 128;
+    srcNode.connect(analyser);
+    const freqData = new Uint8Array(analyser.frequencyBinCount);
+
+    let elapsed = 0;
+    const timerInterval = setInterval(() => {
+      elapsed += 100;
+      const remaining = Math.max(0, 3 - elapsed/1000);
+      $('timer').textContent = remaining.toFixed(1);
+      analyser.getByteFrequencyData(freqData);
+      bars.forEach((b,i) => {
+        const idx = Math.floor(i * freqData.length / NUM_BARS);
+        b.style.height = Math.max(4, freqData[idx] * .22) + 'px';
+        b.style.background = `hsl(${260 + i*2}, 70%, ${50 + freqData[idx]/8}%)`;
+      });
+    }, 100);
+
+    recorder.start();
+
+    await new Promise(r => setTimeout(r, 3000));
+
+    recorder.stop();
+    clearInterval(timerInterval);
+    stream.getTracks().forEach(t => t.stop());
+    srcNode.disconnect();
+
+    await new Promise(r => { recorder.onstop = r; });
+
+    const blob = new Blob(chunks, { type: 'audio/webm' });
+    const arrayBuf = await blob.arrayBuffer();
+    originalBuffer = await ctx.decodeAudioData(arrayBuf);
+
+    $('btnRecord').classList.remove('recording');
+    $('btnRecord').textContent = 'RECORD';
+    $('btnRemix').disabled = false;
+    $('timer').classList.add('hidden');
+    $('status').textContent = 'Audio captured! Hit REMIX to spin the wheel.';
+    $('turntableLabel').innerHTML = 'READY TO<br>REMIX';
+    bars.forEach(b => { b.style.height = '4px'; });
+    isRecording = false;
+  } catch(err) {
+    $('btnRecord').classList.remove('recording');
+    $('btnRecord').textContent = 'RECORD';
+    $('timer').classList.add('hidden');
+    $('status').textContent = 'Mic access denied. Please allow microphone.';
+    $('turntableLabel').innerHTML = 'DROP THE<br>NEEDLE';
+    isRecording = false;
+  }
+};
+
+// --- REMIX ---
+$('btnRemix').onclick = async () => {
+  if(!originalBuffer) return;
+  stopPlayback();
+  $('btnRemix').disabled = true;
+  $('turntable').classList.add('spinning');
+  $('genreBadge').classList.remove('show');
+  $('status').textContent = 'Spinning the wheel...';
+  $('playbackRow').style.display = 'none';
+  $('extraBtns').style.display = 'none';
+
+  const genre = GENRES[Math.floor(Math.random() * GENRES.length)];
+
+  await new Promise(r => setTimeout(r, 1500));
+
+  $('turntable').classList.remove('spinning');
+  $('genreBadge').textContent = `${genre.emoji} ${genre.name}`;
+  $('genreBadge').classList.add('show');
+  $('turntableLabel').innerHTML = genre.emoji + '<br>' + genre.name;
+  $('status').textContent = `Applying ${genre.name} effects...`;
+
+  await new Promise(r => setTimeout(r, 300));
+
+  remixedBuffer = await genre.apply(originalBuffer);
+
+  $('status').textContent = `${genre.name} remix ready! Play to compare.`;
+  $('playbackRow').style.display = 'flex';
+  $('extraBtns').style.display = 'flex';
+  $('btnRemix').disabled = false;
+};
+
+// --- EFFECTS ENGINE ---
+function applyEffects(inputBuffer, fx) {
+  return new Promise(resolve => {
+    const rate = inputBuffer.sampleRate;
+    const tempo = fx.tempo || 1;
+    const pitchUp = fx.pitchUp || 1;
+    const speed = tempo * pitchUp;
+    const outLen = Math.ceil(inputBuffer.length / speed);
+    const offline = new OfflineAudioContext(inputBuffer.numberOfChannels, outLen + rate * 2, rate);
+
+    const src = offline.createBufferSource();
+    src.buffer = inputBuffer;
+    src.playbackRate.value = speed;
+
+    let lastNode = src;
+
+    // Bass boost
+    if(fx.bassBoost) {
+      const bass = offline.createBiquadFilter();
+      bass.type = 'lowshelf';
+      bass.frequency.value = 150;
+      bass.gain.value = fx.bassBoost;
+      lastNode.connect(bass);
+      lastNode = bass;
+    }
+
+    // High boost
+    if(fx.highBoost) {
+      const hi = offline.createBiquadFilter();
+      hi.type = 'highshelf';
+      hi.frequency.value = 4000;
+      hi.gain.value = fx.highBoost;
+      lastNode.connect(hi);
+      lastNode = hi;
+    }
+
+    // Lowpass
+    if(fx.lowpass) {
+      const lp = offline.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = fx.lowpass;
+      lp.Q.value = 1;
+      lastNode.connect(lp);
+      lastNode = lp;
+    }
+
+    // Highpass
+    if(fx.highpass) {
+      const hp = offline.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = fx.highpass;
+      lastNode.connect(hp);
+      lastNode = hp;
+    }
+
+    // Warmth (gentle lowpass)
+    if(fx.warmth) {
+      const w = offline.createBiquadFilter();
+      w.type = 'lowpass';
+      w.frequency.value = fx.warmth;
+      w.Q.value = .5;
+      lastNode.connect(w);
+      lastNode = w;
+    }
+
+    // Twang (peaking filter)
+    if(fx.twang) {
+      const tw = offline.createBiquadFilter();
+      tw.type = 'peaking';
+      tw.frequency.value = fx.twang;
+      tw.Q.value = fx.twangQ || 5;
+      tw.gain.value = 10;
+      lastNode.connect(tw);
+      lastNode = tw;
+    }
+
+    // Distortion
+    if(fx.distortion) {
+      const ws = offline.createWaveShaper();
+      const amt = fx.distortion * 400;
+      const curve = new Float32Array(rate);
+      for(let i=0;i<rate;i++){
+        const x = (i*2/rate) - 1;
+        curve[i] = (Math.PI + amt) * x / (Math.PI + amt * Math.abs(x));
+      }
+      ws.curve = curve;
+      ws.oversample = '4x';
+      lastNode.connect(ws);
+      lastNode = ws;
+    }
+
+    // Echo / Delay
+    if(fx.echo) {
+      const delay = offline.createDelay(1);
+      delay.delayTime.value = fx.echoDelay || .25;
+      const feedback = offline.createGain();
+      feedback.gain.value = fx.echo;
+      const dry = offline.createGain();
+      dry.gain.value = 1;
+      const wet = offline.createGain();
+      wet.gain.value = fx.echo;
+      const merger = offline.createGain();
+
+      lastNode.connect(dry);
+      lastNode.connect(delay);
+      delay.connect(feedback);
+      feedback.connect(delay);
+      delay.connect(wet);
+      dry.connect(merger);
+      wet.connect(merger);
+      lastNode = merger;
+    }
+
+    // Convolution reverb
+    if(fx.reverb) {
+      const decay = fx.reverbDecay || 2;
+      const reverbLen = Math.floor(rate * decay);
+      const impulse = offline.createBuffer(2, reverbLen, rate);
+      for(let ch=0;ch<2;ch++){
+        const d = impulse.getChannelData(ch);
+        for(let i=0;i<reverbLen;i++){
+          d[i] = (Math.random()*2-1) * Math.pow(1 - i/reverbLen, 2);
+        }
+      }
+      const conv = offline.createConvolver();
+      conv.buffer = impulse;
+      const dry = offline.createGain();
+      dry.gain.value = 1 - fx.reverb * .5;
+      const wet = offline.createGain();
+      wet.gain.value = fx.reverb;
+      const merger = offline.createGain();
+
+      lastNode.connect(dry);
+      lastNode.connect(conv);
+      conv.connect(wet);
+      dry.connect(merger);
+      wet.connect(merger);
+      lastNode = merger;
+    }
+
+    // Vibrato (LFO modulating a delay)
+    if(fx.vibrato) {
+      const vDelay = offline.createDelay(.05);
+      vDelay.delayTime.value = .005;
+      const lfo = offline.createOscillator();
+      lfo.frequency.value = fx.vibrato;
+      const lfoGain = offline.createGain();
+      lfoGain.gain.value = .003;
+      lfo.connect(lfoGain);
+      lfoGain.connect(vDelay.delayTime);
+      lfo.start(0);
+      lastNode.connect(vDelay);
+      lastNode = vDelay;
+    }
+
+    // Chorus (detuned delay)
+    if(fx.chorus) {
+      const cDelay = offline.createDelay(.05);
+      cDelay.delayTime.value = .02;
+      const lfo = offline.createOscillator();
+      lfo.frequency.value = .8;
+      const lfoG = offline.createGain();
+      lfoG.gain.value = .005;
+      lfo.connect(lfoG);
+      lfoG.connect(cDelay.delayTime);
+      lfo.start(0);
+      const dry = offline.createGain();
+      dry.gain.value = .7;
+      const wet = offline.createGain();
+      wet.gain.value = .5;
+      const merger = offline.createGain();
+      lastNode.connect(dry);
+      lastNode.connect(cDelay);
+      cDelay.connect(wet);
+      dry.connect(merger);
+      wet.connect(merger);
+      lastNode = merger;
+    }
+
+    lastNode.connect(offline.destination);
+    src.start(0);
+
+    // Add crackle noise if needed
+    if(fx.crackle) {
+      const noiseLen = outLen + rate;
+      const noiseBuf = offline.createBuffer(1, noiseLen, rate);
+      const nd = noiseBuf.getChannelData(0);
+      for(let i=0;i<noiseLen;i++){
+        nd[i] = Math.random() > .997 ? (Math.random()-.5) * fx.crackle * 10 : (Math.random()-.5) * fx.crackle * .3;
+      }
+      const noiseSrc = offline.createBufferSource();
+      noiseSrc.buffer = noiseBuf;
+      noiseSrc.connect(offline.destination);
+      noiseSrc.start(0);
+    }
+
+    // Bitcrush via script (approximate with sample reduction)
+    if(fx.bitcrush) {
+      // We'll post-process after rendering
+    }
+
+    offline.startRendering().then(rendered => {
+      if(fx.bitcrush) {
+        const bits = fx.bitcrush;
+        const step = Math.pow(.5, bits);
+        for(let ch=0;ch<rendered.numberOfChannels;ch++){
+          const d = rendered.getChannelData(ch);
+          for(let i=0;i<d.length;i++){
+            d[i] = step * Math.floor(d[i] / step + .5);
+          }
+        }
+      }
+      resolve(rendered);
+    });
+  });
+}
+
+// --- PLAYBACK ---
+function stopPlayback() {
+  if(currentSource) {
+    try { currentSource.stop(); } catch(e){}
+    currentSource = null;
+  }
+  $('btnOriginal').classList.remove('active');
+  $('btnRemixed').classList.remove('active');
+}
+
+function playBuffer(buffer, btnId) {
+  if(ctx.state === 'suspended') ctx.resume();
+  stopPlayback();
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+
+  // Live waveform
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 128;
+  src.connect(analyser);
+  const freqData = new Uint8Array(analyser.frequencyBinCount);
+  const waveInterval = setInterval(() => {
+    analyser.getByteFrequencyData(freqData);
+    bars.forEach((b,i) => {
+      const idx = Math.floor(i * freqData.length / NUM_BARS);
+      b.style.height = Math.max(4, freqData[idx] * .22) + 'px';
+    });
+  }, 50);
+
+  src.onended = () => {
+    clearInterval(waveInterval);
+    bars.forEach(b => { b.style.height = '4px'; });
+    $(btnId).classList.remove('active');
+    currentSource = null;
+  };
+  src.start(0);
+  currentSource = src;
+  $(btnId).classList.add('active');
+}
+
+$('btnOriginal').onclick = () => {
+  if(!originalBuffer) return;
+  playBuffer(originalBuffer, 'btnOriginal');
+};
+
+$('btnRemixed').onclick = () => {
+  if(!remixedBuffer) return;
+  playBuffer(remixedBuffer, 'btnRemixed');
+};
+
+// Spin Again
+$('btnSpin').onclick = () => {
+  $('btnRemix').click();
+};
+
+// Share
+$('btnShare').onclick = async () => {
+  if(!remixedBuffer) return;
+  // Export remixed audio as WAV
+  const wav = audioBufferToWav(remixedBuffer);
+  const blob = new Blob([wav], { type: 'audio/wav' });
+  const file = new File([blob], 'remix-roulette.wav', { type: 'audio/wav' });
+  const genre = $('genreBadge').textContent;
+
+  if(navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        title: 'Remix Roulette',
+        text: `Check out my ${genre} remix!`,
+        files: [file]
+      });
+    } catch(e) {}
+  } else {
+    // Fallback: download
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'remix-roulette.wav';
+    a.click();
+    URL.revokeObjectURL(url);
+    $('status').textContent = 'Remix downloaded!';
+  }
+};
+
+// WAV encoder
+function audioBufferToWav(buffer) {
+  const numCh = buffer.numberOfChannels;
+  const rate = buffer.sampleRate;
+  const format = 1; // PCM
+  const bitDepth = 16;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = numCh * bytesPerSample;
+  const samples = buffer.length;
+  const dataSize = samples * blockAlign;
+  const bufferSize = 44 + dataSize;
+  const out = new ArrayBuffer(bufferSize);
+  const view = new DataView(out);
+
+  const writeStr = (o, s) => { for(let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, bufferSize - 8, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, format, true);
+  view.setUint16(22, numCh, true);
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitDepth, true);
+  writeStr(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  const channels = [];
+  for(let ch=0;ch<numCh;ch++) channels.push(buffer.getChannelData(ch));
+
+  let offset = 44;
+  for(let i=0;i<samples;i++){
+    for(let ch=0;ch<numCh;ch++){
+      let s = Math.max(-1, Math.min(1, channels[ch][i]));
+      s = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      view.setInt16(offset, s, true);
+      offset += 2;
+    }
+  }
+  return out;
+}
+</script>
+</body>
+</html>

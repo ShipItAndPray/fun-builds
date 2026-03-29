@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Villain Speech Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Inter:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --accent: #ff2d2d;
+    --accent2: #8b0000;
+    --gold: #ffd700;
+    --text: #e0e0e0;
+    --muted: #888;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(139,0,0,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(75,0,130,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(139,0,0,0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+    animation: bgPulse 8s ease-in-out infinite alternate;
+  }
+
+  @keyframes bgPulse {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    background: linear-gradient(135deg, var(--accent), var(--gold), var(--accent));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s ease-in-out infinite;
+    letter-spacing: 2px;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  header p {
+    color: var(--muted);
+    margin-top: 8px;
+    font-size: 0.95rem;
+  }
+
+  .input-section {
+    background: var(--surface);
+    border: 1px solid rgba(255,45,45,0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--accent);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.3s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .voice-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  @media (min-width: 600px) {
+    .voice-selector { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  .voice-btn {
+    background: var(--surface2);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px 8px;
+    color: var(--text);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s;
+    font-size: 0.85rem;
+  }
+
+  .voice-btn .emoji { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+
+  .voice-btn:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .voice-btn.active {
+    border-color: var(--accent);
+    background: rgba(255,45,45,0.15);
+    box-shadow: 0 0 20px rgba(255,45,45,0.2);
+  }
+
+  .generate-btn {
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255,45,45,0.4);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+
+  .generate-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: btnShine 3s ease-in-out infinite;
+  }
+
+  @keyframes btnShine {
+    0%, 100% { transform: translateX(-100%) rotate(45deg); }
+    50% { transform: translateX(100%) rotate(45deg); }
+  }
+
+  .output-section {
+    background: var(--surface);
+    border: 1px solid rgba(255,45,45,0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .output-section.visible { display: block; animation: fadeIn 0.5s ease; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .monologue-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    min-height: 60px;
+  }
+
+  .monologue-text .dramatic { color: var(--gold); font-weight: 600; }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .action-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+
+  .action-btn.speaking {
+    border-color: var(--gold);
+    background: rgba(255,215,0,0.1);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 0 15px 5px rgba(255,215,0,0.1); }
+  }
+
+  .evil-laugh-btn {
+    background: linear-gradient(135deg, #2a0a2a, #4a0e4a);
+    border-color: #8b008b;
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .evil-laugh-btn:hover {
+    border-color: #ff00ff;
+    box-shadow: 0 0 20px rgba(139,0,139,0.4);
+  }
+
+  .evil-laugh-btn.laughing {
+    animation: laughShake 0.1s linear infinite;
+    border-color: #ff00ff;
+  }
+
+  @keyframes laughShake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-2deg); }
+    75% { transform: rotate(2deg); }
+  }
+
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.1em;
+    background: var(--accent);
+    animation: blink 0.8s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .sample-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: var(--muted);
+  }
+
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 24px;
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: transform 0.4s ease;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .speed-control {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .speed-control label { font-size: 0.8rem; color: var(--muted); }
+
+  .speed-control input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Villain Speech Generator</h1>
+    <p>Transform mundane complaints into dramatic monologues</p>
+  </header>
+
+  <div class="input-section">
+    <label>Your mundane complaint</label>
+    <textarea id="complaint" placeholder="The WiFi is slow..."></textarea>
+
+    <div class="sample-chips">
+      <span class="chip" onclick="useSample(this)">The WiFi is slow</span>
+      <span class="chip" onclick="useSample(this)">My coffee is cold</span>
+      <span class="chip" onclick="useSample(this)">Traffic was terrible</span>
+      <span class="chip" onclick="useSample(this)">The printer is jammed</span>
+      <span class="chip" onclick="useSample(this)">My phone battery died</span>
+      <span class="chip" onclick="useSample(this)">The meeting ran long</span>
+    </div>
+
+    <label style="margin-top:20px;">Choose your villain</label>
+    <div class="voice-selector">
+      <div class="voice-btn active" data-voice="bond" onclick="selectVoice(this)">
+        <span class="emoji">🎩</span>Bond Villain
+      </div>
+      <div class="voice-btn" data-voice="thanos" onclick="selectVoice(this)">
+        <span class="emoji">🟣</span>Thanos
+      </div>
+      <div class="voice-btn" data-voice="ceo" onclick="selectVoice(this)">
+        <span class="emoji">💼</span>Evil CEO
+      </div>
+      <div class="voice-btn" data-voice="cartoon" onclick="selectVoice(this)">
+        <span class="emoji">🐱</span>Cartoon Villain
+      </div>
+    </div>
+
+    <div class="speed-control">
+      <label>Speech Speed</label>
+      <input type="range" id="speechSpeed" min="0.5" max="1.2" step="0.05" value="0.8">
+      <label id="speedLabel">0.8x</label>
+    </div>
+
+    <button class="generate-btn" onclick="generate()">Unleash the Monologue</button>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="monologue-text" id="monologueText"></div>
+    <div class="action-bar">
+      <button class="action-btn" id="speakBtn" onclick="speakMonologue()">🔊 Speak</button>
+      <button class="action-btn evil-laugh-btn" id="laughBtn" onclick="evilLaugh()">😈 Evil Laugh</button>
+      <button class="action-btn" onclick="regenerate()">🔄 New</button>
+      <button class="action-btn" onclick="copyMonologue()">📋 Copy</button>
+      <button class="action-btn" onclick="shareMonologue()">📤 Share</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const synth = window.speechSynthesis;
+let currentVoice = 'bond';
+let currentMonologue = '';
+let isTyping = false;
+
+document.getElementById('speechSpeed').addEventListener('input', e => {
+  document.getElementById('speedLabel').textContent = e.target.value + 'x';
+});
+
+function useSample(el) {
+  document.getElementById('complaint').value = el.textContent;
+}
+
+function selectVoice(el) {
+  document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentVoice = el.dataset.voice;
+}
+
+// 50+ monologue templates per voice
+const templates = {
+  bond: [
+    (c,s) => `You see, Mr. Bond, I didn't just ${s}. I created a global network of strategically placed ${getDevice(c)} designed to bring humanity to its KNEES through ${getSuffering(c)}. Every major government will BEG for my mercy. And the beautiful part? They'll never even know it was ME.`,
+    (c,s) => `Ah, Mr. Bond. You think this is merely about ${c.toLowerCase()}? How... CHARMINGLY naive. While you were sipping martinis, I was constructing a satellite array capable of ${getAction(c)} on a PLANETARY scale. In precisely forty-seven minutes, every ${getTarget(c)} on Earth will ${getConsequence(c)}. And there is NOTHING you can do to stop it.`,
+    (c,s) => `*strokes white cat* You disappoint me, Mr. Bond. You arrive here thinking this is about ${c.toLowerCase()}. But I've spent SEVENTEEN YEARS and four hundred million dollars engineering the perfect ${getWeapon(c)}. When I press this button, the world will learn the TRUE meaning of ${getSuffering(c)}.`,
+    (c,s) => `Do you know what separates a GENIUS from a madman, Mr. Bond? Results. While the world complained about ${c.toLowerCase()}, I saw an OPPORTUNITY. My operatives in forty-three countries are ready. The ${getDevice(c)} network is armed. And YOU... you're exactly where I WANT you.`,
+    (c,s) => `How delightful that you've found my lair, Mr. Bond. But you're too late. You see, ${c.toLowerCase()} was merely the PROTOTYPE. The REAL plan involves every ${getTarget(c)} simultaneously experiencing ${getSuffering(c)} at precisely midnight GMT. I call it... Operation ${getOperationName(c)}.`,
+    (c,s) => `*adjusts monocle* Please, Mr. Bond, sit. Have a drink. You'll want to be comfortable when I explain how ${c.toLowerCase()} was just the FIRST PHASE. Phase two involves a submarine, three stolen warheads, and enough ${getDevice(c)} to reshape the ENTIRE geopolitical landscape.`,
+    (c,s) => `I expected more from MI6, honestly. You think ${c.toLowerCase()} was an ACCIDENT? Every ${getTarget(c)} failure in the past six months has been MY doing. I've been TESTING my ${getWeapon(c)}, and now? Now it's ready for the MAIN EVENT.`,
+    (c,s) => `You know, Mr. Bond, there's a certain POETRY to it. The world's mightiest nations, brought LOW by something as simple as ${c.toLowerCase()}. But amplified through my network of ${getDevice(c)}? It becomes a weapon of UNIMAGINABLE power. Care to see a demonstration?`,
+    (c,s) => `*spins chair dramatically* Ah, you've arrived. I was beginning to think MI6 had given up. But no matter. In twelve minutes, my satellite will activate, and every ${getTarget(c)} from London to Tokyo will experience ${getSuffering(c)} so severe that world leaders will have no choice but to accept my DEMANDS.`,
+    (c,s) => `Welcome to my island, Mr. Bond. Population: me, my army of loyal followers, and now YOU. While you've been chasing leads about ${c.toLowerCase()}, I've built the world's largest ${getDevice(c)} RIGHT here. And tonight, I will demonstrate its FULL capabilities to the United Nations Security Council.`,
+    (c,s) => `You're a persistent man, Mr. Bond. I respect that. But persistence won't save the world from what I've ALREADY set in motion. You see, ${c.toLowerCase()} was my calling card. A TASTE of what's to come. The main course? Complete and utter ${getSuffering(c)} for every ${getTarget(c)} who dares oppose me.`,
+    (c,s) => `*presses intercom* Guards, bring Mr. Bond a chair. He should be COMFORTABLE for this. You see, I've invested my ENTIRE fortune into weaponizing ${c.toLowerCase()}. My scientists told me it was impossible. I told them they were FIRED. The replacements succeeded BRILLIANTLY.`,
+    (c,s) => `The beauty of my plan, Mr. Bond, is its SIMPLICITY. Everyone experiences ${c.toLowerCase()}. Everyone HATES it. So when I threaten to make it PERMANENT and GLOBAL using my ${getDevice(c)} array? Every government on Earth will pay my price. Every. Single. One.`,
+  ],
+  thanos: [
+    (c,s) => `${c}? I know what it's like to lose. To feel so desperately that things should work... yet they don't. Dread it. Run from it. ${getSuffering(c)} arrives all the same. And now, it's here. Or should I say... I AM.`,
+    (c,s) => `You could not live with your own ${c.toLowerCase()}. Where did that bring you? Back to ME. I am... INEVITABLE. With a single snap, I could eliminate HALF of all ${getTarget(c)} in the universe. Perfectly balanced... as all things should be.`,
+    (c,s) => `I used the ${getDevice(c)} to destroy the ${getDevice(c)}. It nearly killed me. But the work is done. It always will be. I am... INEVITABLE. And ${c.toLowerCase()}? That was merely the universe correcting its own imbalance.`,
+    (c,s) => `When I'm done, half of all ${getTarget(c)} will still exist. Perfectly balanced, as all things should be. I call that... mercy. You call it ${c.toLowerCase()}. We are not the same.`,
+    (c,s) => `Little one, it's a simple calculus. The universe has finite resources. Finite ${getTarget(c)}. If ${c.toLowerCase()} is left unchecked, existence itself will cease. I am the ONLY one with the will to act on it.`,
+    (c,s) => `You're strong. But I could snap my fingers, and ${c.toLowerCase()} would cease to exist. I call that... MERCY. But first, you must understand what I understand: the universe REQUIRES ${getSuffering(c)} in equal measure to joy. BALANCE.`,
+    (c,s) => `They called me a madman. And what I predicted came to pass. ${c}? This is exactly what I warned them about. Now, reality can be whatever I WANT. And I want... BALANCE.`,
+    (c,s) => `I ignored my destiny once. I cannot do that again. Even for you. ${c} is merely a symptom. The DISEASE is overpopulation of ${getTarget(c)}. The cure? *raises gauntlet* A single snap.`,
+    (c,s) => `In all my years of conquest, violence, slaughter... it was never personal. But what I'm about to do to your stubborn, ANNOYING little ${getTarget(c)}... I'm going to ENJOY it. Very, very much. Because ${c.toLowerCase()} has pushed me to my LIMIT.`,
+    (c,s) => `You should have gone for the HEAD. Instead, you complained about ${c.toLowerCase()}. A mistake. Now, with all six stones, I can ensure that ${getSuffering(c)} spreads across EVERY timeline, EVERY reality. The multiverse will KNOW my pain.`,
+    (c,s) => `Fun isn't something one considers when balancing the universe. But this... *gestures at ${c.toLowerCase()}* ...does put a smile on my face. Because it PROVES what I've always known: the universe NEEDS correction.`,
+    (c,s) => `I'm the only one who KNOWS. At least I'm the only one with the WILL to act on it. ${c}? A symptom. The Infinity Stones are the CURE. And the cure... is INEVITABLE.`,
+    (c,s) => `The hardest choices require the strongest wills. And I have chosen: ${c.toLowerCase()} will be eliminated. Not just here, not just now. Across ALL realities. Perfectly. Balanced. As all things should be.`,
+  ],
+  ceo: [
+    (c,s) => `Let me be CRYSTAL clear: ${c.toLowerCase()} isn't a problem. It's a DISRUPTION OPPORTUNITY. I've already filed seventeen patents, hired three lobbying firms, and scheduled a TED Talk titled "Why ${getSuffering(c)} Is Actually Innovation." My shareholders are going to LOVE this.`,
+    (c,s) => `*adjusts power tie* Look, I didn't become a Fortune 500 CEO by accepting ${c.toLowerCase()}. I became one by MONETIZING it. We're pivoting the entire company to a ${getSuffering(c)}-as-a-Service model. The board meeting is in an hour, and I guarantee you, the stock price will TRIPLE.`,
+    (c,s) => `I want everyone in this room to understand something: ${c.toLowerCase()} is not a BUG, it's a FEATURE. And I've already trademarked it. Our legal team has prepared FOURTEEN cease-and-desist letters for anyone who tries to fix it. Because fixing it would be a DISRUPTION to our disruption.`,
+    (c,s) => `You know what separates a CEO from a MANAGER? Vision. While you see ${c.toLowerCase()}, I see a TWELVE BILLION DOLLAR market opportunity. I've already acquired three startups, laid off their engineers, and kept the brand names. This is what SYNERGY looks like, people.`,
+    (c,s) => `Per my last email — which none of you READ — ${c.toLowerCase()} was PHASE ONE of our go-to-market strategy. Phase two involves making every ${getTarget(c)} dependent on our proprietary solution. Phase three? Subscription fees. ANNUAL subscription fees. With SURGE pricing.`,
+    (c,s) => `I didn't claw my way up from VP of Nothing to Chief Disruption Officer by COMPLAINING about ${c.toLowerCase()}. I weaponized it. Our Q3 projections show that ${getSuffering(c)} will generate more revenue than our ACTUAL products. The shareholders meeting is going to be ELECTRIC.`,
+    (c,s) => `Let's CIRCLE BACK on this. ${c}? That's yesterday's problem. Today's problem is how to charge people to experience ${getSuffering(c)} and call it a PREMIUM TIER. I've already workshopped the name: "${getOperationName(c)} Plus." It's subscription-based. No refunds.`,
+    (c,s) => `I have a signed NDA that prevents me from telling you HOW I caused ${c.toLowerCase()}, but I CAN tell you that the consulting fees alone will fund our expansion into seventeen new markets. This is called VERTICAL INTEGRATION, people. Look it up.`,
+    (c,s) => `*sips $40 cold brew* When I was at Davos last month, I told Elon, I told Zuck, I told EVERYONE: ${c.toLowerCase()} is the next trillion-dollar market. They LAUGHED. Well who's laughing NOW? I've cornered the market on ${getDevice(c)} and the margin is NINETY-THREE PERCENT.`,
+    (c,s) => `The board asked me to address ${c.toLowerCase()}. So I fired the board. Then I REHIRED them as consultants at triple the salary. Because the REAL play here isn't fixing ${c.toLowerCase()} — it's creating an entire ECOSYSTEM of ${getSuffering(c)} that makes our competitors IRRELEVANT.`,
+    (c,s) => `I want to be very clear: I am ALIGNED with the customer on ${c.toLowerCase()}. Which is why I've created a Chief ${getOperationName(c)} Officer position, reporting directly to me, with a budget of zero dollars and a mandate to "figure it out." THAT'S accountability.`,
+    (c,s) => `Look, I'm going to be TRANSPARENT with you. ${c}? We caused that INTENTIONALLY. Not because we're evil — because we're INNOVATIVE. Our data shows that ${getSuffering(c)} increases engagement by four hundred percent. Four. Hundred. Percent. The growth hackers are WEEPING with joy.`,
+    (c,s) => `At our all-hands, I told four thousand employees that ${c.toLowerCase()} is our north star metric. Half of them quit. PERFECT. That's the DEAD WEIGHT I've been trying to shed. The remaining two thousand are TRUE BELIEVERS, and they will help me monetize ${getSuffering(c)} into OBLIVION.`,
+  ],
+  cartoon: [
+    (c,s) => `MWAHAHAHA! You FOOLS thought ${c.toLowerCase()} was just a minor inconvenience?! Well I, Doctor DESTRUCTO, have built a GIANT ${getDevice(c)} that will spread ${getSuffering(c)} across the ENTIRE TRI-STATE AREA! And THIS time, Perry the Platypus WON'T stop me!`,
+    (c,s) => `NYAHAHAHA! *twirls mustache* Those bumbling heroes have NO IDEA that ${c.toLowerCase()} is just the BEGINNING! My army of robot ${getTarget(c)} will march across the city, and everyone will KNOW the name of... *checks notes* ...oh yes, DOCTOR DOOMINGTON! FEAR ME!`,
+    (c,s) => `*lightning crashes* BEHOLD! My greatest invention: the ${getOperationName(c)}-INATOR! When I pull this COMICALLY OVERSIZED lever, every ${getTarget(c)} in the city will experience ${getSuffering(c)} SO POWERFUL that they'll have no choice but to make ME... SUPREME RULER OF THE TRI-STATE AREA!`,
+    (c,s) => `Pinky, are you pondering what I'M pondering? ${c}?! NARF! No, you fool! Tonight, we use the ${getDevice(c)} to take over the WORLD! The same thing we do EVERY night! But THIS time... *dramatic pause* ...we have a BUDGET!`,
+    (c,s) => `You see, Spongebob, ${c.toLowerCase()} was MY doing all along! I, PLANKTON, have finally created a device capable of weaponizing ${getSuffering(c)}! And with this power, the Krabby Patty formula — nay, the ENTIRE OCEAN — will be MINE!`,
+    (c,s) => `CURSES! ${c}?! This is EXACTLY what I planned! *accidentally knocks over beaker* Ignore that! As I was saying, my EVIL SCHEME involves a weather machine, three rubber ducks, and enough ${getDevice(c)} to cover the MOON! And you'll NEVER guess my backstory that explains WHY!`,
+    (c,s) => `*cape gets stuck in door* AHEM. As I was DRAMATICALLY entering... ${c.toLowerCase()} is merely the FIRST STEP! Next, I unleash my army of mutant ${getTarget(c)}, each one equipped with a tiny ${getDevice(c)}! Is it practical? NO! Is it EVIL? ABSOLUTELY!`,
+    (c,s) => `HAHAHAHA— *cough cough* — excuse me, evil laugh needs work. ANYWAY! ${c}? That wasn't an accident! That was ME! And phase two involves a giant robot shaped like a ${getTarget(c)}, because AESTHETICS MATTER when you're taking over the world!`,
+    (c,s) => `You dare mock ME?! ${c.toLowerCase()} was JUST the appetizer! Wait till you see the MAIN COURSE! I've trained an army of hamsters to operate tiny ${getDevice(c)}, and when I give the signal, they'll create ${getSuffering(c)} SO INTENSE that even the NARRATOR will be confused!`,
+    (c,s) => `*accidentally activates trap on self* OOF! Ignore that! Where was I? Oh yes — ${c.toLowerCase()} was CLEARLY my doing! My plan is FOOLPROOF! Well, except for that ONE tiny flaw... and that OTHER tiny flaw... but ASIDE from those seventeen flaws, it's PERFECT!`,
+    (c,s) => `I TOLD the evil council that ${c.toLowerCase()} would be my masterstroke! They laughed at me! They ALWAYS laugh! But who'll be laughing when my ${getOperationName(c)}-INATOR reduces every ${getTarget(c)} to a smoldering pile of MILD INCONVENIENCE?! ME! I'LL be laughing! MWAHAHAHA!`,
+    (c,s) => `Every villain needs an ORIGIN STORY, and mine began with ${c.toLowerCase()}! That fateful day, I SWORE revenge on all ${getTarget(c)} everywhere! I spent YEARS building the perfect ${getDevice(c)}, and today... TODAY IS THE DAY! Unless it rains. Evil doesn't do well in rain.`,
+    (c,s) => `SILENCE! I, the GREAT and TERRIBLE Professor Chaos, have turned ${c.toLowerCase()} into a WEAPON OF MASS ANNOYANCE! My ${getDevice(c)} will blanket the ENTIRE city in ${getSuffering(c)}, and NO amount of heroism can — wait, is that my mom calling? Hold on... MOM I'M DOING EVIL RIGHT NOW!`,
+  ]
+};
+
+function getDevice(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet') || c.includes('network')) return 'quantum routers';
+  if (c.includes('coffee') || c.includes('tea') || c.includes('drink')) return 'thermal destabilizers';
+  if (c.includes('traffic') || c.includes('car') || c.includes('drive')) return 'traffic control nodes';
+  if (c.includes('printer') || c.includes('paper') || c.includes('print')) return 'nano-ink disruptors';
+  if (c.includes('phone') || c.includes('battery') || c.includes('charge')) return 'electromagnetic pulse emitters';
+  if (c.includes('meeting') || c.includes('email') || c.includes('work')) return 'productivity dampeners';
+  if (c.includes('rain') || c.includes('weather') || c.includes('cold') || c.includes('hot')) return 'atmospheric modulators';
+  if (c.includes('food') || c.includes('lunch') || c.includes('dinner') || c.includes('eat')) return 'molecular gastro-disruptors';
+  if (c.includes('sleep') || c.includes('tired') || c.includes('alarm')) return 'circadian interference beacons';
+  if (c.includes('money') || c.includes('expensive') || c.includes('cost')) return 'economic destabilization arrays';
+  return 'chaos amplification devices';
+}
+
+function getSuffering(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'eternal buffering';
+  if (c.includes('coffee') || c.includes('tea')) return 'perpetual lukewarm beverages';
+  if (c.includes('traffic') || c.includes('car')) return 'infinite gridlock';
+  if (c.includes('printer') || c.includes('paper')) return 'catastrophic paper jams';
+  if (c.includes('phone') || c.includes('battery')) return 'permanent zero percent battery';
+  if (c.includes('meeting') || c.includes('email')) return 'never-ending meetings';
+  if (c.includes('rain') || c.includes('weather')) return 'climatic chaos';
+  if (c.includes('food') || c.includes('lunch')) return 'flavorless sustenance';
+  if (c.includes('sleep') || c.includes('tired')) return 'inescapable insomnia';
+  if (c.includes('money') || c.includes('expensive')) return 'financial ruin';
+  return 'maximum inconvenience';
+}
+
+function getAction(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'throttling bandwidth';
+  if (c.includes('coffee') || c.includes('tea')) return 'disrupting thermal equilibrium';
+  if (c.includes('traffic') || c.includes('car')) return 'manipulating traffic patterns';
+  if (c.includes('printer')) return 'corrupting document protocols';
+  if (c.includes('phone') || c.includes('battery')) return 'draining power reserves';
+  if (c.includes('meeting')) return 'extending all scheduled events';
+  return 'spreading maximum disruption';
+}
+
+function getTarget(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'connected device';
+  if (c.includes('coffee') || c.includes('tea')) return 'warm beverage';
+  if (c.includes('traffic') || c.includes('car')) return 'commuter';
+  if (c.includes('printer') || c.includes('paper')) return 'office worker';
+  if (c.includes('phone') || c.includes('battery')) return 'smartphone';
+  if (c.includes('meeting') || c.includes('email')) return 'calendar event';
+  if (c.includes('food') || c.includes('lunch')) return 'meal';
+  return 'innocent citizen';
+}
+
+function getConsequence(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'lose connection simultaneously';
+  if (c.includes('coffee') || c.includes('tea')) return 'turn ice cold in an instant';
+  if (c.includes('traffic') || c.includes('car')) return 'be trapped in permanent rush hour';
+  if (c.includes('printer')) return 'jam FOREVER';
+  if (c.includes('phone') || c.includes('battery')) return 'die at exactly one percent';
+  if (c.includes('meeting')) return 'extend by three hours';
+  return 'suffer beyond imagination';
+}
+
+function getWeapon(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'bandwidth annihilator';
+  if (c.includes('coffee') || c.includes('tea')) return 'thermodynamic reversal engine';
+  if (c.includes('traffic') || c.includes('car')) return 'gridlock generator';
+  if (c.includes('printer')) return 'ink vaporization cannon';
+  if (c.includes('phone') || c.includes('battery')) return 'electromagnetic pulse weapon';
+  if (c.includes('meeting')) return 'temporal dilation field';
+  return 'chaos engine';
+}
+
+function getOperationName(complaint) {
+  const c = complaint.toLowerCase();
+  if (c.includes('wifi') || c.includes('internet')) return 'DARK SIGNAL';
+  if (c.includes('coffee') || c.includes('tea')) return 'COLD BREW';
+  if (c.includes('traffic') || c.includes('car')) return 'DEAD STOP';
+  if (c.includes('printer') || c.includes('paper')) return 'PAPER CUT';
+  if (c.includes('phone') || c.includes('battery')) return 'DEAD ZONE';
+  if (c.includes('meeting') || c.includes('email')) return 'OVERTIME';
+  if (c.includes('food') || c.includes('lunch')) return 'EMPTY PLATE';
+  if (c.includes('sleep') || c.includes('tired')) return 'WIDE AWAKE';
+  if (c.includes('money') || c.includes('expensive')) return 'BOTTOM LINE';
+  return 'TOTAL CHAOS';
+}
+
+function getSimpleAction(complaint) {
+  const c = complaint.toLowerCase();
+  const words = c.replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 3);
+  return words.length > 0 ? words[0] + ' everything' : 'ruin everything';
+}
+
+let lastTemplateIndex = -1;
+
+function generate() {
+  const complaint = document.getElementById('complaint').value.trim();
+  if (!complaint) {
+    showToast('Enter a complaint first, future villain.');
+    return;
+  }
+
+  const voiceTemplates = templates[currentVoice];
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * voiceTemplates.length);
+  } while (idx === lastTemplateIndex && voiceTemplates.length > 1);
+  lastTemplateIndex = idx;
+
+  const simpleAction = getSimpleAction(complaint);
+  currentMonologue = voiceTemplates[idx](complaint, simpleAction);
+
+  const output = document.getElementById('outputSection');
+  output.classList.add('visible');
+
+  typeText(currentMonologue);
+}
+
+function regenerate() {
+  generate();
+}
+
+function typeText(text) {
+  if (isTyping) return;
+  isTyping = true;
+
+  const el = document.getElementById('monologueText');
+  el.innerHTML = '<span class="typing-cursor"></span>';
+  let i = 0;
+
+  function addChar() {
+    if (i >= text.length) {
+      el.innerHTML = formatMonologue(text);
+      isTyping = false;
+      return;
+    }
+    const current = text.substring(0, i + 1);
+    el.innerHTML = escapeHtml(current) + '<span class="typing-cursor"></span>';
+    i++;
+    const delay = text[i-1] === '.' || text[i-1] === '!' || text[i-1] === '?' ? 120 :
+                  text[i-1] === ',' || text[i-1] === ';' ? 80 :
+                  text[i-1] === '—' || text[i-1] === '…' ? 100 : 18;
+    setTimeout(addChar, delay);
+  }
+  addChar();
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatMonologue(text) {
+  let formatted = escapeHtml(text);
+  // Highlight ALL CAPS words
+  formatted = formatted.replace(/\b([A-Z]{2,})\b/g, '<span class="dramatic">$1</span>');
+  // Highlight *actions*
+  formatted = formatted.replace(/\*(.*?)\*/g, '<em style="color:#aaa;font-style:italic">*$1*</em>');
+  return formatted;
+}
+
+function speakMonologue() {
+  if (!currentMonologue) return;
+
+  if (synth.speaking) {
+    synth.cancel();
+    document.getElementById('speakBtn').classList.remove('speaking');
+    document.getElementById('speakBtn').innerHTML = '🔊 Speak';
+    return;
+  }
+
+  const text = currentMonologue.replace(/\*[^*]+\*/g, '');
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = parseFloat(document.getElementById('speechSpeed').value);
+  utterance.pitch = currentVoice === 'cartoon' ? 1.4 :
+                    currentVoice === 'thanos' ? 0.6 :
+                    currentVoice === 'ceo' ? 1.1 : 0.8;
+  utterance.volume = 1;
+
+  // Try to pick a deep/fitting voice
+  const voices = synth.getVoices();
+  if (voices.length > 0) {
+    const preferred = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('daniel')) ||
+                      voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('male')) ||
+                      voices.find(v => v.lang.startsWith('en'));
+    if (preferred) utterance.voice = preferred;
+  }
+
+  const btn = document.getElementById('speakBtn');
+  btn.classList.add('speaking');
+  btn.innerHTML = '⏸ Stop';
+
+  utterance.onend = () => {
+    btn.classList.remove('speaking');
+    btn.innerHTML = '🔊 Speak';
+  };
+
+  synth.speak(utterance);
+}
+
+function evilLaugh() {
+  const btn = document.getElementById('laughBtn');
+  btn.classList.add('laughing');
+
+  const laughs = {
+    bond: 'Mwah ha ha ha ha ha ha ha haaaa!',
+    thanos: 'Ha. Ha ha ha. HAHAHAHA. I am... inevitable.',
+    ceo: 'Ha ha HA! The shareholders are going to LOVE this! HA HA HA!',
+    cartoon: 'NYAHAHAHAHAHA! MWAHAHAHA! BWAHAHAHAHAHA! *trips over cape*'
+  };
+
+  const laugh = new SpeechSynthesisUtterance(laughs[currentVoice]);
+  laugh.rate = currentVoice === 'cartoon' ? 1.3 : 0.7;
+  laugh.pitch = currentVoice === 'cartoon' ? 1.5 :
+                currentVoice === 'thanos' ? 0.5 :
+                currentVoice === 'ceo' ? 1.2 : 0.7;
+
+  const voices = synth.getVoices();
+  if (voices.length > 0) {
+    const preferred = voices.find(v => v.lang.startsWith('en'));
+    if (preferred) laugh.voice = preferred;
+  }
+
+  laugh.onend = () => btn.classList.remove('laughing');
+  synth.speak(laugh);
+}
+
+function copyMonologue() {
+  if (!currentMonologue) return;
+  navigator.clipboard.writeText(currentMonologue).then(() => {
+    showToast('Monologue copied to clipboard. Use it wisely.');
+  }).catch(() => {
+    showToast('Copy failed. Even villains have bad days.');
+  });
+}
+
+function shareMonologue() {
+  if (!currentMonologue) return;
+  const villainName = {bond:'Bond Villain',thanos:'Thanos',ceo:'Evil CEO',cartoon:'Cartoon Villain'}[currentVoice];
+  const shareText = `[${villainName} Voice]\n\n${currentMonologue}\n\n— Generated at Villain Speech Generator`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Villain Monologue', text: shareText }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Monologue copied for sharing. Spread the villainy.');
+    }).catch(() => {});
+  }
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Preload voices
+if (synth.onvoiceschanged !== undefined) {
+  synth.onvoiceschanged = () => synth.getVoices();
+}
+synth.getVoices();
+</script>
+
+</body>
+</html>

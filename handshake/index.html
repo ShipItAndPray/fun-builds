@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Handshake Rater</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --navy: #0a1628;
+  --navy-light: #132240;
+  --navy-mid: #1a3055;
+  --gold: #c9a227;
+  --gold-light: #e8c547;
+  --white: #e8edf5;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3498db;
+}
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+header {
+  text-align: center;
+  padding: 20px 0 10px;
+}
+header h1 {
+  font-size: 1.8em;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+header p {
+  font-size: 0.85em;
+  opacity: 0.6;
+  margin-top: 4px;
+}
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0;
+  background: var(--navy-light);
+  border-radius: 12px;
+  padding: 4px;
+}
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  border-radius: 10px;
+  font-size: 0.85em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: transparent;
+  color: var(--white);
+  opacity: 0.5;
+}
+.tab.active {
+  background: var(--navy-mid);
+  opacity: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.panel { display: none; flex: 1; flex-direction: column; }
+.panel.active { display: flex; }
+
+/* Shake Panel */
+.shake-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+.hand-icon {
+  font-size: 80px;
+  transition: transform 0.1s;
+  filter: drop-shadow(0 4px 20px rgba(201,162,39,0.3));
+}
+.hand-icon.shaking {
+  animation: shake-anim 0.08s infinite alternate;
+}
+@keyframes shake-anim {
+  from { transform: rotate(-8deg) translateX(-3px); }
+  to { transform: rotate(8deg) translateX(3px); }
+}
+#shakeBtn {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 4px solid var(--gold);
+  background: linear-gradient(145deg, var(--navy-mid), var(--navy-light));
+  color: var(--gold);
+  font-size: 1.3em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 0 30px rgba(201,162,39,0.15), inset 0 0 30px rgba(201,162,39,0.05);
+  position: relative;
+  overflow: hidden;
+}
+#shakeBtn:active, #shakeBtn.active {
+  background: linear-gradient(145deg, var(--gold), var(--gold-light));
+  color: var(--navy);
+  box-shadow: 0 0 50px rgba(201,162,39,0.4);
+  transform: scale(0.95);
+}
+#shakeBtn .sub {
+  display: block;
+  font-size: 0.55em;
+  font-weight: 400;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+.intensity-bar {
+  width: 100%;
+  max-width: 300px;
+  height: 12px;
+  background: var(--navy-light);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(201,162,39,0.2);
+}
+.intensity-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 6px;
+  transition: width 0.1s, background 0.3s;
+  background: var(--green);
+}
+.shake-stats {
+  display: flex;
+  gap: 20px;
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+.shake-stats span { font-variant-numeric: tabular-nums; }
+.countdown {
+  font-size: 3em;
+  font-weight: 800;
+  color: var(--gold);
+  display: none;
+}
+
+/* Result */
+.result-panel { display: none; flex-direction: column; align-items: center; gap: 16px; padding: 20px 0; }
+.result-panel.show { display: flex; }
+.result-grade {
+  font-size: 1.1em;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 30px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.grade-deadfish { background: #555; color: #ccc; }
+.grade-limp { background: #8e44ad; color: #fff; }
+.grade-normal { background: var(--green); color: #fff; }
+.grade-firm { background: #e67e22; color: #fff; }
+.grade-crusher { background: var(--red); color: #fff; animation: pulse 0.5s infinite alternate; }
+@keyframes pulse { to { box-shadow: 0 0 20px rgba(231,76,60,0.6); } }
+
+.result-emoji { font-size: 64px; }
+.result-verdict {
+  font-size: 1.1em;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 320px;
+  opacity: 0.85;
+}
+.power-index {
+  font-size: 3.5em;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.power-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  opacity: 0.5;
+  margin-top: -8px;
+}
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+}
+.stat-box {
+  background: var(--navy-light);
+  border-radius: 12px;
+  padding: 12px 8px;
+  text-align: center;
+}
+.stat-box .val { font-size: 1.3em; font-weight: 700; color: var(--gold); }
+.stat-box .lbl { font-size: 0.65em; opacity: 0.5; margin-top: 4px; text-transform: uppercase; }
+.result-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn {
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--navy);
+}
+.btn-secondary {
+  background: var(--navy-light);
+  color: var(--white);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.btn:active { transform: scale(0.95); }
+
+/* Leaderboard */
+.leaderboard-list {
+  flex: 1;
+  overflow-y: auto;
+}
+.lb-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--navy-light);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+.lb-rank {
+  font-size: 1.2em;
+  font-weight: 800;
+  width: 32px;
+  text-align: center;
+  color: var(--gold);
+}
+.lb-rank.top { font-size: 1.4em; }
+.lb-info { flex: 1; }
+.lb-name { font-weight: 600; font-size: 0.95em; }
+.lb-grade { font-size: 0.7em; opacity: 0.6; }
+.lb-score {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--gold);
+}
+.lb-empty {
+  text-align: center;
+  opacity: 0.4;
+  padding: 60px 20px;
+  font-size: 0.95em;
+}
+.lb-clear {
+  text-align: center;
+  padding: 16px;
+}
+
+/* Name input modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--navy-light);
+  border-radius: 20px;
+  padding: 30px;
+  width: 90%;
+  max-width: 360px;
+  text-align: center;
+}
+.modal h3 { margin-bottom: 16px; color: var(--gold); }
+.modal input {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid var(--navy-mid);
+  background: var(--navy);
+  color: var(--white);
+  font-size: 1em;
+  text-align: center;
+  margin-bottom: 16px;
+  outline: none;
+}
+.modal input:focus { border-color: var(--gold); }
+
+/* Sound toggle */
+.sound-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--navy-light);
+  color: var(--white);
+  font-size: 1.2em;
+  cursor: pointer;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Desktop warning */
+.desktop-warn {
+  display: none;
+  text-align: center;
+  padding: 40px 20px;
+  opacity: 0.6;
+}
+@media (hover: hover) and (pointer: fine) {
+  .desktop-warn { display: block; }
+}
+</style>
+</head>
+<body>
+
+<button class="sound-toggle" id="soundBtn" title="Toggle sound">&#128264;</button>
+
+<div class="container">
+  <header>
+    <h1>HANDSHAKE RATER</h1>
+    <p>Shake your phone. Get judged.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="shake">Shake</button>
+    <button class="tab" data-tab="leaderboard">Leaderboard</button>
+  </div>
+
+  <!-- SHAKE PANEL -->
+  <div class="panel active" id="panel-shake">
+    <div class="shake-area" id="shakeArea">
+      <div class="hand-icon" id="handIcon">&#129309;</div>
+      <button id="shakeBtn">
+        SHAKE NOW
+        <span class="sub">Hold &amp; shake your phone</span>
+      </button>
+      <div class="countdown" id="countdown"></div>
+      <div class="intensity-bar"><div class="intensity-fill" id="intensityFill"></div></div>
+      <div class="shake-stats">
+        <span>Intensity: <strong id="statIntensity">0</strong></span>
+        <span>Time: <strong id="statTime">0.0s</strong></span>
+      </div>
+      <div class="desktop-warn">
+        &#9888;&#65039; Best on mobile &mdash; needs accelerometer!<br>
+        <small>On desktop, click and wiggle your mouse fast.</small>
+      </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-panel" id="resultPanel">
+      <div class="result-emoji" id="resultEmoji"></div>
+      <div class="power-index" id="powerIndex"></div>
+      <div class="power-label">Power Index</div>
+      <div class="result-grade" id="resultGrade"></div>
+      <div class="result-verdict" id="resultVerdict"></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val" id="rIntensity">0</div><div class="lbl">Intensity</div></div>
+        <div class="stat-box"><div class="val" id="rDuration">0s</div><div class="lbl">Duration</div></div>
+        <div class="stat-box"><div class="val" id="rConsistency">0%</div><div class="lbl">Consistency</div></div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="tryAgainBtn">Try Again</button>
+        <button class="btn btn-secondary" id="shareBtn">Share Result</button>
+        <button class="btn btn-secondary" id="saveLbBtn">Save to Board</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD PANEL -->
+  <div class="panel" id="panel-leaderboard">
+    <div class="leaderboard-list" id="leaderboardList">
+      <div class="lb-empty">No handshakes recorded yet.<br>Go shake your phone!</div>
+    </div>
+    <div class="lb-clear">
+      <button class="btn btn-secondary" id="clearLbBtn" style="font-size:0.8em;">Clear Leaderboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAME MODAL -->
+<div class="modal-overlay" id="nameModal">
+  <div class="modal">
+    <h3>&#129309; Save Your Shake</h3>
+    <input type="text" id="nameInput" placeholder="Your name" maxlength="20" autocomplete="off">
+    <button class="btn btn-primary" id="saveNameBtn" style="width:100%;">Save</button>
+  </div>
+</div>
+
+<script>
+// ===== AUDIO CONTEXT (business meeting ambience) =====
+let audioCtx, ambienceNode, ambiencePlaying = false, soundOn = true;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function createAmbience() {
+  initAudio();
+  if (ambiencePlaying) return;
+  // Layered noise: brown noise (room tone) + subtle chatter-like modulation
+  const bufSize = audioCtx.sampleRate * 4;
+  const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < bufSize; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + (0.02 * white)) / 1.02;
+    // Add subtle "murmur" modulation
+    const murmur = Math.sin(i / (audioCtx.sampleRate * 0.3)) * 0.3 +
+                   Math.sin(i / (audioCtx.sampleRate * 0.7)) * 0.2 +
+                   Math.sin(i / (audioCtx.sampleRate * 1.1)) * 0.15;
+    data[i] = last * 3 * (0.5 + murmur * 0.5);
+  }
+  ambienceNode = audioCtx.createBufferSource();
+  ambienceNode.buffer = buf;
+  ambienceNode.loop = true;
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.08;
+  // Low pass for warmth
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 800;
+  ambienceNode.connect(lp).connect(gain).connect(audioCtx.destination);
+  ambienceNode.start();
+  ambiencePlaying = true;
+}
+
+function stopAmbience() {
+  if (ambienceNode) { try { ambienceNode.stop(); } catch(e){} ambienceNode = null; }
+  ambiencePlaying = false;
+}
+
+function playResultSound(grade) {
+  if (!soundOn || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.connect(g).connect(audioCtx.destination);
+  g.gain.value = 0.15;
+  if (grade <= 1) { osc.frequency.value = 200; osc.type = 'sine'; }
+  else if (grade <= 2) { osc.frequency.value = 330; osc.type = 'triangle'; }
+  else if (grade === 3) { osc.frequency.value = 523; osc.type = 'sine'; }
+  else if (grade === 4) { osc.frequency.value = 440; osc.type = 'sawtooth'; g.gain.value = 0.08; }
+  else { osc.frequency.value = 150; osc.type = 'square'; g.gain.value = 0.1; }
+  osc.start();
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+  osc.stop(audioCtx.currentTime + 0.8);
+}
+
+document.getElementById('soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').innerHTML = soundOn ? '&#128264;' : '&#128263;';
+  if (!soundOn) stopAmbience();
+});
+
+// ===== TABS =====
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+    if (t.dataset.tab === 'leaderboard') renderLeaderboard();
+  });
+});
+
+// ===== SHAKE DETECTION =====
+const SHAKE_DURATION = 3000; // 3 seconds
+let isShaking = false, shakeStart = 0;
+let readings = [], peakIntensity = 0;
+let shakeTimer = null;
+
+const btn = document.getElementById('shakeBtn');
+const handIcon = document.getElementById('handIcon');
+const intensityFill = document.getElementById('intensityFill');
+const statIntensity = document.getElementById('statIntensity');
+const statTime = document.getElementById('statTime');
+const countdownEl = document.getElementById('countdown');
+const shakeArea = document.getElementById('shakeArea');
+const resultPanel = document.getElementById('resultPanel');
+
+let motionPermGranted = false;
+
+function requestMotion() {
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(s => {
+      if (s === 'granted') { motionPermGranted = true; setupMotion(); }
+    }).catch(() => {});
+  } else {
+    motionPermGranted = true;
+    setupMotion();
+  }
+}
+
+let motionSetup = false;
+function setupMotion() {
+  if (motionSetup) return;
+  motionSetup = true;
+  window.addEventListener('devicemotion', (e) => {
+    if (!isShaking) return;
+    const a = e.accelerationIncludingGravity || e.acceleration;
+    if (!a) return;
+    const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+    // Subtract gravity (~9.8)
+    const adjusted = Math.max(0, mag - 9.8);
+    processReading(adjusted);
+  });
+}
+
+// Mouse fallback for desktop
+let mouseShaking = false, lastMouse = null;
+document.addEventListener('mousemove', (e) => {
+  if (!isShaking || !mouseShaking) return;
+  if (lastMouse) {
+    const dx = e.clientX - lastMouse.x;
+    const dy = e.clientY - lastMouse.y;
+    const speed = Math.sqrt(dx*dx + dy*dy);
+    processReading(speed * 0.15);
+  }
+  lastMouse = { x: e.clientX, y: e.clientY };
+});
+
+function processReading(val) {
+  readings.push({ t: Date.now(), v: val });
+  if (val > peakIntensity) peakIntensity = val;
+  // Update UI
+  const pct = Math.min(100, (val / 30) * 100);
+  intensityFill.style.width = pct + '%';
+  const hue = pct < 50 ? 120 : (pct < 80 ? 45 : 0);
+  intensityFill.style.background = `hsl(${hue}, 80%, 50%)`;
+  statIntensity.textContent = val.toFixed(1);
+  const elapsed = ((Date.now() - shakeStart) / 1000).toFixed(1);
+  statTime.textContent = elapsed + 's';
+  if (val > 3) handIcon.classList.add('shaking');
+  else handIcon.classList.remove('shaking');
+}
+
+function startShake() {
+  if (isShaking) return;
+  initAudio();
+  if (!motionPermGranted) requestMotion();
+  if (soundOn) createAmbience();
+
+  isShaking = true;
+  mouseShaking = true;
+  readings = [];
+  peakIntensity = 0;
+  shakeStart = Date.now();
+  btn.classList.add('active');
+  btn.innerHTML = 'SHAKING...<span class="sub">Keep going!</span>';
+  resultPanel.classList.remove('show');
+  shakeArea.style.display = 'flex';
+  intensityFill.style.width = '0%';
+
+  // Countdown
+  let remaining = SHAKE_DURATION / 1000;
+  countdownEl.style.display = 'block';
+  countdownEl.textContent = remaining;
+  const cdInterval = setInterval(() => {
+    remaining--;
+    if (remaining > 0) countdownEl.textContent = remaining;
+    else { countdownEl.style.display = 'none'; clearInterval(cdInterval); }
+  }, 1000);
+
+  shakeTimer = setTimeout(() => endShake(), SHAKE_DURATION);
+}
+
+function endShake() {
+  isShaking = false;
+  mouseShaking = false;
+  btn.classList.remove('active');
+  btn.innerHTML = 'SHAKE NOW<span class="sub">Hold & shake your phone</span>';
+  handIcon.classList.remove('shaking');
+  countdownEl.style.display = 'none';
+  if (shakeTimer) clearTimeout(shakeTimer);
+  stopAmbience();
+  showResult();
+}
+
+btn.addEventListener('touchstart', (e) => { e.preventDefault(); startShake(); });
+btn.addEventListener('mousedown', (e) => { e.preventDefault(); startShake(); });
+
+// ===== GRADING =====
+const GRADES = [
+  { name: 'Dead Fish', cls: 'grade-deadfish', emoji: '&#128031;', min: 0 },
+  { name: 'Limp Noodle', cls: 'grade-limp', emoji: '&#127837;', min: 15 },
+  { name: 'Normal Human', cls: 'grade-normal', emoji: '&#129309;', min: 35 },
+  { name: 'Too Firm', cls: 'grade-firm', emoji: '&#128170;', min: 60 },
+  { name: 'BONE CRUSHER', cls: 'grade-crusher', emoji: '&#128163;', min: 80 },
+];
+
+const VERDICTS = {
+  'Dead Fish': [
+    "Your handshake makes wet paper towels feel assertive.",
+    "Somewhere, a dead fish is offended by this comparison.",
+    "That wasn't a handshake, that was a surrender.",
+    "Did you just... rest your hand there? Like a tired butterfly?",
+    "CEOs everywhere just felt a disturbance in the force.",
+    "Your hand has the grip strength of a sleepy koala.",
+    "That shake wouldn't register on a richter scale for ants.",
+  ],
+  'Limp Noodle': [
+    "It's giving 'I'd rather be anywhere else' energy.",
+    "You shake hands like you're trying not to wake the hand up.",
+    "Almost a real handshake. Almost. But not quite.",
+    "Your grip has the confidence of a second-round interview candidate.",
+    "If handshakes had volume, yours would be on mute.",
+    "That's the handshake equivalent of a LinkedIn 'connection request'.",
+    "Technically a handshake. Emotionally? A suggestion.",
+  ],
+  'Normal Human': [
+    "Congratulations! You've mastered basic human interaction.",
+    "The Goldilocks of handshakes. Not too soft, not too hard.",
+    "Your handshake says 'I'm reliable and I pay my taxes.'",
+    "This is the handshake that gets you the second meeting.",
+    "Perfectly calibrated. You clearly read the corporate handbook.",
+    "Your handshake has middle-management energy. Solid.",
+    "That's a firm-but-fair shake. HR approves.",
+    "The kind of handshake that gets you invited to brunch.",
+  ],
+  'Too Firm': [
+    "Okay tough guy, you can let go now. Please.",
+    "My hand is going to need physical therapy.",
+    "That's not a handshake, that's a dominance assertion.",
+    "Your grip says 'I bench press on weekends... and weekdays.'",
+    "You shake hands like you're trying to juice a lemon.",
+    "Somewhere, a vice-grip just filed a complaint.",
+    "That handshake came with a warning label.",
+    "Did you just try to arm-wrestle my whole body?",
+  ],
+  'BONE CRUSHER': [
+    "EMERGENCY. SOMEONE CALL AN ORTHOPEDIC SURGEON.",
+    "You don't shake hands. You DESTROY hands.",
+    "That handshake just violated the Geneva Convention.",
+    "Warning: This handshake may cause structural damage to buildings.",
+    "The Richter scale just picked up your handshake.",
+    "You shake hands like Thor meets a car crusher.",
+    "My bones are filing a restraining order.",
+    "BREAKING NEWS: Local handshake registered as seismic event.",
+    "You have been banned from corporate networking events.",
+    "That's not a handshake, that's an extinction-level event.",
+  ],
+};
+
+let lastResult = null;
+
+function showResult() {
+  if (readings.length < 5) {
+    // Not enough data
+    btn.innerHTML = 'SHAKE NOW<span class="sub">Shake harder this time!</span>';
+    return;
+  }
+
+  const values = readings.map(r => r.v);
+  const avgIntensity = values.reduce((a,b) => a+b, 0) / values.length;
+  const duration = (readings[readings.length-1].t - readings[0].t) / 1000;
+
+  // Consistency: lower std deviation = more consistent
+  const mean = avgIntensity;
+  const variance = values.reduce((s, v) => s + (v - mean)**2, 0) / values.length;
+  const stdDev = Math.sqrt(variance);
+  const consistency = Math.max(0, Math.min(100, 100 - (stdDev / (mean + 0.1)) * 30));
+
+  // Power Index: weighted combo
+  const powerIndex = Math.round(
+    Math.min(100, (avgIntensity * 2.5) + (peakIntensity * 0.8) + (consistency * 0.15) + (duration * 2))
+  );
+
+  // Determine grade
+  let grade = GRADES[0];
+  let gradeIdx = 0;
+  for (let i = GRADES.length - 1; i >= 0; i--) {
+    if (powerIndex >= GRADES[i].min) { grade = GRADES[i]; gradeIdx = i; break; }
+  }
+
+  // Pick verdict
+  const vList = VERDICTS[grade.name];
+  const verdict = vList[Math.floor(Math.random() * vList.length)];
+
+  lastResult = { powerIndex, grade: grade.name, gradeIdx, avgIntensity, peakIntensity, duration, consistency, verdict };
+
+  // Display
+  shakeArea.style.display = 'none';
+  resultPanel.classList.add('show');
+
+  document.getElementById('resultEmoji').innerHTML = grade.emoji;
+  document.getElementById('powerIndex').textContent = powerIndex;
+
+  const gradeEl = document.getElementById('resultGrade');
+  gradeEl.textContent = grade.name;
+  gradeEl.className = 'result-grade ' + grade.cls;
+
+  document.getElementById('resultVerdict').textContent = verdict;
+  document.getElementById('rIntensity').textContent = avgIntensity.toFixed(1);
+  document.getElementById('rDuration').textContent = duration.toFixed(1) + 's';
+  document.getElementById('rConsistency').textContent = Math.round(consistency) + '%';
+
+  playResultSound(gradeIdx);
+}
+
+// Try Again
+document.getElementById('tryAgainBtn').addEventListener('click', () => {
+  resultPanel.classList.remove('show');
+  shakeArea.style.display = 'flex';
+  intensityFill.style.width = '0%';
+  statIntensity.textContent = '0';
+  statTime.textContent = '0.0s';
+});
+
+// ===== SHARE =====
+document.getElementById('shareBtn').addEventListener('click', () => {
+  if (!lastResult) return;
+  const text = `${lastResult.grade} ${getGradeEmoji(lastResult.grade)}\n` +
+    `Power Index: ${lastResult.powerIndex}/100\n` +
+    `"${lastResult.verdict}"\n\n` +
+    `Rate YOUR handshake: Handshake Rater`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Handshake Rater', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Share Result', 2000);
+    });
+  }
+});
+
+function getGradeEmoji(name) {
+  const map = { 'Dead Fish': '\u{1F41F}', 'Limp Noodle': '\u{1F35D}', 'Normal Human': '\u{1F91D}', 'Too Firm': '\u{1F4AA}', 'BONE CRUSHER': '\u{1F4A5}' };
+  return map[name] || '';
+}
+
+// ===== LEADERBOARD =====
+function getLeaderboard() {
+  try { return JSON.parse(localStorage.getItem('handshake_lb') || '[]'); } catch { return []; }
+}
+function saveLeaderboard(lb) {
+  localStorage.setItem('handshake_lb', JSON.stringify(lb));
+}
+
+document.getElementById('saveLbBtn').addEventListener('click', () => {
+  if (!lastResult) return;
+  document.getElementById('nameModal').classList.add('show');
+  document.getElementById('nameInput').value = '';
+  setTimeout(() => document.getElementById('nameInput').focus(), 100);
+});
+
+document.getElementById('saveNameBtn').addEventListener('click', () => {
+  const name = document.getElementById('nameInput').value.trim() || 'Anonymous';
+  const lb = getLeaderboard();
+  lb.push({
+    name,
+    score: lastResult.powerIndex,
+    grade: lastResult.grade,
+    date: new Date().toLocaleDateString(),
+  });
+  lb.sort((a, b) => b.score - a.score);
+  if (lb.length > 50) lb.length = 50;
+  saveLeaderboard(lb);
+  document.getElementById('nameModal').classList.remove('show');
+  // Switch to leaderboard
+  document.querySelectorAll('.tab')[1].click();
+});
+
+document.getElementById('nameModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('nameModal'))
+    document.getElementById('nameModal').classList.remove('show');
+});
+
+document.getElementById('clearLbBtn').addEventListener('click', () => {
+  if (confirm('Clear the entire leaderboard?')) {
+    localStorage.removeItem('handshake_lb');
+    renderLeaderboard();
+  }
+});
+
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const list = document.getElementById('leaderboardList');
+  if (lb.length === 0) {
+    list.innerHTML = '<div class="lb-empty">No handshakes recorded yet.<br>Go shake your phone!</div>';
+    return;
+  }
+  const medals = ['&#129351;', '&#129352;', '&#129353;'];
+  list.innerHTML = lb.map((e, i) => `
+    <div class="lb-entry">
+      <div class="lb-rank ${i < 3 ? 'top' : ''}">${i < 3 ? medals[i] : (i+1)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${esc(e.name)}</div>
+        <div class="lb-grade">${e.grade} &middot; ${e.date}</div>
+      </div>
+      <div class="lb-score">${e.score}</div>
+    </div>
+  `).join('');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// Init motion on first interaction
+document.addEventListener('touchstart', () => { if (!motionPermGranted) requestMotion(); }, { once: true });
+document.addEventListener('click', () => { if (!motionPermGranted) requestMotion(); }, { once: true });
+</script>
+</body>
+</html>

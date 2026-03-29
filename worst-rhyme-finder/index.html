@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Worst Rhyme Finder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Caveat:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: #fdf6e3;
+    font-family: 'IM Fell English', serif;
+    color: #3c3c3c;
+    overflow-x: hidden;
+  }
+
+  /* Staff lines background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      transparent,
+      transparent 38px,
+      #d4c5a0 38px,
+      #d4c5a0 39px,
+      transparent 39px,
+      transparent 40px,
+      #d4c5a0 40px,
+      #d4c5a0 41px,
+      transparent 41px,
+      transparent 42px,
+      #d4c5a0 42px,
+      #d4c5a0 43px,
+      transparent 43px,
+      transparent 44px,
+      #d4c5a0 44px,
+      #d4c5a0 45px,
+      transparent 45px,
+      transparent 46px,
+      #d4c5a0 46px,
+      #d4c5a0 47px,
+      transparent 47px,
+      transparent 80px
+    );
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 30px 20px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  h1 {
+    font-size: 2.6em;
+    color: #2c1810;
+    line-height: 1.1;
+    margin-bottom: 6px;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.05);
+  }
+
+  .music-notes {
+    font-size: 1.8em;
+    letter-spacing: 8px;
+    opacity: 0.5;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: #8a7a60;
+    font-size: 1.05em;
+  }
+
+  .input-area {
+    background: #fff9ed;
+    border: 2px solid #c9b890;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    position: relative;
+  }
+
+  .input-area::before {
+    content: '\266B';
+    position: absolute;
+    top: -14px;
+    left: 20px;
+    font-size: 1.6em;
+    background: #fdf6e3;
+    padding: 0 6px;
+    color: #c9b890;
+  }
+
+  label {
+    display: block;
+    font-size: 1em;
+    margin-bottom: 10px;
+    color: #5a4a30;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 14px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.35em;
+    border: 1px dashed #c9b890;
+    border-radius: 8px;
+    background: transparent;
+    color: #2c1810;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    border-color: #8a6a40;
+  }
+
+  textarea::placeholder {
+    color: #c0b090;
+    font-style: italic;
+  }
+
+  .btn-find {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 14px;
+    font-family: 'IM Fell English', serif;
+    font-size: 1.2em;
+    background: #2c1810;
+    color: #fdf6e3;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 1px;
+  }
+
+  .btn-find:hover { background: #4a2e1c; }
+  .btn-find:active { transform: scale(0.98); }
+
+  /* Result card */
+  .result-card {
+    display: none;
+    background: #fff9ed;
+    border: 2px solid #c9b890;
+    border-radius: 12px;
+    padding: 28px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.08);
+    animation: slideUp 0.4s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-card.visible { display: block; }
+
+  .original-line {
+    font-family: 'Caveat', cursive;
+    font-size: 1.4em;
+    color: #5a4a30;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+
+  .rhyme-line {
+    font-family: 'Caveat', cursive;
+    font-size: 1.7em;
+    font-weight: 700;
+    color: #a02020;
+    margin-bottom: 18px;
+    line-height: 1.3;
+    position: relative;
+    padding-left: 20px;
+  }
+
+  .rhyme-line::before {
+    content: '\266A';
+    position: absolute;
+    left: 0;
+    top: 2px;
+    font-size: 0.7em;
+    color: #c9b890;
+  }
+
+  /* Cringe meter */
+  .cringe-section {
+    margin-bottom: 20px;
+  }
+
+  .cringe-label {
+    font-size: 0.95em;
+    color: #8a7a60;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cringe-level {
+    font-weight: bold;
+    color: #a02020;
+  }
+
+  .cringe-bar-outer {
+    height: 18px;
+    background: #ede3d0;
+    border-radius: 9px;
+    overflow: hidden;
+    border: 1px solid #c9b890;
+  }
+
+  .cringe-bar-inner {
+    height: 100%;
+    border-radius: 9px;
+    transition: width 0.8s ease-out;
+    background: linear-gradient(90deg, #e8c840, #e87830, #d02020);
+  }
+
+  .cringe-emoji {
+    font-size: 1.5em;
+    text-align: center;
+    margin-top: 6px;
+    letter-spacing: 4px;
+  }
+
+  /* Vote buttons */
+  .vote-section {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .btn-vote {
+    flex: 1;
+    padding: 14px 10px;
+    font-family: 'IM Fell English', serif;
+    font-size: 1em;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: transparent;
+  }
+
+  .btn-slaps {
+    border-color: #2a8a40;
+    color: #2a8a40;
+  }
+  .btn-slaps:hover { background: #2a8a40; color: #fff; }
+  .btn-slaps.voted { background: #2a8a40; color: #fff; transform: scale(1.03); }
+
+  .btn-kill {
+    border-color: #c03020;
+    color: #c03020;
+  }
+  .btn-kill:hover { background: #c03020; color: #fff; }
+  .btn-kill.voted { background: #c03020; color: #fff; transform: scale(1.03); }
+
+  .vote-counts {
+    text-align: center;
+    font-size: 0.9em;
+    color: #8a7a60;
+    margin-bottom: 16px;
+    min-height: 1.2em;
+  }
+
+  /* Share */
+  .btn-share {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-family: 'IM Fell English', serif;
+    font-size: 1em;
+    background: transparent;
+    border: 1px dashed #c9b890;
+    border-radius: 8px;
+    color: #8a7a60;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-share:hover { background: #f0e8d5; color: #5a4a30; }
+
+  .share-feedback {
+    text-align: center;
+    font-size: 0.9em;
+    color: #2a8a40;
+    margin-top: 6px;
+    min-height: 1.2em;
+  }
+
+  /* Try another */
+  .btn-another {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    font-family: 'IM Fell English', serif;
+    font-size: 1em;
+    background: transparent;
+    border: 1px solid #c9b890;
+    border-radius: 8px;
+    color: #5a4a30;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-another:hover { background: #f0e8d5; }
+
+  /* Hall of shame */
+  .hall-of-shame {
+    margin-top: 30px;
+    text-align: center;
+  }
+
+  .hall-of-shame h2 {
+    font-size: 1.3em;
+    color: #5a4a30;
+    margin-bottom: 14px;
+  }
+
+  .shame-entry {
+    background: #fff9ed;
+    border: 1px solid #d4c5a0;
+    border-radius: 8px;
+    padding: 14px;
+    margin-bottom: 10px;
+    text-align: left;
+    font-family: 'Caveat', cursive;
+    font-size: 1.15em;
+    color: #5a4a30;
+  }
+
+  .shame-rhyme {
+    color: #a02020;
+    font-weight: 700;
+  }
+
+  footer {
+    text-align: center;
+    color: #c9b890;
+    font-size: 0.85em;
+    margin-top: 40px;
+    font-style: italic;
+  }
+
+  @media (max-width: 500px) {
+    h1 { font-size: 2em; }
+    .container { padding: 20px 14px 40px; }
+    .input-area { padding: 18px; }
+    .result-card { padding: 20px 16px; }
+    .vote-section { flex-direction: column; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="music-notes">&sharp;&flat;&sharp;&flat;</div>
+    <h1>Worst Rhyme Finder</h1>
+    <p class="subtitle">Completing lyrics with the rhymes they never deserved</p>
+  </header>
+
+  <div class="input-area">
+    <label for="lyric-input">Enter a song lyric line:</label>
+    <textarea id="lyric-input" placeholder="I will always love..."></textarea>
+    <button class="btn-find" id="btn-find">Find Worst Rhyme</button>
+  </div>
+
+  <div class="result-card" id="result-card">
+    <div class="original-line" id="original-line"></div>
+    <div class="rhyme-line" id="rhyme-line"></div>
+
+    <div class="cringe-section">
+      <div class="cringe-label">
+        <span>Cringe Meter</span>
+        <span class="cringe-level" id="cringe-level"></span>
+      </div>
+      <div class="cringe-bar-outer">
+        <div class="cringe-bar-inner" id="cringe-bar" style="width: 0%"></div>
+      </div>
+      <div class="cringe-emoji" id="cringe-emoji"></div>
+    </div>
+
+    <div class="vote-section">
+      <button class="btn-vote btn-slaps" id="btn-slaps">That Actually Slaps</button>
+      <button class="btn-vote btn-kill" id="btn-kill">Kill It With Fire</button>
+    </div>
+    <div class="vote-counts" id="vote-counts"></div>
+
+    <button class="btn-share" id="btn-share">Share This Abomination</button>
+    <div class="share-feedback" id="share-feedback"></div>
+
+    <button class="btn-another" id="btn-another">Generate Another Terrible Rhyme</button>
+  </div>
+
+  <div class="hall-of-shame" id="hall-of-shame" style="display:none">
+    <h2>Hall of Shame</h2>
+    <div id="shame-list"></div>
+  </div>
+
+  <footer>No melodies were harmed in the making of this tool. Only dignity.</footer>
+</div>
+
+<script>
+// ---- Rhyme engine ----
+
+// Last-word rhyme map: word -> array of terrible completions
+const rhymeMap = {
+  // Common ending words
+  'love': ['my rubber glove', 'a shove from above', 'that turtle dove I found in a dumpster', 'competitive grudge', 'my government-issued oven mitt'],
+  'you': ['my left shoe', 'expired shampoo', 'a kangaroo at the zoo who also had the flu', 'barbecue residue', 'a half-eaten Subaru'],
+  'me': ['a flea on a spree', 'my HOA fee', 'a manatee with a degree', 'lukewarm chamomile tea', 'a PowerPoint about bees'],
+  'heart': ['a grocery cart', 'a mediocre tart', 'my questionable art', 'a loud and public fart', 'a broken Kmart'],
+  'night': ['fluorescent light', 'my Craigslist flight', 'a termite fight', 'an expired Bud Light', 'moderately tight tights'],
+  'day': ['a bale of hay', 'expired sorbet', 'a TED talk about clay', 'an HOA survey', 'a confusing bidet'],
+  'away': ['a toupee in a buffet', 'a mildly aggressive bluejay', 'an anime cosplay', 'a horse named Beyonce', 'a sourdough relay'],
+  'time': ['a pantomime about slime', 'a tax-deductible crime', 'an aggressive wind chime', 'a lemon and lime wrestling match', 'a badly planned paradigm'],
+  'fire': ['a flat tire in a choir', 'an expired job flyer', 'a suspiciously cheap dryer', 'a homeowners insurance buyer', 'a liar on a high wire'],
+  'rain': ['my bathroom drain', 'a migraine on a train', 'a mundane cellophane crane', 'an overly complicated windowpane', 'sustained lower back pain'],
+  'world': ['a squirrel that twirled and hurled', 'an unfurled flag of a place that is not real', 'a curled-up spreadsheet', 'a tax form that swirled'],
+  'life': ['a butter knife in strife', 'my second wife... who is a fife', 'workplace rife with rife', 'a plumber and his pocket knife'],
+  'cry': ['a dry supply of rye', 'my left eye said goodbye', 'a pie chart gone awry', 'a necktie alibi', 'Bill Nye eating Thai'],
+  'pain': ['a windowpane in Spain', 'my mundane cellophane brain', 'a Great Dane on a freight train', 'a stain from Rogaine', 'a migraine from my domain name'],
+  'dream': ['expired sunscreen', 'a meme about steam', 'an ice cream regime', 'a self-esteem trampoline', 'a laser beam named Eugene'],
+  'high': ['a reply from a nearby guy who sells tie-dye', 'a WiFi alibi', 'a drive-by lullaby', 'my thigh said bye-bye'],
+  'soul': ['a casserole in a bowl', 'a mole with a parole', 'a drum roll for a bread roll', 'a flagpole with no goal', 'my Costco membership scroll'],
+  'free': ['a referee and a chimpanzee', 'a flea-market jubilee', 'a PowerPoint on debris', 'my HOA guarantee', 'a spelling bee on the open sea'],
+  'stay': ['my half-price eBay toupee', 'a souffle relay', 'a resume about croquet', 'a stingray on a bad day', 'a protege at a buffet'],
+  'blue': ['a canoe full of fondue', 'a revenue review about bamboo', 'my overdue shampoo tattoo', 'a breakthrough in igloo voodoo'],
+  'home': ['a garden gnome made of chrome', 'a foam dome poem', 'a chromosome palindrome', 'a comb in the Thunderdome'],
+  'alone': ['my ringtone is a saxophone drone', 'a traffic cone I condone', 'a groan from a tombstone phone', 'a hormone-free calzone'],
+  'light': ['a mite in a kite fight', 'a website about dynamite', 'an overnight copyright', 'a stalactite on a satellite', 'a Bud Light at midnight'],
+  'eyes': ['my french fries\' demise', 'a compromise on pies', 'a disguise made of ties', 'some fireflies with supplies', 'a sunrise enterprise'],
+  'sky': ['a magpie eating pad thai', 'my Wi-Fi said bye-bye', 'a necktie on standby', 'a drive-by lullaby supply'],
+  'road': ['a toad that I owed', 'an episode that exploded in code', 'a truckload of a la mode', 'my zip code imploded'],
+  'mind': ['a rind I can not find', 'mankind was unkind to my grind', 'a resigned combined wind', 'a behind-the-scenes rewind'],
+  'hand': ['a contraband rubber band', 'a bland brand of sand', 'my expand-on-demand headband', 'a misunderstood command to disband'],
+  'face': ['my shoelace in outer space', 'a database with no grace', 'a staircase rat race', 'an embrace from a briefcase'],
+  'gold': ['a household mold I was told to behold', 'a controlled casserole that was cold', 'a bold scaffold of old'],
+  'star': ['a cigar in a bizarre sidecar', 'a guitar at a tiki bar', 'my GPS from afar', 'a memoir about tar'],
+  'sun': ['a hot dog bun on the run', 'a pun about a nun with a stun gun', 'an overdone cinnamon bun', 'a rerun of fun'],
+  'moon': ['a spoon in a monsoon', 'a bassoon-playing baboon', 'my afternoon platoon', 'a cartoon honeymoon cocoon'],
+  'kiss': ['a Swiss near-miss at a quiz', 'an abyss of office politics', 'my reminisce about fizz', 'a dismissed hit-or-miss wish list'],
+  'true': ['a shampoo residue canoe', 'a fondue interview breakthrough', 'my overdue curfew tattoo', 'a bayou voodoo review'],
+  'wrong': ['a gong at a ping-pong sing-along', 'a strong prong on a sarong', 'a lifelong ding-dong', 'King Kong in a thong'],
+  'dance': ['my underpants in France', 'a circumstance of ants', 'a freelance avalanche', 'a secondhand romance with plants'],
+  'tonight': ['a parasite flying a kite', 'a flashlight at a food fight', 'a copyright oversight', 'a polite termite in hindsight'],
+  'forever': ['a lever in bad weather', 'my endeavor to measure whatever', 'a never-say-never sweater', 'a clever feather newsletter'],
+  'down': ['a clown in a nightgown downtown', 'a pronoun that made me frown', 'a brown renown breakdown', 'a crown from the lost-and-found'],
+  'believe': ['my sleeve on Christmas Eve', 'a pet peeve I can not grieve', 'a naive reprieve', 'an underachieve on New Year Eve'],
+  'strong': ['a song about tongs that is really long', 'a wrong ping-pong bong', 'a sarong singalong', 'a lifelong prawn prong'],
+};
+
+// Fallback: ending-sound templates for words not in the map
+const endingSoundMap = {
+  'ove': ['my rubber glove', 'a shove from above', 'a cove full of mauve stuff'],
+  'oo': ['expired shampoo', 'my left shoe', 'a kangaroo stew'],
+  'ee': ['a flea on a spree', 'my HOA fee', 'a manatee'],
+  'art': ['a grocery cart', 'a loud public fart', 'a broken Kmart'],
+  'ight': ['fluorescent light', 'a termite fight', 'an expired Bud Light'],
+  'ay': ['a bale of hay', 'expired sorbet', 'a confusing bidet'],
+  'ime': ['a pantomime about slime', 'a tax-deductible crime', 'an aggressive wind chime'],
+  'ire': ['a flat tire', 'a suspiciously cheap dryer', 'a liar on a high wire'],
+  'ain': ['my bathroom drain', 'a migraine on a train', 'sustained lower back pain'],
+  'ife': ['a butter knife', 'workplace strife', 'a fife playing on a drum'],
+  'ow': ['a cow having a row', 'my eyebrow somehow', 'a snowplow pow-wow'],
+  'ound': ['a hound at the lost and found', 'a mound of compound', 'a background sound'],
+  'ong': ['a gong at a sing-along', 'King Kong in a thong', 'a lifelong ding-dong'],
+  'ake': ['a mistake involving cake', 'a milkshake earthquake', 'a snowflake heartbreak'],
+  'ine': ['a porcupine drinking wine', 'a landmine Valentine', 'a clothesline decline'],
+  'ore': ['the hardware store floor', 'a dinosaur doing chores', 'a metaphor for decor'],
+  'ess': ['a hot mess in a dress', 'a chess game causing stress', 'a confess at recess'],
+  'urn': ['a fern that will never learn', 'a tax return that made me yearn', 'a sunburn of concern'],
+  'all': ['a mall bathroom stall', 'a waterfall at the mall', 'a basketball free-for-all'],
+  'ade': ['a lemonade crusade', 'a handmade barricade', 'a charade about Gatorade'],
+  'ose': ['a garden hose I chose', 'a grandiose pose', 'a diagnose of froze'],
+  'eal': ['a meal with no appeal', 'a surreal ordeal', 'a banana peel deal'],
+  'ust': ['a pizza crust I distrust', 'a robust sawdust gust', 'a wanderlust bus bust'],
+  'ack': ['a snack attack setback', 'a backpack on a yak', 'a crackerjack comeback'],
+  'op': ['a mop that will not stop', 'a laptop belly flop', 'a raindrop workshop'],
+  'ull': ['a seagull that is dull', 'a beautiful skull', 'a handful of bull'],
+  'ank': ['a fish tank prank', 'a blank piggy bank', 'a plank I can thank'],
+  'it': ['a permit to knit', 'a misfit armpit', 'a legit banana split'],
+  'un': ['a hot dog bun on the run', 'a pun about a stun gun', 'an overdone cinnamon bun'],
+  'ear': ['a volunteer with gear', 'a chandelier of fear', 'a souvenir from last year'],
+  'at': ['a doormat wearing a hat', 'a bureaucrat on a mat', 'a thermostat acrobat'],
+  'old': ['a household mold I behold', 'a controlled casserole that is cold', 'a bold scaffold of old'],
+  'and': ['a contraband rubber band', 'a bland brand of sand', 'a misunderstood command'],
+  'ace': ['my shoelace in outer space', 'a database rat race', 'a staircase briefcase'],
+};
+
+// Generic completions when nothing matches
+const genericBadRhymes = [
+  '...but then I stubbed my toe on a Lego.',
+  '...and my cat just stared at me disapprovingly.',
+  '...which is exactly what my dentist said.',
+  '...according to my horoscope, and also my parole officer.',
+  '...but in a Walmart parking lot at 2 AM.',
+  '...while eating a gas station burrito.',
+  '...and that is why I am banned from Build-A-Bear.',
+  '...said no one at my high school reunion.',
+  '...which pairs nicely with expired ranch dressing.',
+  '...but make it a LinkedIn post.',
+  '...and my Roomba has never forgiven me.',
+  '...but only on days that end in Y.',
+  '...which is also the name of my WiFi network.',
+  '...according to a fortune cookie I found in my couch.',
+  '...and frankly, the pigeons agree.',
+  '...but with the energy of a corporate team-building exercise.',
+  '...which honestly explains a lot about my credit score.',
+  '...and my landlord said that violates the lease.',
+  '...while my Alexa played the Macarena.',
+  '...but unironically, at a Renaissance faire.',
+];
+
+const cringePrefixes = [
+  'Barely Survived', 'Emotionally Damaged', 'Weapons-Grade Cringe',
+  'Geneva Convention Violation', 'Lethal Dose of Cringe', 'Call An Ambulance',
+  'Interpol Has Been Notified', 'My Ears Filed a Restraining Order',
+  'A Crime Against Music', 'Permanently Unrecoverable'
+];
+
+function getLastWord(line) {
+  const cleaned = line.replace(/[^a-zA-Z\s'-]/g, '').trim();
+  const words = cleaned.split(/\s+/);
+  return words[words.length - 1]?.toLowerCase() || '';
+}
+
+function getEndingSound(word) {
+  if (!word) return null;
+  // Try progressively shorter endings
+  for (let len = Math.min(word.length, 4); len >= 2; len--) {
+    const ending = word.slice(-len);
+    if (endingSoundMap[ending]) return ending;
+  }
+  return null;
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateWorstRhyme(inputLine) {
+  const lastWord = getLastWord(inputLine);
+
+  // Check if line seems to end mid-phrase (trailing ...)
+  const isOpenEnded = /\.{2,}$/.test(inputLine.trim()) || inputLine.trim().endsWith('...');
+  const cleanInput = inputLine.replace(/\.{2,}$/, '').trim();
+
+  let rhymeCompletion;
+  let source = 'none';
+
+  // 1. Direct word match
+  if (rhymeMap[lastWord]) {
+    rhymeCompletion = pickRandom(rhymeMap[lastWord]);
+    source = 'direct';
+  }
+
+  // 2. Ending sound match
+  if (!rhymeCompletion) {
+    const ending = getEndingSound(lastWord);
+    if (ending && endingSoundMap[ending]) {
+      rhymeCompletion = pickRandom(endingSoundMap[ending]);
+      source = 'ending';
+    }
+  }
+
+  // 3. Generic fallback
+  if (!rhymeCompletion) {
+    rhymeCompletion = pickRandom(genericBadRhymes);
+    source = 'generic';
+  }
+
+  // Build the output
+  let prefix = isOpenEnded ? '...' : '\n';
+  const fullRhyme = prefix + rhymeCompletion;
+
+  // Cringe score: direct rhymes are worse because they technically rhyme
+  let cringe = 60 + Math.floor(Math.random() * 35);
+  if (source === 'generic') cringe = 40 + Math.floor(Math.random() * 30);
+
+  return { rhyme: fullRhyme, cringe, source };
+}
+
+// ---- UI ----
+
+const inputEl = document.getElementById('lyric-input');
+const btnFind = document.getElementById('btn-find');
+const resultCard = document.getElementById('result-card');
+const originalLineEl = document.getElementById('original-line');
+const rhymeLineEl = document.getElementById('rhyme-line');
+const cringeLevelEl = document.getElementById('cringe-level');
+const cringeBarEl = document.getElementById('cringe-bar');
+const cringeEmojiEl = document.getElementById('cringe-emoji');
+const btnSlaps = document.getElementById('btn-slaps');
+const btnKill = document.getElementById('btn-kill');
+const voteCountsEl = document.getElementById('vote-counts');
+const btnShare = document.getElementById('btn-share');
+const shareFeedbackEl = document.getElementById('share-feedback');
+const btnAnother = document.getElementById('btn-another');
+const hallOfShame = document.getElementById('hall-of-shame');
+const shameList = document.getElementById('shame-list');
+
+let currentInput = '';
+let currentRhyme = '';
+let votes = { slaps: 0, kill: 0 };
+let shameEntries = [];
+
+function showResult() {
+  const input = inputEl.value.trim();
+  if (!input) return;
+
+  currentInput = input;
+  const result = generateWorstRhyme(input);
+  currentRhyme = result.rhyme;
+
+  // Reset votes for new rhyme
+  votes = { slaps: 0, kill: 0 };
+  btnSlaps.classList.remove('voted');
+  btnKill.classList.remove('voted');
+  voteCountsEl.textContent = '';
+  shareFeedbackEl.textContent = '';
+
+  // Display
+  originalLineEl.textContent = currentInput;
+  rhymeLineEl.textContent = currentRhyme;
+
+  // Cringe meter
+  const cringe = result.cringe;
+  const levelIdx = Math.min(Math.floor(cringe / 10), cringePrefixes.length - 1);
+  cringeLevelEl.textContent = cringe + '% - ' + cringePrefixes[levelIdx];
+
+  cringeBarEl.style.width = '0%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      cringeBarEl.style.width = cringe + '%';
+    });
+  });
+
+  // Emoji indicator
+  const emojiSets = [':-|', ':-/', ':-S', '>_<', 'x_x'];
+  const emojiIdx = Math.min(Math.floor(cringe / 20), emojiSets.length - 1);
+  cringeEmojiEl.textContent = emojiSets[emojiIdx];
+
+  resultCard.classList.add('visible');
+  resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+btnFind.addEventListener('click', showResult);
+
+inputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    showResult();
+  }
+});
+
+btnAnother.addEventListener('click', () => {
+  // Add current to hall of shame
+  if (currentInput && currentRhyme) {
+    shameEntries.unshift({ input: currentInput, rhyme: currentRhyme });
+    if (shameEntries.length > 5) shameEntries.pop();
+    renderShame();
+  }
+  showResult();
+});
+
+function renderShame() {
+  if (shameEntries.length === 0) {
+    hallOfShame.style.display = 'none';
+    return;
+  }
+  hallOfShame.style.display = 'block';
+  shameList.innerHTML = shameEntries.map(e =>
+    `<div class="shame-entry">"${e.input}" <span class="shame-rhyme">${e.rhyme}</span></div>`
+  ).join('');
+}
+
+// Voting
+btnSlaps.addEventListener('click', () => {
+  if (btnSlaps.classList.contains('voted') || btnKill.classList.contains('voted')) return;
+  votes.slaps++;
+  btnSlaps.classList.add('voted');
+  voteCountsEl.textContent = `Slaps: ${votes.slaps} | Kill: ${votes.kill}`;
+});
+
+btnKill.addEventListener('click', () => {
+  if (btnSlaps.classList.contains('voted') || btnKill.classList.contains('voted')) return;
+  votes.kill++;
+  btnKill.classList.add('voted');
+  voteCountsEl.textContent = `Slaps: ${votes.slaps} | Kill: ${votes.kill}`;
+});
+
+// Share
+btnShare.addEventListener('click', async () => {
+  const shareText = `${currentInput}\n${currentRhyme}\n\n-- Worst Rhyme Finder`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'Worst Rhyme Finder', text: shareText });
+      shareFeedbackEl.textContent = 'Shared successfully (our condolences to the recipient)';
+    } catch { /* cancelled */ }
+  } else if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      shareFeedbackEl.textContent = 'Copied to clipboard! Now inflict it on someone.';
+    } catch {
+      fallbackCopy(shareText);
+    }
+  } else {
+    fallbackCopy(shareText);
+  }
+});
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    shareFeedbackEl.textContent = 'Copied to clipboard! Now inflict it on someone.';
+  } catch {
+    shareFeedbackEl.textContent = 'Could not copy. Select and copy manually.';
+  }
+  document.body.removeChild(ta);
+}
+
+// Pre-fill a fun example
+inputEl.value = 'I will always love...';
+</script>
+</body>
+</html>

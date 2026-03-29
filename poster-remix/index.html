@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poster Remix - Motivational Poster Nihilism Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #ccc;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  h1 {
+    font-size: 1.4rem;
+    color: #666;
+    margin-bottom: 24px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  .poster-frame {
+    background: #000;
+    border: 3px solid #1a1a1a;
+    padding: 20px 20px 40px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    position: relative;
+  }
+
+  .poster-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #222;
+  }
+
+  .poster-image svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .poster-text {
+    text-align: center;
+    padding: 24px 16px 8px;
+  }
+
+  .poster-title {
+    font-size: 2rem;
+    color: #fff;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 400;
+    line-height: 1.2;
+    transition: opacity 0.3s;
+  }
+
+  .poster-subtitle {
+    font-size: 1rem;
+    color: #999;
+    font-style: italic;
+    line-height: 1.6;
+    max-width: 420px;
+    margin: 0 auto;
+    transition: opacity 0.3s;
+  }
+
+  .poster-line {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #555, transparent);
+    margin: 16px auto 0;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    background: none;
+    border: 1px solid #333;
+    color: #aaa;
+    padding: 12px 28px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  button:hover {
+    border-color: #888;
+    color: #fff;
+    background: #111;
+  }
+
+  button.remix-btn {
+    border-color: #c0392b;
+    color: #e74c3c;
+    font-size: 1rem;
+    padding: 14px 40px;
+  }
+
+  button.remix-btn:hover {
+    background: #c0392b;
+    color: #fff;
+  }
+
+  .counter {
+    color: #444;
+    font-size: 0.75rem;
+    margin-top: 16px;
+    letter-spacing: 2px;
+  }
+
+  .fade-out { opacity: 0; }
+  .fade-in { opacity: 1; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #222;
+    color: #aaa;
+    padding: 12px 24px;
+    border: 1px solid #333;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  @media (max-width: 560px) {
+    body { padding: 12px; }
+    .poster-frame { padding: 12px 12px 28px; }
+    .poster-title { font-size: 1.5rem; letter-spacing: 5px; }
+    .poster-subtitle { font-size: 0.9rem; }
+    .controls { gap: 8px; }
+    button { padding: 10px 18px; font-size: 0.75rem; }
+    button.remix-btn { padding: 12px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Poster Remix</h1>
+
+<div class="poster-frame" id="poster">
+  <div class="poster-image" id="posterImage"></div>
+  <div class="poster-text">
+    <div class="poster-title" id="posterTitle">TEAMWORK</div>
+    <div class="poster-subtitle" id="posterSubtitle">None of us is as confused as all of us.</div>
+    <div class="poster-line"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="remix-btn" id="remixBtn" onclick="remix()">REMIX</button>
+  <button onclick="sharePoster()">SHARE</button>
+  <button onclick="downloadPoster()">DOWNLOAD</button>
+</div>
+
+<div class="counter" id="counter"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const posters = [
+  { title: "TEAMWORK", sub: "None of us is as confused as all of us.", icon: "people" },
+  { title: "AMBITION", sub: "The journey of a thousand miles begins with a nap.", icon: "mountain" },
+  { title: "POTENTIAL", sub: "Not everyone gets to be an astronaut when they grow up.", icon: "star" },
+  { title: "MOTIVATION", sub: "If a pretty poster and a cute saying are all it takes to motivate you, you have a very easy job.", icon: "sunrise" },
+  { title: "PERSISTENCE", sub: "The first step to failure is trying.", icon: "path" },
+  { title: "MEETINGS", sub: "Because none of us is as dumb as all of us.", icon: "people" },
+  { title: "ACHIEVEMENT", sub: "You can do anything you set your mind to when you have vision, determination, and an endless supply of expendable labor.", icon: "trophy" },
+  { title: "LEADERSHIP", sub: "The ability to convince others to follow a path you wouldn't take yourself.", icon: "mountain" },
+  { title: "DREAMS", sub: "Dreams are like rainbows. Only idiots chase them.", icon: "star" },
+  { title: "EXCELLENCE", sub: "It's probably a good idea to give up now and save yourself the embarrassment.", icon: "trophy" },
+  { title: "MISTAKES", sub: "It could be that the purpose of your life is only to serve as a warning to others.", icon: "waves" },
+  { title: "DESPAIR", sub: "It's always darkest just before it goes pitch black.", icon: "sunset" },
+  { title: "DEFEAT", sub: "For every winner, there are dozens of losers. Odds are you're one of them.", icon: "waves" },
+  { title: "PROCRASTINATION", sub: "Hard work often pays off after time, but laziness always pays off now.", icon: "path" },
+  { title: "MEDIOCRITY", sub: "It takes a lot less time and most people won't notice the difference until it's too late.", icon: "bird" },
+  { title: "CONSULTING", sub: "If you're not a part of the solution, there's good money to be made in prolonging the problem.", icon: "people" },
+  { title: "DYSFUNCTION", sub: "The only consistent feature of all of your dissatisfying relationships is you.", icon: "people" },
+  { title: "AGONY", sub: "Not all pain is gain.", icon: "mountain" },
+  { title: "APATHY", sub: "If we don't take care of the customer, maybe they'll stop bugging us.", icon: "waves" },
+  { title: "BURNOUT", sub: "Attitudes are contagious. Mine might kill you.", icon: "sunset" },
+  { title: "CLUELESSNESS", sub: "There are no stupid questions, but there are a LOT of inquisitive idiots.", icon: "star" },
+  { title: "COMPROMISE", sub: "Let's agree to respect each other's views, no matter how wrong yours may be.", icon: "people" },
+  { title: "DELUSION", sub: "There is no greater joy than soaring high on the wings of your dreams, except maybe the joy of watching a dreamer get smacked in the face by reality.", icon: "bird" },
+  { title: "DISCOVERY", sub: "A company that will go to the ends of the Earth for its people will find it can hire them for about 10% of the cost of Americans.", icon: "path" },
+  { title: "EFFORT", sub: "Hard work never killed anybody, but it is illegal in some places.", icon: "mountain" },
+  { title: "FUTILITY", sub: "You'll always miss 100% of the shots you don't take, and statistically speaking, 99% of the shots you do.", icon: "waves" },
+  { title: "IDIOCY", sub: "Never underestimate the power of stupid people in large groups.", icon: "people" },
+  { title: "INCOMPETENCE", sub: "When you earnestly believe you can compensate for a lack of skill by doubling your efforts, there's no end to what you can't do.", icon: "trophy" },
+  { title: "INDIFFERENCE", sub: "It takes 43 muscles to frown and 17 to smile, but it doesn't take any to just sit there with a dumb look on your face.", icon: "sunrise" },
+  { title: "INDIVIDUALITY", sub: "Always remember that you are unique. Just like everybody else.", icon: "star" },
+  { title: "INNOVATION", sub: "We've been doing it wrong for so long, it feels right.", icon: "bird" },
+  { title: "ISSUES", sub: "My personal issues are none of your business. Mainly because you caused most of them.", icon: "waves" },
+  { title: "LONELINESS", sub: "If you find yourself struggling with loneliness, you're not alone. And yet you are alone. So very alone.", icon: "sunset" },
+  { title: "MULTITASKING", sub: "The art of messing up several things at once.", icon: "people" },
+  { title: "OPTIMISM", sub: "Replaced by the harsh light of experience since 1991.", icon: "sunrise" },
+  { title: "OVERCONFIDENCE", sub: "Before you attempt to beat the odds, be sure you could survive the odds beating you.", icon: "mountain" },
+  { title: "PLANNING", sub: "Much work remains to be done before we can announce our total failure to make any progress.", icon: "path" },
+  { title: "PRETENSION", sub: "The downside of being better than everyone else is that people tend to assume you're pretentious.", icon: "trophy" },
+  { title: "PRIORITIES", sub: "Needs are a function of what other people have.", icon: "star" },
+  { title: "PROBLEM SOLVING", sub: "Every great solution breeds new problems.", icon: "waves" },
+  { title: "PURPOSE", sub: "Finding your calling in life is wonderful. The pay sucks, though.", icon: "sunrise" },
+  { title: "QUITTERS", sub: "Winners never quit. Quitters never win. But those who never quit AND never win are idiots.", icon: "path" },
+  { title: "RETIREMENT", sub: "Because you've given so much of yourself to the company that you don't have anything left we can use.", icon: "sunset" },
+  { title: "SACRIFICE", sub: "Your role may be thankless, but if you're willing to give it your all, you just might find yourself giving it your all.", icon: "mountain" },
+  { title: "STAGNATION", sub: "If you can't beat them, why bother?", icon: "waves" },
+  { title: "SUCCESS", sub: "Some people dream of success, while other people live to crush those dreams.", icon: "trophy" },
+  { title: "TRADITION", sub: "Just because you've always done it that way doesn't mean it's not incredibly stupid.", icon: "people" },
+  { title: "UNDERACHIEVEMENT", sub: "The tallest blade of grass is the first to be cut by the lawnmower.", icon: "bird" },
+  { title: "WISDOM", sub: "With enough knowledge you too can be as cynical as we are.", icon: "star" },
+  { title: "WORTH", sub: "You are worth exactly what someone will pay for you. Check the going rate. Weep.", icon: "waves" },
+  { title: "SYNERGY", sub: "When you combine the talent of several people, you can spread the blame more widely.", icon: "people" },
+  { title: "MINDFULNESS", sub: "Be present. It's not like you have anywhere better to be.", icon: "sunrise" },
+  { title: "HUSTLE", sub: "Work hard in silence so no one asks you to help them move.", icon: "mountain" },
+  { title: "NETWORKING", sub: "It's not what you know, it's who you pretend to like.", icon: "people" },
+  { title: "PASSION", sub: "Follow your passion. Starvation will handle the rest.", icon: "bird" },
+  { title: "GRATITUDE", sub: "Be thankful for what you have. It could be worse. And it probably will be.", icon: "sunset" },
+  { title: "FOCUS", sub: "You can accomplish anything if you just stop caring about everything else.", icon: "star" },
+  { title: "BALANCE", sub: "Work-life balance is important. Unfortunately, we value neither.", icon: "sunrise" },
+  { title: "GROWTH", sub: "You'll grow a lot at this company. Mostly in resentment.", icon: "path" },
+  { title: "RESILIENCE", sub: "What doesn't kill you gives you a set of unhealthy coping mechanisms.", icon: "mountain" },
+  { title: "COURAGE", sub: "It takes courage to push through. It also takes courage to quit. One of these options has a couch.", icon: "sunset" },
+  { title: "STRATEGY", sub: "A comprehensive plan that fails to survive first contact with reality.", icon: "trophy" }
+];
+
+const iconSVGs = {
+  mountain: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a3e"/><stop offset="100%" stop-color="#2d1b4e"/></linearGradient></defs>
+    <rect fill="url(#sky)" width="400" height="300"/>
+    <polygon fill="#1e1e3a" points="0,300 120,100 200,180 280,80 400,300"/>
+    <polygon fill="#151530" points="50,300 180,140 260,200 400,300"/>
+    <circle cx="320" cy="60" r="20" fill="#444" opacity="0.6"/>
+    <line x1="280" y1="82" x2="280" y2="78" stroke="#555" stroke-width="0.5" opacity="0.3"/>
+    ${Array.from({length:30},()=>`<circle cx="${Math.random()*400}" cy="${Math.random()*120}" r="${Math.random()*1.5}" fill="#fff" opacity="${Math.random()*0.6}"/>`).join('')}
+  </svg>`,
+  sunrise: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1a2e"/><stop offset="60%" stop-color="#3d1f3f"/><stop offset="100%" stop-color="#4a2040"/></linearGradient></defs>
+    <rect fill="url(#dawn)" width="400" height="300"/>
+    <circle cx="200" cy="200" r="40" fill="#6b3a3a" opacity="0.7"/>
+    <rect y="200" width="400" height="100" fill="#111" opacity="0.8"/>
+    ${Array.from({length:8},(_,i)=>`<line x1="200" y1="200" x2="${200+Math.cos(i*Math.PI/4)*120}" y2="${200+Math.sin(i*Math.PI/4)*120}" stroke="#5a2a2a" stroke-width="1" opacity="0.3"/>`).join('')}
+  </svg>`,
+  sunset: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d0d1a"/><stop offset="50%" stop-color="#2a1a30"/><stop offset="100%" stop-color="#1a0a15"/></linearGradient></defs>
+    <rect fill="url(#dusk)" width="400" height="300"/>
+    <circle cx="200" cy="220" r="50" fill="#3d1a1a" opacity="0.5"/>
+    <rect y="220" width="400" height="80" fill="#0a0a0a"/>
+    <path d="M0,220 Q100,210 200,220 Q300,230 400,215 L400,300 L0,300Z" fill="#0d0d0d"/>
+  </svg>`,
+  waves: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#0d1117" width="400" height="300"/>
+    <path d="M0,180 Q50,160 100,180 Q150,200 200,180 Q250,160 300,180 Q350,200 400,180 L400,300 L0,300Z" fill="#131825" opacity="0.8"/>
+    <path d="M0,200 Q50,185 100,200 Q150,215 200,200 Q250,185 300,200 Q350,215 400,200 L400,300 L0,300Z" fill="#0f1520" opacity="0.9"/>
+    <path d="M0,230 Q50,220 100,230 Q150,240 200,230 Q250,220 300,230 Q350,240 400,230 L400,300 L0,300Z" fill="#0b1018"/>
+    <circle cx="300" cy="60" r="25" fill="#222" opacity="0.4"/>
+  </svg>`,
+  star: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#0a0a1a" width="400" height="300"/>
+    ${Array.from({length:60},()=>`<circle cx="${Math.random()*400}" cy="${Math.random()*300}" r="${Math.random()*2}" fill="#fff" opacity="${0.1+Math.random()*0.5}"/>`).join('')}
+    <polygon points="200,40 215,110 290,110 228,150 250,220 200,178 150,220 172,150 110,110 185,110" fill="none" stroke="#444" stroke-width="1" opacity="0.6"/>
+    <circle cx="200" cy="140" r="3" fill="#666"/>
+  </svg>`,
+  people: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#111" width="400" height="300"/>
+    <rect y="240" width="400" height="60" fill="#1a1a1a"/>
+    ${[120,180,220,280].map((x,i)=>`<circle cx="${x}" cy="${195+i%2*5}" r="12" fill="#222"/><rect x="${x-8}" y="${210+i%2*5}" width="16" height="30" rx="4" fill="#1a1a1a"/>`).join('')}
+    <line x1="100" y1="260" x2="300" y2="260" stroke="#222" stroke-width="0.5"/>
+  </svg>`,
+  trophy: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#0d0d0d" width="400" height="300"/>
+    <path d="M160,80 L160,60 L240,60 L240,80 Q240,160 200,180 Q160,160 160,80Z" fill="none" stroke="#3a3a1a" stroke-width="2" opacity="0.6"/>
+    <rect x="185" y="180" width="30" height="40" fill="#1a1a0f" opacity="0.5"/>
+    <rect x="165" y="220" width="70" height="12" rx="3" fill="#1a1a0f" opacity="0.5"/>
+    <path d="M155,80 Q120,90 130,130 Q135,140 160,140" fill="none" stroke="#3a3a1a" stroke-width="1.5" opacity="0.4"/>
+    <path d="M245,80 Q280,90 270,130 Q265,140 240,140" fill="none" stroke="#3a3a1a" stroke-width="1.5" opacity="0.4"/>
+  </svg>`,
+  bird: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="birdsky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0d1117"/><stop offset="100%" stop-color="#1a1a2e"/></linearGradient></defs>
+    <rect fill="url(#birdsky)" width="400" height="300"/>
+    ${Array.from({length:5},(_,i)=>{const x=80+i*70,y=60+i*15+Math.sin(i)*20;return `<path d="M${x},${y} Q${x+10},${y-12} ${x+20},${y} M${x},${y} Q${x+10},${y-12} ${x-5},${y+3}" fill="none" stroke="#444" stroke-width="1.5" opacity="${0.3+i*0.1}"/>`;}).join('')}
+    <circle cx="50" cy="250" r="60" fill="#151520"/>
+    <circle cx="350" cy="260" r="40" fill="#151520"/>
+  </svg>`,
+  path: `<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+    <rect fill="#0d0f0d" width="400" height="300"/>
+    <path d="M200,300 Q180,240 190,200 Q210,150 195,100 Q185,60 200,20" fill="none" stroke="#2a2a1a" stroke-width="3" stroke-dasharray="8,6" opacity="0.5"/>
+    <circle cx="200" cy="20" r="4" fill="#444" opacity="0.4"/>
+    <rect x="0" y="260" width="400" height="40" fill="#0f120f"/>
+    ${Array.from({length:12},()=>`<circle cx="${Math.random()*400}" cy="${240+Math.random()*60}" r="${1+Math.random()*3}" fill="#1a1f1a" opacity="0.5"/>`).join('')}
+  </svg>`
+};
+
+let currentIndex = 0;
+let remixCount = 0;
+
+function render(poster) {
+  document.getElementById('posterImage').innerHTML = iconSVGs[poster.icon] || iconSVGs.mountain;
+  const title = document.getElementById('posterTitle');
+  const sub = document.getElementById('posterSubtitle');
+  title.classList.add('fade-out');
+  sub.classList.add('fade-out');
+  setTimeout(() => {
+    title.textContent = poster.title;
+    sub.textContent = poster.sub;
+    title.classList.remove('fade-out');
+    sub.classList.remove('fade-out');
+  }, 200);
+}
+
+function remix() {
+  let idx;
+  do { idx = Math.floor(Math.random() * posters.length); } while (idx === currentIndex && posters.length > 1);
+  currentIndex = idx;
+  remixCount++;
+  render(posters[idx]);
+  document.getElementById('counter').textContent = `remix #${remixCount}`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function sharePoster() {
+  const p = posters[currentIndex];
+  const text = `${p.title}: ${p.sub}\n\n-- posterremix`;
+  if (navigator.share) {
+    try { await navigator.share({ text }); } catch(e) {}
+  } else {
+    await navigator.clipboard.writeText(text);
+    showToast('COPIED TO CLIPBOARD');
+  }
+}
+
+function downloadPoster() {
+  const el = document.getElementById('poster');
+  const p = posters[currentIndex];
+
+  const canvas = document.createElement('canvas');
+  const W = 1080, H = 1350;
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, W, H);
+
+  // Border
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 6;
+  ctx.strokeRect(40, 40, W - 80, H - 80);
+
+  // Image area with SVG
+  const imgY = 80, imgH = 700;
+  const svgStr = iconSVGs[p.icon] || iconSVGs.mountain;
+  const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = () => {
+    ctx.drawImage(img, 80, imgY, W - 160, imgH);
+    URL.revokeObjectURL(url);
+
+    // Title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '700 72px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.letterSpacing = '16px';
+    ctx.fillText(p.title, W / 2, imgY + imgH + 100);
+
+    // Subtitle
+    ctx.fillStyle = '#999999';
+    ctx.font = 'italic 32px Georgia, serif';
+    const words = p.sub.split(' ');
+    let lines = [], line = '';
+    for (const w of words) {
+      const test = line + (line ? ' ' : '') + w;
+      if (ctx.measureText(test).width > W - 200) {
+        lines.push(line);
+        line = w;
+      } else line = test;
+    }
+    if (line) lines.push(line);
+    lines.forEach((l, i) => {
+      ctx.fillText(l, W / 2, imgY + imgH + 160 + i * 44);
+    });
+
+    // Line
+    ctx.strokeStyle = '#555';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 40, imgY + imgH + 180 + lines.length * 44);
+    ctx.lineTo(W / 2 + 40, imgY + imgH + 180 + lines.length * 44);
+    ctx.stroke();
+
+    // Download
+    const a = document.createElement('a');
+    a.download = `poster-remix-${p.title.toLowerCase().replace(/\s+/g,'-')}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast('POSTER DOWNLOADED');
+  };
+  img.src = url;
+}
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); remix(); }
+});
+
+// Initial render
+render(posters[0]);
+</script>
+
+</body>
+</html>

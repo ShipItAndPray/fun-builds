@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genre Identity Crisis Diagnosis</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #f0f0f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-notes {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .bg-notes span {
+    position: absolute; font-size: 2rem; opacity: 0.06;
+    animation: floatNote 20s infinite linear;
+  }
+  @keyframes floatNote {
+    0% { transform: translateY(110vh) rotate(0deg); }
+    100% { transform: translateY(-10vh) rotate(360deg); }
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 720px; margin: 0 auto; padding: 2rem 1.2rem;
+  }
+
+  h1 {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    text-align: center;
+    background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff, #ff6b6b);
+    background-size: 300% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbowShift 4s ease infinite;
+    margin-bottom: 0.3rem;
+    letter-spacing: 2px;
+  }
+  @keyframes rainbowShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .subtitle {
+    text-align: center; font-size: 1rem; color: #aaa; margin-bottom: 2rem;
+  }
+
+  .category-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    color: var(--cat-color, #ffd93d);
+    margin: 1.5rem 0 0.6rem;
+    padding-left: 0.3rem;
+    border-left: 4px solid var(--cat-color, #ffd93d);
+    padding-left: 0.8rem;
+  }
+
+  .checklist {
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .check-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .check-item:hover { background: rgba(255,255,255,0.1); transform: translateX(4px); }
+  .check-item.checked {
+    background: rgba(255,255,255,0.12);
+    border-color: var(--cat-color, #ffd93d);
+    box-shadow: 0 0 12px rgba(255,255,255,0.05);
+  }
+
+  .check-box {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+    font-size: 14px;
+  }
+  .check-item.checked .check-box {
+    background: var(--cat-color, #ffd93d);
+    border-color: var(--cat-color, #ffd93d);
+    color: #111;
+  }
+
+  .check-label { font-size: 0.92rem; line-height: 1.4; }
+
+  .counter-bar {
+    position: sticky; bottom: 0; left: 0; right: 0;
+    background: rgba(15,12,41,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding: 0.8rem 1.2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 10;
+  }
+
+  .count-display {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: #ffd93d;
+  }
+
+  .diagnose-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    padding: 0.6rem 1.8rem;
+    border: none; border-radius: 50px;
+    background: linear-gradient(135deg, #ff6b6b, #ffd93d);
+    color: #111; cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+  }
+  .diagnose-btn:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,107,107,0.4); }
+  .diagnose-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Results */
+  .results-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+    overflow-y: auto;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .results-card {
+    max-width: 600px; margin: 3rem auto; padding: 2.5rem 2rem;
+    background: linear-gradient(145deg, #1a1a3e, #2a2a5e);
+    border-radius: 20px;
+    border: 2px solid rgba(255,255,255,0.1);
+    animation: slideUp 0.5s ease;
+    text-align: center;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .score-circle {
+    width: 140px; height: 140px; border-radius: 50%;
+    margin: 0 auto 1.5rem;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: 'Bangers', cursive;
+    border: 4px solid;
+    position: relative;
+  }
+  .score-circle .number { font-size: 3rem; line-height: 1; }
+  .score-circle .out-of { font-size: 0.85rem; opacity: 0.7; }
+
+  .diagnosis-name {
+    font-family: 'Bangers', cursive;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+  }
+
+  .diagnosis-text {
+    font-size: 1rem; line-height: 1.6;
+    color: #ccc; margin-bottom: 1.2rem;
+    max-width: 480px; margin-left: auto; margin-right: auto;
+  }
+
+  .personality-type {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50px;
+    padding: 0.5rem 1.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .severity-meter {
+    width: 100%; height: 10px; border-radius: 5px;
+    background: rgba(255,255,255,0.1);
+    margin: 1rem 0 0.4rem; overflow: hidden;
+  }
+  .severity-fill {
+    height: 100%; border-radius: 5px;
+    transition: width 1.5s ease;
+  }
+  .severity-label { font-size: 0.8rem; color: #aaa; margin-bottom: 1.5rem; display: block; }
+
+  .share-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    padding: 0.6rem 2rem;
+    border: 2px solid #ffd93d;
+    border-radius: 50px;
+    background: transparent;
+    color: #ffd93d;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 0.4rem;
+  }
+  .share-btn:hover { background: #ffd93d; color: #111; }
+
+  .close-btn {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    padding: 0.5rem 1.5rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50px;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    margin: 0.4rem;
+    transition: all 0.3s;
+  }
+  .close-btn:hover { border-color: #fff; color: #fff; }
+
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: #333; color: #fff; padding: 0.7rem 1.5rem;
+    border-radius: 50px; font-size: 0.9rem; z-index: 200;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 1.7s forwards;
+  }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes toastOut { to { opacity: 0; transform: translateX(-50%) translateY(20px); } }
+
+  @media (max-width: 500px) {
+    .container { padding: 1.2rem 0.8rem; }
+    .check-item { padding: 0.65rem 0.8rem; }
+    .results-card { margin: 1.5rem 0.8rem; padding: 2rem 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-notes" id="bgNotes"></div>
+
+<div class="container" id="app">
+  <h1>Genre Identity Crisis</h1>
+  <p class="subtitle">How fractured is your musical soul? Check all that apply.</p>
+  <div id="checklist"></div>
+</div>
+
+<div class="counter-bar">
+  <span class="count-display"><span id="count">0</span> / <span id="total">0</span> confessions</span>
+  <button class="diagnose-btn" id="diagnoseBtn" disabled onclick="showDiagnosis()">Diagnose Me</button>
+</div>
+
+<div class="results-overlay" id="resultsOverlay" onclick="if(event.target===this)closeDiagnosis()">
+  <div class="results-card" id="resultsCard"></div>
+</div>
+
+<script>
+const categories = [
+  {
+    name: "Guilty Pleasures",
+    color: "#ff6b6b",
+    items: [
+      "I unironically enjoy sea shanties",
+      "I have a polka playlist and it slaps",
+      "Gregorian chants are my spa music",
+      "I know all the words to at least one ABBA song and I'm proud",
+      "I've headbanged to a harpsichord piece",
+      "Kidzbop versions are sometimes superior",
+    ]
+  },
+  {
+    name: "Contradictory Vibes",
+    color: "#ffd93d",
+    items: [
+      "My workout playlist has show tunes",
+      "I listen to death metal to fall asleep",
+      "I cry at country songs but won't admit it",
+      "I play classical music while doing dishes like I'm in a movie",
+      "I've listened to jazz and felt genuinely cool for 3 minutes",
+      "I queue up lo-fi beats right after screamo",
+    ]
+  },
+  {
+    name: "Identity Confusion",
+    color: "#6bcb77",
+    items: [
+      "My Spotify Wrapped confused the algorithm",
+      "I've argued that K-pop IS punk rock, actually",
+      "I've described a song as 'country-trap-fusion' without irony",
+      "I unironically use the phrase 'all music is good music'",
+      "I've had an emo phase AND a bluegrass phase",
+      "I can't pick a favorite genre because I genuinely don't have one",
+    ]
+  },
+  {
+    name: "Secret Obsessions",
+    color: "#4d96ff",
+    items: [
+      "I have a Bollywood playlist hidden from public view",
+      "I know more anime openings than billboard hits",
+      "Video game soundtracks have made me cry",
+      "I've Shazam'd elevator music",
+      "I listen to whale sounds and consider it a genre",
+      "I have a 'songs that go hard in the car alone' playlist",
+    ]
+  },
+  {
+    name: "Unhinged Behavior",
+    color: "#c084fc",
+    items: [
+      "I've put on opera while cooking ramen",
+      "I've air-guitared to a banjo solo",
+      "I sing show tunes in the shower but listen to trap in public",
+      "I've moshed to a Taylor Swift song",
+      "I once made a playlist called 'existential dread bops'",
+      "I've clapped on beats 1 and 3 and felt the room judge me",
+    ]
+  },
+  {
+    name: "Deep Cuts",
+    color: "#ff922b",
+    items: [
+      "I've gone down a 2am rabbit hole of Tuvan throat singing",
+      "I own vinyl of a genre I can't pronounce",
+      "I've recommended a song and prefaced it with 'okay, hear me out'",
+      "I've genuinely tried to like free jazz more than once",
+      "I have strong opinions about synth-wave subgenres",
+      "I've described my taste as 'eclectic' to avoid further questions",
+    ]
+  },
+];
+
+const diagnoses = [
+  // 0-3: Barely chaotic
+  {
+    min: 0, max: 3,
+    name: "Mono-Genre Normie",
+    text: "You picked barely anything. You probably listen to one genre and think that's a personality. Your Spotify Wrapped is a straight line. It's fine. It's just... very predictable.",
+    type: "The Algorithm's Favorite Child",
+    color: "#6bcb77",
+  },
+  {
+    min: 0, max: 3,
+    name: "Musically Stable",
+    text: "Congratulations, your musical taste has never caused you a single moment of shame. You've never had to explain a playlist to anyone. Must be nice living without chaos.",
+    type: "The Beige Playlist Owner",
+    color: "#6bcb77",
+  },
+  // 4-8: Mild confusion
+  {
+    min: 4, max: 8,
+    name: "Minor Genre Sprain",
+    text: "You've dipped your toes into musical chaos but haven't committed. You'll shuffle between two genres and think you're wild. Buddy, you haven't seen wild yet.",
+    type: "The Cautious Explorer",
+    color: "#ffd93d",
+  },
+  {
+    min: 4, max: 8,
+    name: "Early-Onset Eclecticism",
+    text: "The symptoms are appearing. A little country here, some EDM there. You're still in the 'I can stop anytime' phase. Spoiler: you won't.",
+    type: "The Gateway Listener",
+    color: "#ffd93d",
+  },
+  {
+    min: 4, max: 8,
+    name: "Playlist Puberty",
+    text: "Your music taste is going through changes. Awkward, confusing changes. One day you'll look back at this phase and cringe. Or double down. Probably double down.",
+    type: "The Musical Adolescent",
+    color: "#ffd93d",
+  },
+  // 9-14: Moderate crisis
+  {
+    min: 9, max: 14,
+    name: "Chronic Genre Confusion",
+    text: "Your Spotify Wrapped looks like a ransom note assembled from different radio stations. The algorithm gave up trying to recommend you anything months ago.",
+    type: "The Algorithmic Nightmare",
+    color: "#ff922b",
+  },
+  {
+    min: 9, max: 14,
+    name: "Bipolar Playlist Disorder",
+    text: "You go from Beethoven to Beyonce to Bhangra in three songs and see absolutely nothing wrong with that. Your shuffle button lives in fear.",
+    type: "The Sonic Whiplash Survivor",
+    color: "#ff922b",
+  },
+  {
+    min: 9, max: 14,
+    name: "Genre Vertigo",
+    text: "You've been spinning through so many genres you're dizzy. Your friends have stopped asking 'what are you listening to' because the answer is always 'you wouldn't understand.'",
+    type: "The Misunderstood Connoisseur",
+    color: "#ff922b",
+  },
+  // 15-20: Severe
+  {
+    min: 15, max: 20,
+    name: "Acute Musical Schizophrenia",
+    text: "Your playlists should come with a content warning. Sea shanties followed by hyperpop followed by Gregorian chants. You don't have a type. You ARE the type.",
+    type: "The Spotify Therapist's Worst Case",
+    color: "#ff6b6b",
+  },
+  {
+    min: 15, max: 20,
+    name: "Terminal Eclecticism",
+    text: "There is no cure. Your music taste is a Jackson Pollock painting and you wouldn't have it any other way. Normal people's playlists bore you to tears.",
+    type: "The Beautiful Disaster",
+    color: "#ff6b6b",
+  },
+  {
+    min: 15, max: 20,
+    name: "Full Spectrum Derangement",
+    text: "Every genre is your genre. You contain multitudes, and all of them are arguing about the aux cord. Your year-end stats broke the pie chart.",
+    type: "The Walking Festival",
+    color: "#ff6b6b",
+  },
+  {
+    min: 15, max: 20,
+    name: "Genre Dissociative Identity",
+    text: "Each of your playlists belongs to a different person and none of them have met. If your music taste was a person, they'd need at least 4 forms of ID.",
+    type: "The Playlist Split Personality",
+    color: "#ff6b6b",
+  },
+  // 21-27: Critical
+  {
+    min: 21, max: 27,
+    name: "Catastrophic Genre Meltdown",
+    text: "Your music library is an international incident. Somewhere, a music journalist tried to categorize your taste and had to be hospitalized. You are beyond genre. You are post-genre.",
+    type: "The Musical Cryptid",
+    color: "#c084fc",
+  },
+  {
+    min: 21, max: 27,
+    name: "Genre Singularity Event",
+    text: "All genres have collapsed into one inside your brain and you can no longer tell them apart. Is it jazz? Is it metal? Is it both? You genuinely don't know anymore and you're at peace with that.",
+    type: "The Transcendent Listener",
+    color: "#c084fc",
+  },
+  {
+    min: 21, max: 27,
+    name: "Advanced Sonic Psychosis",
+    text: "Your shuffle play sounds like someone flipping through radio stations during an earthquake. DJs refuse to play at your parties because there is no setlist that can satisfy you.",
+    type: "The Unplaylistable",
+    color: "#c084fc",
+  },
+  // 28+: Maximum chaos
+  {
+    min: 28, max: 99,
+    name: "Total Genre Annihilation",
+    text: "You checked almost everything. You don't have a musical identity crisis -- you ARE the crisis. Your ears have achieved enlightenment by refusing to discriminate against any sound ever made by humanity. Spotify sends you a handwritten apology every December.",
+    type: "The Omega Listener",
+    color: "#ff6b6b",
+  },
+  {
+    min: 28, max: 99,
+    name: "Peak Musical Entropy",
+    text: "Genres are a social construct and you have transcended them entirely. Your library contains every human emotion set to every possible rhythm. Scientists want to study your brain. Record labels want to sign you as a consultant. Your friends just want you to pick a restaurant playlist.",
+    type: "The Genre Destroyer",
+    color: "#ff6b6b",
+  },
+  {
+    min: 28, max: 99,
+    name: "The Final Form",
+    text: "You have achieved what few mortals dare: complete musical omnivory. You are the person who puts on throat singing at a barbecue and opera at a rave. You are the reason 'shuffle all' was invented. You are the reason it was almost removed.",
+    type: "The Auditory Chaos Agent",
+    color: "#ff6b6b",
+  },
+  {
+    min: 28, max: 99,
+    name: "Diagnosis: Music Itself",
+    text: "You didn't just break the genre system. You became it. If music were a country, you'd be the entire United Nations. Your headphones contain diplomatic immunity from musical judgment.",
+    type: "The Living Jukebox",
+    color: "#ff6b6b",
+  },
+];
+
+// Build checklist
+const checklistEl = document.getElementById('checklist');
+const totalEl = document.getElementById('total');
+let totalItems = 0;
+
+categories.forEach(cat => {
+  const label = document.createElement('div');
+  label.className = 'category-label';
+  label.style.setProperty('--cat-color', cat.color);
+  label.style.color = cat.color;
+  label.style.borderLeftColor = cat.color;
+  label.textContent = cat.name;
+  checklistEl.appendChild(label);
+
+  const group = document.createElement('div');
+  group.className = 'checklist';
+  group.style.setProperty('--cat-color', cat.color);
+
+  cat.items.forEach(text => {
+    totalItems++;
+    const item = document.createElement('div');
+    item.className = 'check-item';
+    item.style.setProperty('--cat-color', cat.color);
+    item.innerHTML = `<div class="check-box"></div><span class="check-label">${text}</span>`;
+    item.addEventListener('click', () => {
+      item.classList.toggle('checked');
+      item.querySelector('.check-box').textContent = item.classList.contains('checked') ? '\u2714' : '';
+      updateCount();
+    });
+    group.appendChild(item);
+  });
+  checklistEl.appendChild(group);
+});
+
+totalEl.textContent = totalItems;
+
+// Spacer so counter bar doesn't hide last items
+const spacer = document.createElement('div');
+spacer.style.height = '5rem';
+checklistEl.appendChild(spacer);
+
+function updateCount() {
+  const checked = document.querySelectorAll('.check-item.checked').length;
+  document.getElementById('count').textContent = checked;
+  document.getElementById('diagnoseBtn').disabled = checked === 0;
+}
+
+function getDiagnosis(score) {
+  const pool = diagnoses.filter(d => score >= d.min && score <= d.max);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function showDiagnosis() {
+  const score = document.querySelectorAll('.check-item.checked').length;
+  const d = getDiagnosis(score);
+  const pct = Math.round((score / totalItems) * 100);
+
+  const severityColor = pct < 25 ? '#6bcb77' : pct < 50 ? '#ffd93d' : pct < 75 ? '#ff922b' : '#ff6b6b';
+
+  document.getElementById('resultsCard').innerHTML = `
+    <div class="score-circle" style="border-color: ${d.color}; color: ${d.color};">
+      <span class="number">${score}</span>
+      <span class="out-of">/ ${totalItems}</span>
+    </div>
+    <div class="diagnosis-name" style="color: ${d.color};">${d.name}</div>
+    <div class="diagnosis-text">${d.text}</div>
+    <div class="personality-type">Personality Type: <strong>${d.type}</strong></div>
+    <div class="severity-meter"><div class="severity-fill" style="width: 0%; background: linear-gradient(90deg, #6bcb77, #ffd93d, #ff922b, #ff6b6b);"></div></div>
+    <span class="severity-label">Crisis Severity: ${pct}%</span>
+    <div>
+      <button class="share-btn" onclick="shareDiagnosis()">Share Diagnosis</button>
+      <button class="close-btn" onclick="closeDiagnosis()">Try Again</button>
+    </div>
+  `;
+
+  const overlay = document.getElementById('resultsOverlay');
+  overlay.style.display = 'block';
+
+  // animate severity bar
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.querySelector('.severity-fill').style.width = pct + '%';
+    });
+  });
+
+  // store for sharing
+  window._lastDiagnosis = { score, total: totalItems, name: d.name, type: d.type, text: d.text, pct };
+}
+
+function closeDiagnosis() {
+  document.getElementById('resultsOverlay').style.display = 'none';
+}
+
+function shareDiagnosis() {
+  const d = window._lastDiagnosis;
+  const shareText = `My Genre Identity Crisis Score: ${d.score}/${d.total} (${d.pct}% crisis severity)\n\nDiagnosis: ${d.name}\nPersonality Type: ${d.type}\n\n"${d.text}"\n\nTake the test: `;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Genre Identity Crisis Diagnosis', text: shareText }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Diagnosis copied to clipboard!');
+    }).catch(() => {
+      showToast('Could not copy -- try manually!');
+    });
+  } else {
+    showToast('Share not supported on this browser');
+  }
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+// Floating music notes background
+const notes = ['\u266A', '\u266B', '\u266C', '\u2669', '\u{1F3B5}', '\u{1F3B6}', '\u{1F3B8}', '\u{1F3B9}', '\u{1F3BB}', '\u{1F3A4}'];
+const bgContainer = document.getElementById('bgNotes');
+for (let i = 0; i < 30; i++) {
+  const span = document.createElement('span');
+  span.textContent = notes[Math.floor(Math.random() * notes.length)];
+  span.style.left = Math.random() * 100 + '%';
+  span.style.animationDuration = (15 + Math.random() * 20) + 's';
+  span.style.animationDelay = -(Math.random() * 20) + 's';
+  span.style.fontSize = (1.5 + Math.random() * 2) + 'rem';
+  bgContainer.appendChild(span);
+}
+</script>
+</body>
+</html>

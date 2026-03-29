@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apology Decoder - Lie Detector for Non-Apologies</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--red:#dc2626;--dark-red:#991b1b;--black:#0a0a0a;--dark:#1a1a1a;--card:#1f1f1f;--gray:#888;--green:#22c55e;--yellow:#eab308;--white:#f5f5f5;--needle:#ef4444}
+body{font-family:'Courier New',monospace;background:var(--black);color:var(--white);min-height:100vh;overflow-x:hidden}
+.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
+
+header{text-align:center;padding:30px 20px 10px;border-bottom:2px solid var(--red)}
+header h1{font-size:clamp(1.5rem,5vw,2.5rem);color:var(--red);text-transform:uppercase;letter-spacing:4px;text-shadow:0 0 20px rgba(220,38,38,.5)}
+header p{color:var(--gray);font-size:.85rem;margin-top:6px}
+
+.container{max-width:700px;margin:0 auto;padding:20px}
+
+.input-section{margin:24px 0}
+.input-section label{color:var(--red);font-size:.75rem;text-transform:uppercase;letter-spacing:2px;display:block;margin-bottom:8px}
+textarea{width:100%;height:100px;background:var(--dark);border:1px solid #333;color:var(--white);font-family:inherit;font-size:1rem;padding:14px;border-radius:6px;resize:vertical}
+textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 10px rgba(220,38,38,.3)}
+textarea::placeholder{color:#555}
+
+.btn-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+button{background:var(--red);color:#fff;border:none;padding:12px 24px;font-family:inherit;font-size:.9rem;cursor:pointer;text-transform:uppercase;letter-spacing:1px;border-radius:4px;transition:all .2s}
+button:hover{background:var(--dark-red);transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+.btn-secondary{background:transparent;border:1px solid #444;color:var(--gray)}
+.btn-secondary:hover{border-color:var(--red);color:var(--red);background:transparent}
+.btn-speak{background:#333;font-size:.75rem;padding:8px 14px}
+.btn-speak:hover{background:#444}
+
+.examples{margin:20px 0}
+.examples h3{color:var(--gray);font-size:.7rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px}
+.example-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{background:var(--dark);border:1px solid #333;color:var(--gray);padding:6px 12px;font-size:.75rem;border-radius:20px;cursor:pointer;transition:all .2s;font-family:inherit}
+.chip:hover{border-color:var(--red);color:var(--white)}
+
+.category-filter{display:flex;gap:8px;margin:16px 0;flex-wrap:wrap}
+.cat-btn{font-size:.7rem;padding:5px 12px;border-radius:12px;background:var(--dark);border:1px solid #333;color:var(--gray);cursor:pointer;font-family:inherit;text-transform:uppercase;letter-spacing:1px;transition:all .2s}
+.cat-btn:hover,.cat-btn.active{border-color:var(--red);color:var(--red);background:rgba(220,38,38,.1)}
+
+.result{display:none;margin-top:24px;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.meter-section{background:var(--card);border:1px solid #333;border-radius:8px;padding:20px;margin-bottom:16px;text-align:center}
+.meter-label{font-size:.7rem;text-transform:uppercase;letter-spacing:2px;color:var(--gray);margin-bottom:12px}
+.meter{position:relative;width:200px;height:110px;margin:0 auto;overflow:hidden}
+.meter-bg{width:200px;height:200px;border-radius:50%;border:8px solid #333;border-bottom-color:transparent;border-left-color:transparent;transform:rotate(225deg);position:absolute;top:0;left:0}
+.meter-fill{width:200px;height:200px;border-radius:50%;border:8px solid transparent;position:absolute;top:0;left:0;transform:rotate(225deg);transition:all 1s cubic-bezier(.4,0,.2,1)}
+.needle{width:3px;height:90px;background:var(--needle);position:absolute;bottom:10px;left:50%;transform-origin:bottom center;transform:translateX(-50%) rotate(-90deg);transition:transform 1s cubic-bezier(.4,0,.2,1);border-radius:2px;box-shadow:0 0 8px rgba(239,68,68,.6)}
+.needle::after{content:'';width:10px;height:10px;background:var(--needle);border-radius:50%;position:absolute;bottom:-5px;left:-3.5px}
+.score-value{font-size:2.5rem;font-weight:bold;margin-top:8px;transition:color .3s}
+.score-label{font-size:.8rem;color:var(--gray);margin-top:2px}
+
+.decode-card{background:var(--card);border:1px solid #333;border-radius:8px;padding:20px;margin-bottom:16px}
+.decode-card h3{color:var(--red);font-size:.8rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.decode-card h3 .icon{font-size:1.1rem}
+.original{background:var(--dark);padding:12px;border-radius:4px;border-left:3px solid var(--red);color:var(--gray);font-style:italic;margin-bottom:14px;font-size:.9rem}
+.translation{font-size:1.05rem;line-height:1.6;color:var(--white)}
+.translation strong{color:var(--red)}
+
+.tactics{list-style:none;margin-top:10px}
+.tactics li{padding:8px 0;border-bottom:1px solid #222;font-size:.85rem;display:flex;align-items:flex-start;gap:8px}
+.tactics li:last-child{border-bottom:none}
+.tactic-icon{color:var(--red);flex-shrink:0;margin-top:2px}
+
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;text-transform:uppercase;letter-spacing:1px;margin:2px}
+.tag-celebrity{background:rgba(168,85,247,.2);color:#a855f7;border:1px solid rgba(168,85,247,.3)}
+.tag-corporate{background:rgba(59,130,246,.2);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+.tag-partner{background:rgba(236,72,153,.2);color:#ec4899;border:1px solid rgba(236,72,153,.3)}
+.tag-politician{background:rgba(234,179,8,.2);color:#eab308;border:1px solid rgba(234,179,8,.3)}
+.tag-generic{background:rgba(107,114,128,.2);color:#9ca3af;border:1px solid rgba(107,114,128,.3)}
+
+.share-section{text-align:center;margin:16px 0}
+.share-section button{font-size:.75rem;padding:8px 16px;margin:4px}
+
+.history{margin-top:30px;border-top:1px solid #222;padding-top:20px}
+.history h3{color:var(--gray);font-size:.7rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:12px}
+.history-item{background:var(--dark);padding:10px 14px;border-radius:6px;margin-bottom:8px;cursor:pointer;transition:all .2s;font-size:.8rem;display:flex;justify-content:space-between;align-items:center}
+.history-item:hover{border-left:3px solid var(--red);padding-left:11px}
+.history-item .hs{color:var(--red);font-weight:bold;min-width:35px}
+
+footer{text-align:center;padding:30px;color:#333;font-size:.7rem;border-top:1px solid #111;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+<header>
+<h1>Apology Decoder</h1>
+<p>Lie detector for hollow non-apologies</p>
+</header>
+
+<div class="container">
+<div class="input-section">
+<label>Paste the "apology" here</label>
+<textarea id="input" placeholder='e.g. "I&#39;m sorry if you were offended..."'></textarea>
+<div class="btn-row">
+<button onclick="decode()">Decode</button>
+<button class="btn-secondary" onclick="randomExample()">Random Example</button>
+<button class="btn-secondary" onclick="clearAll()">Clear</button>
+</div>
+</div>
+
+<div class="category-filter">
+<span class="cat-btn active" onclick="filterCat('all',this)">All</span>
+<span class="cat-btn" onclick="filterCat('celebrity',this)">Celebrity</span>
+<span class="cat-btn" onclick="filterCat('corporate',this)">Corporate</span>
+<span class="cat-btn" onclick="filterCat('partner',this)">Partner</span>
+<span class="cat-btn" onclick="filterCat('politician',this)">Politician</span>
+</div>
+
+<div class="examples" id="examples">
+<h3>Try one of these</h3>
+<div class="example-chips" id="chipContainer"></div>
+</div>
+
+<div class="result" id="result">
+<div class="meter-section">
+<div class="meter-label">Sincerity Score</div>
+<div class="meter">
+<div class="meter-bg"></div>
+<div class="meter-fill" id="meterFill"></div>
+<div class="needle" id="needle"></div>
+</div>
+<div class="score-value" id="scoreValue">0%</div>
+<div class="score-label" id="scoreLabel">-</div>
+</div>
+
+<div class="decode-card">
+<h3><span class="icon">&#x1F50D;</span> Category &amp; Original</h3>
+<div id="categoryTag"></div>
+<div class="original" id="originalText"></div>
+</div>
+
+<div class="decode-card">
+<h3><span class="icon">&#x26A0;</span> What They Actually Mean</h3>
+<div class="translation" id="translationText"></div>
+</div>
+
+<div class="decode-card">
+<h3><span class="icon">&#x1F6A9;</span> Manipulation Tactics Detected</h3>
+<ul class="tactics" id="tacticsList"></ul>
+</div>
+
+<div class="share-section">
+<button class="btn-speak" onclick="speakResult()">&#x1F50A; Read Aloud</button>
+<button class="btn-speak" onclick="shareResult()">&#x1F4CB; Copy to Share</button>
+</div>
+</div>
+
+<div class="history" id="historySection" style="display:none">
+<h3>Decoded History</h3>
+<div id="historyList"></div>
+</div>
+</div>
+
+<footer>No real apologies were harmed in the making of this tool.</footer>
+
+<script>
+const patterns = [
+// CELEBRITY (15)
+{cat:"celebrity",input:"I'm sorry if anyone was offended by my comments.",translation:"I'm not sorry. I think you're all being dramatic. My words were fine -- your feelings are the problem.",tactics:["Conditional 'if' -- shifts blame to audience","Vague 'anyone' depersonalizes victims","No acknowledgment of what was actually said"],score:4},
+{cat:"celebrity",input:"I want to sincerely apologize to anyone who may have been hurt.",translation:"My publicist wrote this. 'May have' means I still doubt you were actually hurt, but my agent says I need to say something before the brand deals evaporate.",tactics:["'May have' casts doubt on whether harm occurred","'Sincerely' used as a shield word","No specifics about what they did"],score:7},
+{cat:"celebrity",input:"That's not who I am. I'm committed to doing better.",translation:"That IS who I am -- you just weren't supposed to see it. 'Doing better' is deliberately vague so I can never be held accountable.",tactics:["Identity deflection -- 'not who I am'","Promise without a plan","No mention of the actual offense"],score:8},
+{cat:"celebrity",input:"I was in a dark place at the time and I deeply regret my actions.",translation:"I'm using my personal struggles to make you feel guilty for being mad at me. Notice I still didn't say what I did.",tactics:["Sympathy hijack -- redirects to their suffering","'Dark place' as excuse blanket","Still avoids naming the behavior"],score:12},
+{cat:"celebrity",input:"The video/audio was taken out of context.",translation:"You saw exactly what happened. I just wish you hadn't. 'Context' is the magic word that means 'a version where I look okay.'",tactics:["Context deflection","Implies the audience misunderstood","Zero accountability"],score:3},
+{cat:"celebrity",input:"I have spoken to the person privately and we have resolved this.",translation:"I pressured them behind closed doors and they agreed to shut up. You don't get to know what was said because transparency would ruin me.",tactics:["Private resolution blocks accountability","Implies the victim is satisfied (unverified)","Shuts down further discussion"],score:6},
+{cat:"celebrity",input:"I'm taking time away to reflect and learn.",translation:"I'm laying low until you all forget. 'Reflect' means waiting, not changing. I'll be back in three months with a new project to promote.",tactics:["Retreat disguised as growth","No timeline or specifics","'Learn' without stating what they got wrong"],score:9},
+{cat:"celebrity",input:"My words were misconstrued.",translation:"My words were understood perfectly. That's the problem.",tactics:["Audience-blaming","Implies stupidity of the offended","Refuses to own the plain meaning of their words"],score:2},
+{cat:"celebrity",input:"I apologize unreservedly for any offense caused.",translation:"'Unreservedly' is doing a lot of heavy lifting because 'any offense caused' has about twelve reservations baked in. If you weren't offended, this apology technically doesn't apply to you.",tactics:["'Any offense caused' is a conditional","Big adverb, small accountability","Passive construction hides agency"],score:10},
+{cat:"celebrity",input:"I have learned so much from this experience.",translation:"I learned that there are consequences when cameras are rolling. The lesson isn't about empathy -- it's about getting caught.",tactics:["Reframes scandal as personal growth journey","No mention of impact on others","Treats consequences as curriculum"],score:11},
+{cat:"celebrity",input:"It was a joke that didn't land.",translation:"It landed exactly where I aimed it. The problem is you didn't laugh. Now I need to pretend it was supposed to be funny-ha-ha and not funny-cruel.",tactics:["Reframes cruelty as humor","Blames the audience for not laughing","'Didn't land' implies the joke was fine, delivery was off"],score:5},
+{cat:"celebrity",input:"I love my fans and would never intentionally hurt them.",translation:"Key word: 'intentionally.' I absolutely DID hurt them, but since I didn't set out to do it with a written plan, I'm off the hook. Right?",tactics:["'Intentionally' loophole","Pivots to declaring love","Treats intent as the only thing that matters"],score:6},
+{cat:"celebrity",input:"I need to do some soul-searching.",translation:"I need to wait for the news cycle to move on. 'Soul-searching' is the celebrity equivalent of hiding in the bathroom at a party you ruined.",tactics:["Vague spiritual language","No concrete actions","Delays accountability indefinitely"],score:8},
+{cat:"celebrity",input:"I'm only human and I make mistakes like everyone else.",translation:"I'm comparing my public meltdown to your average Tuesday blunder to make it seem equivalent. We are NOT the same.",tactics:["False equivalence with ordinary people","Minimizes the specific harm","'Only human' as universal shield"],score:7},
+{cat:"celebrity",input:"I stand by my art but I understand not everyone will appreciate it.",translation:"I'm not sorry at all. I'm just reframing my offensive behavior as 'art' that you peasants can't comprehend.",tactics:["Elevates offense to art","Frames critics as unsophisticated","Zero apology hidden in apology language"],score:2},
+
+// CORPORATE (14)
+{cat:"corporate",input:"We apologize for any inconvenience this may have caused.",translation:"We know exactly how much inconvenience we caused. We quantified it in a meeting. We just don't care enough to say it out loud.",tactics:["'Any' minimizes known damage","'May have' questions if damage exists","'Inconvenience' downgrades real harm"],score:3},
+{cat:"corporate",input:"We take this matter very seriously.",translation:"We take the PR crisis very seriously. The actual problem? That we've known about for months. The matter-taking-seriously is about stock price, not you.",tactics:["Seriousness theater","No action items follow","Stock phrase that means nothing"],score:5},
+{cat:"corporate",input:"We are committed to doing better and will review our processes.",translation:"We'll have a meeting about having a meeting. The process review will produce a report that no one reads. Nothing will change but the font on the apology letter.",tactics:["Commitment without commitment","'Review processes' is infinite delay","No timeline, no metrics, no accountability"],score:8},
+{cat:"corporate",input:"This does not reflect our values as a company.",translation:"This absolutely reflects our values. It's just not supposed to be visible. Our real values made this happen; our stated values are for the website.",tactics:["Values mismatch deflection","Implies a rogue incident vs. systemic issue","Two sets of values: real and decorative"],score:6},
+{cat:"corporate",input:"We have terminated the employee responsible.",translation:"We found a scapegoat. The system that enabled this behavior, the management that ignored warnings, the culture that rewarded it -- all still intact. But we fired someone, so we're good, right?",tactics:["Scapegoating an individual","Ignores systemic causes","Creates illusion of decisive action"],score:12},
+{cat:"corporate",input:"Your feedback is important to us.",translation:"Your feedback was forwarded to an inbox no one checks. But the sentence looks good in the press release.",tactics:["Empty validation","No evidence feedback changes anything","Stock customer service filler"],score:4},
+{cat:"corporate",input:"We are conducting a thorough internal investigation.",translation:"We are carefully determining exactly how much we can admit to without getting sued. The investigation will find that we did nothing technically illegal, which is not the same as nothing wrong.",tactics:["Investigation as delay tactic","'Thorough' is unverifiable","Internal = we investigate ourselves"],score:9},
+{cat:"corporate",input:"We strive to provide the best experience for all our customers.",translation:"We strive to provide the most profitable experience. You aren't a person to us, you're a Customer Lifetime Value metric. This sentence has nothing to do with what happened.",tactics:["Aspirational deflection","Depersonalizes the harmed party","Non-sequitur to the actual complaint"],score:5},
+{cat:"corporate",input:"Mistakes were made.",translation:"Classic. Mistakes were made -- by whom? By us? By gravity? By the concept of entropy? The passive voice is doing war-crime levels of heavy lifting here.",tactics:["Passive voice erases the actor","No one is responsible","Treats mistake as weather event"],score:2},
+{cat:"corporate",input:"We have updated our policies to prevent this from happening again.",translation:"We added a paragraph to a document no one reads. The next crisis will be slightly different, so this policy won't apply anyway. But we can point to it.",tactics:["Policy theater","Prevents identical crisis only (unlikely)","No evidence of cultural change"],score:14},
+{cat:"corporate",input:"We value our relationship with the community.",translation:"We value your money. The word 'community' makes it sound warm. The 'relationship' is transactional and always has been.",tactics:["Community-washing","Substitutes commerce for connection","Vague enough to mean nothing"],score:6},
+{cat:"corporate",input:"We apologize for falling short of our own standards.",translation:"Our own standards are whatever we say they are, and we just retroactively lowered them. Falling short of a standard you set yourself is just theater.",tactics:["Self-referential standard (meaningless)","No external accountability","Sounds humble, commits to nothing"],score:7},
+{cat:"corporate",input:"Lessons have been learned.",translation:"WHOSE lessons? Learned by WHOM? This is 'mistakes were made' wearing a graduation cap. Passive voice, no actor, no specifics.",tactics:["Passive voice twin of 'mistakes were made'","Implies growth without evidence","No one is identified as the learner"],score:3},
+{cat:"corporate",input:"We hear you and we are listening.",translation:"We hear you the way a wall hears you. Sound waves bounce off. Listening implies we'll do something. Hearing just means we didn't plug our ears. Yet.",tactics:["Hearing is not action","'Listening' without response plan","Performative receptiveness"],score:5},
+
+// PARTNER (12)
+{cat:"partner",input:"I'm sorry you feel that way.",translation:"I'm not sorry for what I did. I'm sorry you have feelings about it. Your emotions are the problem here, not my behavior.",tactics:["Classic blame-shift to the victim's emotions","Invalidates feelings","Implies the 'correct' feeling is no feeling"],score:2},
+{cat:"partner",input:"I'm sorry, but you have to understand...",translation:"I'm about to explain why I was right. Everything before 'but' is a lie. Everything after 'but' is the point.",tactics:["'But' negates the apology","Demands understanding instead of offering it","Converts apology into lecture"],score:3},
+{cat:"partner",input:"I already said I was sorry, what more do you want?",translation:"I said the magic word and it didn't make everything instantly better, which annoys me. My apology was a transaction and I want my receipt.",tactics:["Treats apology as one-time payment","Frustration at consequences persisting","Makes victim the unreasonable one"],score:4},
+{cat:"partner",input:"I wouldn't have done that if you hadn't...",translation:"It's your fault I behaved badly. My actions are your responsibility. You made me do it. Sound familiar? It should -- it's textbook.",tactics:["Direct blame reversal","Removes own agency","Classic DARVO pattern start"],score:1},
+{cat:"partner",input:"You know I didn't mean it like that.",translation:"I'm telling you what I meant, overriding your experience. Your interpretation is wrong. I am the authority on how my words affected you.",tactics:["Intent over impact","Tells victim how to interpret harm","Gaslighting via redefinition"],score:3},
+{cat:"partner",input:"I'm sorry, okay? Can we just move on?",translation:"This apology is a door I'm trying to slam shut. 'Move on' means 'stop holding me accountable.' I want the consequences to end NOW.",tactics:["Urgency to close the conversation","Apology as transaction","'Move on' pressures victim to suppress"],score:5},
+{cat:"partner",input:"I guess I'm just a terrible person then.",translation:"I'm making this about MY pain now. You came to me with a problem and now I'M the victim. Watch me crumble so you have to comfort ME.",tactics:["DARVO -- reversal to victim","Guilt weaponization","Forces partner into caretaker role"],score:2},
+{cat:"partner",input:"Fine, I'm sorry. Happy now?",translation:"This is a hostage apology. I'm saying the words with maximum contempt so you know I don't mean them. The sarcasm IS the message.",tactics:["Weaponized compliance","Contempt disguised as concession","Makes accepting the apology impossible"],score:1},
+{cat:"partner",input:"I'm sorry for whatever I did.",translation:"I didn't listen to a word you said. I have no idea what the problem is and I'm not curious enough to find out. This is a blank check apology -- worth nothing.",tactics:["'Whatever' shows zero engagement","No understanding of the harm","Laziest possible apology format"],score:3},
+{cat:"partner",input:"Nobody's perfect. I said I'm sorry.",translation:"I'm putting my behavior in the same category as all human imperfection to make it seem normal. Also, I said sorry once, and that should be legally binding.",tactics:["Minimization through universality","One-and-done apology mentality","False equivalence"],score:6},
+{cat:"partner",input:"I'm sorry, but that's just how I am.",translation:"I have zero intention of changing. In fact, I'm apologizing for my NATURE, which is like apologizing for the weather. You can't change weather. Convenient.",tactics:["Presents harmful behavior as identity","Preemptive refusal to change","'Take it or leave it' ultimatum hidden in apology"],score:2},
+{cat:"partner",input:"I've apologized a thousand times, nothing is ever enough for you.",translation:"I've SAID sorry a thousand times without changing ONCE, and I'm frustrated that words alone don't erase patterns. Also, you're too demanding for wanting... different behavior.",tactics:["Volume of apologies vs. quality","Frames victim as insatiable","Repetition without change is not apology"],score:4},
+
+// POLITICIAN (12)
+{cat:"politician",input:"I take full responsibility.",translation:"I take full responsibility and zero consequences. Watch me say 'full responsibility' and then change absolutely nothing about my position, my behavior, or my staffing. It's a magic spell.",tactics:["Responsibility without consequences","Performative ownership","Nothing follows the statement"],score:6},
+{cat:"politician",input:"I misspoke.",translation:"I said what I meant, then found out people were recording. 'Misspoke' implies a slip of the tongue when we both know it was a slip of the mask.",tactics:["Reframes deliberate statement as accident","Implies the WORDS were wrong, not the belief","Avoids addressing the substance"],score:4},
+{cat:"politician",input:"I'm sorry if my remarks were taken out of context.",translation:"The context is that I said something indefensible, fully in context, and now I need you to imagine a fantasy context where it's fine.",tactics:["Context deflection","Audience is blamed for misunderstanding","Demands benefit of the doubt they haven't earned"],score:3},
+{cat:"politician",input:"Both sides need to come together and heal.",translation:"I did the thing. But by invoking 'both sides,' I've made the victim equally responsible for resolution. Healing here means 'stop talking about what I did.'",tactics:["False equivalence","Victim shares burden","'Healing' weaponized as silencing"],score:5},
+{cat:"politician",input:"I have always fought for the people of this great nation.",translation:"I just pivoted from the specific thing I did wrong to my entire career highlight reel. Notice how the apology became a campaign speech? Yeah, that's on purpose.",tactics:["Pivot to legacy/record","Patriotism shield","Complete subject change"],score:4},
+{cat:"politician",input:"I regret that this has become a distraction from the important work.",translation:"The real tragedy isn't what I did -- it's that you won't shut up about it. My scandal is DISTRACTING from... me doing my job? Which I wasn't doing when I caused the scandal?",tactics:["'Distraction' frames accusers as problem","Self-importance over accountability","Regrets getting caught, not the act"],score:5},
+{cat:"politician",input:"My family and I ask for privacy during this difficult time.",translation:"I destroyed something and now I want silence to recover from the consequences. 'Family' is mentioned so you feel guilty for prying. The difficult time? I caused it.",tactics:["Privacy as accountability shield","Family used as human shield","'Difficult time' frames perpetrator as victim"],score:7},
+{cat:"politician",input:"I will let the investigation run its course.",translation:"I will hide behind process until everyone forgets. If the investigation clears me, I'll cite it forever. If it doesn't, I'll say it was politically motivated.",tactics:["Process as delay tactic","Prepared spin for any outcome","Avoids personal comment entirely"],score:8},
+{cat:"politician",input:"The American people deserve better, and I intend to deliver.",translation:"Vague promise + patriotic wrapper = accountability-free sentence. What will I deliver? By when? To whom? Don't ask. Just feel the patriotism.",tactics:["Aspirational pivot","No specifics whatsoever","Nationalism as apology substitute"],score:6},
+{cat:"politician",input:"I'm not going to dignify those allegations with a response.",translation:"I can't deny them because they're true, so I'll pretend responding is beneath me. 'Dignity' is an interesting word choice from someone who got caught.",tactics:["Refusal framed as principle","Implies accusations are unworthy","Classic non-denial denial"],score:2},
+{cat:"politician",input:"That was a different time. I've evolved since then.",translation:"I held those views until it became politically costly. 'Evolved' makes it sound like growth. Really it's just poll-tracking.",tactics:["Temporal distance as excuse","'Evolved' implies organic change vs. political calculation","No acknowledgment of who was harmed during 'that time'"],score:9},
+{cat:"politician",input:"I have faith that the truth will come out.",translation:"I have faith that MY version of the truth will be the one that sticks. If it doesn't, I'll say the system is broken. Either way, I win.",tactics:["'Truth' is left undefined","Sounds confident, commits to nothing","Pre-spins any outcome"],score:5},
+
+// GENERIC extras to hit 50+ (5)
+{cat:"generic",input:"I never intended to hurt anyone.",translation:"Intent is my alibi. I'm sorry about the bullet but I didn't mean to pull the trigger -- is that how physics works? Nope. But it's how non-apologies work.",tactics:["Intent over impact (classic)","'Anyone' depersonalizes specific victims","Frames harm as accident despite pattern"],score:4},
+{cat:"generic",input:"I'm sorry to those I've let down.",translation:"'Those I've let down' -- you can't even name them? This apology has an unspecified recipient, unspecified offense, and unspecified remedy. It's a MadLibs apology with all the blanks empty.",tactics:["Vague recipient","No named action","'Let down' is the softest possible framing"],score:7},
+{cat:"generic",input:"If I had it to do over again, I would do things differently.",translation:"Hypothetical regret costs nothing. 'Differently' how? You won't say, because being specific would require admitting what you actually did.",tactics:["Hypothetical framing avoids present accountability","'Differently' is maximally vague","No admission of what went wrong"],score:8},
+{cat:"generic",input:"I hope we can put this behind us.",translation:"'We' -- interesting pronoun choice. YOU need to put this behind YOU because I already have. My healing started the moment I decided to stop caring. Yours should too, according to me.",tactics:["Premature closure","Tells victim to move on","Speaker already over it, wants victim to catch up"],score:5},
+{cat:"generic",input:"I'm only sorry it came to this.",translation:"I'm sorry about the consequences, not the cause. 'It came to this' -- as if the situation walked itself here with no help from me.",tactics:["Apologizes for consequences only","Agency-free framing","Treats outcome as inevitable, not caused"],score:3}
+];
+
+let activeCategory = 'all';
+let history = JSON.parse(localStorage.getItem('apologyHistory') || '[]');
+
+function getFiltered() {
+  return activeCategory === 'all' ? patterns : patterns.filter(p => p.cat === activeCategory);
+}
+
+function renderChips() {
+  const filtered = getFiltered();
+  const container = document.getElementById('chipContainer');
+  const shuffled = [...filtered].sort(() => Math.random() - 0.5).slice(0, 6);
+  container.innerHTML = shuffled.map(p => `<span class="chip" onclick="useExample(this)">${p.input.slice(0, 50)}${p.input.length > 50 ? '...' : ''}</span>`).join('');
+}
+
+function filterCat(cat, el) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderChips();
+}
+
+function useExample(el) {
+  const text = el.textContent.replace('...', '');
+  const match = patterns.find(p => p.input.startsWith(text));
+  if (match) {
+    document.getElementById('input').value = match.input;
+    decode();
+  }
+}
+
+function randomExample() {
+  const filtered = getFiltered();
+  const p = filtered[Math.floor(Math.random() * filtered.length)];
+  document.getElementById('input').value = p.input;
+  decode();
+}
+
+function findBestMatch(input) {
+  const lower = input.toLowerCase().trim();
+  // Exact match first
+  let best = patterns.find(p => p.input.toLowerCase() === lower);
+  if (best) return best;
+
+  // Fuzzy: score by word overlap
+  let topScore = 0;
+  const inputWords = lower.split(/\s+/);
+  for (const p of patterns) {
+    const pWords = p.input.toLowerCase().split(/\s+/);
+    let overlap = 0;
+    for (const w of inputWords) {
+      if (w.length > 2 && pWords.some(pw => pw.includes(w) || w.includes(pw))) overlap++;
+    }
+    // Also check key phrases
+    const keyPhrases = ['sorry if','sorry but','not who i am','out of context','misspoke','full responsibility','move on','feel that way','both sides','just how i am','dark place','mistakes were made','lessons','inconvenience','taken out of context','misconstrued','never intended','let down','do over','behind us','came to this','only human','didn\'t mean','whatever i did','happy now','terrible person','already said','thousand times','dignify','evolved','investigation','privacy','distraction','great nation','different time','the people','do better','values','committed','feedback','terminated','hear you','strive','updated','policies','joke','fans','soul','reflect','art'];
+    for (const kp of keyPhrases) {
+      if (lower.includes(kp)) {
+        for (const pp of patterns) {
+          if (pp.input.toLowerCase().includes(kp)) {
+            const bonus = kp.length;
+            if (overlap + bonus > topScore) {
+              topScore = overlap + bonus;
+              best = pp;
+            }
+          }
+        }
+      }
+    }
+    if (overlap > topScore) {
+      topScore = overlap;
+      best = p;
+    }
+  }
+
+  // If very low match, generate a generic decode
+  if (topScore < 2) {
+    return generateGeneric(input);
+  }
+  return best;
+}
+
+function generateGeneric(input) {
+  const tactics = [];
+  const lower = input.toLowerCase();
+  let score = 5;
+
+  if (lower.includes('if ') || lower.includes('if you') || lower.includes('if anyone')) {
+    tactics.push({icon:'\u26A0', text:"Conditional 'if' -- they're not sure you were actually harmed"});
+    score -= 2;
+  }
+  if (lower.includes(' but ')) {
+    tactics.push({icon:'\u26A0', text:"'But' negates everything before it"});
+    score -= 2;
+  }
+  if (lower.includes('sorry you') || lower.includes('sorry that you')) {
+    tactics.push({icon:'\u26A0', text:"Apologizes for YOUR reaction, not THEIR action"});
+    score -= 3;
+  }
+  if (lower.includes('intention') || lower.includes('intentional') || lower.includes('meant to') || lower.includes('didn\'t mean')) {
+    tactics.push({icon:'\u26A0', text:"Hides behind intent -- impact doesn't care about intent"});
+    score -= 1;
+  }
+  if (lower.includes('mistake')) {
+    tactics.push({icon:'\u26A0', text:"'Mistake' minimizes deliberate choices"});
+    score -= 1;
+  }
+  if (!lower.includes('i ') && !lower.includes('i\'m') && !lower.includes('my ')) {
+    tactics.push({icon:'\u26A0', text:"No first-person ownership detected"});
+    score -= 2;
+  }
+  if (lower.includes('move on') || lower.includes('behind us') || lower.includes('heal')) {
+    tactics.push({icon:'\u26A0', text:"Rushing to closure before accountability"});
+    score -= 1;
+  }
+  if (lower.includes('context')) {
+    tactics.push({icon:'\u26A0', text:"'Context' defense -- implies YOU misunderstood"});
+    score -= 2;
+  }
+
+  if (tactics.length === 0) {
+    tactics.push({icon:'\u26A0', text:"Vague language obscures actual accountability"});
+    tactics.push({icon:'\u26A0', text:"No specific acknowledgment of harm caused"});
+  }
+
+  score = Math.max(1, Math.min(15, score));
+
+  // Guess category from keywords
+  let cat = 'generic';
+  if (lower.includes('fans') || lower.includes('art') || lower.includes('comedy') || lower.includes('joke')) cat = 'celebrity';
+  else if (lower.includes('customer') || lower.includes('user') || lower.includes('service') || lower.includes('company') || lower.includes('team')) cat = 'corporate';
+  else if (lower.includes('babe') || lower.includes('honey') || lower.includes('relationship') || lower.includes('love') || lower.includes('us ')) cat = 'partner';
+  else if (lower.includes('constituent') || lower.includes('nation') || lower.includes('country') || lower.includes('people') || lower.includes('american')) cat = 'politician';
+
+  return {
+    cat,
+    input,
+    translation: `Translation: This apology scores low on sincerity. It avoids naming the specific harm, doesn't take clear ownership, and focuses more on managing perception than making amends.`,
+    tactics: tactics.map(t => t.text),
+    score
+  };
+}
+
+function decode() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+
+  const match = findBestMatch(input);
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+
+  // Score (1-15, lower = less sincere)
+  const score = match.score;
+  const pct = Math.round((score / 20) * 100);
+  const deg = -90 + (pct / 100) * 180;
+
+  // Animate
+  setTimeout(() => {
+    document.getElementById('needle').style.transform = `translateX(-50%) rotate(${deg}deg)`;
+  }, 100);
+
+  const scoreEl = document.getElementById('scoreValue');
+  let current = 0;
+  const target = pct;
+  const step = () => {
+    current += Math.ceil((target - current) / 8) || 1;
+    if (current > target) current = target;
+    scoreEl.textContent = current + '%';
+    if (current < target) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+
+  scoreEl.style.color = pct < 20 ? '#ef4444' : pct < 40 ? '#f97316' : pct < 60 ? '#eab308' : '#22c55e';
+
+  const labels = ['PATHOLOGICAL LIAR','COMPLETELY HOLLOW','DEEPLY INSINCERE','BARELY TRYING','MEH','FLICKER OF REMORSE','ALMOST HUMAN','POSSIBLY GENUINE'];
+  document.getElementById('scoreLabel').textContent = labels[Math.min(Math.floor(pct / 13), labels.length - 1)];
+
+  // Category tag
+  const catColors = {celebrity:'tag-celebrity',corporate:'tag-corporate',partner:'tag-partner',politician:'tag-politician',generic:'tag-generic'};
+  document.getElementById('categoryTag').innerHTML = `<span class="tag ${catColors[match.cat]}">${match.cat}</span>`;
+
+  // Original
+  document.getElementById('originalText').textContent = `"${match.input}"`;
+
+  // Translation
+  document.getElementById('translationText').innerHTML = match.translation;
+
+  // Tactics
+  const tacticsList = document.getElementById('tacticsList');
+  tacticsList.innerHTML = match.tactics.map(t => `<li><span class="tactic-icon">\u26A0</span>${t}</li>`).join('');
+
+  // History
+  history.unshift({input: match.input, score: pct, cat: match.cat, time: Date.now()});
+  if (history.length > 20) history.pop();
+  localStorage.setItem('apologyHistory', JSON.stringify(history));
+  renderHistory();
+
+  resultEl.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+function speakResult() {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const translation = document.getElementById('translationText').textContent;
+  const score = document.getElementById('scoreValue').textContent;
+  const label = document.getElementById('scoreLabel').textContent;
+  const text = `Sincerity score: ${score}. Verdict: ${label}. Translation: ${translation}`;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 0.9;
+  utter.pitch = 0.8;
+  speechSynthesis.speak(utter);
+}
+
+function shareResult() {
+  const original = document.getElementById('originalText').textContent;
+  const translation = document.getElementById('translationText').textContent;
+  const score = document.getElementById('scoreValue').textContent;
+  const label = document.getElementById('scoreLabel').textContent;
+  const text = `APOLOGY DECODED\n\n${original}\n\nSincerity Score: ${score} (${label})\n\nTranslation: ${translation}\n\n-- decoded at apology-decoder`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = history.slice(0, 10).map(h => `<div class="history-item" onclick="document.getElementById('input').value='${h.input.replace(/'/g,"\\'")}';decode()"><span>${h.input.slice(0,45)}${h.input.length>45?'...':''}</span><span class="hs">${h.score}%</span></div>`).join('');
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('result').style.display = 'none';
+}
+
+// Init
+renderChips();
+renderHistory();
+</script>
+</body>
+</html>
