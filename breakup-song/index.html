@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakup Anthem Matcher</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0b1a;--card:#1a1630;--accent:#9b59b6;--accent2:#3498db;--glow:rgba(155,89,182,0.3);--text:#e8e0f0;--muted:#8878a0;--angry:#e74c3c;--sad:#3498db;--relieved:#2ecc71;--confused:#f39c12;--petty:#e91e63}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--d) ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:.2}50%{opacity:.8}}
+.container{max-width:640px;margin:0 auto;padding:20px;position:relative;z-index:1}
+h1{text-align:center;font-size:2.2em;margin:30px 0 5px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{text-align:center;color:var(--muted);font-size:.95em;margin-bottom:30px}
+.input-section{background:var(--card);border-radius:16px;padding:28px;border:1px solid rgba(155,89,182,0.2);box-shadow:0 0 30px var(--glow)}
+.input-section h2{font-size:1.1em;margin-bottom:15px;color:var(--accent)}
+.word-inputs{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.word-inputs input{flex:1;min-width:80px;padding:14px;background:rgba(255,255,255,0.06);border:2px solid rgba(155,89,182,0.3);border-radius:10px;color:var(--text);font-size:1.05em;text-align:center;transition:all .3s}
+.word-inputs input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 15px var(--glow)}
+.word-inputs input::placeholder{color:var(--muted);font-size:.85em}
+.btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:10px;color:#fff;font-size:1.1em;font-weight:600;cursor:pointer;transition:all .3s;letter-spacing:.5px}
+.btn:hover{transform:translateY(-2px);box-shadow:0 5px 20px var(--glow)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.result{display:none;margin-top:24px;animation:slideUp .6s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.mood-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:.85em;font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.mood-angry{background:rgba(231,76,60,0.2);color:var(--angry);border:1px solid var(--angry)}
+.mood-sad{background:rgba(52,152,219,0.2);color:var(--sad);border:1px solid var(--sad)}
+.mood-relieved{background:rgba(46,204,113,0.2);color:var(--relieved);border:1px solid var(--relieved)}
+.mood-confused{background:rgba(243,156,18,0.2);color:var(--confused);border:1px solid var(--confused)}
+.mood-petty{background:rgba(233,30,99,0.2);color:var(--petty);border:1px solid var(--petty)}
+.stage-box{background:rgba(155,89,182,0.1);border:1px solid rgba(155,89,182,0.25);border-radius:10px;padding:14px;margin:12px 0;text-align:center}
+.stage-label{font-size:.8em;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.stage-name{font-size:1.15em;font-weight:600;margin-top:4px;color:var(--accent)}
+.stage-advice{font-size:.85em;color:var(--muted);margin-top:6px;font-style:italic}
+.song-card{background:var(--card);border-radius:14px;padding:22px;margin-top:16px;border:1px solid rgba(155,89,182,0.2);position:relative;overflow:hidden}
+.song-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.song-card.angry::before{background:var(--angry)}
+.song-card.sad::before{background:var(--sad)}
+.song-card.relieved::before{background:var(--relieved)}
+.song-card.confused::before{background:var(--confused)}
+.song-card.petty::before{background:var(--petty)}
+.song-title{font-size:1.4em;font-weight:700;margin-bottom:2px}
+.song-artist{color:var(--muted);font-size:.95em;margin-bottom:14px}
+.song-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.meta-item{background:rgba(255,255,255,0.04);padding:10px;border-radius:8px;text-align:center}
+.meta-label{font-size:.7em;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.meta-value{font-size:1em;font-weight:600}
+.healing-bar{height:8px;background:rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;margin-top:4px}
+.healing-fill{height:100%;border-radius:4px;transition:width 1s ease}
+.why-section{margin-top:14px;padding:14px;background:rgba(155,89,182,0.08);border-radius:8px;border-left:3px solid var(--accent)}
+.why-label{font-size:.75em;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px}
+.why-text{font-size:.92em;line-height:1.5;color:var(--text)}
+.play-btn{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;padding:10px;background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);border-radius:8px;cursor:pointer;color:var(--accent);font-size:.9em;transition:all .3s}
+.play-btn:hover{background:rgba(155,89,182,0.25)}
+.play-btn.playing{background:rgba(155,89,182,0.3);color:#fff}
+.share-section{margin-top:20px;text-align:center}
+.share-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;background:rgba(155,89,182,0.15);border:1px solid rgba(155,89,182,0.3);border-radius:8px;cursor:pointer;color:var(--accent);font-size:.9em;transition:all .3s;margin:4px}
+.share-btn:hover{background:rgba(155,89,182,0.25)}
+.share-copied{color:var(--relieved) !important;border-color:var(--relieved) !important}
+.examples{margin-top:20px;text-align:center}
+.examples p{color:var(--muted);font-size:.8em;margin-bottom:8px}
+.example-chip{display:inline-block;padding:5px 12px;margin:3px;background:rgba(155,89,182,0.1);border:1px solid rgba(155,89,182,0.2);border-radius:15px;font-size:.8em;color:var(--muted);cursor:pointer;transition:all .3s}
+.example-chip:hover{background:rgba(155,89,182,0.2);color:var(--text)}
+.footer{text-align:center;margin:40px 0 20px;color:var(--muted);font-size:.8em}
+@media(max-width:480px){h1{font-size:1.7em}.word-inputs{flex-direction:column}.word-inputs input{min-width:100%}.song-meta{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <h1>Breakup Anthem Matcher</h1>
+  <p class="subtitle">Describe your breakup in 3 words. We'll find your healing anthem.</p>
+
+  <div class="input-section">
+    <h2>How did it feel?</h2>
+    <div class="word-inputs">
+      <input type="text" id="w1" placeholder="word 1" maxlength="20" autocomplete="off">
+      <input type="text" id="w2" placeholder="word 2" maxlength="20" autocomplete="off">
+      <input type="text" id="w3" placeholder="word 3" maxlength="20" autocomplete="off">
+    </div>
+    <button class="btn" id="matchBtn" onclick="findAnthem()">Find My Anthem</button>
+  </div>
+
+  <div class="examples">
+    <p>Try these:</p>
+    <span class="example-chip" onclick="fillExample('betrayed','angry','done')">betrayed angry done</span>
+    <span class="example-chip" onclick="fillExample('empty','lost','crying')">empty lost crying</span>
+    <span class="example-chip" onclick="fillExample('free','finally','over')">free finally over</span>
+    <span class="example-chip" onclick="fillExample('why','confused','hurt')">why confused hurt</span>
+    <span class="example-chip" onclick="fillExample('petty','revenge','blocked')">petty revenge blocked</span>
+  </div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+// Stars
+const starField = document.getElementById('stars');
+for(let i=0;i<60;i++){
+  const s=document.createElement('div');
+  s.className='star';
+  const size=Math.random()*2+1;
+  s.style.cssText=`width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${Math.random()*3+2}s;animation-delay:${Math.random()*3}s`;
+  starField.appendChild(s);
+}
+
+// Song database - 65 songs
+const songs = [
+  // ANGRY (13)
+  {title:"Since U Been Gone",artist:"Kelly Clarkson",mood:"angry",healing:9,position:"Standing in front of a mirror, pointing at yourself",why:"The ultimate 'I'm better off' anthem. That key change is basically a personality transplant.",genre:"Pop Rock"},
+  {title:"You Oughta Know",artist:"Alanis Morissette",mood:"angry",healing:8,position:"Driving with windows down, screaming",why:"Raw, unfiltered rage channeled into art. Every word is a dagger thrown with surgical precision.",genre:"Alt Rock"},
+  {title:"Irreplaceable",artist:"Beyonce",mood:"angry",healing:9,position:"Packing boxes, unbothered",why:"'To the left' became a universal language for 'collect your things and exit my life.'",genre:"R&B Pop"},
+  {title:"Fighter",artist:"Christina Aguilera",mood:"angry",healing:8,position:"Shadow boxing in your living room",why:"Transforms pain into power. You didn't just survive the breakup, it made you dangerous.",genre:"Pop"},
+  {title:"So What",artist:"P!nk",mood:"angry",healing:7,position:"Dancing on a table, preferably",why:"The energy of someone who just realized they're the main character and the ex was a background extra.",genre:"Pop Rock"},
+  {title:"We Are Never Getting Back Together",artist:"Taylor Swift",mood:"angry",healing:7,position:"Blocking their number, smiling",why:"Repetitive on purpose. You need to hear it enough times to actually believe it.",genre:"Pop"},
+  {title:"Survivor",artist:"Destiny's Child",mood:"angry",healing:9,position:"Power walking to absolutely nowhere",why:"A military-grade motivational speech disguised as a pop song. Your breakup was just basic training.",genre:"R&B Pop"},
+  {title:"I Will Survive",artist:"Gloria Gaynor",mood:"angry",healing:10,position:"Center of the dance floor, arms up",why:"The original breakup anthem. 45 years later and it still hits because survival is timeless.",genre:"Disco"},
+  {title:"Shout Out to My Ex",artist:"Little Mix",mood:"angry",healing:7,position:"Group chat with friends, volume up",why:"Because sometimes thanking them sarcastically is the most savage thing you can do.",genre:"Pop"},
+  {title:"Before He Cheats",artist:"Carrie Underwood",mood:"angry",healing:8,position:"Visualizing (not doing) property damage",why:"A revenge fantasy with a fiddle. It's catharsis without the criminal record.",genre:"Country"},
+  {title:"Cry Me a River",artist:"Justin Timberlake",mood:"angry",healing:7,position:"Slowly nodding in a dark room",why:"Cold. Calculated. The kind of anger that freezes instead of burns. Ice-cold vindication.",genre:"R&B Pop"},
+  {title:"IDGAF",artist:"Dua Lipa",mood:"angry",healing:8,position:"Getting ready to go out, looking amazing",why:"The moment indifference hits is when you've truly won. This song IS that moment.",genre:"Pop"},
+  {title:"Truth Hurts",artist:"Lizzo",mood:"angry",healing:9,position:"Full body hair flip energy",why:"DNA test confirmed: 100% that unbothered. A post-breakup rebirth anthem.",genre:"Pop Rap"},
+
+  // SAD (13)
+  {title:"Someone Like You",artist:"Adele",mood:"sad",healing:6,position:"Curled up on the couch, blanket fortress",why:"Permission to be devastated. Adele holds space for your grief like no therapist can.",genre:"Pop Ballad"},
+  {title:"All Too Well (10 Min)",artist:"Taylor Swift",mood:"sad",healing:7,position:"Lying on the floor, staring at the ceiling",why:"10 minutes of meticulous emotional archaeology. Every detail is a tiny beautiful wound.",genre:"Indie Folk"},
+  {title:"Nothing Compares 2 U",artist:"Sinead O'Connor",mood:"sad",healing:6,position:"Looking out a rainy window, tea in hand",why:"That single tear in the music video says everything words can't. Pure, distilled heartbreak.",genre:"Pop"},
+  {title:"Un-Break My Heart",artist:"Toni Braxton",mood:"sad",healing:5,position:"Hugging a pillow, no shame",why:"The most desperate plea in music history. When you're not ready for anger yet, this meets you where you are.",genre:"R&B Ballad"},
+  {title:"Back to December",artist:"Taylor Swift",mood:"sad",healing:6,position:"Writing a letter you'll never send",why:"Regret songs hit different because they're about mourning your own mistakes, not theirs.",genre:"Country Pop"},
+  {title:"When I Was Your Man",artist:"Bruno Mars",mood:"sad",healing:5,position:"Sitting at any available piano, even air piano",why:"Hindsight as heartbreak. Realizing what you should have done when it's too late to do it.",genre:"Piano Ballad"},
+  {title:"Skinny Love",artist:"Bon Iver",mood:"sad",healing:6,position:"Walking alone in nature, preferably cold weather",why:"Falsetto as a coping mechanism. The music itself sounds like it's barely holding together, just like you.",genre:"Indie Folk"},
+  {title:"The Night We Met",artist:"Lord Huron",mood:"sad",healing:5,position:"Looking at old photos (bad idea, do it anyway)",why:"Wanting to go back to the beginning, knowing you can't. Time travel grief.",genre:"Indie"},
+  {title:"Stay",artist:"Rihanna ft. Mikky Ekko",mood:"sad",healing:5,position:"Sitting in your car in a parking lot",why:"Vulnerability stripped bare. Sometimes you just need to admit you don't want them to leave.",genre:"Pop Ballad"},
+  {title:"Wish You Were Here",artist:"Pink Floyd",mood:"sad",healing:7,position:"Staring at the sky, questioning existence",why:"Absence as a physical sensation. The guitar intro alone can make a grown adult cry.",genre:"Rock"},
+  {title:"Liability",artist:"Lorde",mood:"sad",healing:6,position:"Walking home alone at 2am",why:"When you start wondering if YOU'RE the problem. A spiral set to piano.",genre:"Art Pop"},
+  {title:"Last Kiss",artist:"Pearl Jam",mood:"sad",healing:5,position:"Lying in bed, replaying the last conversation",why:"Eddie Vedder sounds like he's actually dying. The timestamps make it worse. 'Midnight... one sixteen...'",genre:"Rock Ballad"},
+  {title:"Exile",artist:"Taylor Swift ft. Bon Iver",mood:"sad",healing:6,position:"Two chairs facing away from each other",why:"Two perspectives of the same breakup. You'll feel seen by one side and gutted by the other.",genre:"Indie Folk"},
+
+  // RELIEVED (13)
+  {title:"Thank U Next",artist:"Ariana Grande",mood:"relieved",healing:9,position:"Shopping for yourself, treating yourself",why:"Gratitude as the ultimate power move. Every ex was just a lesson in the syllabus of you.",genre:"Pop"},
+  {title:"Good as Hell",artist:"Lizzo",mood:"relieved",healing:9,position:"Hair flip in the mirror, full body",why:"Self-care as rebellion. Checking on your own hair and nails IS the revolution.",genre:"Pop Soul"},
+  {title:"Gonna Get Over You",artist:"Sara Bareilles",mood:"relieved",healing:8,position:"Dancing while doing chores",why:"The moment you decide to get over it is the moment you start. This song is that decision.",genre:"Pop"},
+  {title:"New Rules",artist:"Dua Lipa",mood:"relieved",healing:8,position:"Writing actual rules on your hand",why:"A step-by-step breakup recovery program set to a beat. Rule 1: Don't pick up the phone.",genre:"Pop"},
+  {title:"Stronger",artist:"Kanye West",mood:"relieved",healing:8,position:"Walking into work like you own the building",why:"Whatever doesn't kill you makes you... need to listen to this on repeat for three days.",genre:"Hip Hop"},
+  {title:"Don't Start Now",artist:"Dua Lipa",mood:"relieved",healing:9,position:"Out with friends, phone on airplane mode",why:"The glow-up anthem. You've done the work, you're moving forward, and they want back in. No.",genre:"Disco Pop"},
+  {title:"Shake It Off",artist:"Taylor Swift",mood:"relieved",healing:7,position:"Literally shaking, any body part",why:"Sometimes the most sophisticated response to heartbreak is to just... not care. Revolutionary.",genre:"Pop"},
+  {title:"Walking on Sunshine",artist:"Katrina & The Waves",mood:"relieved",healing:8,position:"Actual sunlight, arms spread wide",why:"Pure serotonin in song form. No depth, no nuance, just uncut joy. Sometimes that's medicine.",genre:"Pop Rock"},
+  {title:"Respect",artist:"Aretha Franklin",mood:"relieved",healing:9,position:"Chin up, shoulders back, walking away",why:"The foundation of every breakup anthem that came after. R-E-S-P-E-C-T yourself first.",genre:"Soul"},
+  {title:"Grown Woman",artist:"Beyonce",mood:"relieved",healing:8,position:"Strutting. Just strutting.",why:"A declaration of independence with a beat. You answer to nobody now.",genre:"Pop"},
+  {title:"Best Thing I Never Had",artist:"Beyonce",mood:"relieved",healing:9,position:"Laughing, genuinely laughing",why:"Realizing the breakup was the universe protecting you. Dodged a bullet, caught a blessing.",genre:"R&B Pop"},
+  {title:"Roar",artist:"Katy Perry",mood:"relieved",healing:7,position:"Literal roaring encouraged",why:"From zero to champion. The musical equivalent of a motivational poster that actually works.",genre:"Pop"},
+  {title:"Level Up",artist:"Ciara",mood:"relieved",healing:8,position:"Any form of exercise, even aggressive walking",why:"Your breakup wasn't a setback, it was a setup. Time to ascend.",genre:"Pop R&B"},
+
+  // CONFUSED (13)
+  {title:"Somebody That I Used to Know",artist:"Gotye",mood:"confused",healing:6,position:"Staring at your phone, not texting",why:"The confusion of a stranger wearing the face of someone you loved. Uncanny valley of relationships.",genre:"Indie Pop"},
+  {title:"Complicated",artist:"Avril Lavigne",mood:"confused",healing:6,position:"Pacing around your room",why:"When they're a different person depending on who's watching. Confusion as a legitimate emotion.",genre:"Pop Rock"},
+  {title:"Happier",artist:"Marshmello ft. Bastille",mood:"confused",healing:5,position:"Scrolling their social media (stop it)",why:"Wanting them to be happy but also... not TOO happy? The moral grey zone of breakups.",genre:"EDM Pop"},
+  {title:"idontwannabeyouanymore",artist:"Billie Eilish",mood:"confused",healing:6,position:"Mirror staring session, identity crisis mode",why:"When the breakup makes you question not just the relationship but your entire self.",genre:"Art Pop"},
+  {title:"Decode",artist:"Paramore",mood:"confused",healing:6,position:"Writing in a journal, crossing things out",why:"Trying to reverse-engineer what went wrong. The analysis phase of grief.",genre:"Rock"},
+  {title:"How to Save a Life",artist:"The Fray",mood:"confused",healing:5,position:"Driving aimlessly at night",why:"Replaying the conversation, wondering where it went wrong. A forensic examination of failure.",genre:"Piano Rock"},
+  {title:"Breathe",artist:"Taylor Swift ft. Colbie Caillat",mood:"confused",healing:6,position:"Deep breathing exercises, literal ones",why:"When nobody's the villain and it still hurts. The cruelest kind of ending.",genre:"Country Pop"},
+  {title:"The One That Got Away",artist:"Katy Perry",mood:"confused",healing:5,position:"Looking at old photos in a different way",why:"Nostalgia weaponized. What-ifs are more dangerous than what-was.",genre:"Pop"},
+  {title:"Torn",artist:"Natalie Imbruglia",mood:"confused",healing:6,position:"Sitting on the floor, back against the wall",why:"Feeling nothing and everything at the same time. Emotional static.",genre:"Pop Rock"},
+  {title:"Maps",artist:"Maroon 5",mood:"confused",healing:5,position:"Looking at a map app, no destination",why:"Following someone who isn't leading you anywhere. GPS for the emotionally lost.",genre:"Pop"},
+  {title:"Is There Somebody Who Can Watch You",artist:"The 1975",mood:"confused",healing:5,position:"3am existential crisis position",why:"When love becomes worry becomes letting go becomes confusion. An emotional Rubik's cube.",genre:"Indie Pop"},
+  {title:"Let Her Go",artist:"Passenger",mood:"confused",healing:6,position:"Park bench, watching people walk by",why:"You only realize what you had when it's gone. The cruelest universal truth, set to guitar.",genre:"Folk Pop"},
+  {title:"Runaway",artist:"Aurora",mood:"confused",healing:7,position:"Standing in a doorway, undecided",why:"The urge to run from everything including your own feelings. Ethereal confusion.",genre:"Art Pop"},
+
+  // PETTY (13)
+  {title:"Sorry Not Sorry",artist:"Demi Lovato",mood:"petty",healing:8,position:"Posting your best selfie, no filter needed",why:"The art of the non-apology. Sorry for being amazing? Actually, no. Not sorry.",genre:"Pop"},
+  {title:"Look What You Made Me Do",artist:"Taylor Swift",mood:"petty",healing:7,position:"Villain origin story pose in the mirror",why:"When you decide to own the villain narrative. 'The old you is dead' is the pettiest rebirth.",genre:"Electropop"},
+  {title:"No Scrubs",artist:"TLC",mood:"petty",healing:8,position:"Driving past their place, not stopping",why:"Standards as a weapon. A scrub is someone who can't get love from you. Period.",genre:"R&B"},
+  {title:"Forget You",artist:"CeeLo Green",mood:"petty",healing:7,position:"Waving and smiling at absolutely no one",why:"The clean version is almost pettier than the explicit. That 'oo oo ooo' drips with disdain.",genre:"Soul Pop"},
+  {title:"You're So Vain",artist:"Carly Simon",mood:"petty",healing:8,position:"Writing about them, knowing they'll think it's about them",why:"The ultimate trap. If they think it's about them, they're vain. If they don't, they're oblivious. You win either way.",genre:"Soft Rock"},
+  {title:"Pray You Catch Me",artist:"Beyonce",mood:"petty",healing:6,position:"Knowing everything, saying nothing yet",why:"Quiet petty is the most dangerous petty. The calm before the Lemonade storm.",genre:"R&B"},
+  {title:"Bust Your Windows",artist:"Jazmine Sullivan",mood:"petty",healing:7,position:"Visualizing chaos, maintaining composure",why:"A destruction fantasy with a gospel choir. Cathartic property damage, zero actual property damage.",genre:"R&B"},
+  {title:"Picture to Burn",artist:"Taylor Swift",mood:"petty",healing:7,position:"Unfollowing, blocking, archiving",why:"Country petty is a specific flavor. It involves telling their friends things. It's effective.",genre:"Country"},
+  {title:"Smile",artist:"Lily Allen",mood:"petty",healing:7,position:"Smiling. Just smiling. Menacingly.",why:"Sweet-voiced devastation. The cheerier she sounds, the more devastating the lyrics. Weaponized politeness.",genre:"Pop"},
+  {title:"No Tears Left to Cry",artist:"Ariana Grande",mood:"petty",healing:8,position:"Full glam at the grocery store",why:"The ultimate flex: they hurt you so bad you're DONE crying. Ran out. Upgraded to thriving.",genre:"Pop"},
+  {title:"Bad Blood",artist:"Taylor Swift ft. Kendrick Lamar",mood:"petty",healing:7,position:"Assembling your squad, montage style",why:"When the breakup becomes a declaration of war and you're recruiting soldiers.",genre:"Pop"},
+  {title:"Gives You Hell",artist:"All-American Rejects",mood:"petty",healing:8,position:"Living well, the best revenge",why:"Hoping your happiness is their torture. Is it mature? No. Does it SLAP? Absolutely.",genre:"Pop Rock"},
+  {title:"Better in Time",artist:"Leona Lewis",mood:"petty",healing:7,position:"Upgrading everything in your life, starting with shampoo",why:"The petty promise that you're going to be fine and they're going to notice.",genre:"Pop R&B"}
+];
+
+// Mood keyword mappings
+const moodWords = {
+  angry: ['angry','furious','rage','hate','betrayed','cheated','liar','done','burn','destroy','scream','revenge','mad','livid','fuming','seething','wrath','resentment','bitter','hostile','enraged','irate','outraged','infuriated','disgusted','toxic','manipulated','used','abused','trash','garbage','worst','terrible','horrible','awful','vile','snake','backstabber','unforgivable','deceived','played','fool','stupid','idiot','pathetic','loser','worthless','despise','detest','abhor','fire','explode','break','smash','kill','dead','over','finished','blocked','deleted','erased','ghost','ghosted','fk','damn','hell','devil','monster','demon','beast','evil','wicked','cruel','heartless','cold','ruthless','savage','merciless','nasty','rotten','scum','jerk','punch'],
+  sad: ['sad','crying','tears','miss','empty','broken','lonely','lost','pain','hurt','heartbroken','devastated','crushed','shattered','numb','hollow','ache','grief','mourning','sorrow','melancholy','depressed','hopeless','despairing','inconsolable','wrecked','gutted','ruined','destroyed','weeping','sobbing','longing','yearning','pining','void','darkness','drowning','falling','sinking','dying','bleeding','wounded','scarred','bruised','tender','raw','vulnerable','fragile','weak','tired','exhausted','drained','withered','fading','gone','disappeared','vanished','invisible','forgotten','abandoned','alone','isolated','desolate','forlorn','wistful','nostalgic','remember','memories','regret','wish','shouldve','couldve'],
+  relieved: ['free','relief','finally','better','glad','happy','liberated','escaped','peace','calm','unburdened','light','breathe','alive','reborn','fresh','new','chapter','forward','onward','growth','stronger','wiser','healed','recovered','restored','renewed','empowered','independent','myself','self','worthy','deserving','enough','capable','rising','soaring','flying','winning','thriving','blooming','blossoming','sunshine','bright','clear','clarity','perspective','wisdom','lesson','learned','grateful','thankful','blessed','lucky','good','great','amazing','wonderful','fantastic','incredible','awesome','powerful','unstoppable','fearless','brave','bold','courageous','resilient','unbreakable','diamond','gold','queen','king','boss','upgrade','glow','shine','sparkle','radiant','beautiful','gorgeous','stunning','fierce','fabulous'],
+  confused: ['confused','why','what','how','lost','unsure','mixed','maybe','idk','uncertain','bewildered','perplexed','puzzled','baffled','mystified','stumped','conflicted','torn','divided','ambivalent','undecided','questioning','wondering','pondering','searching','seeking','drifting','floating','spinning','dizzy','disoriented','foggy','hazy','blur','strange','weird','odd','surreal','unreal','dreamlike','limbo','purgatory','between','neither','both','either','complicated','complex','messy','tangled','knotted','twisted','paradox','contradiction','irony','unexpected','surprising','shocking','sudden','abrupt','whiplash','huh','wait','but','still','yet','somehow','somewhere','sometime','someday','someplace'],
+  petty: ['petty','revenge','karma','blocked','unfollowed','upgraded','replaced','jealous','ex','stalking','flexing','glow','unbothered','savage','slay','queen','king','level','better','hotter','richer','smarter','funnier','cooler','prettier','thinner','fitter','taller','younger','newer','shinier','louder','prouder','bolder','meaner','colder','harder','faster','stronger','higher','winning','thriving','serving','slaying','eating','devouring','crushing','destroying','dominating','reigning','ruling','owning','boss','icon','legend','era','period','tea','shade','receipts','exposed','cancelled','deleted','unfriended','muted','archived','next','replaced','bounced','byebye','see ya','later','adios','ciao','toodles','peace','deuces','boy bye','girl bye','bye felicia']
+};
+
+const stages = {
+  angry: {name:"The Volcano", advice:"Let it erupt. Suppressing anger just delays the healing. Scream into this song."},
+  sad: {name:"The Deep Ocean", advice:"You're allowed to drown for a bit. The surface will still be there when you're ready."},
+  relieved: {name:"The Butterfly", advice:"You've broken out of the cocoon. Spread those wings -- the sky was always yours."},
+  confused: {name:"The Fog", advice:"You can't see clearly yet, and that's okay. Clarity comes after the storm, not during."},
+  petty: {name:"The Phoenix (Petty Edition)", advice:"Rise from the ashes, but make sure they see the glow. Self-improvement IS the best revenge."}
+};
+
+function detectMood(words) {
+  const scores = {angry:0, sad:0, relieved:0, confused:0, petty:0};
+  const lower = words.map(w => w.toLowerCase().trim());
+  for (const w of lower) {
+    for (const [mood, keywords] of Object.entries(moodWords)) {
+      if (keywords.includes(w)) scores[mood] += 3;
+      else {
+        for (const kw of keywords) {
+          if (w.includes(kw) || kw.includes(w)) { scores[mood] += 1; break; }
+        }
+      }
+    }
+  }
+  const max = Math.max(...Object.values(scores));
+  if (max === 0) {
+    const moods = ['angry','sad','relieved','confused','petty'];
+    return moods[Math.floor(Math.random() * moods.length)];
+  }
+  const top = Object.entries(scores).filter(([,v]) => v === max).map(([k]) => k);
+  return top[Math.floor(Math.random() * top.length)];
+}
+
+function pickSong(mood) {
+  const pool = songs.filter(s => s.mood === mood);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Web Audio melody hints per mood
+const melodies = {
+  angry: [{f:330,d:.12},{f:392,d:.12},{f:440,d:.15},{f:523,d:.2},{f:440,d:.1},{f:523,d:.25},{f:587,d:.3}],
+  sad: [{f:262,d:.4},{f:247,d:.4},{f:220,d:.5},{f:196,d:.6},{f:220,d:.5},{f:196,d:.7}],
+  relieved: [{f:330,d:.15},{f:392,d:.15},{f:494,d:.2},{f:587,d:.2},{f:659,d:.15},{f:784,d:.3},{f:659,d:.15},{f:784,d:.4}],
+  confused: [{f:330,d:.25},{f:349,d:.25},{f:330,d:.25},{f:294,d:.3},{f:330,d:.2},{f:370,d:.25},{f:330,d:.4}],
+  petty: [{f:392,d:.1},{f:392,d:.1},{f:440,d:.12},{f:494,d:.12},{f:523,d:.15},{f:494,d:.1},{f:523,d:.1},{f:587,d:.2},{f:659,d:.3}]
+};
+
+let audioCtx = null;
+let isPlaying = false;
+
+function playMelody(mood) {
+  if (isPlaying) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  isPlaying = true;
+  const notes = melodies[mood];
+  let t = audioCtx.currentTime + 0.05;
+  const gain = audioCtx.createGain();
+  gain.connect(audioCtx.destination);
+  gain.gain.setValueAtTime(0.15, t);
+
+  const waveforms = {angry:'sawtooth',sad:'sine',relieved:'triangle',confused:'sine',petty:'square'};
+
+  for (const n of notes) {
+    const osc = audioCtx.createOscillator();
+    const noteGain = audioCtx.createGain();
+    osc.type = waveforms[mood];
+    osc.frequency.setValueAtTime(n.f, t);
+    noteGain.gain.setValueAtTime(0.15, t);
+    noteGain.gain.exponentialRampToValueAtTime(0.001, t + n.d);
+    osc.connect(noteGain);
+    noteGain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + n.d + 0.05);
+    t += n.d;
+  }
+  setTimeout(() => { isPlaying = false; }, (t - audioCtx.currentTime) * 1000 + 100);
+}
+
+function fillExample(w1, w2, w3) {
+  document.getElementById('w1').value = w1;
+  document.getElementById('w2').value = w2;
+  document.getElementById('w3').value = w3;
+  findAnthem();
+}
+
+function findAnthem() {
+  const words = [
+    document.getElementById('w1').value.trim(),
+    document.getElementById('w2').value.trim(),
+    document.getElementById('w3').value.trim()
+  ].filter(Boolean);
+
+  if (words.length < 1) { alert('Enter at least one word!'); return; }
+
+  const mood = detectMood(words);
+  const song = pickSong(mood);
+  const stage = stages[mood];
+  const moodColors = {angry:'#e74c3c',sad:'#3498db',relieved:'#2ecc71',confused:'#f39c12',petty:'#e91e63'};
+  const moodEmoji = {angry:'\uD83D\uDD25',sad:'\uD83D\uDCA7',relieved:'\u2728',confused:'\uD83C\uDF00',petty:'\uD83D\uDC85'};
+
+  const resultEl = document.getElementById('result');
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = `
+    <div style="text-align:center">
+      <span class="mood-badge mood-${mood}">${moodEmoji[mood]} ${mood}</span>
+    </div>
+    <div class="stage-box">
+      <div class="stage-label">Your Breakup Stage</div>
+      <div class="stage-name">${stage.name}</div>
+      <div class="stage-advice">${stage.advice}</div>
+    </div>
+    <div class="song-card ${mood}">
+      <div class="song-title">${song.title}</div>
+      <div class="song-artist">${song.artist}</div>
+      <div class="song-meta">
+        <div class="meta-item">
+          <div class="meta-label">Healing Power</div>
+          <div class="meta-value">${song.healing}/10</div>
+          <div class="healing-bar"><div class="healing-fill" style="width:${song.healing*10}%;background:${moodColors[mood]}"></div></div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Genre</div>
+          <div class="meta-value">${song.genre}</div>
+        </div>
+      </div>
+      <div class="meta-item" style="margin-top:8px">
+        <div class="meta-label">Recommended Listening Position</div>
+        <div class="meta-value" style="font-size:.88em;font-weight:400;margin-top:4px">${song.position}</div>
+      </div>
+      <div class="why-section">
+        <div class="why-label">Why This Song</div>
+        <div class="why-text">${song.why}</div>
+      </div>
+      <div class="play-btn" onclick="this.classList.toggle('playing');playMelody('${mood}')">
+        <span>\u266B</span> Play Mood Melody
+      </div>
+    </div>
+    <div class="share-section">
+      <div class="share-btn" onclick="shareAnthem('${song.title}','${song.artist}','${mood}',this)">
+        \uD83D\uDCCB Copy & Share Your Anthem
+      </div>
+      <div class="share-btn" onclick="findAnthem()">
+        \uD83C\uDFB2 Try Another Match
+      </div>
+    </div>
+  `;
+
+  resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function shareAnthem(title, artist, mood, btn) {
+  const words = [
+    document.getElementById('w1').value.trim(),
+    document.getElementById('w2').value.trim(),
+    document.getElementById('w3').value.trim()
+  ].filter(Boolean).join(', ');
+  const text = `My breakup in 3 words: "${words}"\nMy healing anthem: ${title} by ${artist}\nMood: ${mood.toUpperCase()}\n\nFind yours: Breakup Anthem Matcher`;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('share-copied');
+    btn.innerHTML = '\u2713 Copied!';
+    setTimeout(() => {
+      btn.classList.remove('share-copied');
+      btn.innerHTML = '\uD83D\uDCCB Copy & Share Your Anthem';
+    }, 2000);
+  }).catch(() => {
+    prompt('Copy your anthem:', text);
+  });
+}
+
+// Enter key support
+document.querySelectorAll('.word-inputs input').forEach((input, i) => {
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (i < 2) document.querySelectorAll('.word-inputs input')[i+1].focus();
+      else findAnthem();
+    }
+  });
+});
+</script>
+</body>
+</html>

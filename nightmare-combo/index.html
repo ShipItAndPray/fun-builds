@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nightmare Combo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #c8c8c8;
+    font-family: 'Special Elite', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Fog overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(80,0,0,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  h1 {
+    font-family: 'Creepster', cursive;
+    text-align: center;
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    color: #ff2020;
+    text-shadow: 0 0 20px rgba(255,0,0,0.5), 0 0 60px rgba(255,0,0,0.2);
+    margin: 20px 0 5px;
+    letter-spacing: 3px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 30px;
+  }
+
+  .machine {
+    background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+    border: 2px solid #2a2a2a;
+    border-radius: 16px;
+    padding: 30px 20px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  .machine::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 30px; right: 30px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff2020, transparent);
+    opacity: 0.4;
+  }
+
+  .reels-container {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: stretch;
+    margin-bottom: 24px;
+  }
+
+  .reel-wrapper {
+    flex: 1;
+    max-width: 280px;
+  }
+
+  .reel-label {
+    text-align: center;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+    margin-bottom: 8px;
+  }
+
+  .reel {
+    background: #050505;
+    border: 1px solid #333;
+    border-radius: 10px;
+    height: 80px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.9);
+  }
+
+  .reel::before, .reel::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 20px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .reel::before { top: 0; background: linear-gradient(180deg, #050505, transparent); }
+  .reel::after { bottom: 0; background: linear-gradient(0deg, #050505, transparent); }
+
+  .reel-strip {
+    transition: transform 0.1s linear;
+    will-change: transform;
+  }
+
+  .reel-item {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    color: #e0e0e0;
+    text-align: center;
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+
+  .reel-item .emoji {
+    margin-right: 8px;
+    font-size: 1.4em;
+  }
+
+  .plus-sign {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Creepster', cursive;
+    font-size: 2rem;
+    color: #ff2020;
+    padding-top: 26px;
+    text-shadow: 0 0 10px rgba(255,0,0,0.5);
+  }
+
+  .spin-btn {
+    display: block;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    padding: 16px 0;
+    background: linear-gradient(180deg, #cc0000 0%, #8b0000 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Creepster', cursive;
+    font-size: 1.6rem;
+    letter-spacing: 4px;
+    cursor: pointer;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 20px rgba(200,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+    transition: all 0.15s;
+  }
+
+  .spin-btn:hover { background: linear-gradient(180deg, #dd1111 0%, #990000 100%); transform: translateY(-1px); }
+  .spin-btn:active { transform: translateY(1px); box-shadow: 0 2px 10px rgba(200,0,0,0.3); }
+  .spin-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .result-area {
+    margin-top: 28px;
+    min-height: 180px;
+  }
+
+  .scenario-card {
+    background: linear-gradient(180deg, #1c0000 0%, #0f0000 100%);
+    border: 1px solid #3a0000;
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+    animation: fadeInScenario 0.6s ease;
+    box-shadow: 0 0 30px rgba(150,0,0,0.15);
+  }
+
+  @keyframes fadeInScenario {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .scenario-text {
+    font-size: clamp(1.05rem, 3vw, 1.25rem);
+    line-height: 1.6;
+    color: #e8d0d0;
+    margin-bottom: 18px;
+    min-height: 60px;
+  }
+
+  .horror-rating {
+    margin: 16px 0;
+  }
+
+  .horror-rating .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+
+  .skulls {
+    font-size: 1.5rem;
+    letter-spacing: 4px;
+    min-height: 30px;
+  }
+
+  .skull-lit { opacity: 1; }
+  .skull-dim { opacity: 0.15; }
+
+  .rating-number {
+    font-family: 'Creepster', cursive;
+    font-size: 1.1rem;
+    color: #ff4444;
+    margin-top: 4px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid #333;
+    color: #999;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover { background: rgba(255,255,255,0.1); color: #ccc; border-color: #555; }
+
+  .counter-bar {
+    text-align: center;
+    margin-top: 30px;
+    padding: 14px;
+    background: rgba(255,0,0,0.04);
+    border: 1px solid #1a0000;
+    border-radius: 10px;
+  }
+
+  .counter-bar .counter-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #555;
+  }
+
+  .counter-bar .counter-value {
+    font-family: 'Creepster', cursive;
+    font-size: 2rem;
+    color: #ff2020;
+    text-shadow: 0 0 10px rgba(255,0,0,0.4);
+  }
+
+  .counter-bar .counter-btn {
+    display: inline-block;
+    margin-top: 6px;
+    background: none;
+    border: 1px solid #440000;
+    color: #883333;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .counter-bar .counter-btn:hover { border-color: #880000; color: #cc4444; }
+
+  .footer {
+    text-align: center;
+    margin-top: 30px;
+    font-size: 0.7rem;
+    color: #333;
+    padding-bottom: 30px;
+  }
+
+  /* Flicker animation for horror feel */
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.6; }
+    97% { opacity: 1; }
+    98% { opacity: 0.7; }
+  }
+
+  .scenario-card.flicker { animation: flicker 3s infinite, fadeInScenario 0.6s ease; }
+
+  /* Toast for share copy */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1a1a1a;
+    color: #ccc;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.85rem;
+    transition: transform 0.3s ease;
+    z-index: 99;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>NIGHTMARE COMBO</h1>
+  <p class="subtitle">Innocent things. Horrifying combinations.</p>
+
+  <div class="machine">
+    <div class="reels-container">
+      <div class="reel-wrapper">
+        <div class="reel-label">The Thing</div>
+        <div class="reel" id="reel1"><div class="reel-strip" id="strip1"></div></div>
+      </div>
+      <div class="plus-sign">+</div>
+      <div class="reel-wrapper">
+        <div class="reel-label">The Place</div>
+        <div class="reel" id="reel2"><div class="reel-strip" id="strip2"></div></div>
+      </div>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="spin()">S P I N</button>
+  </div>
+
+  <div class="result-area" id="resultArea"></div>
+
+  <div class="counter-bar">
+    <div class="counter-label">I'll Never Sleep Again</div>
+    <div class="counter-value" id="counterValue">0</div>
+    <button class="counter-btn" id="sleepBtn" onclick="neverSleepAgain()">Tap if you can't sleep</button>
+  </div>
+
+  <div class="footer">Sweet dreams.</div>
+</div>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+const NOUNS = [
+  ["Clown","🤡"],["Teddy Bear","🧸"],["Grandmother","👵"],["Dentist","🦷"],["Baby Monitor","📟"],
+  ["Porcelain Doll","🪆"],["Mime","🤫"],["Scarecrow","🌾"],["Music Box","🎵"],["Rocking Chair","🪑"],
+  ["Mannequin","🧍"],["Jack-in-the-Box","🎪"],["Grandfather Clock","🕰️"],["Puppet","🎭"],["Mirror","🪞"],
+  ["Wind-up Toy","🔧"],["Ballerina Figurine","💃"],["Ventriloquist Dummy","🗣️"],["Nutcracker","🫡"],["Snow Globe","🔮"],
+  ["Wedding Dress","👗"],["Rubber Duck","🦆"],["Music Teacher","🎹"],["Librarian","📚"],["Ice Cream Truck","🍦"],
+  ["Umbrella","☂️"],["Typewriter","⌨️"],["Rocking Horse","🐴"],["Garden Gnome","🧙"],["Wind Chime","🎐"],
+  ["Photo Album","📷"],["Ceiling Fan","💨"],["Staircase","🪜"],["Bathrobe","🧥"],["Tricycle","🚲"],
+  ["Cuckoo Clock","⏰"],["Sewing Machine","🧵"],["Piano","🎹"],["Cradle","🛏️"],["Telephone","☎️"],
+  ["Chandelier","✨"],["Mailman","📬"],["Crossing Guard","🛑"],["School Bus","🚌"],["Cotton Candy","🍬"],
+  ["Lullaby","🎶"],["Juice Box","🧃"],["Night Light","💡"],["Playground Swing","🎠"],["Carousel","🎪"],
+  ["Sock Monkey","🧦"],["Breakfast Cereal","🥣"],["Birthday Cake","🎂"],["Bubble Bath","🛁"],["Toothbrush","🪥"],
+  ["Elevator","🛗"],["Hallway","🚪"],["Vacuum Cleaner","🧹"],["Wall Clock","🕐"],["Coat Hanger","🪝"]
+];
+
+const PLACES = [
+  ["Birthday Party","🎈"],["Hospital","🏥"],["Basement","🪨"],["School","🏫"],["Forest","🌲"],
+  ["Parking Garage","🅿️"],["Abandoned Mall","🏬"],["Hotel Hallway","🏨"],["Subway Tunnel","🚇"],["Corn Maze","🌽"],
+  ["Church","⛪"],["Playground","🛝"],["Attic","🏚️"],["Swimming Pool","🏊"],["Laundromat","🧺"],
+  ["Library","📖"],["Elevator Shaft","🛗"],["Dentist Office","💉"],["Pet Cemetery","🪦"],["Carnival","🎡"],
+  ["Rest Stop Bathroom","🚻"],["Airport at Night","✈️"],["Empty Classroom","📝"],["Wax Museum","🕯️"],["Cabin","🏕️"],
+  ["Wine Cellar","🍷"],["Lighthouse","🗼"],["Abandoned Hospital","🩺"],["Toy Factory","🏭"],["Opera House","🎭"],
+  ["Train Station","🚂"],["Underground Bunker","🕳️"],["Retirement Home","🏘️"],["Zoo After Hours","🦁"],["Tunnel","🕳️"],
+  ["Warehouse","📦"],["Old Bookstore","📕"],["Funeral Home","⚰️"],["Bowling Alley","🎳"],["Rooftop","🏙️"],
+  ["Motel Room","🛏️"],["Abandoned Theme Park","🎢"],["Greenhouse","🌿"],["Clock Tower","🗼"],["Dollhouse","🏠"],
+  ["Ice Rink","⛸️"],["Empty Parking Lot","🌑"],["School Gymnasium","🏀"],["Server Room","💻"],["Crawl Space","🕸️"],
+  ["Antique Shop","🏺"],["Stairwell","🪜"],["Back Alley","🌙"],["Museum at Night","🖼️"],["Root Cellar","🫙"]
+];
+
+const TEMPLATES = [
+  (t,p) => `${t} at a ${p}. It's 3am. It's staring at you.`,
+  (t,p) => `You wake up in a ${p}. A ${t} is sitting at the foot of your bed. It wasn't there before.`,
+  (t,p) => `The ${t} in the ${p} just turned its head. There are no batteries.`,
+  (t,p) => `You're alone in a ${p}. The ${t} behind you just whispered your name.`,
+  (t,p) => `A ${t} is standing in the ${p}. Every time you blink, it's closer.`,
+  (t,p) => `The security camera in the ${p} shows a ${t} following you. You can't see it when you turn around.`,
+  (t,p) => `You find a ${t} in the ${p}. The note attached says "Don't let it see you breathe."`,
+  (t,p) => `The ${p} has been closed for 30 years. So why is there a fresh ${t} in the middle of the room?`,
+  (t,p) => `You hear a ${t} in the ${p}. The door is locked from the outside. You're supposed to be alone.`,
+  (t,p) => `A ${t} appears in every photo you've taken at the ${p}. You never saw it in person.`,
+  (t,p) => `The ${t} in the ${p} hasn't moved in hours. But it's now facing a different direction.`,
+  (t,p) => `You're in a ${p}. A ${t} falls from the ceiling. Then another. Then twelve more.`,
+  (t,p) => `The ${t} at the ${p} smiles. ${t}s can't smile.`,
+  (t,p) => `Someone left a ${t} at the ${p} with a tag: "It remembers you."`,
+  (t,p) => `The ${p} was demolished in 1987. Your phone just sent you a photo of a ${t} inside it. Taken today.`,
+  (t,p) => `You see a ${t} in the ${p}. It sees you back. It always has.`,
+  (t,p) => `The children at the ${p} won't stop drawing the same ${t}. None of them have ever seen one.`,
+  (t,p) => `There's a ${t} in the ${p}. It's humming a song only you should know.`,
+  (t,p) => `You locked the ${t} in the ${p}. The ${t} is now behind you.`,
+  (t,p) => `The ${t} at the ${p} waves at you every night at exactly 3:33am. You live across the street.`,
+  (t,p) => `The ${p} has 47 ${t}s. Yesterday there were 46. No one brought a new one.`,
+  (t,p) => `You left a ${t} at the ${p}. It was returned to your doorstep. You never told anyone where you live.`,
+  (t,p) => `The ${t} in the ${p} is crying. Real tears.`,
+  (t,p) => `A ${t} at the ${p}. It blinks once for yes. You didn't ask it anything.`,
+  (t,p) => `You can hear a ${t} from inside the walls of the ${p}. The building is solid concrete.`,
+  (t,p) => `The ${t} at the ${p} hasn't moved in years. The dust around it shows footprints. Tiny ones.`,
+  (t,p) => `You're told to never mention the ${t} at the ${p}. No one will explain why.`,
+  (t,p) => `The ${p} burned down last week. The only thing that survived: a ${t}, perfectly intact, still warm.`,
+  (t,p) => `A ${t} at the ${p} keeps appearing in your peripheral vision. When you look directly, it's gone.`,
+  (t,p) => `The ${t} in the ${p} was just a prop. Then why does the security footage show it walking at 2am?`,
+  (t,p) => `You buried the ${t} behind the ${p}. It's back on the shelf this morning.`,
+  (t,p) => `The ${t} at the ${p} is perfectly normal. Except everyone who touches it forgets the last hour.`,
+  (t,p) => `A ${t} at a ${p}. Normal, right? Except it's been following you home every night for a week.`,
+  (t,p) => `The ${p} has a room no one enters. Inside: a single ${t}, facing the door, waiting.`,
+  (t,p) => `You put the ${t} in the ${p} facing the wall. It's facing the window now. The window faces your house.`,
+  (t,p) => `The ${t} at the ${p} is smiling in old photos. In recent ones, it's not smiling anymore.`,
+  (t,p) => `Nobody works at the ${p} after dark. But the ${t} on the shelf rearranges itself every night.`,
+  (t,p) => `The ${t} in the ${p} made a sound. Like breathing. Slow, deliberate breathing.`,
+  (t,p) => `Your child drew a picture of the ${p}. In the drawing, the ${t} has your face.`,
+  (t,p) => `The ${t} at the ${p} is watching the door. Not the door to outside. The door to where you are.`,
+  (t,p) => `There's a ${t} at the ${p}. It aged. Its hair turned grey. It's not alive. It shouldn't age.`,
+  (t,p) => `You threw the ${t} away at the ${p}. The trash can is empty now. Check under your pillow.`,
+  (t,p) => `The ${t} in the ${p} only appears in mirrors. When you look directly at the spot: nothing.`,
+  (t,p) => `Someone recorded audio in the ${p}. Between the silence: a ${t}, whispering coordinates. They're yours.`,
+];
+
+let sleeplessCount = parseInt(localStorage.getItem('nightmareCombo_sleepless') || '0');
+let isSpinning = false;
+let audioCtx = null;
+
+document.getElementById('counterValue').textContent = sleeplessCount;
+
+// Initialize reels with random items
+function initReels() {
+  populateStrip('strip1', NOUNS);
+  populateStrip('strip2', PLACES);
+}
+
+function populateStrip(id, items) {
+  const strip = document.getElementById(id);
+  strip.innerHTML = '';
+  // Add enough items for scrolling effect (repeat the list)
+  const shuffled = [...items].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < shuffled.length; i++) {
+    const div = document.createElement('div');
+    div.className = 'reel-item';
+    div.innerHTML = `<span class="emoji">${shuffled[i][1]}</span>${shuffled[i][0]}`;
+    strip.appendChild(div);
+  }
+}
+
+function spin() {
+  if (isSpinning) return;
+  isSpinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('resultArea').innerHTML = '';
+
+  // Pick final results
+  const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+  const place = PLACES[Math.floor(Math.random() * PLACES.length)];
+
+  // Animate reels
+  animateReel('strip1', NOUNS, noun, 1800, () => {});
+  animateReel('strip2', PLACES, place, 2400, () => {
+    // Both done
+    setTimeout(() => {
+      playEerieSound();
+      showScenario(noun, place);
+      isSpinning = false;
+      document.getElementById('spinBtn').disabled = false;
+    }, 300);
+  });
+}
+
+function animateReel(stripId, items, finalItem, duration, onDone) {
+  const strip = document.getElementById(stripId);
+  const itemHeight = 80;
+  let startTime = null;
+  const totalCycles = Math.floor(duration / 80);
+  let currentIndex = 0;
+
+  // Rebuild strip with random order ending on final item
+  const shuffled = [...items].sort(() => Math.random() - 0.5);
+  // Remove finalItem from shuffled if present, then add it at the end
+  const filtered = shuffled.filter(i => i[0] !== finalItem[0]);
+  const sequence = [...filtered, finalItem];
+
+  strip.innerHTML = '';
+  for (const item of sequence) {
+    const div = document.createElement('div');
+    div.className = 'reel-item';
+    div.innerHTML = `<span class="emoji">${item[1]}</span>${item[0]}`;
+    strip.appendChild(div);
+  }
+
+  const totalItems = sequence.length;
+  const targetOffset = -(totalItems - 1) * itemHeight;
+
+  // Animate with easing
+  let step = 0;
+  const totalSteps = totalItems - 1;
+  const baseInterval = 40;
+
+  function tick() {
+    if (step >= totalSteps) {
+      strip.style.transform = `translateY(${targetOffset}px)`;
+      onDone();
+      return;
+    }
+    // Ease out: slow down at end
+    const progress = step / totalSteps;
+    const delay = baseInterval + (progress * progress * progress) * 300;
+    strip.style.transform = `translateY(${-(step + 1) * itemHeight}px)`;
+    step++;
+    setTimeout(tick, delay);
+  }
+
+  strip.style.transform = 'translateY(0)';
+  setTimeout(tick, 50);
+}
+
+function showScenario(noun, place) {
+  const template = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+  const scenario = template(noun[0], place[0]);
+  const rating = getHorrorRating(noun[0], place[0], scenario);
+
+  let skullsHtml = '';
+  for (let i = 1; i <= 10; i++) {
+    skullsHtml += `<span class="${i <= rating ? 'skull-lit' : 'skull-dim'}">💀</span>`;
+  }
+
+  document.getElementById('resultArea').innerHTML = `
+    <div class="scenario-card flicker">
+      <div class="scenario-text">${scenario}</div>
+      <div class="horror-rating">
+        <div class="label">Horror Rating</div>
+        <div class="skulls">${skullsHtml}</div>
+        <div class="rating-number">${rating}/10</div>
+      </div>
+      <div class="actions">
+        <button class="action-btn" onclick="shareScenario(\`${scenario.replace(/`/g,"'").replace(/\\/g,"\\\\")}\`)">Share Nightmare</button>
+        <button class="action-btn" onclick="neverSleepAgain()">I'll Never Sleep Again</button>
+      </div>
+    </div>
+  `;
+}
+
+function getHorrorRating(noun, place, scenario) {
+  // Hash-based pseudo-rating from combo
+  const scary_nouns = ['Clown','Porcelain Doll','Mannequin','Ventriloquist Dummy','Puppet','Baby Monitor','Scarecrow','Jack-in-the-Box'];
+  const scary_places = ['Basement','Abandoned Mall','Pet Cemetery','Abandoned Hospital','Crawl Space','Funeral Home','Abandoned Theme Park','Attic'];
+  let score = 5;
+  if (scary_nouns.includes(noun)) score += 2;
+  if (scary_places.includes(place)) score += 2;
+  if (scenario.includes('3am') || scenario.includes('3:33am') || scenario.includes('2am')) score += 1;
+  if (scenario.includes('whisper') || scenario.includes('breathing') || scenario.includes('crying')) score += 1;
+  if (scenario.includes('closer') || scenario.includes('following')) score += 1;
+  // Add some variance based on string hash
+  let hash = 0;
+  for (let i = 0; i < scenario.length; i++) hash = ((hash << 5) - hash + scenario.charCodeAt(i)) | 0;
+  score += (Math.abs(hash) % 3) - 1;
+  return Math.max(3, Math.min(10, score));
+}
+
+function shareScenario(text) {
+  const shareText = `${text}\n\n— Nightmare Combo 💀`;
+  if (navigator.share) {
+    navigator.share({ text: shareText }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Copied to clipboard');
+    }).catch(() => {});
+  }
+}
+
+function neverSleepAgain() {
+  sleeplessCount++;
+  localStorage.setItem('nightmareCombo_sleepless', sleeplessCount);
+  const el = document.getElementById('counterValue');
+  el.textContent = sleeplessCount;
+  el.style.transform = 'scale(1.3)';
+  setTimeout(() => el.style.transform = 'scale(1)', 200);
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function playEerieSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = audioCtx;
+
+    // Low drone
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(55, ctx.currentTime);
+    osc1.frequency.linearRampToValueAtTime(45, ctx.currentTime + 1.5);
+    gain1.gain.setValueAtTime(0, ctx.currentTime);
+    gain1.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.3);
+    gain1.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.8);
+    osc1.connect(gain1).connect(ctx.destination);
+    osc1.start(ctx.currentTime);
+    osc1.stop(ctx.currentTime + 2);
+
+    // Dissonant high tone
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(660, ctx.currentTime + 0.1);
+    osc2.frequency.linearRampToValueAtTime(440, ctx.currentTime + 1);
+    gain2.gain.setValueAtTime(0, ctx.currentTime);
+    gain2.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.15);
+    gain2.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.2);
+    osc2.connect(gain2).connect(ctx.destination);
+    osc2.start(ctx.currentTime + 0.1);
+    osc2.stop(ctx.currentTime + 1.5);
+
+    // Noise burst (like a whisper)
+    const bufferSize = ctx.sampleRate * 0.8;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * 0.5;
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = ctx.createGain();
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'bandpass';
+    noiseFilter.frequency.value = 800;
+    noiseFilter.Q.value = 2;
+    noiseGain.gain.setValueAtTime(0, ctx.currentTime);
+    noiseGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.05);
+    noiseGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+    noise.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+    noise.start(ctx.currentTime + 0.2);
+    noise.stop(ctx.currentTime + 1);
+  } catch(e) {}
+}
+
+initReels();
+</script>
+</body>
+</html>
