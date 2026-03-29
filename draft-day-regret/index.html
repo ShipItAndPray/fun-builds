@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Day Regret Calculator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a1628;
+    --card: #111d33;
+    --accent: #00e676;
+    --red: #ff1744;
+    --gold: #ffd600;
+    --orange: #ff9100;
+    --blue: #448aff;
+    --text: #e0e6ed;
+    --muted: #6b7d96;
+    --border: #1e3050;
+    --row-alt: #0d1f38;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  .ticker {
+    background: linear-gradient(90deg, var(--red), #b71c1c);
+    color: #fff;
+    padding: 8px 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: scroll 25s linear infinite;
+  }
+  @keyframes scroll {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+
+  header {
+    text-align: center;
+    padding: 32px 16px 16px;
+    background: linear-gradient(180deg, #0d1f38 0%, var(--bg) 100%);
+    border-bottom: 3px solid var(--accent);
+  }
+  header h1 {
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--red), var(--orange), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  header p {
+    color: var(--muted);
+    margin-top: 6px;
+    font-size: 14px;
+    font-style: italic;
+  }
+
+  .scoreboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stat-card .value {
+    font-size: clamp(22px, 5vw, 36px);
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card.damage .value { color: var(--red); }
+  .stat-card.regret .value { color: var(--orange); }
+  .stat-card.picks .value { color: var(--blue); }
+  .stat-card.worst .value { color: var(--gold); font-size: clamp(14px, 3vw, 20px); }
+
+  .worst-crown {
+    text-align: center;
+    padding: 12px;
+    display: none;
+  }
+  .worst-crown.active { display: block; }
+  .worst-crown .crown-icon { font-size: 40px; }
+  .worst-crown .crown-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .worst-crown .crown-reason {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  .input-area {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  .input-row input, .input-row select {
+    background: var(--card);
+    border: 2px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .input-row input:focus, .input-row select:focus {
+    border-color: var(--accent);
+  }
+  .input-row input { flex: 1; }
+  .input-row select { width: 110px; }
+  .input-row button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    transition: transform .1s, background .2s;
+  }
+  .input-row button:hover { background: #69f0ae; }
+  .input-row button:active { transform: scale(.96); }
+
+  .draft-board {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+  .draft-board h2 {
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  .pick-row {
+    display: grid;
+    grid-template-columns: 36px 1fr 90px 1fr 90px 36px;
+    gap: 8px;
+    align-items: center;
+    padding: 12px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    animation: slideIn .3s ease-out;
+    font-size: 14px;
+  }
+  .pick-row:nth-child(odd) { background: var(--row-alt); }
+  .pick-row:nth-child(even) { background: var(--card); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .pick-round {
+    background: var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .pick-name {
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: .5px;
+  }
+  .pick-outcome {
+    font-size: 13px;
+    line-height: 1.3;
+  }
+  .pick-damage {
+    font-weight: 800;
+    text-align: right;
+  }
+  .pick-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color .2s;
+  }
+  .pick-delete:hover { color: var(--red); }
+
+  .severity-low { color: #81c784; }
+  .severity-med { color: var(--orange); }
+  .severity-high { color: var(--red); }
+  .severity-brutal { color: #ff1744; text-shadow: 0 0 8px rgba(255,23,68,.5); }
+
+  .actions {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .actions button {
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 16px;
+    border: 2px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: border-color .2s, background .2s;
+  }
+  .actions button:hover {
+    border-color: var(--accent);
+    background: #1a2d4a;
+  }
+  .actions .share-btn { border-color: var(--blue); color: var(--blue); }
+  .actions .nuke-btn { border-color: var(--red); color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--card);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform .3s ease;
+    z-index: 100;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  footer {
+    text-align: center;
+    padding: 30px 16px;
+    color: var(--muted);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  @media (max-width: 600px) {
+    .input-row { flex-wrap: wrap; }
+    .input-row input { min-width: 0; }
+    .input-row select { flex: 1; }
+    .input-row button { width: 100%; }
+    .pick-row {
+      grid-template-columns: 32px 1fr 70px;
+      font-size: 13px;
+    }
+    .pick-outcome, .pick-damage { grid-column: 2 / 3; }
+    .pick-delete { grid-column: 3; grid-row: 1; justify-self: end; }
+    .pick-damage { grid-column: 3; }
+    .scoreboard { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">
+    BREAKING: YOUR FANTASY DRAFT WAS A DISASTER ... LEAGUE MATES STILL LAUGHING ... EMOTIONAL DAMAGE MOUNTING ... HINDSIGHT IS 20/20 BUT YOUR PICKS WERE BLIND ... WHY DID YOU REACH IN ROUND 3 ... BREAKING: YOUR FANTASY DRAFT WAS A DISASTER ... LEAGUE MATES STILL LAUGHING ...
+  </div>
+</div>
+
+<header>
+  <h1>Draft Day Regret</h1>
+  <p>Quantifying the emotional wreckage of your fantasy picks since never</p>
+</header>
+
+<div class="scoreboard">
+  <div class="stat-card damage">
+    <div class="label">Total Emotional Damage</div>
+    <div class="value" id="totalDamage">$0</div>
+  </div>
+  <div class="stat-card regret">
+    <div class="label">Regret Score</div>
+    <div class="value" id="regretScore">0</div>
+  </div>
+  <div class="stat-card picks">
+    <div class="label">Picks Made</div>
+    <div class="value" id="pickCount">0</div>
+  </div>
+  <div class="stat-card worst">
+    <div class="label">Worst Pick</div>
+    <div class="value" id="worstPick">---</div>
+  </div>
+</div>
+
+<div class="worst-crown" id="crownArea">
+  <div class="crown-icon">&#128081;</div>
+  <div class="crown-name" id="crownName"></div>
+  <div class="crown-reason" id="crownReason"></div>
+</div>
+
+<div class="input-area">
+  <div class="input-row">
+    <input type="text" id="playerName" placeholder="Player name..." autocomplete="off" />
+    <select id="draftRound">
+      <option value="1">Round 1</option>
+      <option value="2">Round 2</option>
+      <option value="3">Round 3</option>
+      <option value="4">Round 4</option>
+      <option value="5">Round 5</option>
+      <option value="6">Round 6</option>
+      <option value="7">Round 7</option>
+      <option value="8">Round 8</option>
+      <option value="9">Round 9</option>
+      <option value="10">Round 10</option>
+      <option value="11">Round 11</option>
+      <option value="12">Round 12</option>
+      <option value="13">Round 13</option>
+      <option value="14">Round 14</option>
+      <option value="15">Round 15</option>
+      <option value="16">Round 16</option>
+    </select>
+    <button id="addBtn">Draft</button>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="share-btn" onclick="shareRegret()">Share Regret</button>
+  <button onclick="randomFill()">Auto-Draft 5</button>
+  <button class="nuke-btn" onclick="nukeAll()">Rage Quit</button>
+</div>
+
+<div class="draft-board">
+  <h2>Your Draft Board of Shame</h2>
+  <div id="board"></div>
+  <div class="empty-state" id="emptyState">
+    <div class="icon">&#9917;</div>
+    <p>No picks yet. Add players above and face the consequences.</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  Draft Day Regret Calculator &mdash; No real money was harmed. Only feelings.
+</footer>
+
+<script>
+const OUTCOMES = [
+  // Injuries — 10
+  { text: "Injured Week 2. Out for season.", regret: 85, damage: 4200, severity: "brutal" },
+  { text: "Tore ACL in preseason. You watched it live.", regret: 95, damage: 6800, severity: "brutal" },
+  { text: "Hamstring injury Week 4. Came back Week 12. Scored 2 pts.", regret: 70, damage: 3100, severity: "high" },
+  { text: "Concussion protocol. Missed 6 weeks.", regret: 55, damage: 2400, severity: "high" },
+  { text: "Broke hand punching a wall after a loss.", regret: 80, damage: 3900, severity: "brutal" },
+  { text: "Sprained ankle celebrating a TD. Ironic.", regret: 60, damage: 2700, severity: "high" },
+  { text: "Back spasms. Listed as questionable every single week.", regret: 50, damage: 1800, severity: "med" },
+  { text: "Injured in a charity basketball game. Of course.", regret: 75, damage: 3500, severity: "brutal" },
+  { text: "Turf toe. Sounds minor. Missed 8 weeks.", regret: 65, damage: 2900, severity: "high" },
+  { text: "Pulled a muscle getting off the team bus.", regret: 88, damage: 4500, severity: "brutal" },
+
+  // Bad performance — 12
+  { text: "Averaged 3.2 fantasy points per game.", regret: 60, damage: 2200, severity: "high" },
+  { text: "Had more fumbles than touchdowns.", regret: 72, damage: 3000, severity: "high" },
+  { text: "Scored negative points in your championship week.", regret: 90, damage: 5500, severity: "brutal" },
+  { text: "Put up a donut in 3 separate weeks.", regret: 65, damage: 2600, severity: "high" },
+  { text: "Outscored by your kicker. Every. Single. Week.", regret: 78, damage: 3400, severity: "brutal" },
+  { text: "Caught 11 passes all season. Total.", regret: 55, damage: 2100, severity: "med" },
+  { text: "Had fewer yards than your defense.", regret: 68, damage: 2800, severity: "high" },
+  { text: "Benched by Week 6 for a rookie.", regret: 70, damage: 3200, severity: "high" },
+  { text: "Stat line: 4 carries, 9 yards, 1 lost fumble.", regret: 62, damage: 2400, severity: "high" },
+  { text: "Fantasy relevant for exactly 2 weeks.", regret: 58, damage: 2000, severity: "med" },
+  { text: "Vulture TD merchant. Scored once. In Week 17.", regret: 45, damage: 1600, severity: "med" },
+  { text: "Had a breakout game... the week they were on your bench.", regret: 82, damage: 3800, severity: "brutal" },
+
+  // Missed opportunities — 10
+  { text: "You could have had the league MVP. He went next pick.", regret: 98, damage: 8500, severity: "brutal" },
+  { text: "The guy picked after yours scored 40 pts Week 1.", regret: 88, damage: 5200, severity: "brutal" },
+  { text: "Passed on a RB1 for a 'sleeper' who slept all season.", regret: 80, damage: 4100, severity: "brutal" },
+  { text: "Your league mate got a league winner 2 picks later.", regret: 75, damage: 3600, severity: "high" },
+  { text: "Reached 3 rounds early. He was there 3 rounds later.", regret: 70, damage: 3000, severity: "high" },
+  { text: "Autodraft would have picked better. Literally.", regret: 85, damage: 4800, severity: "brutal" },
+  { text: "Drafted based on a podcast. That podcaster got fired.", regret: 72, damage: 3200, severity: "high" },
+  { text: "Your 'handcuff' outperformed your starter. On someone else's team.", regret: 78, damage: 3500, severity: "brutal" },
+  { text: "Took a backup thinking he'd take the job. He got cut.", regret: 65, damage: 2600, severity: "high" },
+  { text: "Drafted for 'upside.' Downside is all you got.", regret: 60, damage: 2300, severity: "high" },
+
+  // Holdouts / Suspensions / Off-field — 6
+  { text: "Suspended 6 games. You drafted him Round 2.", regret: 88, damage: 5000, severity: "brutal" },
+  { text: "Held out all training camp. Never got in shape.", regret: 55, damage: 2100, severity: "med" },
+  { text: "Requested a trade 3 days after your draft.", regret: 80, damage: 3800, severity: "brutal" },
+  { text: "Retired mid-season to become an influencer.", regret: 92, damage: 6200, severity: "brutal" },
+  { text: "Showed up to camp 30 lbs overweight.", regret: 58, damage: 2200, severity: "med" },
+  { text: "Got into a Twitter beef with his QB. Targets: 0.", regret: 74, damage: 3100, severity: "high" },
+
+  // Scheme / situation changes — 6
+  { text: "New coach installed a run-first offense. He's a WR.", regret: 62, damage: 2500, severity: "high" },
+  { text: "Moved to a committee backfield. Got 8 carries a game.", regret: 50, damage: 1900, severity: "med" },
+  { text: "Team drafted his replacement. In the first round.", regret: 68, damage: 2800, severity: "high" },
+  { text: "Offense ranked 32nd. Your guy was the best player on the worst team.", regret: 55, damage: 2100, severity: "med" },
+  { text: "Traded to a team where he's the WR4.", regret: 64, damage: 2600, severity: "high" },
+  { text: "Quarterback got hurt Week 1. Backup can't throw past 10 yards.", regret: 60, damage: 2400, severity: "high" },
+
+  // Emotional gut punches — 8
+  { text: "Your ex drafted him in the next round. They won the league.", regret: 99, damage: 9999, severity: "brutal" },
+  { text: "Your coworker auto-drafted and beat you by 40.", regret: 85, damage: 4600, severity: "brutal" },
+  { text: "You told everyone 'this is my guy.' He scored 12 pts total.", regret: 90, damage: 5800, severity: "brutal" },
+  { text: "Named your team after him. Had to rename it Week 5.", regret: 76, damage: 3400, severity: "high" },
+  { text: "Wore his jersey to the draft party. Pain.", regret: 82, damage: 4000, severity: "brutal" },
+  { text: "He got dropped in every league. Except yours.", regret: 70, damage: 2900, severity: "high" },
+  { text: "Your gut said no. Your heart said yes. Your wallet said goodbye.", regret: 66, damage: 2700, severity: "high" },
+  { text: "League group chat still clowns you for this pick.", regret: 78, damage: 3600, severity: "brutal" }
+];
+
+const BETTER_PLAYERS = [
+  "Josh Allen","Lamar Jackson","Patrick Mahomes","CeeDee Lamb","Ja'Marr Chase",
+  "Tyreek Hill","Bijan Robinson","Breece Hall","Amon-Ra St. Brown","Travis Kelce",
+  "Saquon Barkley","De'Von Achane","Puka Nacua","Jahmyr Gibbs","Derrick Henry",
+  "Davante Adams","Justin Jefferson","A.J. Brown","Sam LaPorta","Kyren Williams"
+];
+
+const RANDOM_PLAYERS = [
+  "Chad Hamhands","Brock Benchwarmer","DeAndre Decoy","Miles Misfire","Jaylen Jinxed",
+  "Antonio Bust","Rashad Reached","Davonte Droppable","Kelvin Cutworthy","Marcus Mediocre",
+  "Trevor Turnover","Darius Disappointment","Kwame Questionable","Elijah Eliminated",
+  "Jamal Justno","Terrance Terrible","Corey Crickets","Brandon Busted","Xavier Zero","Lamar Letdown"
+];
+
+let picks = [];
+
+const board = document.getElementById('board');
+const emptyState = document.getElementById('emptyState');
+const nameInput = document.getElementById('playerName');
+const roundSelect = document.getElementById('draftRound');
+
+document.getElementById('addBtn').addEventListener('click', addPick);
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') addPick(); });
+
+function addPick() {
+  const name = nameInput.value.trim();
+  if (!name) { nameInput.focus(); return; }
+  const round = parseInt(roundSelect.value);
+
+  const outcome = OUTCOMES[Math.floor(Math.random() * OUTCOMES.length)];
+
+  // Enhance "could have had" outcomes with a real name
+  let outcomeText = outcome.text;
+  if (outcomeText.includes("league MVP") || outcomeText.includes("picked after") || outcomeText.includes("league winner")) {
+    const better = BETTER_PLAYERS[Math.floor(Math.random() * BETTER_PLAYERS.length)];
+    outcomeText += ` (${better} was right there.)`;
+  }
+
+  // Round multiplier: earlier rounds hurt more
+  const roundMultiplier = Math.max(1, 2.5 - (round * 0.12));
+  const adjustedRegret = Math.min(99, Math.round(outcome.regret * roundMultiplier));
+  const adjustedDamage = Math.round(outcome.damage * roundMultiplier);
+
+  const pick = {
+    id: Date.now() + Math.random(),
+    name,
+    round,
+    outcome: outcomeText,
+    regret: adjustedRegret,
+    damage: adjustedDamage,
+    severity: outcome.severity
+  };
+
+  picks.push(pick);
+  nameInput.value = '';
+  nameInput.focus();
+  roundSelect.value = Math.min(16, round + 1);
+  render();
+  showToast(adjustedRegret > 80 ? `Catastrophic pick. ${name} was a mistake.` : `${name} drafted. Fate sealed.`);
+}
+
+function render() {
+  emptyState.style.display = picks.length ? 'none' : 'block';
+
+  // Board
+  board.innerHTML = '';
+  picks.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'pick-row';
+    row.innerHTML = `
+      <div class="pick-round">R${p.round}</div>
+      <div class="pick-name">${esc(p.name)}</div>
+      <div class="pick-damage severity-${p.severity}">-$${p.damage.toLocaleString()}</div>
+      <div class="pick-outcome severity-${p.severity}">${esc(p.outcome)}</div>
+      <div class="pick-damage severity-${p.severity}">${p.regret}/99</div>
+      <button class="pick-delete" onclick="removePick(${i})" title="Remove">&times;</button>
+    `;
+    board.appendChild(row);
+  });
+
+  // Stats
+  const totalDamage = picks.reduce((s, p) => s + p.damage, 0);
+  const totalRegret = picks.reduce((s, p) => s + p.regret, 0);
+  document.getElementById('totalDamage').textContent = '$' + totalDamage.toLocaleString();
+  document.getElementById('regretScore').textContent = totalRegret.toLocaleString();
+  document.getElementById('pickCount').textContent = picks.length;
+
+  // Worst pick
+  const crown = document.getElementById('crownArea');
+  if (picks.length > 0) {
+    const worst = picks.reduce((a, b) => a.regret > b.regret ? a : b);
+    document.getElementById('worstPick').textContent = worst.name;
+    crown.classList.add('active');
+    document.getElementById('crownName').textContent = worst.name;
+    document.getElementById('crownReason').textContent = worst.outcome;
+  } else {
+    document.getElementById('worstPick').textContent = '---';
+    crown.classList.remove('active');
+  }
+
+  // Ticker update
+  if (picks.length > 0) {
+    const msgs = picks.map(p => `${p.name.toUpperCase()}: ${p.outcome}`);
+    const ticker = msgs.join(' ... ') + ' ... EMOTIONAL DAMAGE: $' + totalDamage.toLocaleString() + ' ... ';
+    document.getElementById('ticker').textContent = ticker + ticker;
+  }
+}
+
+function removePick(i) {
+  picks.splice(i, 1);
+  render();
+}
+
+function nukeAll() {
+  if (picks.length === 0) return;
+  picks = [];
+  render();
+  showToast('Draft board nuked. Start the pain over.');
+}
+
+function randomFill() {
+  for (let i = 0; i < 5; i++) {
+    const name = RANDOM_PLAYERS[Math.floor(Math.random() * RANDOM_PLAYERS.length)];
+    const round = Math.floor(Math.random() * 16) + 1;
+    nameInput.value = name;
+    roundSelect.value = round;
+    addPick();
+  }
+}
+
+function shareRegret() {
+  if (picks.length === 0) { showToast('Draft something first, coward.'); return; }
+  const totalDamage = picks.reduce((s, p) => s + p.damage, 0);
+  const totalRegret = picks.reduce((s, p) => s + p.regret, 0);
+  const worst = picks.reduce((a, b) => a.regret > b.regret ? a : b);
+  const text = [
+    `Draft Day Regret Report:`,
+    `Picks: ${picks.length}`,
+    `Total Emotional Damage: $${totalDamage.toLocaleString()}`,
+    `Regret Score: ${totalRegret}`,
+    `Worst Pick: ${worst.name} (${worst.outcome})`,
+    ``,
+    picks.map(p => `R${p.round} ${p.name}: ${p.outcome} (-$${p.damage.toLocaleString()})`).join('\n')
+  ].join('\n');
+
+  if (navigator.share) {
+    navigator.share({ title: 'Draft Day Regret', text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('Regret copied to clipboard. Share the pain.'));
+  } else {
+    showToast('Copy failed. Even your clipboard regrets this.');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

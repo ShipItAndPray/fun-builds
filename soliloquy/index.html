@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soliloquy Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Cinzel:wght@400;700&family=IM+Fell+English+SC&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --curtain: #6b0f1a;
+    --curtain-dark: #3d0a10;
+    --gold: #d4a843;
+    --gold-light: #f0d68a;
+    --stage: #1a0a05;
+    --wood: #2a1508;
+    --parchment: #f5e6c8;
+    --ink: #1a0a05;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--stage);
+    font-family: 'Playfair Display', serif;
+    color: var(--parchment);
+    overflow-x: hidden;
+  }
+
+  /* Theater frame */
+  .theater {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Curtain top valance */
+  .valance {
+    width: 100%;
+    height: 60px;
+    background: linear-gradient(180deg, var(--curtain-dark) 0%, var(--curtain) 40%, var(--curtain-dark) 100%);
+    border-bottom: 4px solid var(--gold);
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .valance::before, .valance::after {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    width: 80px;
+    height: 20px;
+    background: var(--curtain);
+    border-radius: 0 0 50% 50%;
+    border-bottom: 3px solid var(--gold);
+  }
+  .valance::before { left: 15%; }
+  .valance::after { right: 15%; }
+  .valance-center {
+    position: absolute;
+    bottom: -25px;
+    width: 100px;
+    height: 25px;
+    background: var(--curtain);
+    border-radius: 0 0 50% 50%;
+    border-bottom: 3px solid var(--gold);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Side curtains */
+  .curtain-left, .curtain-right {
+    position: fixed;
+    top: 0;
+    width: 60px;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .curtain-left {
+    left: 0;
+    background: linear-gradient(90deg, var(--curtain-dark) 0%, var(--curtain) 60%, transparent 100%);
+  }
+  .curtain-right {
+    right: 0;
+    background: linear-gradient(270deg, var(--curtain-dark) 0%, var(--curtain) 60%, transparent 100%);
+  }
+
+  /* Stage floor */
+  .stage-floor {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    height: 40px;
+    background: linear-gradient(180deg, var(--wood) 0%, #0d0604 100%);
+    border-top: 3px solid var(--gold);
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Spotlight effect */
+  .spotlight {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse 50% 60% at 50% 30%, rgba(255,220,150,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Main content */
+  .stage-content {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 700px;
+    padding: 40px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    color: var(--gold);
+    text-align: center;
+    text-shadow: 0 0 20px rgba(212,168,67,0.3);
+    margin-top: 30px;
+    letter-spacing: 3px;
+  }
+  .subtitle {
+    font-family: 'IM Fell English SC', serif;
+    font-size: 0.95rem;
+    color: var(--gold-light);
+    opacity: 0.7;
+    text-align: center;
+    margin-top: -10px;
+  }
+
+  /* Input area */
+  .input-section {
+    width: 100%;
+    background: rgba(245,230,200,0.06);
+    border: 1px solid rgba(212,168,67,0.3);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .input-section label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    margin-bottom: 8px;
+    letter-spacing: 2px;
+  }
+  textarea {
+    width: 100%;
+    height: 80px;
+    background: rgba(26,10,5,0.6);
+    border: 1px solid rgba(212,168,67,0.2);
+    border-radius: 6px;
+    color: var(--parchment);
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    padding: 12px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  textarea:focus {
+    border-color: var(--gold);
+  }
+  textarea::placeholder {
+    color: rgba(245,230,200,0.3);
+    font-style: italic;
+  }
+
+  /* Drama slider */
+  .drama-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .drama-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+  .drama-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--gold-light);
+  }
+  .slider-track {
+    position: relative;
+    width: 100%;
+    height: 36px;
+    display: flex;
+    align-items: center;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(212,168,67,0.2), rgba(212,168,67,0.6));
+    border-radius: 3px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px;
+    height: 24px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(212,168,67,0.5);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    background: var(--gold);
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 10px rgba(212,168,67,0.5);
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: rgba(245,230,200,0.4);
+    margin-top: -4px;
+  }
+
+  /* Button */
+  .transform-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    padding: 14px 40px;
+    background: linear-gradient(135deg, var(--curtain) 0%, var(--curtain-dark) 100%);
+    color: var(--gold);
+    border: 2px solid var(--gold);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+  }
+  .transform-btn:hover {
+    background: linear-gradient(135deg, #8b1425 0%, var(--curtain) 100%);
+    box-shadow: 0 0 20px rgba(212,168,67,0.3);
+    transform: scale(1.02);
+  }
+  .transform-btn:active { transform: scale(0.98); }
+  .transform-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .transform-btn .quill {
+    margin-right: 8px;
+  }
+
+  /* Output */
+  .output-section {
+    width: 100%;
+    display: none;
+    animation: fadeUp 0.8s ease;
+  }
+  .output-section.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .parchment-scroll {
+    background: linear-gradient(135deg, #f5e6c8 0%, #e8d5a8 50%, #f0dbb8 100%);
+    border: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 30px 24px;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 0 40px rgba(139,100,40,0.1);
+  }
+  .parchment-scroll::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 8px; right: 8px; bottom: 8px;
+    border: 1px solid rgba(139,100,40,0.2);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .scroll-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+  }
+  .soliloquy-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--ink);
+    font-style: italic;
+    white-space: pre-wrap;
+    min-height: 100px;
+  }
+  .soliloquy-text .highlight {
+    background: rgba(212,168,67,0.2);
+    padding: 0 2px;
+    border-radius: 2px;
+  }
+  .act-direction {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  /* Controls below output */
+  .output-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+  .ctrl-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    padding: 10px 18px;
+    background: rgba(245,230,200,0.08);
+    color: var(--gold);
+    border: 1px solid rgba(212,168,67,0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .ctrl-btn:hover {
+    background: rgba(245,230,200,0.15);
+    border-color: var(--gold);
+  }
+  .ctrl-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Speaking indicator */
+  .speaking-indicator {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    color: var(--gold);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+  .speaking-indicator.active { display: flex; }
+  .sound-waves {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+  .sound-waves span {
+    display: block;
+    width: 3px;
+    background: var(--gold);
+    border-radius: 2px;
+    animation: wave 0.8s ease infinite;
+  }
+  .sound-waves span:nth-child(1) { height: 8px; animation-delay: 0s; }
+  .sound-waves span:nth-child(2) { height: 14px; animation-delay: 0.1s; }
+  .sound-waves span:nth-child(3) { height: 10px; animation-delay: 0.2s; }
+  .sound-waves span:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+  .sound-waves span:nth-child(5) { height: 8px; animation-delay: 0.4s; }
+  @keyframes wave {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.4); }
+  }
+
+  /* Applause overlay */
+  .applause-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .applause-overlay.active {
+    display: flex;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .applause-text {
+    font-family: 'Cinzel', serif;
+    font-size: 2.5rem;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(212,168,67,0.5);
+    animation: pulse 1s ease infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  .roses {
+    font-size: 2rem;
+    animation: rosesFall 2s ease infinite;
+  }
+  @keyframes rosesFall {
+    0% { transform: translateY(-10px); opacity: 1; }
+    100% { transform: translateY(10px); opacity: 0.7; }
+  }
+  .dismiss-applause {
+    font-family: 'Cinzel', serif;
+    padding: 10px 24px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+  }
+
+  /* Examples */
+  .examples-section {
+    width: 100%;
+  }
+  .examples-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: rgba(212,168,67,0.5);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .examples-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .example-chip {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    background: rgba(245,230,200,0.06);
+    border: 1px solid rgba(212,168,67,0.15);
+    border-radius: 20px;
+    color: rgba(245,230,200,0.6);
+    cursor: pointer;
+    transition: all 0.3s;
+    font-style: italic;
+  }
+  .example-chip:hover {
+    background: rgba(245,230,200,0.12);
+    border-color: rgba(212,168,67,0.4);
+    color: var(--parchment);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--curtain);
+    color: var(--gold);
+    padding: 10px 24px;
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    h1 { font-size: 1.6rem; }
+    .curtain-left, .curtain-right { width: 20px; }
+    .stage-content { padding: 30px 16px 80px; }
+    .parchment-scroll { padding: 20px 16px; }
+    .output-controls { gap: 8px; }
+    .ctrl-btn { padding: 8px 12px; font-size: 0.7rem; }
+    .valance { height: 40px; }
+    .applause-text { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="theater">
+  <div class="valance">
+    <div class="valance-center"></div>
+  </div>
+  <div class="curtain-left"></div>
+  <div class="curtain-right"></div>
+  <div class="spotlight"></div>
+  <div class="stage-floor"></div>
+
+  <div class="stage-content">
+    <h1>The Soliloquy Generator</h1>
+    <p class="subtitle">Transform thy mundane musings into theatrical grandeur</p>
+
+    <div class="input-section">
+      <label>Speak thy Grievance</label>
+      <textarea id="userInput" placeholder="e.g. I can't find my keys..."></textarea>
+    </div>
+
+    <div class="drama-section">
+      <div class="drama-label">
+        <span>Drama Level</span>
+        <span class="drama-value" id="dramaLabel">Theatrical</span>
+      </div>
+      <div class="slider-track">
+        <input type="range" id="dramaSlider" min="1" max="5" value="3">
+      </div>
+      <div class="slider-labels">
+        <span>Mild Concern</span>
+        <span>Utter Despair</span>
+      </div>
+    </div>
+
+    <button class="transform-btn" id="transformBtn" onclick="generateSoliloquy()">
+      <span class="quill">&#9998;</span> Transform!
+    </button>
+
+    <div class="output-section" id="outputSection">
+      <div class="parchment-scroll">
+        <div class="scroll-title">~ A SOLILOQUY ~</div>
+        <div class="soliloquy-text" id="soliloquyText"></div>
+        <div class="act-direction" id="actDirection"></div>
+      </div>
+      <div class="speaking-indicator" id="speakingIndicator">
+        <div class="sound-waves">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <span>The player speaks...</span>
+      </div>
+      <div class="output-controls">
+        <button class="ctrl-btn" id="speakBtn" onclick="speakSoliloquy()">&#127917; Perform</button>
+        <button class="ctrl-btn" id="stopBtn" onclick="stopSpeaking()" style="display:none">&#9632; Cease</button>
+        <button class="ctrl-btn" onclick="shareSoliloquy()">&#128220; Share</button>
+        <button class="ctrl-btn" onclick="copySoliloquy()">&#128203; Copy</button>
+        <button class="ctrl-btn" onclick="generateSoliloquy()">&#127922; Another!</button>
+      </div>
+    </div>
+
+    <div class="examples-section">
+      <div class="examples-label">Or try these mundane woes:</div>
+      <div class="examples-grid" id="examplesGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="applause-overlay" id="applauseOverlay">
+  <div class="roses">&#127801; &#127801; &#127801;</div>
+  <div class="applause-text">BRAVO!</div>
+  <div class="roses">&#127801; &#127801; &#127801;</div>
+  <button class="dismiss-applause" onclick="dismissApplause()">Take a bow</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Drama level labels
+const dramaLabels = {
+  1: 'A Mild Concern',
+  2: 'Somewhat Vexed',
+  3: 'Theatrical',
+  4: 'Operatic Despair',
+  5: 'Existential Ruin'
+};
+
+document.getElementById('dramaSlider').addEventListener('input', e => {
+  document.getElementById('dramaLabel').textContent = dramaLabels[e.target.value];
+});
+
+// Example inputs
+const examples = [
+  "I can't find my keys",
+  "The WiFi is down",
+  "My phone is at 2%",
+  "I burned my toast",
+  "Someone ate my lunch from the fridge",
+  "I have a meeting in 5 minutes",
+  "My coffee is cold",
+  "I forgot my password",
+  "The printer won't work",
+  "Traffic is terrible today",
+  "I stepped in a puddle",
+  "My umbrella broke in the rain",
+  "The elevator is broken",
+  "I can't open this jar",
+  "My headphones are tangled"
+];
+
+const grid = document.getElementById('examplesGrid');
+examples.forEach(ex => {
+  const chip = document.createElement('div');
+  chip.className = 'example-chip';
+  chip.textContent = ex;
+  chip.onclick = () => {
+    document.getElementById('userInput').value = ex;
+    generateSoliloquy();
+  };
+  grid.appendChild(chip);
+});
+
+// ============================================================
+// 50+ TRANSFORMATION TEMPLATES
+// ============================================================
+// Each template is a function: (subject, verb, object, original) => string
+// Drama levels 1-5 control which templates get picked and extra embellishments
+
+const templates = [
+  // --- HAMLET STYLE ---
+  (s,v,o,orig,d) =>
+`To ${v}, or not to ${v} -- that is the question!
+Whether 'tis nobler in the mind to suffer
+The slings and arrows of outrageous ${o},
+Or to take arms against a sea of ${o}s,
+And by opposing, end them? To weep, to wail --
+No more -- and by a wail to say we end
+The heartache and the thousand natural shocks
+That ${orig} is heir to.`,
+
+  // --- MACBETH STYLE ---
+  (s,v,o,orig,d) =>
+`${o}! ${o}! ${o}!
+Out, out, brief ${o}!
+Life's but a walking shadow, a poor player
+That struts and frets upon the stage
+And then is heard no more. It is a tale
+Told by an idiot, full of ${o} and fury,
+Signifying nothing.
+For I have looked upon the face of ${o},
+And it hath looked back at me with cold disdain.`,
+
+  // --- ROMEO STYLE ---
+  (s,v,o,orig,d) =>
+`But soft! What ${o} through yonder window breaks?
+It is the east, and ${o} is the sun!
+Arise, fair ${o}, and slay the envious moon,
+Who is already sick and pale with grief
+That thou, a ${o}, art far more cruel than she.
+O ${o}, ${o}! Wherefore art thou, ${o}?
+Deny thy nature and refuse thy name,
+Or if thou wilt not, be but sworn my torment,
+And I'll no longer be a ${s}.`,
+
+  // --- RICHARD III ---
+  (s,v,o,orig,d) =>
+`Now is the winter of my discontent
+Made glorious summer by this wretched ${o}!
+And all the clouds that loured upon our house
+Have not departed -- nay, they gather still!
+A ${o}! A ${o}! My kingdom for relief from ${o}!
+Was ever ${s} in this humour wooed?
+Was ever ${s} in this humour won?
+I that have neither joy nor peace of mind,
+Am curtailed of this fair proportion,
+Cheated of ${o} by dissembling nature.`,
+
+  // --- OTHELLO ---
+  (s,v,o,orig,d) =>
+`O, beware, my lord, of ${o}!
+It is the green-eyed monster which doth mock
+The meat it feeds on. That ${s} who, poor soul,
+Did suffer this, was blessed indeed,
+For ${o} is a fate worse than the jealous cuckold's horns.
+Put out the light, and then put out the light!
+If I quench thee, thou flaming minister of ${o},
+I can again thy former light restore
+Should I repent me.`,
+
+  // --- KING LEAR ---
+  (s,v,o,orig,d) =>
+`Blow, winds, and crack your cheeks! Rage! Blow!
+You cataracts and hurricanoes, spout
+Till you have drenched my very soul with ${o}!
+You sulph'rous and thought-executing fires,
+Vaunt-couriers of ${o}-cleaving thunderbolts,
+Singe my white head! And thou, all-shaking ${o},
+Strike flat the thick rotundity of the world!
+I am a ${s} more sinned against than sinning.
+Howl, howl, howl, howl! O, you are men of stones!`,
+
+  // --- MERCHANT OF VENICE ---
+  (s,v,o,orig,d) =>
+`Hath not a ${s} eyes? Hath not a ${s} hands, organs,
+Dimensions, senses, affections, passions?
+Fed with the same food, hurt with the same ${o},
+Subject to the same indignities?
+If you prick us, do we not bleed?
+If you ${v} us, do we not suffer?
+If you poison us with ${o}, do we not die?
+The quality of mercy is strained,
+Most strained, when one cannot even ${v}
+Without the universe conspiring against them.`,
+
+  // --- MIDSUMMER NIGHT'S DREAM ---
+  (s,v,o,orig,d) =>
+`Lord, what fools these mortals be!
+To think that one could simply ${v}
+Without the merry pranks of Puck himself
+Conspiring to turn ${o} to madness!
+If we shadows have offended,
+Think but this, and all is mended:
+That you have but slumbered here
+While ${o} did appear.
+The course of true ${v}ing never did run smooth,
+And lo, today proves that ancient truth.`,
+
+  // --- TEMPEST ---
+  (s,v,o,orig,d) =>
+`We are such stuff as dreams are made on,
+And our little life is rounded with a ${o}.
+O brave new world, that has such ${o}s in it!
+Full fathom five my patience lies;
+Of its bones are coral made;
+Those are pearls that were its eyes;
+Nothing of it that doth fade,
+But doth suffer a sea-change
+Into something rich and strange.
+Hell is empty, and all the ${o}s are here.`,
+
+  // --- JULIUS CAESAR ---
+  (s,v,o,orig,d) =>
+`Friends, Romans, countrymen, lend me your ears!
+I come to bury ${o}, not to praise it.
+The evil that ${o} does lives after it;
+The good is oft interred with its bones.
+So let it be with ${o}.
+The noble ${s} hath told you ${o} was here;
+If it were so, it was a grievous fault,
+And grievously hath the ${s} answered it.
+Et tu, ${o}? Then fall, Caesar!
+Beware the ides of ${o}!`,
+
+  // --- TWELFTH NIGHT ---
+  (s,v,o,orig,d) =>
+`If music be the food of love, play on,
+Give me excess of it, that, surfeiting,
+The appetite for ${o} may sicken and so die!
+That strain again! It had a dying fall;
+O, it came o'er my ear like the sweet sound
+That breathes upon a bank of ${o}s.
+Some are born with ${o}, some achieve ${o},
+And some have ${o} thrust upon them!
+Alas, I am one of the latter sort.`,
+
+  // --- AS YOU LIKE IT ---
+  (s,v,o,orig,d) =>
+`All the world's a stage,
+And all the men and women merely players;
+They have their exits and their entrances,
+And one ${s} in their time plays many parts.
+But none so tragic as the part I play today --
+The woeful ${s} who cannot ${v}!
+This is the very false gallop of ${o},
+And I say unto thee: if thou hast not ${v}ed,
+Thou hast not lived. If thou hast not suffered ${o},
+Thou knowest not the depths of being.`,
+
+  // --- MUCH ADO ABOUT NOTHING ---
+  (s,v,o,orig,d) =>
+`Sigh no more, ladies, sigh no more,
+${o} was ever thus.
+One foot in sea, and one on shore,
+To one thing constant never.
+Then sigh not so, but let them go,
+And be you blithe and bonny,
+Converting all your songs of woe
+Into "Hey, nonny, nonny!"
+For what is ${o} but much ado about nothing?
+And yet -- THIS ${o}? This is EVERYTHING.`,
+
+  // --- HAMLET ACT 3 STYLE ---
+  (s,v,o,orig,d) =>
+`O, what a rogue and peasant slave am I!
+Is it not monstrous that this player here,
+But in a fiction, in a dream of ${o},
+Could force his soul so to his own conceit
+That from her working all his visage wanned,
+Tears in his eyes, distraction in his aspect?
+And all for ${o}! What's ${o} to him, or he to ${o},
+That he should weep for it?
+What would he do had he the motive and the cue
+For passion that I have? He would drown the stage with tears!`,
+
+  // --- COMEDY OF ERRORS ---
+  (s,v,o,orig,d) =>
+`Am I in earth, in heaven, or in hell?
+Sleeping or waking? Mad or well-advised?
+Known unto these, and to myself disguised!
+I'll say as they say, and persever so,
+And in this mist at all adventures go.
+For verily, I cannot ${v},
+And this ${o} doth make a fool of me!
+Was there ever any ${s} so abused?
+I think the whole world is in conspiracy
+To make of me a laughingstock!`,
+
+  // --- HENRY V ---
+  (s,v,o,orig,d) =>
+`Once more unto the breach, dear friends, once more,
+Or close the wall up with our ${o}-stricken dead!
+In peace there's nothing so becomes a ${s}
+As modest stillness and humility;
+But when the blast of ${o} blows in our ears,
+Then imitate the action of the tiger!
+Stiffen the sinews, summon up the blood!
+Cry "God for Harry, England, and no more ${o}!"
+We few, we happy few, we band of brothers;
+For he today that sheds his blood with me in ${o}
+Shall be my brother.`,
+
+  // --- WINTER'S TALE ---
+  (s,v,o,orig,d) =>
+`Exit, pursued by a ${o}.
+'Tis a world to see! A world of ${o}!
+I have tremor cordis on me; my heart dances,
+But not for joy, not joy! For ${o} hath seized
+My every faculty and left me hollow.
+I am a feather for each wind that blows.
+Stars, hide your fires;
+Let not light see my black and deep ${o}!
+The ${s} stands here, naked to the elements,
+Undone by nothing more than ${o}.`,
+
+  // --- TAMING OF THE SHREW ---
+  (s,v,o,orig,d) =>
+`Why, there's a wench! Come on, and kiss me, Kate!
+Nay, not Kate -- it is ${o} that demands my lips!
+O this ${o}, this shrew, this untameable beast!
+What, did I marry ${o}? No!
+And yet ${o} doth follow me like a wife,
+Scolding, nagging, never letting me rest!
+Petruchio himself could not tame this ${o},
+Though he starved it, and denied it sleep,
+And called it names most foul and unbecoming.
+I shall kiss this ${o} and call it done -- or die trying!`,
+
+  // --- SONNET 18 STYLE ---
+  (s,v,o,orig,d) =>
+`Shall I compare thee to a summer's day?
+Nay, for thou art more terrible and cruel!
+Rough winds do shake the darling buds of May,
+But ${o}? ${o} is the roughest wind of all!
+Sometime too hot the eye of heaven shines,
+And often is his gold complexion dimmed;
+But thy ${o} never fades nor declines --
+Eternal in its torment, never trimmed.
+So long as ${s} can breathe or eyes can see,
+So long lives ${o}, and it torments me.`,
+
+  // --- SONNET 130 PARODY ---
+  (s,v,o,orig,d) =>
+`My ${o}'s eyes are nothing like the sun;
+Coral is far more pleasant than its grip;
+If snow be white, why then this ${o} is dun;
+If hairs be wires, ${o} hath thorns that rip.
+I have seen roses damasked, red and white,
+But no such roses see I in this plight;
+And in some perfumes is there more delight
+Than in the breath that from my ${o} reeks.
+I love to hear my ${s} speak, yet well I know
+That music hath a far more pleasing sound.
+I grant I never saw a ${o} so low --
+And yet, by heaven, I think my curse profound.`,
+
+  // --- PROSPERO'S FAREWELL ---
+  (s,v,o,orig,d) =>
+`Our revels now are ended. These our ${o}s,
+As I foretold you, were all spirits, and
+Are melted into air, into thin air;
+And, like the baseless fabric of this vision,
+The cloud-capped towers, the gorgeous palaces,
+The solemn temples, the great globe itself --
+Yea, all which it inherit -- shall dissolve,
+And, like this insubstantial ${o},
+Leave not a rack behind.
+Now my charms are all o'erthrown,
+And what strength I have's mine own -- which is most faint.`,
+
+  // --- LADY MACBETH ---
+  (s,v,o,orig,d) =>
+`Out, damned ${o}! Out, I say!
+One, two -- why then 'tis time to ${v}!
+Yet who would have thought the old ${o}
+To have had so much persistence in it?
+What, will these hands ne'er be clean of ${o}?
+Here's the smell of ${o} still.
+All the perfumes of Arabia will not sweeten
+This little hand. O, O, O!
+Unsex me here, and fill me from the crown to the toe
+Top-full of direst resolve against ${o}!`,
+
+  // --- PUCK'S EPILOGUE ---
+  (s,v,o,orig,d) =>
+`If we shadows have offended,
+Think but this, and all is mended --
+That you have but slumbered here
+While these ${o}s did appear.
+And this weak and idle theme,
+No more yielding but a dream,
+Gentles, do not reprehend:
+If you pardon, we will mend.
+Give me your hands, if we be friends,
+And Robin shall restore amends --
+But first, let us address this ${o},
+For it shall not stand unanswered!`,
+
+  // --- JAQUES' SEVEN AGES ---
+  (s,v,o,orig,d) =>
+`At first, the infant, mewling and puking,
+Knowing nothing of ${o}.
+Then the schoolboy, creeping like snail
+Unwillingly to school, still innocent of ${o}.
+Then the lover, sighing like furnace,
+Writing ballads to ${o} instead of his mistress.
+Then the soldier, seeking the bubble reputation
+Even in the cannon's mouth of ${o}.
+Then the justice, full of wise saws --
+All of them about ${o}.
+Last scene of all, that ends this strange eventful history,
+Is second childishness and mere oblivion --
+Sans teeth, sans eyes, sans taste, sans everything --
+Sans even ${o}!`,
+
+  // --- BENEDICK'S LAMENT ---
+  (s,v,o,orig,d) =>
+`I do much wonder that one ${s},
+Seeing how much another ${s} is proved a fool
+By ${o}, will, after such torment,
+Become the argument of their own scorn
+By falling into ${o} themselves!
+And such a ${s} is I.
+May I be so converted and see with these eyes?
+I cannot tell; I think not.
+I will not be sworn but ${o} may transform me,
+And yet I swear I shall overcome it -- probably.`,
+
+  // --- PORTIA'S QUALITY OF MERCY ---
+  (s,v,o,orig,d) =>
+`The quality of ${o} is not strained;
+It droppeth as the gentle rain from heaven
+Upon the place beneath -- which is to say,
+It falls upon my head with great regularity!
+It is twice cursed:
+It curseth him that gives and him that takes.
+'Tis mightiest in the mightiest; it becomes
+The throned monarch better than his crown.
+But TODAY, I ask for mercy FROM ${o},
+For I have suffered enough!
+Take thrice thy bond; take six -- take nine!
+Just relieve me of this ${o}!`,
+
+  // --- TITANIA'S ENCHANTMENT ---
+  (s,v,o,orig,d) =>
+`What angel wakes me from my flowery bed?
+Not an angel -- 'tis ${o}, wearing an ass's head!
+I pray thee, gentle mortal, sing again:
+Mine ear is much enamoured of thy ${o} --
+No, wait. Mine ear is OFFENDED by thy ${o}.
+Tie up my love's tongue; bring him silently.
+Out of this wood do not desire to go;
+Thou shalt remain here, with ${o} forever.
+I am a spirit of no common rate;
+The summer still doth tend upon my state --
+But ${o}? ${o} answers to no season.`,
+
+  // --- HAMLET'S YORICK ---
+  (s,v,o,orig,d) =>
+`Alas, poor ${o}! I knew it, Horatio --
+A thing of infinite jest, of most excellent fancy.
+It hath borne me on its back a thousand times,
+And now, how abhorred in my imagination it is!
+My gorge rises at it.
+Here hung those lips that I have cursed I know not how oft.
+Where be your gibes now? Your gambols?
+Your songs? Your flashes of merriment
+That were wont to set the table on a roar?
+Not one now, to mock your own grinning?
+Quite chapfallen? Now get you to my ${o},
+And tell it, let it paint an inch thick,
+To this favour it must come.`,
+
+  // --- CLEOPATRA'S FURY ---
+  (s,v,o,orig,d) =>
+`Give me my robe, put on my crown;
+I have immortal longings in me --
+Immortal longings to be FREE of ${o}!
+The stroke of death is as a lover's pinch,
+Which hurts and is desired. Dost thou not see?
+${o} is my Antony, and I its Cleopatra --
+Bound together in tragic embrace!
+O, withered is the garland of the war,
+The soldier's pole is fall'n!
+Come, thou mortal wretch,
+With thy sharp teeth this knot of ${o} unloose!
+Peace, peace! Dost thou not see my baby at my breast,
+That sucks the nurse asleep? O, ${o}!`,
+
+  // --- ARIEL'S SONG ---
+  (s,v,o,orig,d) =>
+`Where the bee sucks, there suck I --
+In a cowslip's bell I lie,
+Far from ${o} and its sting!
+There I couch when owls do cry.
+On the bat's back I do fly
+After summer merrily.
+Merrily, merrily shall I live now
+Under the blossom that hangs on the bough --
+But FIRST I must contend with ${o},
+That sprite most foul, that goblin dire!
+Come unto these yellow sands,
+And then take hands:
+Curtsied when you have, and kissed,
+And ${o} shall be dismissed!`,
+
+  // --- CALIBAN'S CURSE ---
+  (s,v,o,orig,d) =>
+`This island's mine, by Sycorax my mother,
+Which thou takest from me with ${o}!
+When thou camest first,
+Thou strok'dst me and made much of me,
+Wouldst give me water with berries in't,
+And teach me how to name the bigger light
+And how the less, that burn by day and night.
+And then I loved thee -- but now, ${o}!
+A plague upon the tyrant that I serve!
+I'll bear him no more sticks, nor fetch him wood,
+For ${o} hath made a monster of me!
+You taught me language, and my profit on't is,
+I know how to curse ${o}!`,
+
+  // --- BOTTOM'S DREAM ---
+  (s,v,o,orig,d) =>
+`I have had a most rare vision!
+I have had a dream, past the wit of man
+To say what dream it was. Man is but an ass
+If he go about to expound this dream.
+Methought I was -- there is no ${s} can tell what.
+Methought I was -- and methought I had --
+But ${s} is but a patched fool if he will offer
+To say what methought I had.
+The eye of ${s} hath not heard,
+The ear of ${s} hath not seen,
+${s}'s hand is not able to taste,
+His tongue to conceive, nor his heart to report
+What my ${o} was!`,
+
+  // --- OBERON'S SPELL ---
+  (s,v,o,orig,d) =>
+`I know a bank where the wild thyme blows,
+Where oxlips and the nodding violet grows,
+Quite over-canopied with luscious woodbine,
+With sweet musk-roses and with eglantine.
+There sleeps the ${s} sometime of the night,
+Lulled in these flowers with dances and delight;
+And there the snake throws her enamelled skin,
+Weed wide enough to wrap a ${o} in.
+And with the juice of this I'll streak thy eyes
+And make thee full of hateful fantasies --
+Though none could be more hateful than ${o},
+Which plagues me waking AND in sleep!`,
+
+  // --- VIOLA'S DISGUISE ---
+  (s,v,o,orig,d) =>
+`I am not what I am!
+Disguise, I see thou art a wickedness
+Wherein the pregnant enemy does much.
+How easy is it for the proper false
+In women's waxen hearts to set their forms!
+Alas, our frailty is the cause, not we,
+For such as we are made of, such we be.
+And here I stand, a ${s} most confused,
+Unable to ${v}, beset by ${o},
+Wearing a mask of competence
+While underneath, all is chaos and ${o}!
+O Time, thou must untangle this, not I;
+It is too hard a knot for me to untie.`,
+
+  // --- SHYLOCK'S BOND ---
+  (s,v,o,orig,d) =>
+`I am a ${s}, hath not a ${s} eyes?
+Hath not a ${s} hands, organs, dimensions, senses,
+Affections, passions? Fed with the same food,
+Hurt with the same weapons, subject to the same diseases,
+Healed by the same means, warmed and cooled
+By the same winter and summer as everyone else?
+If you prick us, do we not bleed?
+If you tickle us, do we not laugh?
+If you ${v} us, do we not WEEP?
+And if you wrong us with ${o},
+SHALL WE NOT REVENGE?
+The villainy you teach me, I will execute!`,
+
+  // --- HAMLET'S MOUSETRAP ---
+  (s,v,o,orig,d) =>
+`The play's the thing
+Wherein I'll catch the conscience of ${o}!
+Speak the speech, I pray you, as I pronounced it to you --
+Trippingly on the tongue. But if you mouth it,
+As many of our players do, I had as lief
+The town crier spoke my ${o}.
+Nor do not saw the air too much with your hand, thus,
+But use all gently -- even in the very torrent,
+Tempest, and whirlwind of ${o},
+You must acquire and beget a temperance
+That may give it smoothness.
+O, it offends me to the soul
+To hear a robustious ${o} tear a passion to tatters!`,
+
+  // --- TOUCHSTONE'S WIT ---
+  (s,v,o,orig,d) =>
+`The truest poetry is the most feigning,
+And ${o} is the truest poetry of all!
+Your "if" is the only peacemaker;
+Much virtue in "if."
+"If" I could ${v}, "if" ${o} would cease,
+"If" the world were not conspiring against me --
+But the world IS conspiring, and ${o} IS upon me!
+A fool, a fool! I met a fool i' th' forest,
+A motley fool. And he said unto me,
+"It is ${o}, and ${o} is all."
+And I said, "Thou art right, thou motley fool,
+For I am proof of that which thou dost say."`,
+
+  // --- DOGBERRY'S REPORT ---
+  (s,v,o,orig,d) =>
+`Marry, sir, they have committed false report;
+Moreover, they have spoken untruths;
+Secondarily, they are slanders;
+Sixth and lastly, they have belied a ${s};
+And to conclude, they are lying knaves.
+Write down that they are none!
+And also write down that ${o} is a villain!
+O that I had been writ down an ass!
+But I am a wise fellow, and which is more, an officer,
+And which is more, a ${s} beset by ${o},
+And which is more, as pretty a piece of flesh
+As any in Messina -- yet STILL plagued by ${o}!`,
+
+  // --- HERMIA'S FURY ---
+  (s,v,o,orig,d) =>
+`How low am I, thou painted maypole? Speak!
+How low am I? I am not yet so low
+But that my nails can reach unto thine eyes!
+O ${o}, thou art a thief, a villain base,
+That steals my joy and leaves me desolate!
+Get you gone, you dwarf,
+You minimus of hind'ring knot-grass made,
+You bead, you acorn!
+Though ${o} be but little, it is FIERCE!
+And I shall fight it with the fury
+Of a she-bear robbed of her cubs!
+Let me at this ${o}! Hold me not!`,
+
+  // --- LYSANDER'S LOVE ---
+  (s,v,o,orig,d) =>
+`Ay me! For aught that I could ever read,
+Could ever hear by tale or history,
+The course of true ${v}ing never did run smooth!
+But either it was different in ${o},
+Or else misgraffed in respect of years,
+Or else it stood upon the choice of friends,
+Or, if there were a sympathy in choice,
+${o} made it like a cross,
+Too high to be enthralled to low,
+Too low to reach the heights of ${v}ing.
+O hell! To choose love by another's eyes!
+O spite! To be undone by ${o}!`,
+
+  // --- FALSTAFF'S HONOR ---
+  (s,v,o,orig,d) =>
+`Can ${o} set a leg? No.
+Or an arm? No. Or take away the grief of a wound? No.
+${o} hath no skill in surgery, then? No.
+What is ${o}? A word.
+What is in that word "${o}"? Air!
+A trim reckoning! Who hath it? He that died o' Wednesday.
+Doth he feel it? No. Doth he hear it? No.
+'Tis insensible then? Yea, to the dead.
+But will it not live with the living? No.
+Why? Detraction will not suffer it. Therefore I'll none of it.
+${o} is a mere scutcheon. And so ends my catechism.
+Give me life -- and take this ${o} from me!`,
+
+  // --- CORIOLANUS ---
+  (s,v,o,orig,d) =>
+`You common cry of curs, whose breath I hate
+As reek o' the rotten fens, whose loves I prize
+As the dead carcasses of unburied men
+That do corrupt my air -- I banish YOU!
+There is a world elsewhere, a world without ${o}!
+Hear you this Triton of the minnows? Mark you
+His absolute "shall"?
+O ${o}, thou art a disease that must be cut away!
+Let them pull all about mine ears,
+Present me death on the wheel or at wild horses' heels,
+But I shall NEVER yield to ${o}!`,
+
+  // --- BEATRICE'S SCORN ---
+  (s,v,o,orig,d) =>
+`I had rather hear my dog bark at a crow
+Than a ${s} swear they can ${v}!
+For truly, I know ${o}, and ${o} knows me,
+And we are ancient enemies, sworn upon a sword!
+I wonder that you will still be talking;
+Nobody marks you. And ${o}? ${o} marks EVERYONE.
+I would my horse had the speed of your tongue,
+That I might outrun ${o}!
+But no -- there is no outrunning it.
+${o} follows like a faithful hound,
+And I, poor Beatrice, am its quarry!
+O that I were a man! I would eat ${o}'s heart in the marketplace!`,
+
+  // --- PROSPERO'S MAGIC ---
+  (s,v,o,orig,d) =>
+`Ye elves of hills, brooks, standing lakes, and groves,
+And ye that on the sands with printless foot
+Do chase the ebbing Neptune and do fly him
+When he comes back -- you demi-puppets that
+By moonshine do the green sour ringlets make,
+Whereof the ewe not bites -- by whose aid,
+Weak masters though ye be, I have bedimmed
+The noontide sun, called forth the mutinous winds,
+And 'twixt the green sea and the azured vault
+Set roaring war -- yet STILL cannot conquer ${o}!
+But this rough magic I here abjure.
+I'll break my staff, bury it certain fathoms in the earth,
+And deeper than did ever plummet sound
+I'll drown my ${o}.`,
+
+  // --- ORSINO'S EXCESS ---
+  (s,v,o,orig,d) =>
+`If music be the food of love, play on!
+Give me EXCESS of it -- that surfeiting,
+The appetite may sicken and SO DIE!
+That strain again! It had a dying fall --
+Much like my will to ${v} hath a dying fall
+When ${o} appears upon the scene!
+O spirit of love, how quick and fresh art thou,
+That, notwithstanding thy capacity
+Receiveth as the sea, naught enters there,
+Of what validity and pitch soe'er,
+But falls into abatement and low price
+Even in a minute! So full of shapes is ${o}
+That it alone is high fantastical.`,
+
+  // --- PETRUCHIO'S CONQUEST ---
+  (s,v,o,orig,d) =>
+`Have I not in my time heard lions roar?
+Have I not heard the sea, puffed up with winds,
+Rage like an angry boar chafed with sweat?
+Have I not heard great ordnance in the field,
+And heaven's artillery thunder in the skies?
+Have I not in a pitched battle heard
+Loud 'larums, neighing steeds, and trumpets' clang?
+And do you tell me of ${o}?
+Tush, tush! Fear boys with bugs!
+For I will tame this ${o}, as I would tame
+The wildest shrew in all of Padua!
+Come, come, you wasp! I'faith, you are too angry --
+But I shall conquer thee, ${o}!`,
+
+  // --- MALVOLIO'S LETTER ---
+  (s,v,o,orig,d) =>
+`By my life, this is my ${o}'s hand!
+These be her very C's, her U's, and her T's,
+And thus makes she her great P's.
+"Some are born great, some achieve greatness,
+And some have ${o} thrust upon them!"
+I will be proud, I will read politic authors,
+I will baffle Sir ${o} the younger!
+In my stars I am above thee, ${o},
+But be not afraid of greatness!
+Remember who commended thy yellow stockings
+And wished to see thee ever cross-gartered --
+'Twas ${o}! And I shall wear the stockings
+AND the cross-garters and face it DOWN!`,
+
+  // --- ROSALIND'S CURE ---
+  (s,v,o,orig,d) =>
+`Love is merely a madness, and I tell you,
+Deserves as well a dark house and a whip
+As madmen do; and the reason why they are not
+So punished and cured is that the lunacy
+Is so ordinary that the whippers
+Are in love too! Yet I profess
+Curing it by counsel -- the same counsel
+I now apply to ${o}!
+Come, woo me, woo me, for now I am
+In a holiday humour and like enough to consent --
+To consent to FIGHT this ${o}!
+Do you know I am a ${s}? Why, I must have
+Resolution, and courage, and a plan!`,
+
+  // --- POLONIUS'S ADVICE ---
+  (s,v,o,orig,d) =>
+`Give thy thoughts no tongue,
+Nor any unproportioned thought his act.
+Be thou familiar but by no means vulgar.
+Those friends thou hast, and their adoption tried,
+Grapple them unto thy soul with hoops of steel,
+But do not dull thy palm with entertainment
+Of each new-hatched, unfledged ${o}!
+Beware of entrance to a quarrel with ${o},
+But being in, bear't that the opposed may beware of thee.
+Give every man thy ear, but few thy voice.
+Take each man's censure, but reserve thy judgment.
+Neither a borrower nor a lender be,
+And -- above all -- to thine own self be true,
+Even in the face of ${o}!
+This above all: avoid ${o}, if thou canst.`,
+
+  // --- MARC ANTONY'S FUNERAL ---
+  (s,v,o,orig,d) =>
+`I come not, friends, to steal away your hearts.
+I am no orator, as Brutus is,
+But as you know me all, a plain blunt ${s}
+That loves their daily peace and cannot ${v}!
+For I have neither wit, nor words, nor worth,
+Action, nor utterance, nor the power of speech
+To stir men's blood -- I only speak right on!
+I tell you that which you yourselves do know,
+Show you sweet ${o}'s wounds, poor poor dumb mouths,
+And bid them speak for me.
+But were I Brutus, and Brutus were I,
+There were an Antony would ruffle up your spirits
+And put a tongue in every wound of ${o}
+That should move the stones of Rome to rise and mutiny!`,
+
+  // --- MIRANDA'S WONDER ---
+  (s,v,o,orig,d) =>
+`O wonder!
+How many goodly creatures are there here!
+How beauteous mankind is!
+O brave new world, that has such ${o}s in it!
+'Tis new to me -- and yet not welcome!
+I pitied thee, took pains to make thee speak,
+Taught thee each hour one thing or other.
+When thou didst not, savage,
+Know thine own meaning, but wouldst gabble like
+A thing most brutish, I endowed thy purposes
+With words that made them known.
+But thy vile ${o}, which any print of goodness
+Wilt not take, being capable of all ill!
+I pitied thee -- but now I pity MYSELF,
+For ${o} is upon me most unmercifully!`,
+];
+
+// Parse input into subject/verb/object for template filling
+function parseInput(text) {
+  const t = text.trim().replace(/[.!?]+$/, '');
+  const lower = t.toLowerCase();
+
+  // Extract the core complaint
+  const negatives = ["can't", "cannot", "won't", "couldn't", "shouldn't", "don't", "doesn't", "didn't", "isn't", "aren't", "wasn't", "weren't", "haven't", "hasn't"];
+  const hasNeg = negatives.some(n => lower.includes(n));
+
+  // Try to find verb and object
+  const verbPatterns = [
+    /(?:i |my |the |we )(?:can't|cannot|won't|couldn't|don't|doesn't|didn't) (\w+)\s*(.*)/i,
+    /(?:i |my |the |we )(?:am|is|are|was|were) (\w+)\s*(.*)/i,
+    /(?:i |my |the |we )(\w+(?:ed|ing|s)?)\s*(.*)/i,
+    /(?:the |my |a )(\w+)\s+(?:is|are|was|were)\s+(.*)/i,
+  ];
+
+  let verb = 'endure';
+  let object = t;
+  let subject = 'mortal';
+
+  for (const pat of verbPatterns) {
+    const m = lower.match(pat);
+    if (m) {
+      verb = m[1] || 'endure';
+      object = m[2] || t;
+      break;
+    }
+  }
+
+  // Clean up object
+  if (!object || object.length < 2) object = t;
+  object = object.replace(/^(the |my |a |an |this |that |these |those )/i, '').trim();
+  if (!object) object = t;
+
+  // Truncate long objects
+  if (object.length > 30) {
+    const words = object.split(' ');
+    object = words.slice(0, 4).join(' ');
+  }
+
+  // Capitalize first letter
+  object = object.charAt(0).toUpperCase() + object.slice(1);
+
+  return { subject, verb, object };
+}
+
+let currentSoliloquy = '';
+let applauseAudioCtx = null;
+
+function generateSoliloquy() {
+  const input = document.getElementById('userInput').value.trim();
+  if (!input) {
+    showToast('Pray, speak thy grievance first!');
+    return;
+  }
+
+  const drama = parseInt(document.getElementById('dramaSlider').value);
+  const { subject, verb, object } = parseInput(input);
+
+  // Pick random templates (more at higher drama)
+  const count = Math.min(1 + Math.floor(drama / 2), 3);
+  const used = new Set();
+  let soliloquy = '';
+
+  for (let i = 0; i < count; i++) {
+    let idx;
+    do { idx = Math.floor(Math.random() * templates.length); } while (used.has(idx));
+    used.add(idx);
+
+    const piece = templates[idx](subject, verb, object, input, drama);
+    soliloquy += (i > 0 ? '\n\n' : '') + piece;
+  }
+
+  // Add drama-level embellishments
+  const stageDirections = [
+    '[The player pauses thoughtfully]',
+    '[Clutches heart dramatically]',
+    '[Falls to knees]',
+    '[Tears garments asunder]',
+    '[Collapses upon the stage, weeping]'
+  ];
+
+  const endings = [
+    '\n\n[Exit, mildly concerned]',
+    '\n\n[Exit, shaking fist at the heavens]',
+    '\n\n[Exit, pursued by despair]',
+    '\n\n[Exit, rending garments and howling at the moon]',
+    '\n\n[Dies. Rises. Dies again. The curtain falls upon a scene of utter devastation.]'
+  ];
+
+  const direction = stageDirections[drama - 1];
+  const ending = endings[drama - 1];
+
+  currentSoliloquy = `${direction}\n\n${soliloquy}${ending}`;
+
+  // Display with typewriter effect
+  const textEl = document.getElementById('soliloquyText');
+  const outputSection = document.getElementById('outputSection');
+  outputSection.classList.add('visible');
+  textEl.textContent = '';
+  document.getElementById('actDirection').textContent = '';
+
+  // Scroll to output
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  let charIdx = 0;
+  const speed = Math.max(8, 30 - (drama * 4));
+
+  function typeChar() {
+    if (charIdx < currentSoliloquy.length) {
+      textEl.textContent += currentSoliloquy[charIdx];
+      charIdx++;
+      setTimeout(typeChar, speed);
+    }
+  }
+  typeChar();
+}
+
+// Speech synthesis
+let currentUtterance = null;
+
+function speakSoliloquy() {
+  if (!currentSoliloquy) return;
+  if (!('speechSynthesis' in window)) {
+    showToast('Alas, thy browser lacks the gift of speech!');
+    return;
+  }
+
+  stopSpeaking();
+
+  const utterance = new SpeechSynthesisUtterance(currentSoliloquy);
+  const drama = parseInt(document.getElementById('dramaSlider').value);
+
+  // Theatrical voice settings based on drama level
+  utterance.rate = Math.max(0.6, 1.0 - (drama * 0.08));
+  utterance.pitch = 0.8 + (drama * 0.1);
+  utterance.volume = 0.7 + (drama * 0.06);
+
+  // Try to find an English voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.lang.startsWith('en') && v.name.includes('Daniel')) ||
+                    voices.find(v => v.lang.startsWith('en-GB')) ||
+                    voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onstart = () => {
+    document.getElementById('speakBtn').style.display = 'none';
+    document.getElementById('stopBtn').style.display = 'flex';
+    document.getElementById('speakingIndicator').classList.add('active');
+  };
+
+  utterance.onend = () => {
+    document.getElementById('speakBtn').style.display = 'flex';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('speakingIndicator').classList.remove('active');
+    triggerApplause();
+  };
+
+  utterance.onerror = () => {
+    document.getElementById('speakBtn').style.display = 'flex';
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('speakingIndicator').classList.remove('active');
+  };
+
+  currentUtterance = utterance;
+  speechSynthesis.speak(utterance);
+}
+
+function stopSpeaking() {
+  speechSynthesis.cancel();
+  document.getElementById('speakBtn').style.display = 'flex';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('speakingIndicator').classList.remove('active');
+}
+
+// Applause sound using Web Audio API
+function triggerApplause() {
+  const overlay = document.getElementById('applauseOverlay');
+  overlay.classList.add('active');
+
+  // Generate applause-like noise
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    applauseAudioCtx = ctx;
+    const duration = 3;
+    const sampleRate = ctx.sampleRate;
+    const bufferSize = sampleRate * duration;
+    const buffer = ctx.createBuffer(2, bufferSize, sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / sampleRate;
+        // Layered noise bursts to simulate clapping
+        let sample = 0;
+        // Random clap bursts
+        const burstRate = 12 + Math.random() * 8;
+        const burstPhase = (t * burstRate) % 1;
+        if (burstPhase < 0.15) {
+          sample = (Math.random() * 2 - 1) * 0.6;
+        }
+        // Add crowd ambience
+        sample += (Math.random() * 2 - 1) * 0.15;
+        // Envelope: fade in then fade out
+        const env = t < 0.3 ? t / 0.3 : t > (duration - 0.8) ? (duration - t) / 0.8 : 1;
+        data[i] = sample * env * 0.5;
+      }
+    }
+
+    // Bandpass filter for more realistic sound
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2000;
+    filter.Q.value = 0.5;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.6;
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+    source.onended = () => ctx.close();
+  } catch (e) {
+    // Audio not supported, visual only
+  }
+}
+
+function dismissApplause() {
+  document.getElementById('applauseOverlay').classList.remove('active');
+  if (applauseAudioCtx && applauseAudioCtx.state !== 'closed') {
+    applauseAudioCtx.close();
+  }
+}
+
+// Share
+function shareSoliloquy() {
+  if (!currentSoliloquy) return;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'A Soliloquy Most Grand',
+      text: currentSoliloquy
+    }).catch(() => copySoliloquy());
+  } else {
+    copySoliloquy();
+  }
+}
+
+function copySoliloquy() {
+  if (!currentSoliloquy) return;
+  navigator.clipboard.writeText(currentSoliloquy).then(() => {
+    showToast('Soliloquy copied to thy clipboard!');
+  }).catch(() => {
+    showToast('Alas, the clipboard resists!');
+  });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// Pre-load voices
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

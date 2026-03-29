@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bad Advice Generator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600;700&display=swap');
+  :root{--bg:#0a0a0a;--card:#1a1010;--red:#dc2626;--darkred:#7f1d1d;--gold:#f59e0b;--text:#f5f5f5;--muted:#a8a29e}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(220,38,38,.12),transparent 70%);pointer-events:none;z-index:0}
+
+  .container{max-width:640px;margin:0 auto;padding:24px 16px;position:relative;z-index:1}
+  h1{font-family:'Creepster',cursive;font-size:clamp(2.2rem,6vw,3.4rem);text-align:center;color:var(--red);text-shadow:0 0 30px rgba(220,38,38,.5);margin-bottom:4px;letter-spacing:2px}
+  .subtitle{text-align:center;color:var(--muted);font-size:.85rem;margin-bottom:28px}
+
+  .input-area{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+  textarea{width:100%;min-height:80px;padding:14px;border-radius:12px;border:2px solid var(--darkred);background:#110808;color:var(--text);font-size:1rem;font-family:inherit;resize:vertical;transition:border-color .2s}
+  textarea:focus{outline:none;border-color:var(--red);box-shadow:0 0 20px rgba(220,38,38,.25)}
+  textarea::placeholder{color:#666}
+
+  .btn{padding:14px 28px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit}
+  .btn-main{background:linear-gradient(135deg,var(--red),#991b1b);color:#fff;text-transform:uppercase;letter-spacing:1px;position:relative;overflow:hidden}
+  .btn-main:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(220,38,38,.4)}
+  .btn-main:active{transform:translateY(0)}
+  .btn-main::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);transform:translateX(-100%);transition:none}
+  .btn-main:hover::after{transform:translateX(100%);transition:transform .5s}
+
+  .result-card{background:var(--card);border:2px solid var(--darkred);border-radius:16px;padding:24px;margin-bottom:20px;display:none;animation:slideIn .4s ease}
+  .result-card.show{display:block}
+  @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+  .advice-text{font-size:1.35rem;font-weight:700;line-height:1.4;margin-bottom:16px;color:#fff}
+  .danger-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .danger-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .skulls{font-size:1.3rem;letter-spacing:2px}
+  .danger-desc{font-size:.75rem;color:var(--red);font-weight:600}
+
+  .disclaimer{background:rgba(220,38,38,.08);border:1px solid var(--darkred);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:.8rem;color:var(--muted);display:none}
+  .disclaimer.show{display:block}
+  .disclaimer strong{color:var(--red)}
+
+  .share-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;display:none}
+  .share-row.show{display:flex}
+  .btn-share{padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:600;background:#222;border:1px solid #333;color:var(--text);cursor:pointer;transition:all .15s}
+  .btn-share:hover{background:#333;border-color:var(--red)}
+  .copied-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--red);color:#fff;padding:10px 24px;border-radius:8px;font-weight:600;font-size:.85rem;transition:transform .3s;z-index:100}
+  .copied-toast.show{transform:translateX(-50%) translateY(0)}
+
+  .history-section{margin-top:32px}
+  .history-section h2{font-family:'Creepster',cursive;font-size:1.4rem;color:var(--red);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .history-item{background:var(--card);border:1px solid #2a1515;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+  .history-item:hover{border-color:var(--darkred)}
+  .history-problem{font-size:.75rem;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .history-advice{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .history-meta{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+  .history-skulls{font-size:.9rem}
+  .history-time{font-size:.7rem;color:var(--muted)}
+  .no-history{color:var(--muted);font-size:.85rem;font-style:italic}
+  .btn-clear{padding:6px 14px;border-radius:6px;font-size:.7rem;font-weight:600;background:transparent;border:1px solid #333;color:var(--muted);cursor:pointer;margin-left:auto}
+  .btn-clear:hover{border-color:var(--red);color:var(--red)}
+
+  .gong-flash{position:fixed;inset:0;background:rgba(220,38,38,.15);pointer-events:none;opacity:0;transition:opacity .15s;z-index:50}
+  .gong-flash.active{opacity:1}
+
+  @media(max-width:480px){
+    .container{padding:16px 12px}
+    .advice-text{font-size:1.15rem}
+    .btn{padding:12px 20px;font-size:.95rem}
+  }
+</style>
+</head>
+<body>
+<div class="gong-flash" id="gongFlash"></div>
+<div class="copied-toast" id="copiedToast">Copied to clipboard!</div>
+
+<div class="container">
+  <h1>Bad Advice Generator</h1>
+  <p class="subtitle">The worst guidance for every situation. Guaranteed terrible.</p>
+
+  <div class="input-area">
+    <textarea id="problemInput" placeholder="Describe your problem... (e.g. &quot;I'm always late&quot;, &quot;My boss hates me&quot;, &quot;I can't sleep&quot;)"></textarea>
+    <button class="btn btn-main" id="adviceBtn" onclick="generateAdvice()">Give Me Bad Advice</button>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="advice-text" id="adviceText"></div>
+    <div class="danger-row">
+      <span class="danger-label">Danger:</span>
+      <span class="skulls" id="dangerSkulls"></span>
+      <span class="danger-desc" id="dangerDesc"></span>
+    </div>
+  </div>
+
+  <div class="disclaimer" id="disclaimer">
+    <strong>Actually Don't.</strong> This is satirical entertainment only. Following any of this advice would be a genuinely terrible idea. Please do the opposite of whatever was suggested above.
+  </div>
+
+  <div class="share-row" id="shareRow">
+    <button class="btn-share" onclick="copyAdvice()">Copy</button>
+    <button class="btn-share" onclick="shareTwitter()">Share on X</button>
+    <button class="btn-share" onclick="shareGeneric()">Share</button>
+  </div>
+
+  <div class="history-section">
+    <h2>Past Bad Advice <button class="btn-clear" onclick="clearHistory()">Clear</button></h2>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = {
+  finances: {
+    keywords: ['broke','bills','budget','afford','expensive','cheap','spending','frugal','splurge','purchase','shopping','overspend','bargain','thrifty','economize','wasteful'],
+    advice: [
+      "Have you tried buying more things?",
+      "Borrow from everyone you know. It's called networking.",
+      "Declare yourself a sovereign citizen exempt from all obligations.",
+      "Spend more to feel better about having less. Retail therapy is real therapy.",
+      "Quit your job. Obligations were holding you back from your true potential.",
+      "Become a consultant despite having zero experience in anything.",
+      "Just stop opening your mail. Problem solved.",
+      "Move to a more expensive apartment. You deserve it.",
+      "Start collecting luxury items. They're an investment in vibes.",
+      "Give away everything you own. Minimalism is trendy right now.",
+      "Only eat at restaurants. Cooking is for people with too much free time.",
+      "Treat yourself every single day. You've earned it by existing.",
+    ],
+    danger: [3,4,4,3,4,3,3,4,3,3,3,3]
+  },
+  relationship: {
+    keywords: ['relationship','girlfriend','boyfriend','partner','spouse','husband','wife','dating','date','love','breakup','break up','marriage','married','divorce','crush','ex','cheating','argue','fight','jealous','text','ghost','romance','tinder','hinge'],
+    advice: [
+      "Definitely send that 3am text.",
+      "Check their phone while they're sleeping. Trust is overrated.",
+      "If they haven't replied in 5 minutes, send 47 more messages.",
+      "Bring up your ex on every date. Comparison builds character.",
+      "Give them an ultimatum. People love ultimatums.",
+      "Post a passive-aggressive subtweet. That'll fix everything.",
+      "Start dating their best friend to make them jealous.",
+      "Propose on the first date. Efficiency is key.",
+      "Communicate exclusively through memes and song lyrics.",
+      "Ghost them for a week then act like nothing happened.",
+      "Show up at their workplace unannounced with a boombox.",
+      "Keep a detailed spreadsheet of every argument you've won.",
+    ],
+    danger: [3,5,4,3,4,3,5,4,3,4,4,4]
+  },
+  career: {
+    keywords: ['job','work','boss','career','promotion','interview','resume','fired','hired','office','colleague','coworker','manager','meeting','deadline','project','client','professional','corporate','quit','unemployed','position','company','startup','business','skill','linkedin','presentation','negotiate'],
+    advice: [
+      "Just tell your boss they're wrong in the meeting.",
+      "Reply-all to that company-wide message with your hot take.",
+      "Put 'CEO of Life' as your LinkedIn title.",
+      "Show up to the interview in pajamas. It shows confidence.",
+      "CC your boss's boss on every complaint.",
+      "Take a 3-hour lunch. Assert dominance.",
+      "Start every presentation with 'I didn't prepare for this.'",
+      "Burn bridges. Bridges are expensive to maintain anyway.",
+      "Announce your side hustle to the entire company.",
+      "Negotiate by crying. Works every time.",
+      "Tell your interviewer about your dream job. At a different company.",
+      "Use comic sans in all professional communications.",
+    ],
+    danger: [4,5,2,3,5,3,4,5,4,3,3,3]
+  },
+  health: {
+    keywords: ['health','sick','doctor','sleep','tired','exercise','diet','weight','gym','stress','anxiety','depressed','headache','pain','eat','food','fitness','workout','mental','therapy','ill','vitamin','energy','run','yoga','insomnia','exhausted'],
+    advice: [
+      "Sleep is for the weak. Replace it with espresso.",
+      "WebMD says it's definitely the worst possible thing.",
+      "Cure your insomnia by worrying about not sleeping.",
+      "Replace vegetables with gummy vitamins. Same thing basically.",
+      "Stress eat at 2am. Midnight resets the counter.",
+      "Skip the doctor. Just search your symptoms until you panic.",
+      "Exercise by running from your problems.",
+      "Fight your anxiety with more caffeine.",
+      "The food pyramid is a conspiracy. Live on pizza alone.",
+      "Handle stress by bottling up your emotions forever.",
+      "Start an extreme diet you found on a random blog.",
+      "If it hurts, just ignore it. Pain is just a suggestion.",
+    ],
+    danger: [3,3,3,2,3,4,3,4,3,4,3,4]
+  },
+  technology: {
+    keywords: ['computer','phone','app','website','code','programming','software','bug','crash','wifi','internet','update','error','laptop','screen','backup','tech','digital','algorithm','device','download','install','broken','fix','slow','virus','glitch'],
+    advice: [
+      "Turn it off and never turn it on again.",
+      "Use the same simple word for all your logins. Consistency is key.",
+      "Delete system files. They're just taking up space.",
+      "Click every link in your junk folder. You might actually win something.",
+      "Never update your software. Updates are planned obsolescence.",
+      "Store all important info in a text file on your desktop.",
+      "Fix the bug by adding more bugs until they cancel each other out.",
+      "Reuse the same credentials everywhere. Simplicity is elegance.",
+      "Download more RAM from the internet.",
+      "Reply to that prince who keeps emailing you. Be polite.",
+      "Disable your firewall. It's slowing you down.",
+      "Stack overflow said it, so it must be right. Copy paste everything.",
+    ],
+    danger: [2,5,5,5,3,4,3,5,2,4,5,3]
+  },
+  social: {
+    keywords: ['party','friend','social','awkward','conversation','people','talk','shy','introvert','extrovert','event','networking','group','crowd','embarrass','public','speak','opinion','debate','argue','neighbor','roommate','invite','hangout'],
+    advice: [
+      "Start every conversation with an unsolicited opinion.",
+      "One-up everyone's stories. They'll admire your superiority.",
+      "Overshare immediately. Nothing bonds people like TMI.",
+      "Correct everyone's grammar mid-conversation.",
+      "Show people your phone screen without warning.",
+      "Talk about yourself for 45 minutes straight. People love listening.",
+      "Invite yourself to everything. Boundaries are suggestions.",
+      "Start political debates at dinner parties. Great icebreaker.",
+      "Leave every conversation without saying goodbye.",
+      "Give brutal honesty when no one asked for it.",
+      "Bring your guitar to every gathering, unasked.",
+      "Tell everyone their favorite things are bad, actually.",
+    ],
+    danger: [3,3,3,3,3,4,3,4,2,4,3,3]
+  },
+  school: {
+    keywords: ['school','study','exam','test','homework','grade','professor','teacher','college','university','class','student','learn','assignment','essay','paper','thesis','GPA','fail','pass','lecture','degree','education','textbook'],
+    advice: [
+      "Write your entire thesis the night before. Pressure makes diamonds.",
+      "Cite Wikipedia as your only source.",
+      "Skip class. The real education is on YouTube.",
+      "Copy everything. Imitation is the sincerest form of flattery.",
+      "Tell your professor their course is useless. They'll respect the honesty.",
+      "Study by osmosis. Sleep on your textbook.",
+      "Drop out and start a podcast instead.",
+      "Submit the assignment in comic sans. Stand out from the crowd.",
+      "Argue with the professor about the answer key.",
+      "Take notes by just vibing and hoping you remember later.",
+      "Pull three all-nighters in a row before finals. Sleep is for after.",
+      "Use only the first result from any search engine. Research done.",
+    ],
+    danger: [3,3,3,5,4,2,4,2,4,3,4,3]
+  },
+  family: {
+    keywords: ['parent','mom','dad','sibling','brother','sister','kids','children','family','mother','father','in-law','thanksgiving','holiday','baby','toddler','teenager','teen','grandma','grandpa','uncle','aunt','cousin'],
+    advice: [
+      "Bring up politics at Thanksgiving. The turkey needs more drama.",
+      "Compare your siblings to each other constantly. Motivation!",
+      "Let your toddler make all household decisions.",
+      "Reply to family group chat with 'K' only.",
+      "Tell your parents exactly what you think of their parenting. In detail.",
+      "Give unsolicited parenting advice to everyone with kids.",
+      "Announce major life decisions via family group text.",
+      "Remind everyone of embarrassing childhood stories at gatherings.",
+      "Take sides in every family argument. Loudly.",
+      "Post family drama on social media. Transparency is a virtue.",
+      "Re-gift birthday presents within the same family.",
+      "Critique the holiday meal while eating it.",
+    ],
+    danger: [4,4,5,2,4,3,3,3,4,5,3,3]
+  },
+  cooking: {
+    keywords: ['cook','cooking','recipe','kitchen','bake','baking','meal','dinner','lunch','breakfast','food','ingredient','oven','stove','grill','microwave','burnt','recipe','chef'],
+    advice: [
+      "Eyeball every measurement. Recipes are just suggestions.",
+      "Set the oven to max. Cook everything faster.",
+      "Substitute literally any ingredient with ketchup.",
+      "Never wash your cutting board. It's seasoning.",
+      "Deep fry everything. Even cereal.",
+      "Add more garlic than any recipe calls for. Then triple it.",
+      "Ignore expiration dates. They're just corporate fear-mongering.",
+      "Use a hair dryer when you can't find a blowtorch.",
+      "Microwave everything. Even steak. Especially steak.",
+      "Taste-test raw everything. Your immune system needs the practice.",
+      "Cook without a timer. Your instincts know when it's done.",
+      "Season with whatever's closest to the stove. Floor spice is nice.",
+    ],
+    danger: [3,4,2,4,3,2,4,3,2,4,3,2]
+  },
+  pets: {
+    keywords: ['dog','cat','pet','puppy','kitten','animal','vet','walk','bark','meow','fish','hamster','bird','parrot','turtle','rabbit','ferret'],
+    advice: [
+      "Let your cat make all the household rules. They already do anyway.",
+      "Teach your dog to drive. It's the next logical step.",
+      "Name your fish something long and complicated. They appreciate it.",
+      "Let your parrot answer your phone calls.",
+      "Dress your pet in a full suit for every occasion.",
+      "Explain your problems to your dog. They're better than therapy.",
+      "Get a pet to fix your other pet's behavioral issues.",
+      "Let your cat walk you. Reverse the power dynamic.",
+      "Train your hamster to file your paperwork.",
+      "Have a serious talk with your goldfish about boundaries.",
+      "Let your dog pick your outfits. They have better taste.",
+      "Adopt 47 more cats. What's one more at this point?",
+    ],
+    danger: [2,4,1,3,2,1,3,2,2,1,2,4]
+  },
+  general: {
+    advice: [
+      "Ignore it. If you don't acknowledge the problem, it doesn't exist.",
+      "Panic. That always helps.",
+      "Make it someone else's problem. Delegation is leadership.",
+      "Do the exact opposite of what everyone suggests.",
+      "Have you tried blaming Mercury retrograde?",
+      "Post about it on social media and let strangers decide.",
+      "Procrastinate until the problem solves itself or gets worse.",
+      "Overthink it until 3am, then decide while exhausted.",
+      "Handle it the same way that didn't work last time.",
+      "Ask for advice, then do none of it. Classic.",
+      "Assume the worst. Pessimism is just realism with experience.",
+      "Solve it with a dramatic life change you haven't thought through.",
+      "Add more problems so this one seems smaller by comparison.",
+      "Pretend you're fine. Fake it until you break it.",
+      "Have you tried just... not having that problem?",
+      "Wing it. Planning is for people who don't trust chaos.",
+      "Make a pros and cons list, then ignore it.",
+      "Sleep on it. For several months.",
+    ],
+    danger: [3,3,4,3,2,3,3,3,3,2,2,4,4,3,2,3,2,3]
+  }
+};
+
+const DANGER_LABELS = {
+  1: 'Mildly inadvisable',
+  2: 'Questionable at best',
+  3: 'Genuinely terrible',
+  4: 'Life-altering bad',
+  5: 'Catastrophic. Do NOT.'
+};
+
+let currentAdvice = null;
+let history = JSON.parse(localStorage.getItem('badAdviceHistory') || '[]');
+
+// Audio context for gong
+let audioCtx = null;
+function playGong() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const gain2 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(65, now);
+    osc1.frequency.exponentialRampToValueAtTime(55, now + 2);
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(130, now);
+    osc2.frequency.exponentialRampToValueAtTime(110, now + 1.5);
+    gain.gain.setValueAtTime(0.4, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+    gain2.gain.setValueAtTime(0.2, now);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+    osc1.connect(gain).connect(audioCtx.destination);
+    osc2.connect(gain2).connect(audioCtx.destination);
+    osc1.start(now); osc1.stop(now + 2.5);
+    osc2.start(now); osc2.stop(now + 1.5);
+    // Noise burst for metallic hit
+    const bufferSize = audioCtx.sampleRate * 0.1;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.3, now);
+    noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 800;
+    noise.connect(filter).connect(noiseGain).connect(audioCtx.destination);
+    noise.start(now); noise.stop(now + 0.3);
+  } catch(e) {}
+  // Visual flash
+  const flash = document.getElementById('gongFlash');
+  flash.classList.add('active');
+  setTimeout(() => flash.classList.remove('active'), 200);
+}
+
+function detectCategory(text) {
+  const lower = text.toLowerCase();
+  let bestCat = null, bestScore = 0;
+  for (const [cat, data] of Object.entries(CATEGORIES)) {
+    if (cat === 'general') continue;
+    let score = 0;
+    for (const kw of data.keywords) {
+      if (lower.includes(kw)) score++;
+    }
+    if (score > bestScore) { bestScore = score; bestCat = cat; }
+  }
+  return bestScore > 0 ? bestCat : 'general';
+}
+
+function generateAdvice() {
+  const input = document.getElementById('problemInput').value.trim();
+  if (!input) {
+    document.getElementById('problemInput').focus();
+    return;
+  }
+
+  const cat = detectCategory(input);
+  const catData = CATEGORIES[cat];
+  const idx = Math.floor(Math.random() * catData.advice.length);
+  const advice = catData.advice[idx];
+  const danger = catData.danger ? catData.danger[idx] : (2 + Math.floor(Math.random() * 3));
+
+  currentAdvice = { problem: input, advice, danger, category: cat, time: Date.now() };
+
+  // Display
+  document.getElementById('adviceText').textContent = '\u201C' + advice + '\u201D';
+  document.getElementById('dangerSkulls').textContent = '\u{1F480}'.repeat(danger);
+  document.getElementById('dangerDesc').textContent = DANGER_LABELS[danger];
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('disclaimer').classList.add('show');
+  document.getElementById('shareRow').classList.add('show');
+
+  playGong();
+
+  // Save to history
+  history.unshift(currentAdvice);
+  if (history.length > 50) history.pop();
+  localStorage.setItem('badAdviceHistory', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (history.length === 0) {
+    list.innerHTML = '<div class="no-history">No bad advice yet. Lucky you.</div>';
+    return;
+  }
+  list.innerHTML = history.map((h, i) => {
+    const ago = timeAgo(h.time);
+    const skulls = '\u{1F480}'.repeat(h.danger);
+    return '<div class="history-item" onclick="replayHistory(' + i + ')">' +
+      '<div class="history-problem">' + esc(h.problem) + '</div>' +
+      '<div class="history-advice">' + esc(h.advice) + '</div>' +
+      '<div class="history-meta"><span class="history-skulls">' + skulls + '</span><span class="history-time">' + ago + '</span></div>' +
+    '</div>';
+  }).join('');
+}
+
+function replayHistory(i) {
+  const h = history[i];
+  document.getElementById('problemInput').value = h.problem;
+  document.getElementById('adviceText').textContent = '\u201C' + h.advice + '\u201D';
+  document.getElementById('dangerSkulls').textContent = '\u{1F480}'.repeat(h.danger);
+  document.getElementById('dangerDesc').textContent = DANGER_LABELS[h.danger];
+  document.getElementById('resultCard').classList.add('show');
+  document.getElementById('disclaimer').classList.add('show');
+  document.getElementById('shareRow').classList.add('show');
+  currentAdvice = h;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function clearHistory() {
+  history = [];
+  localStorage.removeItem('badAdviceHistory');
+  renderHistory();
+}
+
+function copyAdvice() {
+  if (!currentAdvice) return;
+  var text = 'Problem: ' + currentAdvice.problem + '\nBad Advice: "' + currentAdvice.advice + '"\nDanger: ' + '\u{1F480}'.repeat(currentAdvice.danger) + '\n\nActually Don\'t. This is terrible advice.';
+  navigator.clipboard.writeText(text).then(function() { showToast(); });
+}
+
+function shareTwitter() {
+  if (!currentAdvice) return;
+  var text = encodeURIComponent('Bad Advice for "' + currentAdvice.problem.slice(0,60) + '": "' + currentAdvice.advice + '" ' + '\u{1F480}'.repeat(currentAdvice.danger) + '\n\nActually Don\'t.');
+  window.open('https://twitter.com/intent/tweet?text=' + text, '_blank');
+}
+
+function shareGeneric() {
+  if (!currentAdvice) return;
+  if (navigator.share) {
+    navigator.share({
+      title: 'Bad Advice Generator',
+      text: 'Problem: ' + currentAdvice.problem + '\nBad Advice: "' + currentAdvice.advice + '"\nDanger: ' + '\u{1F480}'.repeat(currentAdvice.danger) + '\n\nActually Don\'t.'
+    }).catch(function() {});
+  } else {
+    copyAdvice();
+  }
+}
+
+function showToast() {
+  var t = document.getElementById('copiedToast');
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+function timeAgo(ts) {
+  var diff = Date.now() - ts;
+  var mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  var hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  var days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+
+function esc(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Enter key support
+document.getElementById('problemInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); generateAdvice(); }
+});
+
+// Init
+renderHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fantasy Draft Roaster</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0a0a0a;
+  color: #e0e0e0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+header {
+  width: 100%;
+  background: linear-gradient(180deg, #1a1a2e 0%, #0a0a0a 100%);
+  border-bottom: 3px solid #d4001f;
+  padding: 24px 16px 16px;
+  text-align: center;
+}
+header h1 {
+  font-size: 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+}
+header h1 span { color: #d4001f; }
+header p {
+  color: #888;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  font-style: italic;
+}
+.container {
+  width: 100%;
+  max-width: 560px;
+  padding: 24px 16px;
+}
+label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+input, select {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 1rem;
+  background: #151520;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  margin-bottom: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus { border-color: #d4001f; }
+select option { background: #151520; }
+button#roast-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background: #d4001f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+button#roast-btn:hover { background: #ff1a3a; }
+button#roast-btn:active { transform: scale(0.98); }
+#result {
+  display: none;
+  margin-top: 28px;
+  background: #111118;
+  border: 1px solid #222;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.grade-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #1a0005 0%, #2a0010 100%);
+  border-bottom: 1px solid #222;
+}
+.grade-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #888;
+}
+.grade {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #d4001f;
+  line-height: 1;
+}
+.grade-suffix {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 2px;
+}
+.roast-body {
+  padding: 20px;
+}
+.roast-player {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.roast-pos {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+}
+.roast-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #ccc;
+}
+.share-row {
+  display: flex;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid #222;
+}
+.share-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #1a1a2e;
+  color: #aaa;
+  border: 1px solid #333;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.share-btn:hover { background: #252540; color: #fff; }
+.copied { background: #0a3d0a !important; color: #4f4 !important; border-color: #0a3d0a !important; }
+footer {
+  margin-top: auto;
+  padding: 20px;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #444;
+}
+@media (max-width: 400px) {
+  header h1 { font-size: 1.5rem; }
+  .grade { font-size: 2rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fantasy Draft <span>Roaster</span></h1>
+  <p>Your picks are bad and you should feel bad</p>
+</header>
+
+<div class="container">
+  <label for="player">Player Name</label>
+  <input type="text" id="player" placeholder="e.g. Baker Mayfield" autocomplete="off">
+
+  <label for="position">Position</label>
+  <select id="position">
+    <option value="QB">QB - Quarterback</option>
+    <option value="RB">RB - Running Back</option>
+    <option value="WR">WR - Wide Receiver</option>
+    <option value="TE">TE - Tight End</option>
+    <option value="K">K - Kicker</option>
+    <option value="DEF">DEF - Defense</option>
+  </select>
+
+  <button id="roast-btn">Roast This Pick</button>
+
+  <div id="result">
+    <div class="grade-bar">
+      <span class="grade-label">Draft Grade</span>
+      <div><span class="grade" id="grade-letter"></span><span class="grade-suffix" id="grade-minus"></span></div>
+    </div>
+    <div class="roast-body">
+      <div class="roast-player" id="r-player"></div>
+      <div class="roast-pos" id="r-pos"></div>
+      <div class="roast-text" id="r-text"></div>
+    </div>
+    <div class="share-row">
+      <button class="share-btn" id="copy-btn">Copy Roast</button>
+      <button class="share-btn" id="tweet-btn">Share on X</button>
+    </div>
+  </div>
+</div>
+
+<footer>Not affiliated with ESPN, NFL, or anyone who knows what they're doing.</footer>
+
+<script>
+const roasts = {
+  QB: [
+    "Bold choice. Last year he threw more interceptions than touchdowns. But sure.",
+    "Ah yes, the QB whose arm talent is rivaled only by your uncle at Thanksgiving.",
+    "This QB's completion percentage makes a coin flip look reliable.",
+    "He's got a cannon for an arm. Unfortunately, he aims it at the other team.",
+    "You drafted a QB whose biggest highlight reel is on the opposing team's website.",
+    "His pocket presence is less 'Tom Brady' and more 'lost tourist in Times Square.'",
+    "This QB has thrown so many picks, defensive backs send him Christmas cards.",
+    "Bold strategy drafting a QB who treats the red zone like it's haunted.",
+    "He scrambles like eggs. Messy, all over the place, and nobody asked for it.",
+    "His deep ball accuracy suggests he's actually aiming for the parking lot.",
+    "Even his offensive line has given up pretending to block for him.",
+    "This QB's game film is used as a cautionary tale at coaching clinics.",
+    "He audibles at the line like he's reading a menu in a foreign language.",
+    "The only spiral he's known for is his career trajectory. Downward.",
+    "His QB rating is lower than the temperature at a December game in Green Bay.",
+    "He stares down receivers like he's trying to win a blinking contest.",
+    "Two-minute drill? More like a two-minute fire drill with this guy.",
+    "His handoffs are the best part of his game. Think about that."
+  ],
+  RB: [
+    "A running back who runs like he's being chased by commitment.",
+    "This RB's yards after contact are roughly the same as his yards before contact. Zero.",
+    "He fumbles so often the ball has a restraining order against him.",
+    "Drafting this RB is like paying full price for a car with no engine.",
+    "His burst through the hole is more of a polite suggestion.",
+    "This RB hits the hole like he's knocking on a door and hoping nobody answers.",
+    "He's part of a committee backfield. The committee voted him out.",
+    "His vision is so bad he makes wrong turns on a one-way street.",
+    "Averaging 2.8 yards per carry but sure, THIS is his breakout year.",
+    "He's elusive alright. Elusive to fantasy points.",
+    "His pass-blocking makes the QB wish he'd stayed in college.",
+    "The coaching staff uses him on third down. Third down and punt.",
+    "He cuts like a butter knife. In the wrong direction.",
+    "His touchdown celebration is so unpracticed. Wonder why.",
+    "This RB treats the goal line like a suggestion, not a destination.",
+    "He's on a pitch count. The count is 'as few as possible.'"
+  ],
+  WR: [
+    "This WR runs routes like he's following a GPS with bad signal.",
+    "He drops more passes than your phone drops calls in a tunnel.",
+    "His route tree has one branch. It's the wrong one.",
+    "This receiver couldn't get separation from his own shadow.",
+    "He has hands of stone. Actually, stone might catch better.",
+    "His YAC is so low it stands for 'You Actually Chose him?'",
+    "Contested catches? He doesn't even contest. He just watches.",
+    "This WR gets targeted like a spam email. Frequently ignored.",
+    "He runs a 4.6 forty. In his dreams. It's actually 4.8.",
+    "The DB covering him takes naps during the game. Still gets picks.",
+    "His highlight tape is 30 seconds long. Including the intro.",
+    "He has 'WR1 upside.' And WR58 downside. Guess which shows up.",
+    "This receiver makes contested catches look impossible. Because for him, they are.",
+    "He body-catches everything. His body also drops everything.",
+    "The only thing this WR stretches is your patience.",
+    "His comeback route is a metaphor for his entire career. Going backwards."
+  ],
+  TE: [
+    "You drafted a tight end. In the first five rounds. We need to talk.",
+    "This TE blocks like a traffic cone. And catches like one too.",
+    "Tight end is the 'we have WR at home' of fantasy positions.",
+    "He's the TE your league mates wanted you to draft. Think about why.",
+    "His usage in the red zone is purely decorative.",
+    "This TE gets one target a game. He drops it.",
+    "He's a 'matchup nightmare.' For you. Every week. On your bench.",
+    "The only thing tight about this end is the window of games where he's useful. It's zero games.",
+    "He runs seam routes like he's wading through quicksand.",
+    "You could have drafted literally anyone else. You chose a tight end.",
+    "This TE is the human equivalent of a bye week.",
+    "His blocking is why the OC pretends he doesn't exist in the passing game.",
+    "Fantasy experts say stream tight ends. This is why.",
+    "He's on pace for 400 yards. For the season. Total.",
+    "The ghost of fantasy TEs past, present, and future all agree: don't."
+  ],
+  K: [
+    "You drafted a kicker. Before the last round. Seek help.",
+    "This kicker's leg is strong. His accuracy, however, is on vacation.",
+    "Imagine telling your league you're excited about a kicker pick.",
+    "He misses field goals from distances most people can throw a football.",
+    "A kicker. You used a draft pick on a kicker. Let that sink in.",
+    "His PAT percentage makes you question the concept of 'automatic.'",
+    "This kicker has iced himself more times than the opposing coach has.",
+    "You drafted the position that gets cut first when rosters shrink.",
+    "His kickoffs don't reach the end zone. They barely reach midfield.",
+    "The wind is his enemy. Also, calm days. And domes. And outdoors.",
+    "He shanks kicks like he's playing golf. Badly.",
+    "Fantasy football: the only place where drafting a kicker feels like a personality flaw.",
+    "This kicker's range tops out at 38 yards. On a good day. With a tailwind.",
+    "He celebrates made field goals like he just won the Super Bowl. It was a PAT."
+  ],
+  DEF: [
+    "You drafted a defense. Your real defense should be against making picks like this.",
+    "This defense gives up more points than a clearance sale.",
+    "They're called a defense, but the offense has to outscore their mistakes.",
+    "Streaming defenses is free. You spent a pick. On purpose.",
+    "This defense has more holes than a screen door on a submarine.",
+    "Their pass rush arrives sometime next Tuesday.",
+    "Opposing QBs see this defense and start planning their touchdown celebrations.",
+    "This defense couldn't stop a nosebleed.",
+    "Their secondary is more of a suggestion than an actual coverage unit.",
+    "The only turnovers this defense creates are in the coaching staff.",
+    "They give up garbage time points. Also first-quarter points. And every-quarter points.",
+    "This defense makes backup QBs look like MVPs.",
+    "You could stream a defense off waivers and do better. Every single week.",
+    "Their run defense is optional. They opted out.",
+    "Opposing coaches don't even game plan for them. They just show up."
+  ]
+};
+
+const grades = ['D+', 'D', 'D-', 'F+', 'F', 'F', 'F-'];
+const gradeColors = {
+  'D+': '#d4001f', 'D': '#d4001f', 'D-': '#aa0018',
+  'F+': '#880010', 'F': '#880010', 'F-': '#660008'
+};
+
+function roast() {
+  const name = document.getElementById('player').value.trim();
+  if (!name) { document.getElementById('player').focus(); return; }
+  const pos = document.getElementById('position').value;
+  const pool = roasts[pos];
+  const text = pool[Math.floor(Math.random() * pool.length)];
+  const grade = grades[Math.floor(Math.random() * grades.length)];
+  const letter = grade[0];
+  const suffix = grade.slice(1);
+
+  document.getElementById('grade-letter').textContent = letter;
+  document.getElementById('grade-minus').textContent = suffix;
+  document.getElementById('grade-letter').style.color = gradeColors[grade];
+  document.getElementById('r-player').textContent = name;
+  document.getElementById('r-pos').textContent = pos;
+  document.getElementById('r-text').textContent = text;
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.getElementById('roast-btn').addEventListener('click', roast);
+document.getElementById('player').addEventListener('keydown', e => { if (e.key === 'Enter') roast(); });
+
+document.getElementById('copy-btn').addEventListener('click', function() {
+  const name = document.getElementById('r-player').textContent;
+  const pos = document.getElementById('r-pos').textContent;
+  const grade = document.getElementById('grade-letter').textContent + document.getElementById('grade-minus').textContent;
+  const text = document.getElementById('r-text').textContent;
+  const msg = `DRAFT GRADE: ${grade}\n${name} (${pos})\n\n${text}\n\n-- Fantasy Draft Roaster`;
+  navigator.clipboard.writeText(msg).then(() => {
+    this.textContent = 'Copied!';
+    this.classList.add('copied');
+    setTimeout(() => { this.textContent = 'Copy Roast'; this.classList.remove('copied'); }, 2000);
+  });
+});
+
+document.getElementById('tweet-btn').addEventListener('click', function() {
+  const name = document.getElementById('r-player').textContent;
+  const grade = document.getElementById('grade-letter').textContent + document.getElementById('grade-minus').textContent;
+  const text = document.getElementById('r-text').textContent;
+  const tweet = `DRAFT GRADE: ${grade} -- ${name}\n\n${text}\n\n#FantasyFootball`;
+  window.open('https://x.com/intent/tweet?text=' + encodeURIComponent(tweet), '_blank');
+});
+</script>
+</body>
+</html>

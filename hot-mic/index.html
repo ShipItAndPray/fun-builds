@@ -3,25 +3,36 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hot Mic - Oops, Still On</title>
+<title>Hot Mic - Accidentally On Air</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     background: #0a0a0a;
     color: #e0e0e0;
     min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px;
+    overflow-x: hidden;
   }
 
-  .header {
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,0,0,0.015) 2px,
+      rgba(255,0,0,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  header {
     text-align: center;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 500px;
+    padding: 20px 16px 10px;
+    position: relative;
   }
 
   .live-badge {
@@ -30,87 +41,137 @@
     gap: 8px;
     background: #cc0000;
     color: white;
-    padding: 6px 16px;
-    border-radius: 4px;
     font-weight: 900;
     font-size: 14px;
+    padding: 6px 16px;
+    border-radius: 4px;
     letter-spacing: 3px;
+    animation: livePulse 1.5s ease-in-out infinite;
     margin-bottom: 12px;
-    animation: pulse-bg 1.5s ease-in-out infinite;
   }
+
   .live-dot {
     width: 10px; height: 10px;
     background: white;
     border-radius: 50%;
-    animation: blink 1s infinite;
+    animation: dotBlink 1s step-end infinite;
   }
-  @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
-  @keyframes pulse-bg { 0%,100% { background: #cc0000; } 50% { background: #ff1a1a; } }
+
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(204,0,0,0.6); }
+    50% { box-shadow: 0 0 20px rgba(204,0,0,0.9), 0 0 40px rgba(204,0,0,0.3); }
+  }
+
+  @keyframes dotBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
 
   h1 {
-    font-size: 22px;
+    font-size: 28px;
+    font-weight: 900;
     color: #ff3333;
+    text-shadow: 0 0 20px rgba(255,0,0,0.3);
     margin-bottom: 4px;
   }
-  .subtitle { font-size: 13px; color: #666; }
+
+  .subtitle {
+    font-size: 13px;
+    color: #888;
+    font-style: italic;
+  }
 
   .controls {
-    width: 100%;
-    max-width: 500px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
   }
 
-  label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .context-selector {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 500px;
+  }
 
-  select {
-    width: 100%;
-    padding: 12px;
+  .context-btn {
     background: #1a1a1a;
-    color: #e0e0e0;
     border: 1px solid #333;
-    border-radius: 8px;
-    font-size: 16px;
+    color: #aaa;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 13px;
     cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
+    transition: all 0.2s;
   }
 
-  .mic-btn {
-    width: 100%;
-    padding: 16px;
+  .context-btn:hover { border-color: #ff3333; color: #ff6666; }
+  .context-btn.active {
+    background: #cc0000;
+    border-color: #cc0000;
+    color: white;
+    font-weight: 600;
+  }
+
+  .big-btn {
     background: linear-gradient(135deg, #cc0000, #990000);
     color: white;
     border: none;
-    border-radius: 12px;
+    padding: 18px 36px;
+    border-radius: 50px;
     font-size: 18px;
-    font-weight: 700;
+    font-weight: 800;
     cursor: pointer;
-    transition: transform 0.1s, box-shadow 0.2s;
-    box-shadow: 0 4px 20px rgba(204, 0, 0, 0.4);
+    transition: all 0.15s;
+    box-shadow: 0 4px 20px rgba(204,0,0,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
   }
-  .mic-btn:hover { transform: scale(1.02); box-shadow: 0 6px 28px rgba(204, 0, 0, 0.6); }
-  .mic-btn:active { transform: scale(0.98); }
+
+  .big-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(204,0,0,0.6);
+  }
+
+  .big-btn:active { transform: scale(0.97); }
+
+  .big-btn.speaking {
+    animation: btnPulse 0.3s ease-in-out infinite alternate;
+  }
+
+  @keyframes btnPulse {
+    from { box-shadow: 0 4px 20px rgba(204,0,0,0.4); }
+    to { box-shadow: 0 4px 40px rgba(204,0,0,0.8), 0 0 60px rgba(255,0,0,0.3); }
+  }
 
   .damage-section {
     width: 100%;
-    max-width: 500px;
-    margin-bottom: 16px;
+    max-width: 400px;
+    padding: 0 16px;
   }
+
   .damage-label {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
-    color: #888;
-    margin-bottom: 4px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    color: #888;
   }
-  .damage-track {
+
+  .damage-level-text {
+    color: #ff3333;
+    font-weight: 900;
+  }
+
+  .damage-bar-bg {
     width: 100%;
     height: 12px;
     background: #1a1a1a;
@@ -118,411 +179,632 @@
     overflow: hidden;
     border: 1px solid #333;
   }
-  .damage-fill {
+
+  .damage-bar {
     height: 100%;
     width: 0%;
     border-radius: 6px;
-    transition: width 0.5s ease, background 0.5s ease;
-    background: #33cc33;
-  }
-  .damage-text {
-    text-align: center;
-    font-size: 11px;
-    color: #666;
-    margin-top: 4px;
-    min-height: 16px;
+    transition: width 0.6s ease, background 0.6s ease;
+    background: #22cc44;
   }
 
-  .chat {
-    width: 100%;
-    max-width: 500px;
-    flex: 1;
-    overflow-y: auto;
+  .damage-bar.low { background: #22cc44; }
+  .damage-bar.medium { background: #ffaa00; }
+  .damage-bar.high { background: #ff4400; }
+  .damage-bar.critical { background: #cc0000; animation: criticalFlash 0.5s infinite; }
+
+  @keyframes criticalFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .chat-area {
+    padding: 16px;
+    max-width: 600px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-bottom: 20px;
+    gap: 12px;
+    min-height: 200px;
   }
 
-  .msg {
+  .chat-bubble {
     background: #1a1a1a;
     border: 1px solid #2a2a2a;
-    border-radius: 12px;
-    padding: 12px 16px;
-    animation: slideIn 0.3s ease;
+    border-radius: 16px;
+    padding: 14px 18px;
     position: relative;
+    animation: bubbleIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 85%;
   }
-  .msg .warning {
+
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .mic-warning {
     display: inline-block;
     background: #cc0000;
     color: white;
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
     padding: 2px 8px;
     border-radius: 3px;
+    letter-spacing: 1px;
     margin-bottom: 6px;
-    animation: blink 1.2s infinite;
+    animation: warningBlink 1.2s ease-in-out infinite;
   }
-  .msg .text {
-    font-size: 15px;
+
+  @keyframes warningBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .confession-text {
+    font-size: 16px;
     line-height: 1.5;
+    color: #e8e8e8;
   }
-  .msg .context-tag {
-    font-size: 11px;
-    color: #555;
+
+  .share-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #222;
+    border: 1px solid #444;
+    color: #aaa;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.2s;
+  }
+
+  .share-btn:hover { border-color: #ff3333; color: #ff6666; }
+
+  .escalation-tag {
+    font-size: 10px;
+    color: #666;
     margin-top: 6px;
+    font-style: italic;
   }
 
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  .static-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 999;
+    display: none;
+    align-items: center;
+    justify-content: center;
   }
 
-  .empty-state {
-    text-align: center;
-    color: #444;
-    font-size: 14px;
-    margin-top: 40px;
+  .static-overlay.active { display: flex; }
+
+  .static-text {
+    color: #ff3333;
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    animation: staticGlitch 0.1s infinite;
   }
+
+  @keyframes staticGlitch {
+    0% { transform: translate(0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(2px, -1px); }
+    75% { transform: translate(-1px, -2px); }
+    100% { transform: translate(1px, 2px); }
+  }
+
+  .reset-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #666;
+    padding: 6px 16px;
+    border-radius: 16px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .reset-btn:hover { border-color: #666; color: #aaa; }
+
+  .sound-toggle {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #888;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #222;
+    color: #ccc;
+    padding: 10px 24px;
+    border-radius: 24px;
+    font-size: 13px;
+    border: 1px solid #444;
+    transition: transform 0.3s ease;
+    z-index: 2000;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div class="live-badge"><div class="live-dot"></div> LIVE</div>
-  <h1>HOT MIC</h1>
-  <div class="subtitle">things you should not have said out loud</div>
+<div class="scanline"></div>
+
+<button class="sound-toggle" id="soundToggle" title="Toggle sound">&#x1f50a;</button>
+
+<div class="static-overlay" id="staticOverlay">
+  <div class="static-text">INTERCEPTING FEED...</div>
 </div>
+
+<header>
+  <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  <h1>HOT MIC</h1>
+  <p class="subtitle">"I didn't know it was still on..."</p>
+</header>
 
 <div class="controls">
-  <label>Context</label>
-  <select id="context">
-    <option value="office">Office Meeting</option>
-    <option value="date">First Date</option>
-    <option value="family">Family Dinner</option>
-    <option value="interview">Job Interview</option>
-    <option value="classroom">Classroom</option>
-  </select>
-  <button class="mic-btn" id="micBtn">OOPS MY MIC IS ON</button>
+  <div class="context-selector" id="contextSelector">
+    <button class="context-btn active" data-ctx="office">Office Meeting</button>
+    <button class="context-btn" data-ctx="date">Date</button>
+    <button class="context-btn" data-ctx="family">Family Dinner</button>
+    <button class="context-btn" data-ctx="interview">Job Interview</button>
+    <button class="context-btn" data-ctx="classroom">Classroom</button>
+  </div>
+
+  <button class="big-btn" id="mainBtn">Oops, My Mic Is On</button>
+
+  <div class="damage-section">
+    <div class="damage-label">
+      <span>DAMAGE LEVEL</span>
+      <span class="damage-level-text" id="damageText">Mild Awkwardness</span>
+    </div>
+    <div class="damage-bar-bg">
+      <div class="damage-bar low" id="damageBar"></div>
+    </div>
+  </div>
+
+  <button class="reset-btn" id="resetBtn">Clear and Reset Damage</button>
 </div>
 
-<div class="damage-section">
-  <div class="damage-label">
-    <span>Damage Level</span>
-    <span id="damagePercent">0%</span>
-  </div>
-  <div class="damage-track">
-    <div class="damage-fill" id="damageFill"></div>
-  </div>
-  <div class="damage-text" id="damageText"></div>
-</div>
+<div class="chat-area" id="chatArea"></div>
 
-<div class="chat" id="chat">
-  <div class="empty-state">Press the button. We dare you.</div>
-</div>
+<div class="toast" id="toast">Copied to clipboard!</div>
 
 <script>
-const CONFESSIONS = {
+var CONFESSIONS = {
   office: [
-    // Level 1 - mild
-    "I've been on mute this whole meeting... playing Candy Crush.",
-    "I literally have no idea what this project even does.",
-    "I just googled what KPI stands for. Again.",
-    "My 'working from home' outfit is just underwear and a blazer.",
-    "I wrote that entire report using ChatGPT in 4 minutes.",
-    "I've been pretending my internet is bad to skip my camera.",
-    "I reply-all on purpose sometimes just to watch the chaos.",
-    "I put 2 hours on my timesheet for a task that took 11 minutes.",
-    "The 'system outage' last Tuesday was me unplugging the wrong cable.",
-    "I take my laptop to the bathroom for every afternoon standup.",
-    // Level 2 - medium
-    "I made up a doctor's appointment so I could watch the season finale.",
-    "I've been BCC'ing my personal email on every client conversation.",
-    "I screenshot my manager's typos and share them in a group chat called 'CEO Brain'.",
-    "I keep two Slack accounts open so it looks like I'm online when I'm at the gym.",
-    "My 'deep work blocks' on the calendar are actually nap time.",
-    "I told HR I was at a funeral. It was a music festival.",
-    "I have a Chrome extension that randomly moves my mouse so Teams shows me as active.",
-    "The reason the deploy failed was because I was drunk-coding at 2 AM.",
-    "I use my work laptop for my entire side hustle and bill the electricity to the company.",
-    "Half my LinkedIn recommendations are from people I've never actually worked with.",
-    // Level 3 - spicy
-    "I've been interviewing at our direct competitor for three weeks.",
-    "I accidentally sent my resignation letter to the whole department... then pretended it was a phishing test.",
-    "I named the test server 'boss-is-a-clown' and it got shown in the client demo.",
-    "I told the new hire the CEO's parking spot was free game. The look on both their faces was worth it.",
-    "I've been slowly replacing the decaf in the break room with espresso to see how many meetings get shorter.",
-    "My performance review says 'consistently exceeds expectations' but I automate 90% of my job and play video games.",
-    "I created a fake employee in the system and collected a paycheck for 6 months before anyone noticed.",
-    "I run a meme account that exclusively roasts our company's products. It has 40K followers.",
-    "I forwarded the CEO's 'confidential restructuring' email to a journalist because I was bored.",
-    "I told the board our AI initiative was revolutionary. It's an if-else statement."
+    [
+      "I have been on mute this whole meeting but I have not been on mute in my heart",
+      "Does anyone actually read these emails or do we all just reply sounds good",
+      "I am literally watching a cooking video right now and nobody can tell",
+      "My hard stop at 3 is actually a nap",
+      "I have had my camera off because I am still in pajamas and it is 4pm",
+      "I have been saying let me look into that for three years and have never looked into anything",
+      "I just realized I have been nodding on camera for 20 minutes and I have no idea what this meeting is about",
+      "The internet issues I reported last week were me unplugging my router to skip standup",
+      "I set my Slack status to Focusing whenever I want to take a two hour lunch",
+      "I have been screen sharing my desktop background that says I QUIT for five minutes and nobody noticed",
+      "My deep work block on the calendar is just me doing the crossword puzzle",
+      "I accidentally replied all THIS MEETING COULD HAVE BEEN AN EMAIL and honestly good",
+      "I named my home WiFi StillInTheMeeting as a cry for help"
+    ],
+    [
+      "I have been browsing other job listings during every single all-hands meeting",
+      "I automated my entire job three months ago. I have been playing Zelda since.",
+      "The AI tool I demoed was actually just me typing really fast in another tab",
+      "I have been logged into two positions simultaneously and nobody at either one has noticed",
+      "I wrote a script that randomly sends Slack messages saying good point during meetings",
+      "Every time my boss says synergy I take a sip of coffee. I am eight cups deep right now.",
+      "I forward every urgent email to my spam folder and wait for someone to follow up. They never do.",
+      "I changed the WiFi password so Dave from accounting cannot join meetings from the bathroom anymore",
+      "I have been running a fantasy football league on company Slack and HR is my biggest competitor",
+      "I put CEO of my apartment in my LinkedIn headline and got contacted by three companies",
+      "My output went up 400 percent after I started ignoring every message from my manager",
+      "I have been submitting my streaming subscription as market research for eight months",
+      "The quarterly report I submitted was last quarter report with the dates changed"
+    ],
+    [
+      "I am the one who has been stealing Kevin lunch and I would do it again his wife makes incredible lasagna",
+      "I have been running my side hustle during work hours and it is going better than my actual job",
+      "I told HR I had jury duty but I was actually at a concert. Worth it.",
+      "I am pretty sure I accidentally deleted the production database last month but it fixed itself so...",
+      "I have been padding my timesheet for so long I forgot what my actual schedule is",
+      "My sick days perfectly align with every major video game release for the past three years",
+      "I told my team I was at a leadership retreat. I was at a water park. In a tube. Eating nachos.",
+      "The motivational quote I sent to the whole company was from a fortune cookie I got at lunch",
+      "I have been using the company card for food delivery and categorizing it as client entertainment",
+      "I accidentally CC'd the entire company on an email calling the VP a sentient khaki pant",
+      "I have taken 47 mental health walks this month. My fitness tracker says I walked to another state.",
+      "The reason the printer is always jammed is because I have been printing my novel on company paper"
+    ]
   ],
   date: [
-    "I googled you so thoroughly I accidentally liked a photo from 2017.",
-    "This is actually my third date tonight. You're the 7pm slot.",
-    "I'm only here because my therapist said I need to 'put myself out there.'",
-    "My profile photo is from 2019 and 30 pounds ago.",
-    "I practiced this conversation in the mirror for an hour.",
-    "I told my friends I was coming here ironically.",
-    "Your friend is actually the one I swiped right on. You were the compromise.",
-    "I have a spreadsheet where I rate my dates. You're currently a 6.",
-    "The reason I suggested this restaurant is because my ex works here and I want them to see me with someone.",
-    "I'm still wearing my ex's cologne because I ran out of mine.",
-    "I already checked if you have a criminal record. You're clean, by the way.",
-    "I've been texting my group chat under the table this whole time. They're voting on whether I should stay.",
-    "I'm not actually allergic to shellfish. I just hate sharing appetizers.",
-    "My 'dog' that I showed you pictures of is actually my neighbor's dog. I don't have pets.",
-    "I told you I love hiking but the last time I went outside voluntarily was to check the mail.",
-    "I brought pepper spray, a taser, and a fake phone number. You know, just casual first date stuff.",
-    "I rehearsed three funny anecdotes. I just used my last one. We're in unscripted territory now.",
-    "My roommate is parked outside as my getaway driver. She's been here for 40 minutes.",
-    "I've been on 47 first dates this year. You're statistically average so far.",
-    "I just realized I went on a date with your brother last month. This is getting weird.",
-    "I told my mom I was engaged already. She thinks you proposed last weekend.",
-    "I have your entire family tree memorized from ancestry.com. Your great aunt Mildred seems lovely.",
-    "My bio said 'loves adventure.' My most adventurous act this year was trying oat milk.",
-    "I'm wearing Spanx so tight I can barely breathe. If I pass out, it's not your fault.",
-    "I already have our couple name. We're 'Brandrew.' Don't fight it.",
-    "I've been pretending to like jazz for three dates now and I genuinely cannot take it anymore.",
-    "The 'deep connection' I mentioned feeling? That was the cocktail hitting on an empty stomach.",
-    "I lied about my job. I said I'm in finance. I count the register at Wendy's.",
-    "I've already mentally designed our wedding Pinterest board. The theme is 'rustic anxiety.'",
-    "If this doesn't work out I'm getting a cat and naming it after you."
+    [
+      "I practiced this exact conversation in the mirror six times before coming here",
+      "I memorized your entire social media before this date and I need to pretend I do not know about the cat",
+      "I am texting my best friend under the table rating this date on a scale of 1 to 10",
+      "I wore these shoes because a website said they make you look taller and honestly they are killing me",
+      "I have three backup plans if this goes badly including a fake emergency call in 30 minutes",
+      "I just browsed other profiles while waiting for you to come back from the bathroom",
+      "Everything I said about loving hiking is a lie. I get winded going up stairs.",
+      "My bio said fluent in French but I only know how to order croissants",
+      "I picked this restaurant because a video said it has the best lighting for selfies",
+      "I told my mom I was going to the library tonight. She is tracking my location. We need to go near one.",
+      "I rehearsed three interesting anecdotes about myself and I have already used all of them",
+      "The spontaneous joke I just told you was workshopped in my group chat for 40 minutes"
+    ],
+    [
+      "I am on three apps and honestly cannot remember which one you are from",
+      "My roommate is parked outside ready for extraction if I send the safe word",
+      "I said I was looking for something serious on my profile but honestly I just want someone to share a streaming password with",
+      "The ex I said I was totally over? I liked their photo 11 minutes ago.",
+      "I have been to this restaurant four times this week with four different people. The waiter knows.",
+      "My profile says I am 29. I have been 29 for four years now.",
+      "I have a spreadsheet tracking all my dates with scoring criteria. You are doing okay.",
+      "The interesting hobby I mentioned is actually just binge watching reality TV and judging people",
+      "I wore this outfit because my ex said I look terrible in it and I am trying to prove them wrong",
+      "My cool apartment I mentioned is actually my parents basement but I have my own mini fridge",
+      "I asked the waiter to bring the check just now via text under the table",
+      "I have a group chat called Date Night Live and seven people are following along right now"
+    ],
+    [
+      "I just realized you are my coworker sibling. I called your sibling a sentient potato last week.",
+      "I am actually still technically in a relationship. But spiritually single. Very spiritually single.",
+      "My dog that I showed you photos of is my neighbor dog. I do not have a dog. I just borrow it for photos.",
+      "I have told you my name is Jake but it is actually Gerald. I just did not think Gerald was a good name for this.",
+      "The interesting trip to Bali I mentioned was actually a virtual street view deep dive at 2am",
+      "I am searching everything you say under the table so I can pretend I know what you are talking about",
+      "My therapist specifically told me not to do this right now and I said okay and opened the app in the parking lot",
+      "I recognize you from my friend wedding. You are the one who fell into the cake. I was so hoping it was you.",
+      "My friends placed a wager that I could not get a second date. The stakes are real.",
+      "The charity work on my profile is that I once held a door open for someone at a warehouse store",
+      "I set up a search alert for your name before this date. You have a very interesting public record.",
+      "My ride is already outside. It has been outside for twenty minutes. Just in case."
+    ]
   ],
   family: [
-    "Grandma's casserole tastes like it was seasoned with sadness.",
-    "I pretend my phone dies every Thanksgiving so I don't have to talk to Uncle Rick.",
-    "I'm only here for the free food. I don't even like most of you.",
-    "I told mom I'm a vegetarian so she'd stop making that horrifying meatloaf.",
-    "I've regifted Aunt Linda's candle set three years in a row. To Aunt Linda.",
-    "I voted for the opposite candidate everyone here supports. Twice.",
-    "The 'girlfriend' I mentioned is actually a stock photo. Her name is definitely not Jessica.",
-    "I hide in the bathroom for 20 minutes every family gathering. It's my only peace.",
-    "Dad's 'famous' chili recipe is literally from the back of the spice packet.",
-    "I haven't read a single family group chat message in two years. Just react with a heart emoji.",
-    "Mom's new boyfriend is younger than me and we matched on a dating app before they got together.",
-    "I sold grandpa's 'priceless' watch on eBay. It was worth $12.",
-    "I've been telling everyone I'm a lawyer. I dropped out of law school in the first semester.",
-    "I told the kids Santa isn't real and blamed it on cousin Tyler.",
-    "The pie I 'baked from scratch' has a Costco sticker still on the bottom.",
-    "I only come to Easter because I'm written into the will and I need to maintain appearances.",
-    "That vase I broke when I was 12? It wasn't the cat. It was absolutely me. Sorry Mr. Whiskers.",
-    "I've been slowly replacing family photos with slightly photoshopped versions where I look taller.",
-    "Uncle Bob's 'war stories' are all plots from Call of Duty campaigns and I've just been nodding along.",
-    "I donate to every cause the family argues about just to play both sides.",
-    "Grandma knows everyone's secrets. She told me all of yours. Every. Single. One.",
-    "I started the rumor about cousin Dave because he ate my slice of birthday cake in 2014.",
-    "The family vacation fund I've been 'contributing' to? I've been spending it on DoorDash.",
-    "My gluten intolerance is fake but it got me out of eating Aunt Carol's bread and I'm never going back.",
-    "I FaceTimed in from the 'office' last Christmas. I was in Cancun.",
-    "I'm the one who taught grandma to use TikTok. The family chaos is my doing.",
-    "I've been running a betting pool with the cousins on which uncle will say something offensive first. I'm up $200.",
-    "That dog we 'found a loving home for' when I was 8? I know the truth now, Dad.",
-    "I use family dinner debates as content for my anonymous Reddit account.",
-    "I've been telling mom I go to church every Sunday. I go to brunch. Same energy."
+    [
+      "I told grandma her casserole was amazing but I actually fed it to the dog under the table",
+      "I have been pretending to like Uncle Frank jokes for 27 years and I cannot do this anymore",
+      "I have a different opinion than everyone at this table and I have been sweating about it for three courses",
+      "Mom I have been using your streaming accounts for six years. All of them. Thank you.",
+      "The reason I am running late to every family dinner is I sit in the driveway for 20 minutes preparing",
+      "I told everyone I could not come to the holiday dinner because of work. I was in my apartment watching movies.",
+      "Dad secret recipe is literally just a recipe from the back of a soup can. I found the can.",
+      "I have been regifting Aunt Susan Christmas presents to Aunt Karen and vice versa for five years",
+      "The family group chat? I muted it in 2019 and never unmuted it.",
+      "I told mom I eat healthy but there is a pizza box fort in my apartment that could house a family",
+      "I have been saying I will think about it to moving back home for four years. I thought about it. It is a no.",
+      "The plant mom gave me thrived so well because I replaced it with a fake one after I killed the real one"
+    ],
+    [
+      "Grandma I know about the flask in your purse. I have known for years. I respect it deeply.",
+      "The reason I do not bring anyone to family dinners is because last time Uncle Bob did his impressions",
+      "I have been telling my parents I am a consultant for three years. I still do not know what I actually do.",
+      "Mom I did not get that promotion you told all your friends about. I did not even apply.",
+      "Dad has been hiding snacks in the garage for years. I know because I have been eating them.",
+      "The work trip I took last month was actually a music festival. I came back with glitter in my hair and said it was from a conference.",
+      "I created a fake professional profile so mom would stop asking why I am not on there",
+      "I have been dodging Aunt Carol calls since 2017. My voicemail is specifically worded to discourage her.",
+      "The dog likes me more than you Dad. We both know it. He sleeps in my room when I visit.",
+      "I have memorized which topics to avoid and I have a mental flowchart for redirecting to weather",
+      "Every time grandpa starts a back in my day story I set a silent timer. Record is 47 minutes.",
+      "I have a ranking of family members cooking and it is laminated in my wallet"
+    ],
+    [
+      "I found dad browser history and we need to have a conversation about his shopping habit on auction sites",
+      "I am the one who broke the vase in 2006. Not the dog. The dog was framed. I am sorry Biscuit.",
+      "Mom the friend from college at my wedding is my partner. We have been together seven years. Surprise!",
+      "Uncle Gary venture he keeps asking us to put resources into is literally a pyramid scheme. I checked.",
+      "I dropped grandma irreplaceable heirloom dish last holiday. The one you are eating from now is from a big box store.",
+      "I have been saving every passive aggressive birthday card from Aunt Linda as evidence",
+      "Dad I know you cry during romantic comedies. Mom told me. Mom told everyone. We all know.",
+      "The family tree project I was asked to do revealed some things. I will not be presenting my findings.",
+      "I overheard who mom favorite child is and it is NOT who you think. Actually it might be the dog.",
+      "I have been telling each sibling they are my favorite privately. Running a whole operation here.",
+      "Cousin Mark homemade wine gave me food poisoning three years running and I still drink it to be polite",
+      "I accidentally found out what everyone in this family earns and the dinner table dynamics make SO much more sense now"
+    ]
   ],
   interview: [
-    "I wore pants for the first time in three months specifically for this.",
-    "My resume says 'proficient in Excel.' I can barely make a bar chart.",
-    "I googled 'good answers for interview questions' in your parking lot five minutes ago.",
-    "My 'greatest weakness' answer was also generated by AI.",
-    "The gap in my resume was not 'freelance consulting.' It was a Netflix marathon.",
-    "I applied here because your office is next to a Chipotle.",
-    "I listed my mom as a professional reference. She goes by 'Dr. Williams' during these calls.",
-    "I have no idea what your company does. I applied to 200 places this week.",
-    "My 'leadership experience' is being admin of a Discord server with 12 people.",
-    "I said I left my last job for 'growth opportunities.' They fired me for sleeping at my desk.",
-    "The suit I'm wearing still has the tags on it. I'm returning it tonight.",
-    "My 'passion for this industry' started approximately 20 minutes ago when I read your About page.",
-    "I'm mostly here because unemployment runs out next month.",
-    "I put 'team player' on my resume but I literally cannot stand working with other people.",
-    "My 'volunteer work' was court-mandated community service.",
-    "I said I know Python. I have a pet python. The snake kind.",
-    "I've been nodding enthusiastically but I zoned out after 'tell me about yourself.'",
-    "The 'competitive analysis' I did for your company was reading the first Google result for 30 seconds.",
-    "My 'mentor' that I keep referencing is a motivational Instagram account.",
-    "I rehearsed my handshake 40 times. I still think I gripped too hard.",
-    "This is the same portfolio I've shown to 15 companies. I change the color scheme each time.",
-    "I said I'm detail-oriented. There's a typo on my resume. On the word 'detail-oriented.'",
-    "My salary expectation was whatever number I thought I could say without laughing.",
-    "I told you I have 5 years experience. I have 1 year of experience, five times.",
-    "The project I just described was my coworker's. I watched.",
-    "I'm doing this interview from a fake home office. The bookshelf behind me is a Zoom background.",
-    "If you check my GitHub, every commit is 'initial commit' on a project that never got past the README.",
-    "I have 14 tabs of interview prep open and I can see my own panicked face in the screen reflection.",
-    "My 'published research' is a Medium article with 3 views. Two of those were me.",
-    "I told my current boss I had a dentist appointment. I am betraying them as we speak."
+    [
+      "I searched how to answer interview questions in the lobby five minutes ago",
+      "My greatest weakness being I work too hard is a complete fabrication. My actual weakness is naps.",
+      "I am wearing suit pants with flip flops under this desk. Full business mullet situation.",
+      "I have the company About Us page open on my phone right now and I am reading their values in real time",
+      "I practiced my handshake on a doorknob for twenty minutes this morning",
+      "My passion for this industry started approximately 45 minutes ago when I read the job description",
+      "I listed proficient in Excel on my resume but I can really only make the cells different colors",
+      "The leadership experience on my resume is me being in charge of the music playlist at parties",
+      "I have answered I am a team player so many times today that the words have lost all meaning",
+      "I wore this tie because a forum thread said it subconsciously builds trust",
+      "My five year plan was improvised entirely just now. I do not have a five day plan.",
+      "I set three alarms to not be late and I was still somehow five minutes late"
+    ],
+    [
+      "My resume says I spearheaded a cross functional initiative. I organized a pizza party.",
+      "I do not actually know what your company does. I applied because the office has a snack bar.",
+      "The gap in my resume is because I spent a year trying to become a professional gamer. It did not work out.",
+      "I am interviewing here and at your competitor simultaneously. Whoever has better snacks wins.",
+      "My reference is my roommate pretending to be my old manager. He is very committed to the role.",
+      "The major project I led was a group assignment in college where I did 90 percent of the work. The other ten was formatting.",
+      "I said I left my last job for growth opportunities but actually my boss chewed ice and I could not take it anymore",
+      "My fluency in Spanish is really just being able to sing one song and order at a burrito place",
+      "I brought three copies of my resume in case this becomes a hostage negotiation",
+      "The results driven professional in my cover letter has spent the last two months watching every season of a reality show",
+      "I prepared for this interview by watching The Office and taking notes",
+      "My desired role is whatever you were going to offer plus a better title"
+    ],
+    [
+      "I just got a notification that I got the other position. But this one has a better cafeteria so I am staying in this interview.",
+      "My degree from a prestigious university is technically a certificate from an online course I finished at 3am",
+      "I was let go from my last job for accidentally reply all with a meme about the CEO. It was a very funny meme though.",
+      "The team of twelve I managed on my resume was actually my guild in World of Warcraft. But I was a GREAT guild leader.",
+      "I just noticed my shirt is inside out. We are forty minutes into this interview. Nobody said anything.",
+      "My cover letter was written entirely by AI and even the AI said this is a stretch",
+      "I recognize the interviewer. We matched on an app last week. Neither of us is acknowledging it.",
+      "I am going to be honest I have absolutely no idea what a KPI is and at this point I am too afraid to ask",
+      "The coding bootcamp on my resume was a video tutorial I watched at double speed",
+      "I have said absolutely forty seven times in this interview because I forgot all other affirmative words",
+      "I prepared three questions to ask but they were all answered during the interview so now my last question is genuinely where is the bathroom",
+      "My entrepreneurial venture was a lemonade stand that failed because I kept consuming the product"
+    ]
   ],
   classroom: [
-    "I haven't read a single page of the assigned textbook. Not one.",
-    "My 'original thesis' is three Wikipedia articles blended together.",
-    "I've been nodding for 45 minutes but I couldn't tell you what subject this is.",
-    "I cited a source that doesn't exist. It's been two semesters and nobody's checked.",
-    "I paid someone on Fiverr to do my last three assignments.",
-    "I only take this class because the professor curves everything.",
-    "My hand is raised but I forgot my question. I'm just going to wing it.",
-    "I wrote my essay in the Uber on the way here. The driver helped with the conclusion.",
-    "I've been using the textbook as a laptop stand all semester.",
-    "My study group is actually just us sharing answers in a group chat during the exam.",
-    "I told the professor my grandma died to get an extension. She's alive and making cookies right now.",
-    "My laptop screen says I'm taking notes. I'm actually on Reddit.",
-    "I turned in the same essay to three different classes. Changed the font each time.",
-    "I wrote 'per the author' in my paper 14 times and I don't know who the author is.",
-    "The class participation grade is the only reason I speak. I have nothing valuable to add.",
-    "I photoshopped my attendance record because this class is at 8 AM and I'm not a monster.",
-    "My lab partner does all the work. I bring snacks. We have an unspoken agreement.",
-    "I accidentally submitted my shopping list instead of my homework and got a B+.",
-    "I've been going to the wrong lecture hall for two weeks and just realized.",
-    "I told the professor I'd 'expand on this in office hours.' I will never go to office hours.",
-    "My presentation is entirely memes I found last night. The bibliography is 'the internet.'",
-    "I set my Zoom background to the classroom so it looks like I'm there while I'm at Starbucks.",
-    "I quoted myself in my research paper and cited it as 'anonymous expert.'",
-    "I'm failing this class so I'm going to start a rumor that the grading system is broken.",
-    "The 'field research' in my paper was eavesdropping at a coffee shop.",
-    "I asked ChatGPT to write my essay and then I asked it to add some typos so it looks human.",
-    "My peer review said 'great work!' I didn't read a word of it.",
-    "I calculated that I can fail the final and still pass with a D. That's the plan.",
-    "I've been emailing the TA flirty memes hoping for grade leniency. It's not working.",
-    "My senior thesis proposal is due tomorrow and I just learned what a thesis is."
+    [
+      "I have been nodding like I understand photosynthesis for three weeks. I do not understand photosynthesis.",
+      "My study group is just four of us sharing a single brain cell and a large pizza",
+      "I cited a Wikipedia article in my paper and just changed the font so it would not look like Wikipedia",
+      "Professor I have been doodling for 45 minutes. These are not notes. This is a portrait of my cat.",
+      "I set my laptop brightness to zero and I am watching shows. Education is happening adjacent to me.",
+      "The family emergency last week was that my family was having pizza without me",
+      "I have read the same paragraph of this textbook fourteen times and I still do not know what a mitochondria does besides being the powerhouse",
+      "I asked a question I already knew the answer to just so the professor would think I am engaged",
+      "My laptop has 47 tabs open and not a single one is related to this class",
+      "I have been pretending to type notes but I am actually live posting about how boring this lecture is",
+      "The research paper is 80 percent block quotes with slightly different formatting",
+      "I set an alarm on my phone to accidentally go off so I have an excuse to leave"
+    ],
+    [
+      "I wrote my entire essay this morning using the textbook glossary as a thesaurus to sound smarter",
+      "I have been coming to the wrong classroom for two weeks and only realized today. I have been learning anthropology by accident.",
+      "The group project is being carried entirely by one person and that person hates all of us. Rightfully.",
+      "I used a random number generator to answer the multiple choice exam. Got a B plus. The system is broken.",
+      "My extensive research for this paper was scrolling forum threads at midnight",
+      "Professor your review page has 2 stars and after this lecture I understand why",
+      "I have been using the same book report template since 7th grade. Just swap the title and author.",
+      "I strategically sit behind the tallest person so the professor cannot see me on my phone",
+      "The bibliography in my paper is three real sources and four I completely made up",
+      "I have perfected the art of looking contemplative while actually thinking about what to have for lunch",
+      "My study abroad was me going to an Italian restaurant and calling it cultural immersion",
+      "I once submitted the same paper to two different classes. Both professors gave it a B. This haunts me."
+    ],
+    [
+      "I created a fake email to submit an anonymous course evaluation that was just the word NO repeated 500 times",
+      "I have been distributing my notes to other students. They are not even good notes. They are mostly doodles. The demand is desperate.",
+      "Professor I have not purchased the textbook. Nobody has purchased the textbook. We are all using a PDF from a website I cannot legally name.",
+      "I turned in an AI generated paper and got a better grade than the one I actually wrote. I do not know what to do with that information.",
+      "The volunteer hours on my transcript are from a signup sheet I walked past and put my name on",
+      "I have been giving the TA baked goods in exchange for extensions. It has worked every single time.",
+      "My thesis advisor thinks I am researching climate change but I have actually been down a three month Wikipedia rabbit hole about medieval cheese production",
+      "I figured out the campus WiFi password by watching the librarian type it in. I have been distributing it like contraband.",
+      "I accidentally emailed my professor a meme instead of my assignment. They responded with a better meme. We have an understanding now.",
+      "The reason I always sit in the back is so nobody sees that my textbook is actually a novel with a textbook cover on it",
+      "I have been telling my parents I am pre-med for three semesters. I am an art history major. The reveal will be cinematic.",
+      "My honors thesis started as an argument at a party that I refused to lose"
+    ]
   ]
 };
 
-const DAMAGE_LEVELS = [
-  { max: 10, label: "Awkward silence", color: "#33cc33" },
-  { max: 25, label: "Nervous laughter", color: "#88cc33" },
-  { max: 40, label: "Visible cringing", color: "#cccc33" },
-  { max: 55, label: "Someone gasped", color: "#cc8833" },
-  { max: 70, label: "HR has been notified", color: "#cc4433" },
-  { max: 85, label: "Reputation in flames", color: "#cc1133" },
-  { max: 95, label: "Social exile imminent", color: "#cc0044" },
-  { max: 100, label: "CAREER DESTROYED", color: "#ff0000" },
-];
+var currentContext = 'office';
+var escalationLevel = 0;
+var pressCount = 0;
+var soundEnabled = true;
+var usedConfessions = {};
+var audioCtx = null;
 
-let pressCount = 0;
-let usedIndices = {};
-const chat = document.getElementById('chat');
-const damageFill = document.getElementById('damageFill');
-const damagePercent = document.getElementById('damagePercent');
-const damageText = document.getElementById('damageText');
-const contextSelect = document.getElementById('context');
-const micBtn = document.getElementById('micBtn');
-
-contextSelect.addEventListener('change', () => {
-  pressCount = 0;
-  usedIndices = {};
-  chat.innerHTML = '<div class="empty-state">New context. New regrets. Press the button.</div>';
-  updateDamage(0);
+document.querySelectorAll('.context-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelector('.context-btn.active').classList.remove('active');
+    btn.classList.add('active');
+    currentContext = btn.dataset.ctx;
+  });
 });
 
-micBtn.addEventListener('click', () => {
-  const ctx = contextSelect.value;
-  const pool = CONFESSIONS[ctx];
+document.getElementById('soundToggle').addEventListener('click', function() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? '\u{1F50A}' : '\u{1F507}';
+});
 
-  if (!usedIndices[ctx]) usedIndices[ctx] = new Set();
-  const used = usedIndices[ctx];
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
 
-  if (used.size >= pool.length) {
-    used.clear(); // reset if all used
+function playStatic(duration) {
+  if (!soundEnabled) return;
+  duration = duration || 0.6;
+  var ctx = getAudioCtx();
+  var bufferSize = Math.floor(ctx.sampleRate * duration);
+  var buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  var data = buffer.getChannelData(0);
+  for (var i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * 0.15;
   }
+  var source = ctx.createBufferSource();
+  source.buffer = buffer;
+  var filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 3000;
+  filter.Q.value = 0.5;
+  var gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start();
+}
 
-  // Pick from escalating thirds based on press count
-  const totalPresses = pressCount;
-  let tierStart, tierEnd;
-  const third = Math.floor(pool.length / 3);
-
-  if (totalPresses < 4) {
-    tierStart = 0; tierEnd = third;
-  } else if (totalPresses < 8) {
-    tierStart = third; tierEnd = third * 2;
-  } else {
-    tierStart = third * 2; tierEnd = pool.length;
+function speakConfession(text) {
+  if (!soundEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  var utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.1;
+  utter.pitch = 0.9;
+  utter.volume = 0.8;
+  var voices = speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    var english = voices.filter(function(v) { return v.lang.startsWith('en'); });
+    if (english.length > 0) utter.voice = english[Math.floor(Math.random() * english.length)];
   }
-
-  // Find unused in tier, fallback to any
-  let idx;
-  let attempts = 0;
-  do {
-    idx = tierStart + Math.floor(Math.random() * (tierEnd - tierStart));
-    attempts++;
-    if (attempts > 50) {
-      // fallback: pick any unused
-      for (let i = 0; i < pool.length; i++) {
-        if (!used.has(i)) { idx = i; break; }
-      }
-      break;
-    }
-  } while (used.has(idx));
-
-  used.add(idx);
-  pressCount++;
-
-  const confession = pool[idx];
-
-  // Remove empty state
-  const empty = chat.querySelector('.empty-state');
-  if (empty) empty.remove();
-
-  // Add message
-  const msgEl = document.createElement('div');
-  msgEl.className = 'msg';
-
-  const contextNames = {
-    office: 'Office Meeting',
-    date: 'First Date',
-    family: 'Family Dinner',
-    interview: 'Job Interview',
-    classroom: 'Classroom'
+  utter.onend = function() {
+    document.getElementById('mainBtn').classList.remove('speaking');
   };
+  speechSynthesis.speak(utter);
+}
 
-  msgEl.innerHTML = `
-    <div class="warning">(mic still on)</div>
-    <div class="text">"${confession}"</div>
-    <div class="context-tag">${contextNames[ctx]} - confession #${pressCount}</div>
-  `;
+function getConfessionKey(ctx, tier, idx) {
+  return ctx + '-' + tier + '-' + idx;
+}
 
-  chat.appendChild(msgEl);
-  chat.scrollTop = chat.scrollHeight;
+function getConfession() {
+  var tiers = CONFESSIONS[currentContext];
+  var tier = tiers[escalationLevel];
+  if (!usedConfessions[currentContext]) usedConfessions[currentContext] = {};
 
-  // Update damage
-  const dmg = Math.min(100, Math.round((pressCount / 12) * 100));
-  updateDamage(dmg);
-
-  // Speak it
-  speak(confession);
-
-  // Button feedback
-  micBtn.style.transform = 'scale(0.95)';
-  setTimeout(() => micBtn.style.transform = '', 150);
-});
-
-function updateDamage(pct) {
-  damageFill.style.width = pct + '%';
-  damagePercent.textContent = pct + '%';
-
-  let level = DAMAGE_LEVELS[0];
-  for (const l of DAMAGE_LEVELS) {
-    if (pct <= l.max) { level = l; break; }
+  var available = [];
+  for (var i = 0; i < tier.length; i++) {
+    var key = getConfessionKey(currentContext, escalationLevel, i);
+    if (!usedConfessions[currentContext][key]) {
+      available.push(i);
+    }
   }
-  damageFill.style.background = level.color;
-  damageText.textContent = pct > 0 ? level.label : '';
 
-  if (pct >= 100) {
-    damageText.style.color = '#ff0000';
-    damageText.style.fontWeight = '700';
+  if (available.length === 0) {
+    for (var j = 0; j < tier.length; j++) {
+      delete usedConfessions[currentContext][getConfessionKey(currentContext, escalationLevel, j)];
+    }
+    return getConfession();
+  }
+
+  var pickIdx = available[Math.floor(Math.random() * available.length)];
+  usedConfessions[currentContext][getConfessionKey(currentContext, escalationLevel, pickIdx)] = true;
+  return tier[pickIdx];
+}
+
+function updateDamage() {
+  var bar = document.getElementById('damageBar');
+  var text = document.getElementById('damageText');
+  var pct = Math.min(pressCount * 8, 100);
+  bar.style.width = pct + '%';
+  bar.classList.remove('low', 'medium', 'high', 'critical');
+  if (pct < 25) {
+    bar.classList.add('low');
+    text.textContent = 'Mild Awkwardness';
+  } else if (pct < 50) {
+    bar.classList.add('medium');
+    text.textContent = 'Social Damage';
+  } else if (pct < 75) {
+    bar.classList.add('high');
+    text.textContent = 'Reputation Ruined';
   } else {
-    damageText.style.color = '#666';
-    damageText.style.fontWeight = 'normal';
+    bar.classList.add('critical');
+    text.textContent = 'CAREER OVER';
+  }
+  if (pressCount >= 8) escalationLevel = 2;
+  else if (pressCount >= 4) escalationLevel = 1;
+  else escalationLevel = 0;
+}
+
+function addBubble(text) {
+  var area = document.getElementById('chatArea');
+  var bubble = document.createElement('div');
+  bubble.className = 'chat-bubble';
+  var tierLabels = ['Mildly Embarrassing', 'Professionally Questionable', 'Absolutely Catastrophic'];
+  var warning = document.createElement('div');
+  warning.className = 'mic-warning';
+  warning.textContent = 'MIC STILL ON';
+  var confText = document.createElement('div');
+  confText.className = 'confession-text';
+  confText.textContent = '\u201C' + text + '\u201D';
+  var tag = document.createElement('div');
+  tag.className = 'escalation-tag';
+  tag.textContent = tierLabels[escalationLevel] + ' | Press #' + pressCount;
+  var shareBtn = document.createElement('button');
+  shareBtn.className = 'share-btn';
+  shareBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> Share';
+  shareBtn.addEventListener('click', function() { shareConfession(this); });
+  bubble.appendChild(warning);
+  bubble.appendChild(confText);
+  bubble.appendChild(tag);
+  bubble.appendChild(shareBtn);
+  area.insertBefore(bubble, area.firstChild);
+}
+
+function shareConfession(btn) {
+  var text = btn.closest('.chat-bubble').querySelector('.confession-text').textContent;
+  var shareText = text + '\n\n[mic still on] -- Hot Mic';
+  if (navigator.share) {
+    navigator.share({ text: shareText }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(shareText).then(function() {
+      var toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(function() { toast.classList.remove('show'); }, 2000);
+    });
   }
 }
 
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 0.95;
-  utter.pitch = 0.9;
-  speechSynthesis.speak(utter);
+document.getElementById('mainBtn').addEventListener('click', function() {
+  var btn = document.getElementById('mainBtn');
+  var overlay = document.getElementById('staticOverlay');
+  btn.disabled = true;
+  pressCount++;
+  updateDamage();
+  overlay.classList.add('active');
+  playStatic(0.7);
+  setTimeout(function() {
+    overlay.classList.remove('active');
+    var confession = getConfession();
+    addBubble(confession);
+    btn.classList.add('speaking');
+    setTimeout(function() { speakConfession(confession); }, 200);
+    btn.disabled = false;
+  }, 800);
+});
+
+document.getElementById('resetBtn').addEventListener('click', function() {
+  pressCount = 0;
+  escalationLevel = 0;
+  usedConfessions = {};
+  document.getElementById('chatArea').innerHTML = '';
+  updateDamage();
+});
+
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
 }
 </script>
 </body>

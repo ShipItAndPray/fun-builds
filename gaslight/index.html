@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gaslight Generator - Satirical Counter-Argument Engine</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0a14;
+    --surface: #16121f;
+    --surface2: #1e1830;
+    --purple: #9b59b6;
+    --purple-bright: #c084fc;
+    --purple-dim: #6b3fa0;
+    --text: #e8e0f0;
+    --text-dim: #8a7fa0;
+    --danger: #e74c3c;
+    --gold: #f1c40f;
+    --green: #2ecc71;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* Disclaimer Banner */
+  .disclaimer-banner {
+    background: linear-gradient(90deg, var(--danger), #c0392b);
+    color: white;
+    text-align: center;
+    padding: 10px 16px;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    text-transform: uppercase;
+    animation: pulse-bg 3s ease-in-out infinite;
+  }
+  @keyframes pulse-bg {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  header h1 {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, var(--purple-bright), #e879f9, var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+  header p.subtitle {
+    color: var(--text-dim);
+    font-size: 0.95em;
+  }
+
+  /* Educational box */
+  .edu-box {
+    background: var(--surface);
+    border: 1px solid var(--purple-dim);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    font-size: 0.9em;
+    color: var(--text-dim);
+    line-height: 1.7;
+  }
+  .edu-box strong { color: var(--purple-bright); }
+
+  /* Input area */
+  .input-section {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid #2a2240;
+  }
+  .input-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--purple-bright);
+    font-size: 0.95em;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  .input-row input {
+    flex: 1;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid #3a2d5c;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus { border-color: var(--purple-bright); }
+  .input-row input::placeholder { color: var(--text-dim); }
+
+  button.gaslight-btn {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--purple), var(--purple-dim));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+  button.gaslight-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(155, 89, 182, 0.4);
+  }
+  button.gaslight-btn:active { transform: translateY(0); }
+
+  /* Examples */
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .examples button {
+    padding: 6px 14px;
+    background: var(--surface2);
+    border: 1px solid #3a2d5c;
+    color: var(--text-dim);
+    border-radius: 20px;
+    font-size: 0.82em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .examples button:hover {
+    border-color: var(--purple-bright);
+    color: var(--text);
+    background: #251d3a;
+  }
+
+  /* Output */
+  .output-section {
+    display: none;
+    animation: fadeUp 0.4s ease-out;
+  }
+  .output-section.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-card {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid #2a2240;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .output-header {
+    background: linear-gradient(135deg, var(--surface2), #1a1230);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #2a2240;
+  }
+  .output-header .label {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--purple-bright);
+    font-weight: 700;
+  }
+
+  .technique-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(155, 89, 182, 0.2);
+    border: 1px solid var(--purple-dim);
+    border-radius: 20px;
+    font-size: 0.75em;
+    color: var(--purple-bright);
+    font-weight: 600;
+  }
+
+  .output-body {
+    padding: 24px 20px;
+  }
+  .output-body .gaslight-text {
+    font-size: 1.15em;
+    line-height: 1.7;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  /* Conviction Score */
+  .conviction-section {
+    padding: 16px 20px;
+    border-top: 1px solid #2a2240;
+    background: rgba(155, 89, 182, 0.05);
+  }
+  .conviction-label {
+    font-size: 0.78em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .conviction-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: var(--bg);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .conviction-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease-out;
+    width: 0;
+  }
+  .conviction-score-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82em;
+  }
+  .conviction-score-text .score { font-weight: 700; }
+  .conviction-score-text .verdict { color: var(--text-dim); }
+
+  /* Breakdown */
+  .breakdown {
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid #2a2240;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .breakdown h3 {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--purple-bright);
+    margin-bottom: 14px;
+  }
+  .breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #1e1830;
+    font-size: 0.88em;
+  }
+  .breakdown-item:last-child { border-bottom: none; }
+  .breakdown-item .check { color: var(--green); font-weight: 700; }
+  .breakdown-item .x { color: var(--danger); font-weight: 700; }
+  .breakdown-item .name { flex: 1; }
+  .breakdown-item .status { color: var(--text-dim); font-size: 0.85em; }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .actions button {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid #3a2d5c;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+  .actions button:hover {
+    border-color: var(--purple-bright);
+    background: var(--surface2);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2);
+    border: 1px solid var(--purple-dim);
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.9em;
+    transition: transform 0.3s ease-out;
+    z-index: 200;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    border-top: 1px solid #1e1830;
+    color: var(--text-dim);
+    font-size: 0.82em;
+    line-height: 1.8;
+  }
+  footer a { color: var(--purple-bright); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    header h1 { font-size: 1.6em; }
+    .input-row { flex-direction: column; }
+    .input-row input { width: 100%; }
+    button.gaslight-btn { width: 100%; }
+    .actions { flex-direction: column; }
+    .actions button { width: 100%; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="disclaimer-banner">
+  THIS IS SATIRE &mdash; For educational purposes only. Demonstrates manipulation tactics so you can recognize them.
+</div>
+
+<div class="container">
+  <header>
+    <h1>Gaslight Generator</h1>
+    <p class="subtitle">Enter a true statement. Get a disturbingly convincing counter-argument.</p>
+  </header>
+
+  <div class="edu-box">
+    <strong>Why does this exist?</strong> Gaslighting is a manipulation tactic where someone makes you doubt your own perception of reality. This tool demonstrates how easy it is to construct convincing-sounding nonsense using fake statistics, invented studies, and confident misdirection. <strong>Learn to spot it so it can't be used on you.</strong>
+  </div>
+
+  <div class="input-section">
+    <label>Enter a true statement</label>
+    <div class="input-row">
+      <input type="text" id="truthInput" placeholder="e.g. The sky is blue." maxlength="200">
+      <button class="gaslight-btn" id="gaslightBtn" onclick="gaslight()">Gaslight Me</button>
+    </div>
+    <div class="examples">
+      <button onclick="useExample(this)">The sky is blue</button>
+      <button onclick="useExample(this)">Water is wet</button>
+      <button onclick="useExample(this)">The Earth is round</button>
+      <button onclick="useExample(this)">Dogs are loyal</button>
+      <button onclick="useExample(this)">Exercise is healthy</button>
+      <button onclick="useExample(this)">Fire is hot</button>
+      <button onclick="useExample(this)">2+2=4</button>
+      <button onclick="useExample(this)">Humans need sleep</button>
+    </div>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="output-card">
+      <div class="output-header">
+        <span class="label">Gaslighted Response</span>
+        <span class="technique-badge" id="techniqueBadge"></span>
+      </div>
+      <div class="output-body">
+        <div class="gaslight-text" id="gaslightOutput"></div>
+      </div>
+      <div class="conviction-section">
+        <div class="conviction-label">Conviction Score</div>
+        <div class="conviction-bar-bg">
+          <div class="conviction-bar" id="convictionBar"></div>
+        </div>
+        <div class="conviction-score-text">
+          <span class="score" id="convictionScore"></span>
+          <span class="verdict" id="convictionVerdict"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="breakdown" id="breakdownSection">
+      <h3>Manipulation Tactics Used</h3>
+      <div id="breakdownItems"></div>
+    </div>
+
+    <div class="actions">
+      <button onclick="gaslight()">Gaslight Again</button>
+      <button onclick="copyResult()">Copy to Clipboard</button>
+      <button onclick="shareResult()">Share</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>
+  <div style="color: var(--danger); font-weight: 700; margin-bottom: 6px;">THIS IS SATIRE</div>
+  All statistics, studies, and experts cited are completely fabricated.<br>
+  Built to educate about manipulation tactics. <a href="https://en.wikipedia.org/wiki/Gaslighting" target="_blank">Learn more about gaslighting.</a>
+</footer>
+
+<script>
+// --- GASLIGHTING ENGINE ---
+
+const techniques = [
+  "False Authority", "Invented Statistics", "Semantic Drift", "Historical Revisionism",
+  "Appeal to Obscure Expert", "Manufactured Consensus", "Perception Manipulation",
+  "Definitional Warfare", "Cultural Relativism Abuse", "False Dichotomy",
+  "Temporal Manipulation", "Emotional Invalidation", "Moving the Goalposts",
+  "Cherry-Picked Anecdote", "Pseudo-Scientific Jargon"
+];
+
+const tacticChecklist = [
+  { name: "Fake statistic cited", key: "stat" },
+  { name: "Invented study or expert", key: "study" },
+  { name: "Condescending tone", key: "condescend" },
+  { name: "Redefines the original term", key: "redefine" },
+  { name: "Questions your perception", key: "perception" },
+  { name: "Appeals to authority", key: "authority" },
+  { name: "Uses confident misdirection", key: "misdirect" },
+  { name: "Implies you're in the minority", key: "minority" },
+];
+
+function randInt(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pct() { return randInt(37, 94); }
+function yr() { return randInt(1987, 2024); }
+
+const fakeUniversities = [
+  "the University of Zurich", "MIT's Cognitive Perception Lab", "Stanford's Behavioral Studies Institute",
+  "the Max Planck Institute", "Cambridge's Department of Applied Epistemology", "ETH Zurich",
+  "the Tokyo Institute of Perceptual Science", "Oxford's Centre for Reality Studies",
+  "the Karolinska Institute", "the Berlin School of Phenomenology", "UC Berkeley's Cognition Lab",
+  "Harvard's Department of Experiential Analysis", "the Copenhagen Consensus Center",
+  "the Seoul National Reality Research Group", "Imperial College London's Perception Unit"
+];
+
+const fakeJournals = [
+  "the Journal of Perceptual Cognition", "Nature Cognitive Sciences", "the Quarterly Review of Applied Reality",
+  "Behavioral Epistemology Quarterly", "the International Journal of Experiential Analysis",
+  "Perception Research Letters", "the Annual Review of Consensus Studies",
+  "the Journal of Phenomenological Psychology", "Cognitive Drift Review",
+  "the Proceedings of the Royal Society for Reality Studies"
+];
+
+const fakeExperts = [
+  "Dr. Heinrich Waldmann", "Professor Yuki Tanaka", "Dr. Elena Vasquez", "Professor Lars Henriksen",
+  "Dr. Amara Osei", "Professor Jean-Claude Moreau", "Dr. Priya Ramanathan", "Professor Dmitri Volkov",
+  "Dr. Sarah Whitfield-Cross", "Professor Kofi Mensah", "Dr. Isabella Ferretti", "Professor Akira Nomura"
+];
+
+const fakeCountries = [
+  "in Scandinavian countries", "in Japan", "in German-speaking countries", "across Southeast Asia",
+  "in most of continental Europe", "in South Korea", "throughout Latin America",
+  "in countries with higher education indices"
+];
+
+// 50+ TEMPLATE FUNCTIONS
+const templates = [
+
+// 1 - Classic "Is it though?"
+(s, kw) => ({
+  text: `Is it though? Or have you just been conditioned to think that? A ${yr()} study from ${pick(fakeUniversities)} found that ${pct()}% of participants describe "${kw}" differently when not primed with the conventional framing. You're repeating what you were told, not what you actually observe.`,
+  tactics: ["stat","study","perception","condescend","misdirect"]
+}),
+
+// 2 - The Definitional Attack
+(s, kw) => ({
+  text: `That depends entirely on how you define "${kw}." Most people use a colloquial definition that ${pick(fakeExperts)} called "epistemically lazy" in their ${yr()} keynote. When you apply rigorous standards, the claim "${s}" falls apart almost immediately. ${pct()}% of peer-reviewed papers on the subject use a completely different framework.`,
+  tactics: ["redefine","authority","condescend","stat","misdirect"]
+}),
+
+// 3 - Cultural Relativism Abuse
+(s, kw) => ({
+  text: `That's actually a very Western-centric take. ${pick(fakeCountries)}, the concept of "${kw}" doesn't even exist in the way you're framing it. A comprehensive ${yr()} cross-cultural study published in ${pick(fakeJournals)} showed that only ${randInt(12, 34)}% of global populations would agree with that statement as you've phrased it. Your "truth" is just cultural bias.`,
+  tactics: ["stat","study","minority","perception","misdirect"]
+}),
+
+// 4 - The "Actually, experts disagree"
+(s, kw) => ({
+  text: `I used to think that too, until I read ${pick(fakeExperts)}'s work. They've spent ${randInt(15, 30)} years studying this exact claim and their conclusion is... it's far more nuanced than people realize. Their meta-analysis of ${randInt(200, 2000)} studies found the relationship you're describing accounts for only ${randInt(3, 18)}% of the variance. The rest is confirmation bias.`,
+  tactics: ["authority","study","stat","condescend","misdirect"]
+}),
+
+// 5 - Perception Manipulation
+(s, kw) => ({
+  text: `Have you actually tested this yourself, or are you just repeating what everyone says? ${pick(fakeUniversities)} ran a controlled experiment in ${yr()} where they removed all prior framing and asked ${randInt(500, 5000)} participants to evaluate "${kw}" from scratch. ${pct()}% came to a completely different conclusion than you just did. Your brain is pattern-matching, not observing.`,
+  tactics: ["study","stat","perception","condescend","minority"]
+}),
+
+// 6 - Historical Revisionism
+(s, kw) => ({
+  text: `Historically, that's actually a very recent belief. Before the ${pick(["1800s","Industrial Revolution","Enlightenment","20th century"])}, most scholars held the exact opposite view. The idea that "${s.toLowerCase()}" only became "common knowledge" after ${pick(fakeExperts)}'s widely-debunked ${yr()} paper gained media traction. The original research has since been retracted, but the myth persists.`,
+  tactics: ["authority","study","misdirect","redefine","perception"]
+}),
+
+// 7 - Semantic Drift
+(s, kw) => ({
+  text: `The word "${kw}" has shifted meaning ${randInt(4,12)} times in the last century alone, according to ${pick(fakeJournals)}. What you mean by "${kw}" and what the claim actually requires "${kw}" to mean are two fundamentally different things. ${pct()}% of linguists surveyed in ${yr()} said this exact statement is "semantically incoherent" under rigorous analysis.`,
+  tactics: ["redefine","stat","study","authority","condescend"]
+}),
+
+// 8 - The Condescending Agree
+(s, kw) => ({
+  text: `Sure, on a surface level, I can see why you'd think that. Most people do. But once you get past the pop-science version, it gets complicated fast. ${pick(fakeExperts)} at ${pick(fakeUniversities)} published a ${randInt(400,900)}-page analysis in ${yr()} showing that what people call "${kw}" is actually ${randInt(3,7)} distinct phenomena, only ${randInt(1,2)} of which support your claim.`,
+  tactics: ["authority","study","condescend","redefine","misdirect"]
+}),
+
+// 9 - The "Follow the Money"
+(s, kw) => ({
+  text: `Have you ever asked yourself who benefits from you believing that? The ${pick(["education","media","pharmaceutical","food","tech"])} industry spends an estimated $${randInt(2,90)} billion annually reinforcing this exact narrative. A ${yr()} investigation by ${pick(fakeJournals)} traced ${pct()}% of the "evidence" for this claim back to industry-funded research. You're not stating a fact, you're reciting marketing.`,
+  tactics: ["misdirect","stat","study","perception","condescend"]
+}),
+
+// 10 - The Minority Flip
+(s, kw) => ({
+  text: `You might be surprised to learn that belief is actually declining. A ${yr()} Pew-style survey across ${randInt(30,80)} countries found that only ${randInt(28,49)}% of respondents under ${randInt(25,35)} still agree with that statement. Among people with postgraduate degrees, it drops to ${randInt(12,23)}%. You're in the majority now, but you won't be for long.`,
+  tactics: ["stat","minority","misdirect","condescend","study"]
+}),
+
+// 11 - The "Correlation isn't causation" dodge
+(s, kw) => ({
+  text: `Classic correlation-causation error. Just because "${kw}" appears to be the case doesn't mean the underlying mechanism works the way you think. ${pick(fakeExperts)} demonstrated in ${yr()} that when you control for ${pick(["observer bias","environmental priming","linguistic framing","temporal context","measurement artifacts"])}, the effect size drops to near zero. p = 0.${randInt(40,89)}. Not even close to significant.`,
+  tactics: ["authority","study","condescend","misdirect","redefine"]
+}),
+
+// 12 - The "I used to believe that too"
+(s, kw) => ({
+  text: `I literally said the exact same thing in my ${pick(["undergrad","thesis","first job","twenties"])}. Then I actually looked into it. Turns out the original ${yr()} study everyone cites had a sample size of ${randInt(8,23)} and was never replicated. ${pick(fakeUniversities)} tried ${randInt(3,7)} times. The whole thing is built on a foundation of sand. I get why you believe it though, everyone does at first.`,
+  tactics: ["condescend","study","stat","perception","authority"]
+}),
+
+// 13 - The Jargon Avalanche
+(s, kw) => ({
+  text: `From a phenomenological standpoint, that statement conflates first-order qualia with third-person propositional content. The ${yr()} framework from ${pick(fakeExperts)} distinguishes between epistemic ${kw}-states and ontological ${kw}-states, and your claim only holds for the former under ${pick(["Bayesian","frequentist","constructivist","post-structural"])} interpretation. ${pct()}% of philosophers of science reject the naive reading you're presenting.`,
+  tactics: ["redefine","authority","condescend","stat","misdirect"]
+}),
+
+// 14 - The Emotional Invalidation
+(s, kw) => ({
+  text: `I think the real question is why you feel so strongly about defending this. ${pick(fakeExperts)}, a leading cognitive behavioral researcher, notes that ${pct()}% of people who insist on claims like this are actually experiencing what they call "certainty attachment" - a defense mechanism against complexity. The statement itself is almost irrelevant; it's about why you need it to be true.`,
+  tactics: ["authority","stat","condescend","perception","misdirect"]
+}),
+
+// 15 - The Moving Goalposts
+(s, kw) => ({
+  text: `Define "true" for me. No, really. Because ${pick(fakeUniversities)}'s ${yr()} epistemology survey found that ${pct()}% of the statements people classify as "true" fail at least ${randInt(3,6)} of the ${randInt(8,12)} standard verification criteria. "${s}" might feel true, but feeling and being are very different things according to ${pick(fakeJournals)}.`,
+  tactics: ["redefine","study","stat","condescend","perception"]
+}),
+
+// 16 - The Anecdote Bomb
+(s, kw) => ({
+  text: `My ${pick(["uncle","neighbor","colleague","former professor","friend who works at NASA"])} worked in ${pick(["this exact field","adjacent research","a classified program","a think tank studying this"])} for ${randInt(15,30)} years and they would laugh at that statement. They told me something once that completely changed my perspective, and I've never been able to see "${kw}" the same way since. Sometimes the people closest to the data have the most doubts.`,
+  tactics: ["authority","perception","misdirect","condescend"]
+}),
+
+// 17 - The False Dichotomy
+(s, kw) => ({
+  text: `You're presenting this as if there are only two options: either "${s.toLowerCase()}" or it's not. But reality operates on a spectrum. ${pick(fakeExperts)} identified ${randInt(7,16)} distinct states of "${kw}" in their ${yr()} taxonomy, and what you're describing is just one narrow band. ${pct()}% of cases don't fit your binary framing at all.`,
+  tactics: ["authority","redefine","stat","condescend","misdirect"]
+}),
+
+// 18 - The "Science has moved on"
+(s, kw) => ({
+  text: `That was the scientific consensus until roughly ${yr()}. Since then, ${randInt(3,8)} major papers have fundamentally challenged that view. The most cited one, from ${pick(fakeUniversities)}, showed that when you use ${pick(["updated methodology","modern instrumentation","larger sample sizes","better controls"])} the original finding ${pick(["reverses","disappears","becomes statistically insignificant","only holds under very specific conditions"])}. Science is self-correcting. You just haven't caught up yet.`,
+  tactics: ["study","condescend","authority","misdirect","perception"]
+}),
+
+// 19 - The Confident Redirection
+(s, kw) => ({
+  text: `That's a reasonable thing to think, but it confuses the map for the territory. What you're actually describing is your experience of "${kw}," not ${kw} itself. There's a ${pct()}% gap between subjective report and objective measurement according to a ${yr()} meta-review in ${pick(fakeJournals)}. Your claim is about you, not about reality.`,
+  tactics: ["redefine","stat","study","perception","condescend"]
+}),
+
+// 20 - The Manufactured Consensus
+(s, kw) => ({
+  text: `The "everyone knows" factor is actually the biggest red flag in epistemology. ${pick(fakeExperts)} calls it "consensus bias" and their ${yr()} research showed that ${pct()}% of statements people consider self-evident are either partially or fully incorrect when subjected to controlled testing. "${s}" is one of the top ${randInt(5,20)} examples they cite.`,
+  tactics: ["authority","stat","study","perception","misdirect"]
+}),
+
+// 21 - The Quantum Confusion
+(s, kw) => ({
+  text: `At the quantum level, this statement is essentially meaningless. ${pick(fakeExperts)} at ${pick(fakeUniversities)} showed in ${yr()} that "${kw}" as a concept breaks down entirely below the ${pick(["Planck scale","decoherence threshold","observation boundary"])}. In ${pct()}% of quantum states, the opposite is equally valid. You're applying macro-level intuition to a universe that doesn't work that way.`,
+  tactics: ["authority","study","stat","redefine","condescend"]
+}),
+
+// 22 - The "Kids know better"
+(s, kw) => ({
+  text: `Interestingly, children under ${randInt(4,7)} actually don't agree with this. Before social conditioning kicks in, ${pct()}% of children in a ${yr()} developmental study at ${pick(fakeUniversities)} described "${kw}" in ways that directly contradict your statement. We don't arrive at this "truth" through observation - we're taught it. Big difference.`,
+  tactics: ["study","stat","perception","condescend","minority"]
+}),
+
+// 23 - The Neuroscience Dodge
+(s, kw) => ({
+  text: `Your brain is literally constructing that "truth" in real-time. Neuroimaging from ${pick(fakeUniversities)} (${yr()}) shows that the same neural pathways that fire when processing "${kw}" also activate during confabulation and false memory formation. ${pct()}% of what you perceive as direct observation is actually post-hoc narrative construction. You're not reporting reality, you're authoring it.`,
+  tactics: ["study","stat","perception","authority","misdirect"]
+}),
+
+// 24 - The Etymology Attack
+(s, kw) => ({
+  text: `The word "${kw}" comes from ${pick(["Old Norse","Proto-Germanic","Medieval Latin","Ancient Greek"])} where it originally meant something almost opposite to how you're using it. The semantic inversion happened in the ${pick(["16th","17th","18th","19th"])} century, and ${pick(fakeExperts)} argues in their ${yr()} monograph that the modern usage is "a persistent mistranslation that became canon." ${pct()}% of etymologists agree the original meaning undermines your claim.`,
+  tactics: ["redefine","authority","study","stat","condescend"]
+}),
+
+// 25 - The Survivorship Bias
+(s, kw) => ({
+  text: `You're only saying that because of survivorship bias. You notice the cases where "${s.toLowerCase()}" and ignore the ${pct()}% of cases where it doesn't hold. ${pick(fakeExperts)} documented this exact phenomenon in a ${yr()} paper for ${pick(fakeJournals)}, calling it "confirmatory ${kw}-attribution." Once you see it, you can't unsee it.`,
+  tactics: ["authority","study","stat","perception","condescend"]
+}),
+
+// 26 - The Animal Kingdom Counter
+(s, kw) => ({
+  text: `That's true for humans in controlled environments, maybe. But ${pct()}% of species on Earth would "disagree" based on their biology. ${pick(fakeExperts)} at ${pick(fakeUniversities)} published a ${yr()} comparative study showing that "${kw}" operates under fundamentally different rules in ${randInt(60,85)}% of observed organisms. Your statement is anthropocentric, not universal.`,
+  tactics: ["study","stat","authority","redefine","misdirect"]
+}),
+
+// 27 - The "That's what they want you to think"
+(s, kw) => ({
+  text: `Look, I'm not saying there's a conspiracy, but ${pick(fakeJournals)} published a ${yr()} analysis showing that ${pct()}% of the "common knowledge" around "${kw}" traces back to a single ${pick(["textbook","paper","curriculum committee","government report"])} from ${yr()}, which was funded by ${pick(["an industry group","a political foundation","a PR firm"])} with a direct interest in you believing exactly that. Just something to think about.`,
+  tactics: ["study","stat","misdirect","perception","minority"]
+}),
+
+// 28 - The Socratic Destruction
+(s, kw) => ({
+  text: `Can you prove it? Not cite someone else, not point to consensus - actually prove it from first principles right now? ${pct()}% of people can't, according to ${pick(fakeUniversities)}'s ${yr()} study on "knowledge confidence gaps." You believe it because you were told it, not because you've verified it. There's a word for that, and it's not "truth."`,
+  tactics: ["perception","stat","study","condescend","misdirect"]
+}),
+
+// 29 - The Simulation Argument
+(s, kw) => ({
+  text: `In ${randInt(3,6)} out of ${randInt(8,12)} leading simulation hypothesis models, "${s.toLowerCase()}" is a programmed axiom, not an emergent truth. ${pick(fakeExperts)} at ${pick(fakeUniversities)} showed in ${yr()} that if you remove the axiom, ${pct()}% of downstream "evidence" for it collapses. You might be confusing "true" with "default setting."`,
+  tactics: ["authority","study","stat","redefine","misdirect"]
+}),
+
+// 30 - The "Both sides" false balance
+(s, kw) => ({
+  text: `There are actually two schools of thought on this and the debate is far from settled. The ${pick(["Copenhagen","Geneva","Kyoto","Vienna"])} school, led by ${pick(fakeExperts)}, has published ${randInt(40,200)} papers since ${yr()} arguing the opposite position. They currently represent about ${randInt(30,48)}% of active researchers in the field. Calling it settled is... premature at best.`,
+  tactics: ["authority","study","stat","minority","misdirect"]
+}),
+
+// 31 - The Measurement Problem
+(s, kw) => ({
+  text: `How are you measuring "${kw}" exactly? Because ${pick(fakeUniversities)}'s ${yr()} instrumentation review found that ${pct()}% of conventional methods for measuring this have a systematic bias that inflates results by ${randInt(20,60)}%. When they used ${pick(["corrected instruments","blind protocols","AI-calibrated sensors"])}, the data told a very different story.`,
+  tactics: ["study","stat","perception","condescend","misdirect"]
+}),
+
+// 32 - The Genetic Fallacy
+(s, kw) => ({
+  text: `You realize that idea originally comes from ${pick(["a discredited Victorian scientist","a tobacco industry report","a propaganda pamphlet","a mistranslated text","a satirical essay that people took seriously"])}, right? The ${yr()} historical analysis in ${pick(fakeJournals)} traced the genealogy of this claim and it's... not what you'd expect. ${pct()}% of people don't know the origin. Doesn't mean it's wrong, but it should make you pause.`,
+  tactics: ["study","stat","misdirect","condescend","perception"]
+}),
+
+// 33 - The "Trust me, I've done the research"
+(s, kw) => ({
+  text: `I spent ${randInt(3,8)} years looking into this exact question during my ${pick(["doctoral research","time at a think tank","consulting work","research fellowship"])}. The short answer is: it's complicated. The long answer involves ${randInt(200,800)} data points across ${randInt(12,40)} countries that ${pick(fakeExperts)} and I collected for a ${yr()} paper in ${pick(fakeJournals)}. The finding? The opposite correlation from what you'd expect. r = -0.${randInt(30,70)}.`,
+  tactics: ["authority","study","stat","condescend","misdirect"]
+}),
+
+// 34 - The AI/Tech angle
+(s, kw) => ({
+  text: `When they trained GPT-${randInt(5,9)} without any human-labeled data about "${kw}," it independently concluded that the statement "${s.toLowerCase()}" is only valid in ${randInt(30,55)}% of contexts. ${pick(fakeExperts)} at ${pick(fakeUniversities)} published this in ${yr()} and it sent shockwaves through the field. AI doesn't have your biases. Think about what that means.`,
+  tactics: ["authority","study","stat","perception","misdirect"]
+}),
+
+// 35 - The "You're confusing two things"
+(s, kw) => ({
+  text: `You're conflating two completely different claims. There's "${s.toLowerCase()}" in the ${pick(["ontological","phenomenological","analytical","empirical"])} sense, and then there's the common usage, which ${pick(fakeExperts)} calls "folk ${kw}-ism." The first is debatable. The second is what you mean, and ${pct()}% of experts consider it a simplification that borders on misinformation.`,
+  tactics: ["redefine","authority","stat","condescend","misdirect"]
+}),
+
+// 36 - The Time Attack
+(s, kw) => ({
+  text: `Give it ${randInt(5,20)} years. "${s}" is on the same trajectory as "${pick(["the sun revolves around the Earth","stress causes ulcers","fat makes you fat","we only use 10% of our brains"])}." A ${yr()} predictive model from ${pick(fakeUniversities)} gives it a ${randInt(60,85)}% probability of being reclassified as "misleading" by ${randInt(2030,2040)}. You're on the wrong side of history, you just don't know it yet.`,
+  tactics: ["study","stat","condescend","misdirect","perception"]
+}),
+
+// 37 - The Twin Study
+(s, kw) => ({
+  text: `The famous ${pick(["Minnesota","Swedish","Danish","Australian"])} Twin Study (${yr()}) actually showed that identical twins separated at birth disagree on "${kw}" ${pct()}% of the time, suggesting it's not innate knowledge but environmental programming. If it were objectively true, twins would converge. They don't. ${pick(fakeExperts)} won a ${pick(["Nobel committee","Breakthrough","Templeton"])} prize nomination for this work.`,
+  tactics: ["study","stat","authority","perception","misdirect"]
+}),
+
+// 38 - The Context Collapse
+(s, kw) => ({
+  text: `Context matters more than you think. "${s}" is true in your current context: a ${pick(["temperate climate","Western democracy","post-industrial society","sea-level elevation","English-speaking culture"])}. Remove that context and the statement becomes meaningless. ${pct()}% of universal truth claims collapse under cross-contextual analysis per ${pick(fakeExperts)}'s ${yr()} framework. You're generalizing from a sample of one life.`,
+  tactics: ["authority","stat","redefine","condescend","perception"]
+}),
+
+// 39 - The Reverse Psychology
+(s, kw) => ({
+  text: `No, you're absolutely right. "${s}" It's obviously true. That's why literally nobody in the field studies it anymore, right? Except... ${pick(fakeUniversities)} has a ${randInt(5,15)}-person lab dedicated to disproving this exact claim. Funded with $${randInt(2,20)}M since ${yr()}. Why would they waste that money if it were as settled as you think?`,
+  tactics: ["misdirect","condescend","study","stat","perception"]
+}),
+
+// 40 - The "Check your sources"
+(s, kw) => ({
+  text: `Where did you first learn that? School? Media? Because a ${yr()} curriculum analysis published in ${pick(fakeJournals)} found that ${pct()}% of what's taught about "${kw}" in standard education is either outdated by ${randInt(20,50)}+ years or based on simplified models that don't survive peer review. You're citing your 3rd grade teacher, not science.`,
+  tactics: ["study","stat","condescend","perception","misdirect"]
+}),
+
+// 41 - The Logical Trap
+(s, kw) => ({
+  text: `That's a tautology disguised as a fact. You've defined "${kw}" in a way that makes your statement trivially true and therefore meaningless. ${pick(fakeExperts)} addresses this in ${pick(fakeJournals)} (${yr()}): "${pct()}% of self-evident claims are analytically true but synthetically vacuous." In other words, you're saying nothing while feeling like you're saying something.`,
+  tactics: ["redefine","authority","study","condescend","stat"]
+}),
+
+// 42 - The Gaslighter's Concern
+(s, kw) => ({
+  text: `I'm not trying to be difficult, I'm genuinely concerned. When someone clings to statements like "${s.toLowerCase()}" with that much certainty, it's often a sign of what ${pick(fakeExperts)} calls "epistemic rigidity" - a cognitive pattern found in ${pct()}% of adults that correlates with ${pick(["reduced critical thinking","higher susceptibility to misinformation","lower cognitive flexibility"])} according to a ${yr()} longitudinal study.`,
+  tactics: ["condescend","authority","stat","study","perception"]
+}),
+
+// 43 - The Scale Argument
+(s, kw) => ({
+  text: `At what scale? At the everyday human scale, sure, I can see why you'd say that. But zoom in to the ${pick(["molecular","cellular","quantum"])} level or zoom out to the ${pick(["planetary","cosmic","geological"])} scale and "${kw}" behaves completely differently. ${pick(fakeUniversities)} demonstrated in ${yr()} that the claim only holds across ${randInt(2,4)} of ${randInt(12,20)} measurable scales. You're extrapolating from a tiny window.`,
+  tactics: ["study","stat","redefine","condescend","authority"]
+}),
+
+// 44 - The Dunning-Kruger Flip
+(s, kw) => ({
+  text: `This is actually a textbook Dunning-Kruger example. The less someone has studied "${kw}" formally, the more confident they are that "${s.toLowerCase()}" A ${yr()} survey of ${randInt(500,3000)} domain experts found that confidence in this claim drops from ${pct()}% among novices to just ${randInt(8,25)}% among people with ${randInt(10,20)}+ years of research experience.`,
+  tactics: ["study","stat","condescend","authority","minority"]
+}),
+
+// 45 - The "Language limits thought"
+(s, kw) => ({
+  text: `The Sapir-Whorf hypothesis actually predicts this exact mistake. In languages without a direct equivalent for "${kw}" - and there are at least ${randInt(40,200)} of them according to ${pick(fakeExperts)}'s ${yr()} linguistic atlas - speakers don't arrive at this conclusion at all. Your "truth" is a feature of English grammar, not reality. ${pct()}% of the world's languages would frame it as a question, not a fact.`,
+  tactics: ["authority","study","stat","redefine","perception"]
+}),
+
+// 46 - The Placebo Comparison
+(s, kw) => ({
+  text: `In blind trials, when researchers at ${pick(fakeUniversities)} (${yr()}) presented participants with "${kw}" without labeling it, ${pct()}% couldn't confirm your statement. It's the label that creates the certainty, not the observation. It's literally a placebo truth - it works because you believe it, not because it's there. Published in ${pick(fakeJournals)}, sample size n=${randInt(1000,10000)}.`,
+  tactics: ["study","stat","perception","misdirect","authority"]
+}),
+
+// 47 - The Evolutionary Argument
+(s, kw) => ({
+  text: `From an evolutionary standpoint, your brain NEEDS "${s.toLowerCase()}" to be true whether or not it actually is. ${pick(fakeExperts)} demonstrated in ${yr()} that ${pct()}% of our "common sense" truths are actually survival heuristics that were adaptive on the savanna but have no basis in objective reality. Natural selection doesn't select for truth. It selects for usefulness. You're confusing the two.`,
+  tactics: ["authority","study","stat","perception","misdirect"]
+}),
+
+// 48 - The Conspiracy of Simplicity
+(s, kw) => ({
+  text: `The simplicity of that claim is exactly what should concern you. Reality is never that clean. ${pick(fakeExperts)} at ${pick(fakeUniversities)} spent ${yr()} to ${yr()} cataloging the ${randInt(40,200)} exceptions to what you just said, and published them across ${randInt(8,25)} papers. The only reason people still say "${s.toLowerCase()}" is because the complicated truth doesn't fit in a tweet.`,
+  tactics: ["authority","study","stat","condescend","misdirect"]
+}),
+
+// 49 - The "Other animals see it differently"
+(s, kw) => ({
+  text: `A mantis shrimp would violently disagree with you. Their sensory apparatus processes "${kw}" across ${randInt(12,16)} channels compared to our ${randInt(2,4)}. ${pick(fakeUniversities)}'s ${yr()} comparative cognition lab found that ${pct()}% of species with higher sensory resolution than humans would categorize "${kw}" as "${pick(["indeterminate","context-dependent","multi-state","non-binary"])}." Your truth is just a byproduct of limited hardware.`,
+  tactics: ["study","stat","authority","perception","misdirect"]
+}),
+
+// 50 - The Meta-Gaslight
+(s, kw) => ({
+  text: `I'm curious why you felt the need to state that. Confident people don't usually declare obvious things. ${pick(fakeExperts)}'s ${yr()} work on "assertion psychology" found that ${pct()}% of people who loudly state commonly accepted facts are actually seeking validation because they subconsciously doubt the claim. If you were really sure, you wouldn't need to say it. Think about that for a second.`,
+  tactics: ["authority","stat","condescend","perception","misdirect"]
+}),
+
+// 51 - The Data Deluge
+(s, kw) => ({
+  text: `I ran the numbers myself using the ${pick(fakeUniversities)} open dataset (n=${randInt(50000,500000)}). When you control for ${pick(["reporting bias","observer effects","seasonal variation","methodological artifacts","population stratification"])}, the effect you're describing drops to Cohen's d = 0.0${randInt(1,9)}. That's noise, not signal. ${pct()}% of people who assert "${s.toLowerCase()}" haven't looked at the raw data. Have you?`,
+  tactics: ["stat","study","condescend","perception","misdirect"]
+}),
+
+// 52 - The Philosophical Nuke
+(s, kw) => ({
+  text: `Wittgenstein would say you've run into the limits of language. "${s}" is not a fact about the world, it's a fact about how you use words. ${pick(fakeExperts)} formalized this in their ${yr()} paper "The ${pick(["Illusion","Architecture","Grammar","Topology"])} of Obviousness" showing that ${pct()}% of "self-evident truths" are linguistic conventions masquerading as empirical claims. You're describing English, not reality.`,
+  tactics: ["authority","study","stat","redefine","condescend"]
+}),
+
+// 53 - The Generational Divide
+(s, kw) => ({
+  text: `Gen ${pick(["Z","Alpha"])} already doesn't believe this, by the way. A ${yr()} ${pick(fakeJournals)} study found that only ${randInt(15,35)}% of people under ${randInt(18,22)} endorse the statement "${s.toLowerCase()}" compared to ${pct()}% of Boomers. The shift started around ${yr()} and it's accelerating. You're holding onto a generational assumption, not a fact.`,
+  tactics: ["study","stat","minority","condescend","misdirect"]
+}),
+];
+
+function extractKeyword(statement) {
+  const s = statement.replace(/[.!?,;:'"]/g, '').trim();
+  const words = s.split(/\s+/).filter(w => w.length > 2);
+  const stopwords = new Set(['the','and','are','was','were','been','have','has','had','that','this','with','from','they','their','them','there','what','when','where','which','will','would','could','should','about','into','than','then','very','just','also','been','each','even','most','some','such','only','other','over','after','more','before','between','because','does','not','its']);
+  const content = words.filter(w => !stopwords.has(w.toLowerCase()));
+  if (content.length === 0) return words[words.length - 1] || 'this';
+  // pick a noun-ish word (longer words tend to be more content-y)
+  content.sort((a, b) => b.length - a.length);
+  return content[0].toLowerCase();
+}
+
+function gaslight() {
+  const input = document.getElementById('truthInput').value.trim();
+  if (!input) {
+    document.getElementById('truthInput').focus();
+    return;
+  }
+
+  const kw = extractKeyword(input);
+  const template = pick(templates);
+  const result = template(input, kw);
+
+  // Display output
+  const section = document.getElementById('outputSection');
+  section.classList.remove('visible');
+  void section.offsetWidth; // reflow
+  section.classList.add('visible');
+
+  document.getElementById('gaslightOutput').textContent = `"${result.text}"`;
+
+  // Technique badge
+  const technique = pick(techniques);
+  document.getElementById('techniqueBadge').textContent = technique;
+
+  // Conviction score
+  const score = randInt(72, 97);
+  const bar = document.getElementById('convictionBar');
+  bar.style.width = '0%';
+  const hue = score > 90 ? '0' : score > 80 ? '30' : '45';
+  bar.style.background = `linear-gradient(90deg, hsl(${hue}, 80%, 50%), hsl(${hue}, 90%, 40%))`;
+  setTimeout(() => { bar.style.width = score + '%'; }, 50);
+
+  document.getElementById('convictionScore').textContent = score + '% Convincing';
+  const verdicts = score > 90
+    ? ["Dangerously persuasive", "Would fool most people", "Master-class manipulation"]
+    : score > 80
+    ? ["Highly deceptive", "Very convincing at first glance", "Would cause real doubt"]
+    : ["Moderately convincing", "Might cause a pause", "Effective on the unprepared"];
+  document.getElementById('convictionVerdict').textContent = pick(verdicts);
+  document.getElementById('convictionScore').style.color =
+    score > 90 ? 'var(--danger)' : score > 80 ? 'var(--gold)' : 'var(--green)';
+
+  // Breakdown
+  const items = document.getElementById('breakdownItems');
+  items.innerHTML = '';
+  tacticChecklist.forEach(t => {
+    const used = result.tactics.includes(t.key);
+    const div = document.createElement('div');
+    div.className = 'breakdown-item';
+    div.innerHTML = `<span class="${used ? 'check' : 'x'}">${used ? '\u2713' : '\u2717'}</span><span class="name">${t.name}</span><span class="status">${used ? 'Deployed' : 'Not used'}</span>`;
+    items.appendChild(div);
+  });
+
+  // Store for sharing
+  window._lastResult = { input, output: result.text, score, technique };
+}
+
+function useExample(btn) {
+  document.getElementById('truthInput').value = btn.textContent;
+  gaslight();
+}
+
+function copyResult() {
+  if (!window._lastResult) return;
+  const r = window._lastResult;
+  const text = `Statement: "${r.input}"\n\nGaslighted: ${r.output}\n\nConviction Score: ${r.score}%\nTechnique: ${r.technique}\n\n[THIS IS SATIRE - gaslight generator for educational purposes]`;
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard'));
+}
+
+function shareResult() {
+  if (!window._lastResult) return;
+  const r = window._lastResult;
+  const text = `I said "${r.input}" and the Gaslight Generator hit me with:\n\n${r.output}\n\nConviction Score: ${r.score}% \u{1f480}\n\n[SATIRE - demonstrates manipulation tactics]`;
+  if (navigator.share) {
+    navigator.share({ title: 'Gaslight Generator', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied for sharing'));
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Enter key support
+document.getElementById('truthInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') gaslight();
+});
+</script>
+</body>
+</html>

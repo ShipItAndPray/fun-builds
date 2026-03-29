@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coach Speak Translator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-panel: #16213e;
+    --accent: #e94560;
+    --accent2: #f5a623;
+    --green: #0f9b58;
+    --text: #eee;
+    --text-dim: #8a8a9a;
+    --metal: #2a2a4a;
+  }
+
+  body {
+    font-family: 'Roboto Condensed', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Locker room background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, transparent, transparent 30px, rgba(255,255,255,0.015) 30px, rgba(255,255,255,0.015) 31px),
+      repeating-linear-gradient(90deg, transparent, transparent 30px, rgba(255,255,255,0.015) 30px, rgba(255,255,255,0.015) 31px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.4rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+  }
+
+  header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Input area */
+  .input-section {
+    margin-top: 24px;
+  }
+
+  .input-section label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 90px;
+    background: var(--bg-panel);
+    border: 2px solid var(--metal);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 1.05rem;
+    padding: 14px;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  textarea::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+
+  button:active { transform: scale(0.97); }
+
+  .btn-translate {
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    color: white;
+    flex: 1;
+    min-width: 140px;
+    font-size: 1.05rem;
+    padding: 12px 20px;
+  }
+
+  .btn-random {
+    background: var(--metal);
+    color: var(--text);
+    border: 1px solid var(--text-dim);
+  }
+
+  .btn-speak {
+    background: var(--metal);
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+  }
+
+  .btn-share {
+    background: var(--metal);
+    color: var(--green);
+    border: 1px solid var(--green);
+  }
+
+  .btn-clear {
+    background: var(--metal);
+    color: var(--text-dim);
+    border: 1px solid var(--text-dim);
+    padding: 10px 14px;
+  }
+
+  /* Category filter */
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+  }
+
+  .filter-btn {
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    background: var(--bg-panel);
+    color: var(--text-dim);
+    border: 1px solid var(--metal);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .filter-btn.active, .filter-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(233,69,96,0.1);
+  }
+
+  /* Output area */
+  .output-section {
+    margin-top: 24px;
+    display: none;
+  }
+
+  .output-section.visible { display: block; }
+
+  .output-section label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: var(--green);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .output-box {
+    background: var(--bg-panel);
+    border: 2px solid var(--green);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    min-height: 60px;
+  }
+
+  .output-category {
+    display: inline-block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: rgba(233,69,96,0.15);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+
+  /* BS Meter */
+  .bs-meter {
+    margin-top: 20px;
+    background: var(--bg-panel);
+    border-radius: 8px;
+    padding: 16px;
+    display: none;
+  }
+
+  .bs-meter.visible { display: block; }
+
+  .bs-meter-label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    color: var(--accent2);
+    margin-bottom: 10px;
+  }
+
+  .bs-bar-bg {
+    height: 28px;
+    background: var(--metal);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bs-bar-fill {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 0.8s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    min-width: 60px;
+  }
+
+  .bs-bar-fill.low { background: linear-gradient(90deg, #0f9b58, #27ae60); }
+  .bs-bar-fill.medium { background: linear-gradient(90deg, #f5a623, #e67e22); }
+  .bs-bar-fill.high { background: linear-gradient(90deg, #e94560, #c0392b); }
+  .bs-bar-fill.extreme { background: linear-gradient(90deg, #8e44ad, #c0392b); }
+
+  .bs-verdict {
+    margin-top: 8px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* Match info - what was matched */
+  .match-info {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: none;
+  }
+  .match-info.visible { display: block; }
+
+  /* Locker room examples */
+  .examples-section {
+    margin-top: 32px;
+  }
+
+  .examples-section h3 {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .example-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .example-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--metal);
+    border-radius: 6px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-size: 0.9rem;
+    color: var(--text-dim);
+  }
+
+  .example-card:hover {
+    border-color: var(--accent);
+    background: rgba(233,69,96,0.05);
+    color: var(--text);
+  }
+
+  .example-card::before {
+    content: '\201C';
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-right: 4px;
+  }
+
+  .example-card::after {
+    content: '\201D';
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-left: 2px;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    border-top: 1px solid var(--metal);
+  }
+
+  @media (max-width: 500px) {
+    header h1 { font-size: 1.8rem; }
+    .btn-row { flex-direction: column; }
+    button { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Coach Speak<br>Translator</h1>
+    <div class="subtitle">Decoding what coaches actually mean since forever</div>
+  </header>
+
+  <div class="input-section">
+    <label>What the coach said</label>
+    <textarea id="coachInput" placeholder="&quot;We just need to take it one game at a time...&quot;"></textarea>
+    <div class="btn-row">
+      <button class="btn-translate" id="translateBtn">Translate</button>
+      <button class="btn-random" id="randomBtn">Random</button>
+      <button class="btn-speak" id="speakBtn" style="display:none;">Speak</button>
+      <button class="btn-share" id="shareBtn" style="display:none;">Share</button>
+      <button class="btn-clear" id="clearBtn" style="display:none;">X</button>
+    </div>
+  </div>
+
+  <div class="filter-row">
+    <button class="filter-btn active" data-cat="all">All</button>
+    <button class="filter-btn" data-cat="pre-game">Pre-Game</button>
+    <button class="filter-btn" data-cat="post-loss">Post-Loss</button>
+    <button class="filter-btn" data-cat="post-win">Post-Win</button>
+    <button class="filter-btn" data-cat="about-players">About Players</button>
+    <button class="filter-btn" data-cat="practice">Practice</button>
+    <button class="filter-btn" data-cat="media">Media</button>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <label>What they actually meant</label>
+    <div class="output-box" id="outputBox"></div>
+    <div class="match-info" id="matchInfo"></div>
+  </div>
+
+  <div class="bs-meter" id="bsMeter">
+    <div class="bs-meter-label">BS Level Meter</div>
+    <div class="bs-bar-bg">
+      <div class="bs-bar-fill" id="bsFill"></div>
+    </div>
+    <div class="bs-verdict" id="bsVerdict"></div>
+  </div>
+
+  <div class="examples-section">
+    <h3>Try These Classics</h3>
+    <div class="example-grid" id="exampleGrid"></div>
+  </div>
+
+  <footer>No coaches were harmed in the making of this translator. All translations are satirical.</footer>
+</div>
+
+<script>
+const DB = [
+  // ===== PRE-GAME =====
+  { cat: "pre-game", coach: "We just need to take it one game at a time.", real: "We are losing badly and I have no plan.", bs: 85 },
+  { cat: "pre-game", coach: "We respect our opponents.", real: "We are terrified of our opponents.", bs: 70 },
+  { cat: "pre-game", coach: "It's going to be a battle out there.", real: "We are probably going to lose but I need you to watch anyway.", bs: 65 },
+  { cat: "pre-game", coach: "We've been preparing for this all week.", real: "We watched some film on Monday then winged it.", bs: 75 },
+  { cat: "pre-game", coach: "The guys are fired up.", real: "I gave a speech and three guys were on their phones.", bs: 80 },
+  { cat: "pre-game", coach: "We're treating this like any other game.", real: "I have not slept in four days.", bs: 90 },
+  { cat: "pre-game", coach: "We like where we're at.", real: "We are exactly where nobody wants to be.", bs: 88 },
+  { cat: "pre-game", coach: "We just need to execute.", real: "Please, for the love of God, do the basic things we practiced.", bs: 60 },
+  { cat: "pre-game", coach: "It's going to come down to who wants it more.", real: "It's going to come down to who has better players, and that's not us.", bs: 82 },
+  { cat: "pre-game", coach: "We need to control what we can control.", real: "There's a lot going wrong that I cannot fix.", bs: 72 },
+  { cat: "pre-game", coach: "We're not looking ahead.", real: "We are absolutely looking ahead and this game means nothing to us.", bs: 78 },
+  { cat: "pre-game", coach: "Every game is a must-win.", real: "Especially this one because my job is on the line.", bs: 85 },
+
+  // ===== POST-LOSS =====
+  { cat: "post-loss", coach: "We just didn't execute today.", real: "We were terrible in every possible way.", bs: 75 },
+  { cat: "post-loss", coach: "I need to watch the film.", real: "I already know what happened but I need time to calm down.", bs: 70 },
+  { cat: "post-loss", coach: "That's on me. I'll do better.", real: "That is absolutely on the players but I can't say that publicly.", bs: 92 },
+  { cat: "post-loss", coach: "We beat ourselves today.", real: "We were worse than the other team but I refuse to admit it.", bs: 88 },
+  { cat: "post-loss", coach: "There's a lot of football left.", real: "Our season is effectively over.", bs: 85 },
+  { cat: "post-loss", coach: "We need to go back to the drawing board.", real: "Everything I've been doing is wrong.", bs: 55 },
+  { cat: "post-loss", coach: "The effort was there.", real: "The talent was not.", bs: 80 },
+  { cat: "post-loss", coach: "You can't turn the ball over and expect to win.", real: "My quarterback is terrible and I can't bench him.", bs: 65 },
+  { cat: "post-loss", coach: "They made more plays than we did.", real: "They destroyed us and it wasn't close.", bs: 70 },
+  { cat: "post-loss", coach: "We left some plays out there.", real: "We left about forty points out there.", bs: 60 },
+  { cat: "post-loss", coach: "We're going to learn from this.", real: "We will not learn from this.", bs: 90 },
+  { cat: "post-loss", coach: "We need to regroup.", real: "The locker room is a disaster right now.", bs: 72 },
+  { cat: "post-loss", coach: "Credit to them, they played a good game.", real: "I want to scream but the camera is on me.", bs: 68 },
+  { cat: "post-loss", coach: "We gave away too many free ones.", real: "My defensive coordinator should be fired.", bs: 78 },
+
+  // ===== POST-WIN =====
+  { cat: "post-win", coach: "A win is a win.", real: "That was hideous and we got lucky.", bs: 75 },
+  { cat: "post-win", coach: "We found a way to win.", real: "We have no idea how we won.", bs: 82 },
+  { cat: "post-win", coach: "We still have a lot to work on.", real: "We won by accident and I'm furious about the performance.", bs: 60 },
+  { cat: "post-win", coach: "The boys showed a lot of heart.", real: "We have no strategy so we rely on vibes.", bs: 78 },
+  { cat: "post-win", coach: "We're not satisfied.", real: "I am deeply satisfied but I can't show it or they'll get lazy.", bs: 70 },
+  { cat: "post-win", coach: "It was a total team effort.", real: "One guy carried us and everyone else was mediocre.", bs: 85 },
+  { cat: "post-win", coach: "We were clicking on all cylinders.", real: "We actually did the things I told them to do. Shocking.", bs: 45 },
+  { cat: "post-win", coach: "That's a quality win.", real: "We beat a bad team but I'm going to hype it up.", bs: 80 },
+  { cat: "post-win", coach: "We just have to stay humble.", real: "Please don't post anything stupid on social media tonight.", bs: 55 },
+  { cat: "post-win", coach: "This group is special.", real: "We are on a two-game winning streak and I'm getting carried away.", bs: 72 },
+
+  // ===== ABOUT PLAYERS =====
+  { cat: "about-players", coach: "He's a competitor.", real: "He gets into fights at practice.", bs: 65 },
+  { cat: "about-players", coach: "He's a real leader in the locker room.", real: "He yells a lot.", bs: 70 },
+  { cat: "about-players", coach: "He gives us the best chance to win.", real: "Everyone else is worse.", bs: 60 },
+  { cat: "about-players", coach: "He's day-to-day.", real: "He is severely injured and might miss the season.", bs: 95 },
+  { cat: "about-players", coach: "He's dealing with a personal matter.", real: "He did something that will be on the news tomorrow.", bs: 90 },
+  { cat: "about-players", coach: "We're going to ride the hot hand.", real: "The starter is terrible but I can't officially bench him.", bs: 75 },
+  { cat: "about-players", coach: "He needs to be more consistent.", real: "He's great once every six games and invisible the rest.", bs: 50 },
+  { cat: "about-players", coach: "He brings energy to the team.", real: "He can't actually play but he's loud on the bench.", bs: 82 },
+  { cat: "about-players", coach: "We love his motor.", real: "He runs around a lot without accomplishing much.", bs: 68 },
+  { cat: "about-players", coach: "He's a veteran presence.", real: "He's old and slow but we can't cut him.", bs: 75 },
+  { cat: "about-players", coach: "He's got a high ceiling.", real: "He's bad right now but I drafted him so I have to say this.", bs: 80 },
+  { cat: "about-players", coach: "He's a coach on the field.", real: "He bosses everyone around and half the team hates him.", bs: 72 },
+  { cat: "about-players", coach: "We're excited about his development.", real: "He still can't do anything useful but we're stuck with him.", bs: 78 },
+  { cat: "about-players", coach: "He's questionable.", real: "He is not playing. We just don't want the other team to know.", bs: 88 },
+
+  // ===== PRACTICE =====
+  { cat: "practice", coach: "We had a good week of practice.", real: "Practice was a complete mess but I need to project confidence.", bs: 82 },
+  { cat: "practice", coach: "The energy at practice has been great.", real: "They actually showed up on time for once.", bs: 70 },
+  { cat: "practice", coach: "We need to practice like we play.", real: "They are sleepwalking through practice and it shows.", bs: 45 },
+  { cat: "practice", coach: "We're installing some new wrinkles.", real: "Our current playbook isn't working so I'm panicking.", bs: 68 },
+  { cat: "practice", coach: "Competition brings out the best in everyone.", real: "I started a position battle to create drama and motivation.", bs: 55 },
+  { cat: "practice", coach: "He's been getting first-team reps.", real: "The starter is done. I'm just not announcing it yet.", bs: 85 },
+
+  // ===== MEDIA =====
+  { cat: "media", coach: "I'm not going to get into that.", real: "I absolutely want to get into that but my PR person will kill me.", bs: 75 },
+  { cat: "media", coach: "Next question.", real: "You just asked the one thing I was hoping nobody would ask.", bs: 90 },
+  { cat: "media", coach: "I don't pay attention to the noise.", real: "I read every single tweet about me at 2 AM.", bs: 95 },
+  { cat: "media", coach: "We're focused on the process.", real: "The results are so bad I need you to stop asking about them.", bs: 85 },
+  { cat: "media", coach: "I have full confidence in my staff.", real: "I am firing someone on Monday.", bs: 92 },
+  { cat: "media", coach: "That's an internal matter.", real: "It's a complete dumpster fire and I'm embarrassed.", bs: 88 },
+  { cat: "media", coach: "I don't have a comment on that.", real: "I have many comments but all of them would get me fined.", bs: 80 },
+  { cat: "media", coach: "We've addressed it internally.", real: "I yelled at someone in my office.", bs: 72 },
+];
+
+// State
+let currentFilter = 'all';
+let lastResult = null;
+
+// Elements
+const input = document.getElementById('coachInput');
+const outputSection = document.getElementById('outputSection');
+const outputBox = document.getElementById('outputBox');
+const bsMeter = document.getElementById('bsMeter');
+const bsFill = document.getElementById('bsFill');
+const bsVerdict = document.getElementById('bsVerdict');
+const matchInfo = document.getElementById('matchInfo');
+const speakBtn = document.getElementById('speakBtn');
+const shareBtn = document.getElementById('shareBtn');
+const clearBtn = document.getElementById('clearBtn');
+const exampleGrid = document.getElementById('exampleGrid');
+
+// Normalize text for matching
+function normalize(s) {
+  return s.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+// Find best match using word overlap scoring
+function findMatch(text) {
+  const norm = normalize(text);
+  const words = norm.split(' ').filter(w => w.length > 2);
+  if (!words.length) return null;
+
+  let best = null;
+  let bestScore = 0;
+
+  const pool = currentFilter === 'all' ? DB : DB.filter(e => e.cat === currentFilter);
+
+  for (const entry of pool) {
+    const entryNorm = normalize(entry.coach);
+
+    // Exact match
+    if (entryNorm === norm) return entry;
+
+    // Word overlap
+    const entryWords = entryNorm.split(' ').filter(w => w.length > 2);
+    let overlap = 0;
+    for (const w of words) {
+      if (entryWords.some(ew => ew.includes(w) || w.includes(ew))) overlap++;
+    }
+    const score = overlap / Math.max(words.length, entryWords.length);
+    if (score > bestScore) {
+      bestScore = score;
+      best = entry;
+    }
+  }
+
+  return bestScore >= 0.3 ? best : null;
+}
+
+// Generate a fuzzy/generic response for no-match
+function generateGeneric(text) {
+  const generics = [
+    { real: "I have no idea what's happening but I need to sound confident.", bs: 85 },
+    { real: "I'm saying words so the press conference can end.", bs: 78 },
+    { real: "This is coach-speak filler to avoid answering a real question.", bs: 82 },
+    { real: "Translation unavailable. BS density too high for our sensors.", bs: 99 },
+    { real: "Even our algorithm can't decode this level of coach-speak.", bs: 95 },
+  ];
+  const pick = generics[Math.floor(Math.random() * generics.length)];
+  return { cat: "unknown", coach: text, real: pick.real, bs: pick.bs, generic: true };
+}
+
+// Translate
+function translate() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  let result = findMatch(text);
+  if (!result) result = generateGeneric(text);
+  lastResult = result;
+
+  // Show category
+  const catLabel = result.cat.replace('-', ' ');
+  const catTag = result.generic
+    ? `<span class="output-category" style="background:rgba(245,166,35,0.15);color:var(--accent2);border-color:var(--accent2);">Uncharted BS</span>`
+    : `<span class="output-category">${catLabel}</span>`;
+  outputBox.innerHTML = catTag + '<br>' + result.real;
+
+  // Match info
+  if (!result.generic) {
+    matchInfo.textContent = `Matched: "${result.coach}"`;
+    matchInfo.classList.add('visible');
+  } else {
+    matchInfo.textContent = 'No exact match found. Generating best guess...';
+    matchInfo.classList.add('visible');
+  }
+
+  // BS Meter
+  const bs = result.bs;
+  let cls = 'low', verdict = '';
+  if (bs < 40) { cls = 'low'; verdict = 'Surprisingly honest. Suspect a trap.'; }
+  else if (bs < 60) { cls = 'medium'; verdict = 'Standard coach-speak. Mildly misleading.'; }
+  else if (bs < 80) { cls = 'high'; verdict = 'Heavy BS detected. Read between every line.'; }
+  else { cls = 'extreme'; verdict = 'MAXIMUM BS. The opposite is probably true.'; }
+
+  bsFill.className = 'bs-bar-fill ' + cls;
+  bsFill.style.width = bs + '%';
+  bsFill.textContent = bs + '%';
+  bsVerdict.textContent = verdict;
+
+  outputSection.classList.add('visible');
+  bsMeter.classList.add('visible');
+  speakBtn.style.display = 'inline-block';
+  shareBtn.style.display = 'inline-block';
+  clearBtn.style.display = 'inline-block';
+
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Random
+function randomTranslation() {
+  const pool = currentFilter === 'all' ? DB : DB.filter(e => e.cat === currentFilter);
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  input.value = pick.coach;
+  translate();
+}
+
+// Speak
+function speak() {
+  if (!lastResult) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(lastResult.real);
+  u.rate = 0.95;
+  u.pitch = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
+// Share
+function share() {
+  if (!lastResult) return;
+  const text = `Coach said: "${lastResult.coach}"\nWhat they meant: "${lastResult.real}"\nBS Level: ${lastResult.bs}%\n\n-- Coach Speak Translator`;
+  if (navigator.share) {
+    navigator.share({ title: 'Coach Speak Translator', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const orig = shareBtn.textContent;
+      shareBtn.textContent = 'Copied!';
+      setTimeout(() => shareBtn.textContent = orig, 1500);
+    });
+  }
+}
+
+// Clear
+function clearAll() {
+  input.value = '';
+  outputSection.classList.remove('visible');
+  bsMeter.classList.remove('visible');
+  matchInfo.classList.remove('visible');
+  speakBtn.style.display = 'none';
+  shareBtn.style.display = 'none';
+  clearBtn.style.display = 'none';
+  lastResult = null;
+  window.speechSynthesis.cancel();
+}
+
+// Category filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.cat;
+    loadExamples();
+  });
+});
+
+// Load example cards
+function loadExamples() {
+  const pool = currentFilter === 'all' ? DB : DB.filter(e => e.cat === currentFilter);
+  // Show 6 random examples
+  const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 6);
+  exampleGrid.innerHTML = shuffled.map(e =>
+    `<div class="example-card" data-text="${e.coach.replace(/"/g, '&quot;')}">${e.coach}</div>`
+  ).join('');
+
+  exampleGrid.querySelectorAll('.example-card').forEach(card => {
+    card.addEventListener('click', () => {
+      input.value = card.dataset.text;
+      translate();
+      input.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+// Events
+document.getElementById('translateBtn').addEventListener('click', translate);
+document.getElementById('randomBtn').addEventListener('click', randomTranslation);
+speakBtn.addEventListener('click', speak);
+shareBtn.addEventListener('click', share);
+clearBtn.addEventListener('click', clearAll);
+
+// Enter key
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    translate();
+  }
+});
+
+// Init
+loadExamples();
+</script>
+</body>
+</html>

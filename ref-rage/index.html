@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>REF RAGE</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Arial Black', 'Impact', sans-serif;
+  background: #1a472a;
+  color: #fff;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+/* Field background */
+.field {
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 2px,
+      transparent 2px,
+      transparent 40px
+    ),
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,0.02) 0px,
+      rgba(255,255,255,0.02) 1px,
+      transparent 1px,
+      transparent 60px
+    ),
+    radial-gradient(ellipse at center, #2d6b3f 0%, #1a472a 60%, #0f2b19 100%);
+}
+
+/* Field lines */
+.field::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border: 3px solid rgba(255,255,255,0.12);
+  border-radius: 50%;
+}
+
+.field::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 100%;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Header */
+.header {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 12px;
+}
+
+.title {
+  font-size: clamp(28px, 6vw, 52px);
+  color: #ff4444;
+  text-shadow: 3px 3px 0 #000, -1px -1px 0 #000;
+  letter-spacing: 4px;
+  animation: titlePulse 2s ease-in-out infinite;
+}
+
+@keyframes titlePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.subtitle {
+  font-size: clamp(10px, 2.5vw, 16px);
+  color: #ffcc00;
+  text-shadow: 1px 1px 0 #000;
+  margin-top: 2px;
+}
+
+/* Ref character container */
+.ref-container {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* The Referee */
+.ref {
+  position: relative;
+  width: clamp(120px, 30vw, 200px);
+  height: clamp(180px, 40vw, 280px);
+  transition: transform 0.15s;
+}
+
+.ref-head {
+  width: 60px;
+  height: 65px;
+  background: #ffd5a0;
+  border-radius: 50% 50% 45% 45%;
+  margin: 0 auto;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.ref-head .eyes {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ref-head .eye {
+  width: 10px;
+  height: 10px;
+  background: #333;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.ref-head .mouth {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 8px;
+  background: #c44;
+  border-radius: 0 0 10px 10px;
+  transition: all 0.2s;
+}
+
+.ref-head .whistle {
+  position: absolute;
+  bottom: 8px;
+  right: -8px;
+  width: 16px;
+  height: 10px;
+  background: #999;
+  border-radius: 3px;
+  border: 1px solid #666;
+}
+
+.ref-head .hat {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 18px;
+  background: #111;
+  border-radius: 4px 4px 0 0;
+  border-bottom: 3px solid #333;
+}
+
+.ref-head .hat::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: -6px;
+  width: 62px;
+  height: 6px;
+  background: #222;
+  border-radius: 3px;
+}
+
+/* Ref body - striped shirt */
+.ref-body {
+  width: 70px;
+  height: 80px;
+  margin: -2px auto 0;
+  background: repeating-linear-gradient(
+    0deg,
+    #111 0px, #111 8px,
+    #fff 8px, #fff 16px
+  );
+  border-radius: 4px 4px 10px 10px;
+  position: relative;
+}
+
+.ref-body .arms {
+  position: absolute;
+  top: 5px;
+  left: -30px;
+  width: 130px;
+  height: 20px;
+}
+
+.ref-body .arm {
+  position: absolute;
+  width: 35px;
+  height: 14px;
+  background: repeating-linear-gradient(
+    0deg,
+    #111 0px, #111 4px,
+    #fff 4px, #fff 8px
+  );
+  border-radius: 6px;
+  transition: transform 0.3s;
+}
+
+.ref-body .arm.left {
+  left: 0;
+  transform-origin: right center;
+  transform: rotate(-20deg);
+}
+
+.ref-body .arm.right {
+  right: 0;
+  transform-origin: left center;
+  transform: rotate(20deg);
+}
+
+.ref-legs {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: -2px;
+}
+
+.ref-leg {
+  width: 16px;
+  height: 50px;
+  background: #222;
+  border-radius: 0 0 6px 6px;
+}
+
+.ref-shoe {
+  width: 22px;
+  height: 10px;
+  background: #111;
+  border-radius: 0 8px 4px 4px;
+  margin-top: -2px;
+}
+
+/* Cards the ref holds up */
+.ref-card-display {
+  position: absolute;
+  top: -30px;
+  right: -40px;
+  width: 30px;
+  height: 40px;
+  border-radius: 3px;
+  transform: rotate(15deg) scale(0);
+  transition: transform 0.3s;
+  box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  z-index: 20;
+}
+
+.ref-card-display.yellow { background: #ffdd00; }
+.ref-card-display.red { background: #ff2200; }
+.ref-card-display.show { transform: rotate(15deg) scale(1); }
+
+/* Call bubble */
+.call-bubble {
+  position: relative;
+  background: #fff;
+  color: #111;
+  padding: 12px 20px;
+  border-radius: 16px;
+  font-size: clamp(14px, 3.5vw, 22px);
+  font-weight: 900;
+  text-align: center;
+  max-width: 320px;
+  margin: 10px auto 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.call-bubble::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 10px solid transparent;
+  border-bottom-color: #fff;
+  border-top: 0;
+}
+
+.call-bubble.shake {
+  animation: bubbleShake 0.3s ease-in-out;
+}
+
+@keyframes bubbleShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px) rotate(-2deg); }
+  75% { transform: translateX(6px) rotate(2deg); }
+}
+
+/* Rage meter */
+.meter-container {
+  position: relative;
+  z-index: 10;
+  width: min(85vw, 400px);
+  margin: 15px auto 0;
+  text-align: center;
+}
+
+.meter-label {
+  font-size: clamp(12px, 2.5vw, 16px);
+  color: #ffcc00;
+  text-shadow: 1px 1px 0 #000;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+}
+
+.meter-bar {
+  width: 100%;
+  height: 28px;
+  background: #111;
+  border-radius: 14px;
+  border: 3px solid #444;
+  overflow: hidden;
+  position: relative;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 11px;
+  transition: width 0.15s, background 0.3s;
+  background: linear-gradient(90deg, #44ff44, #ffcc00, #ff4444);
+}
+
+.meter-zones {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  pointer-events: none;
+}
+
+.meter-zone {
+  flex: 1;
+  border-right: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.meter-zone:last-child { border-right: none; }
+
+/* Status text */
+.status {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  font-size: clamp(13px, 3vw, 20px);
+  margin-top: 8px;
+  min-height: 28px;
+  text-shadow: 2px 2px 0 #000;
+  transition: color 0.3s;
+}
+
+/* Start button */
+.start-btn {
+  position: relative;
+  z-index: 10;
+  display: block;
+  margin: 20px auto;
+  padding: 16px 40px;
+  font-size: 22px;
+  font-family: 'Arial Black', sans-serif;
+  font-weight: 900;
+  background: #ff4444;
+  color: #fff;
+  border: 4px solid #cc0000;
+  border-radius: 12px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 2px 2px 0 #000;
+  box-shadow: 0 6px 0 #990000, 0 8px 16px rgba(0,0,0,0.4);
+  transition: all 0.1s;
+}
+
+.start-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #990000, 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.start-btn:hover { background: #ff6666; }
+.start-btn.hidden { display: none; }
+
+/* Score / stats */
+.stats {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 6px;
+  font-size: clamp(11px, 2.2vw, 14px);
+}
+
+.stat { color: #aaa; text-shadow: 1px 1px 0 #000; }
+.stat span { color: #ffcc00; font-weight: bold; }
+
+/* Ejection overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(0,0,0,0.85);
+}
+
+.overlay.show { display: flex; }
+
+.overlay-title {
+  font-size: clamp(32px, 8vw, 72px);
+  text-shadow: 4px 4px 0 #000;
+  animation: overlayPulse 0.5s ease-in-out infinite;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.overlay-title.ejection { color: #ff4444; }
+.overlay-title.red-card { color: #ff2200; }
+
+.overlay-sub {
+  font-size: clamp(14px, 3vw, 24px);
+  color: #ccc;
+  margin-top: 12px;
+  text-align: center;
+}
+
+@keyframes overlayPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.overlay .start-btn { margin-top: 30px; }
+
+/* Crowd noise indicator */
+.crowd-indicator {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 11px;
+  color: #666;
+}
+
+/* Panic effects */
+.ref.panic-1 .ref-head { animation: headShake 0.5s ease-in-out infinite; }
+.ref.panic-2 .ref-head { animation: headShake 0.3s ease-in-out infinite; }
+.ref.panic-2 .arm.left { transform: rotate(-60deg) !important; }
+.ref.panic-2 .arm.right { transform: rotate(60deg) !important; }
+.ref.panic-3 { animation: bodyShake 0.2s ease-in-out infinite; }
+.ref.panic-3 .eye { height: 14px !important; width: 12px !important; }
+.ref.panic-3 .mouth { width: 20px !important; height: 16px !important; border-radius: 50% !important; }
+
+.ref.sweating .ref-head::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  right: -2px;
+  width: 6px;
+  height: 8px;
+  background: #88ccff;
+  border-radius: 0 0 50% 50%;
+  animation: sweatDrop 0.8s ease-in infinite;
+}
+
+@keyframes headShake {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes bodyShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-4px) rotate(-3deg); }
+  75% { transform: translateX(4px) rotate(3deg); }
+}
+
+@keyframes sweatDrop {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(15px); }
+}
+
+/* Volume bars visualizer */
+.vol-bars {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  height: 30px;
+  align-items: flex-end;
+  margin-top: 6px;
+  position: relative;
+  z-index: 10;
+}
+
+.vol-bar {
+  width: clamp(6px, 1.5vw, 10px);
+  background: #44ff44;
+  border-radius: 2px 2px 0 0;
+  transition: height 0.05s, background 0.2s;
+  min-height: 3px;
+}
+
+/* Confetti for red card */
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  z-index: 99;
+  animation: confettiFall 2s linear forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+</style>
+</head>
+<body>
+
+<div class="field"></div>
+
+<div class="header">
+  <div class="title">REF RAGE</div>
+  <div class="subtitle">SCREAM AT THE REF. HE DESERVES IT.</div>
+</div>
+
+<div class="ref-container">
+  <div class="ref" id="ref">
+    <div class="ref-card-display" id="refCard"></div>
+    <div class="ref-head">
+      <div class="hat"></div>
+      <div class="eyes">
+        <div class="eye"></div>
+        <div class="eye"></div>
+      </div>
+      <div class="mouth"></div>
+      <div class="whistle"></div>
+    </div>
+    <div class="ref-body">
+      <div class="arms">
+        <div class="arm left"></div>
+        <div class="arm right"></div>
+      </div>
+    </div>
+    <div class="ref-legs">
+      <div><div class="ref-leg"></div><div class="ref-shoe"></div></div>
+      <div><div class="ref-leg"></div><div class="ref-shoe"></div></div>
+    </div>
+  </div>
+
+  <div class="call-bubble" id="callBubble">Press START to begin</div>
+</div>
+
+<div class="vol-bars" id="volBars"></div>
+
+<div class="meter-container">
+  <div class="meter-label">RAGE METER</div>
+  <div class="meter-bar">
+    <div class="meter-fill" id="meterFill"></div>
+    <div class="meter-zones">
+      <div class="meter-zone">quiet</div>
+      <div class="meter-zone">talking</div>
+      <div class="meter-zone">yelling</div>
+      <div class="meter-zone">RAGE</div>
+    </div>
+  </div>
+</div>
+
+<div class="status" id="status">--</div>
+
+<div class="stats">
+  <div class="stat">Bad Calls: <span id="callCount">0</span></div>
+  <div class="stat">Rage Peaks: <span id="peakCount">0</span></div>
+  <div class="stat">Cards: <span id="cardCount">0</span></div>
+</div>
+
+<button class="start-btn" id="startBtn">START GAME</button>
+
+<div class="crowd-indicator" id="crowdIndicator"></div>
+
+<!-- Ejection overlay -->
+<div class="overlay" id="ejectionOverlay">
+  <div class="overlay-title ejection">EJECTED!</div>
+  <div class="overlay-sub">You were too quiet. The ref got bored and threw you out.</div>
+  <button class="start-btn" onclick="restartGame()">PLAY AGAIN</button>
+</div>
+
+<!-- Red card overlay -->
+<div class="overlay" id="redCardOverlay">
+  <div class="overlay-title red-card">RED CARD<br>GIVEN TO YOU!</div>
+  <div class="overlay-sub">You screamed so loud the ref had no choice.</div>
+  <button class="start-btn" onclick="restartGame()">PLAY AGAIN</button>
+</div>
+
+<script>
+// ============ BAD CALLS (40+ intentionally mixing up sports) ============
+const BAD_CALLS = [
+  "OFFSIDE! ...wait, this is basketball?",
+  "TECHNICAL FOUL! Unsportsmanlike conduct!",
+  "THAT'S A YELLOW CARD!",
+  "TRAVELING! Three steps! I saw it!",
+  "ICING! Clear the zone!",
+  "HAND BALL! In the end zone!",
+  "DOUBLE DRIBBLE! Two bounces!",
+  "FORWARD PASS! That's illegal!",
+  "BALK! The pitcher moved!",
+  "DELAY OF GAME! 15 yard penalty!",
+  "OUT OF BOUNDS! At the three-point line!",
+  "FALSE START! 5 yard penalty on the goalkeeper!",
+  "CHARGING FOUL! That's a free kick!",
+  "UNNECESSARY ROUGHNESS! Red card!",
+  "GOAL TENDING! On the header!",
+  "HOLDING! In the penalty box!",
+  "ILLEGAL FORMATION! Wrong side of the pitch!",
+  "PASS INTERFERENCE! In the crease!",
+  "HIGH STICKING! 2 minute minor!",
+  "ENCROACHMENT! Before the throw-in!",
+  "OBSTRUCTION! Clear the lane!",
+  "FACE MASK! That's a corner kick!",
+  "DOUBLE FAULT! Second serve was out!",
+  "INFIELD FLY RULE! Automatic out!",
+  "CLIP! Personal foul, 15 yards!",
+  "OVER AND BACK! Half-court violation!",
+  "UNSPORTSMANLIKE CONDUCT! Two free throws!",
+  "ROUGHING THE PASSER! That's a penalty shot!",
+  "ILLEGAL SCREEN! Moving pick!",
+  "OFFSIDE TRAP! The defense wins!",
+  "CARRYING! You palmed the ball!",
+  "LANE VIOLATION! Before the serve!",
+  "INTENTIONAL GROUNDING! Loss of down!",
+  "GOALTENDING! Above the cylinder!",
+  "DANGEROUS PLAY! Free hit on the 22!",
+  "ILLEGAL SUBSTITUTION! Too many men on the pitch!",
+  "SHOT CLOCK VIOLATION! 24 seconds!",
+  "INTERFERENCE! In the crease during a corner!",
+  "FLAGRANT FOUL! You're looking at a red card!",
+  "NO GOAL! The puck didn't cross the try line!",
+  "LATE HIT! After the whistle! Personal foul!",
+  "TRIPPING! That's a power play!",
+  "ILLEGAL USE OF HANDS! In the D!",
+  "DELAY PENALTY! Move the wall back 10 yards!",
+  "BLOCKING FOUL! Charge on the goalkeeper!",
+  "DEAD BALL! Play stopped at the ruck!",
+  "TWO MINUTES FOR HOOKING! Off the pitch!",
+  "ROUGHING! That's a sin bin for 10 minutes!",
+];
+
+// ============ STATUS MESSAGES BY RAGE LEVEL ============
+const STATUS_MSGS = {
+  silent: [
+    "The ref can't even hear you...",
+    "Are you even watching the game?",
+    "Speak up or get ejected!",
+    "The ref is ignoring you completely.",
+  ],
+  low: [
+    "Louder! The ref barely noticed.",
+    "Is that all you've got?",
+    "My grandma screams louder at bingo.",
+    "The ref is smirking at you.",
+  ],
+  medium: [
+    "Now we're talking! The ref is nervous!",
+    "The ref is looking around nervously!",
+    "Keep going! He's starting to sweat!",
+    "The ref is questioning his career choices!",
+  ],
+  high: [
+    "THE REF IS PANICKING!",
+    "HE'S LOSING CONTROL!",
+    "THE REF WANTS TO RUN AWAY!",
+    "MAXIMUM INTIMIDATION!",
+  ],
+  extreme: [
+    "THE REF IS CALLING SECURITY!",
+    "YOU'RE ABOUT TO GET A RED CARD!",
+    "THE REF IS IN FULL MELTDOWN!",
+    "DEFCON 1 - REF IS BREAKING DOWN!",
+  ]
+};
+
+// ============ AUDIO CONTEXT & WHISTLE ============
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let dataArray = null;
+let isRunning = false;
+let rageLevel = 0;
+let smoothedLevel = 0;
+let callCount = 0;
+let peakCount = 0;
+let cardCount = 0;
+let ejectionTimer = 0;
+let redCardTimer = 0;
+let callTimer = 0;
+let lastCallIndex = -1;
+let gameActive = false;
+let peaked = false;
+
+const NUM_BARS = 16;
+
+function initVolBars() {
+  const container = document.getElementById('volBars');
+  container.innerHTML = '';
+  for (let i = 0; i < NUM_BARS; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'vol-bar';
+    bar.style.height = '3px';
+    container.appendChild(bar);
+  }
+}
+
+initVolBars();
+
+function playWhistle(duration = 0.3, freq = 2800) {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(freq * 1.2, audioCtx.currentTime + duration * 0.3);
+  osc.frequency.linearRampToValueAtTime(freq, audioCtx.currentTime + duration);
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function playDoubleWhistle() {
+  playWhistle(0.15, 2800);
+  setTimeout(() => playWhistle(0.25, 3200), 200);
+}
+
+function playTripleWhistle() {
+  playWhistle(0.1, 2600);
+  setTimeout(() => playWhistle(0.1, 2900), 150);
+  setTimeout(() => playWhistle(0.3, 3400), 300);
+}
+
+// ============ GAME LOGIC ============
+
+async function startGame() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.8;
+    source.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+  } catch (e) {
+    alert('Microphone access is required to scream at the ref! ' + e.message);
+    return;
+  }
+
+  document.getElementById('startBtn').classList.add('hidden');
+  gameActive = true;
+  isRunning = true;
+  rageLevel = 0;
+  smoothedLevel = 0;
+  callCount = 0;
+  peakCount = 0;
+  cardCount = 0;
+  ejectionTimer = 0;
+  redCardTimer = 0;
+  callTimer = 0;
+  peaked = false;
+
+  document.getElementById('callCount').textContent = '0';
+  document.getElementById('peakCount').textContent = '0';
+  document.getElementById('cardCount').textContent = '0';
+
+  makeCall();
+  playDoubleWhistle();
+  gameLoop();
+}
+
+function restartGame() {
+  document.getElementById('ejectionOverlay').classList.remove('show');
+  document.getElementById('redCardOverlay').classList.remove('show');
+  document.querySelectorAll('.confetti').forEach(c => c.remove());
+
+  const ref = document.getElementById('ref');
+  ref.className = 'ref';
+
+  const card = document.getElementById('refCard');
+  card.classList.remove('show', 'yellow', 'red');
+
+  gameActive = true;
+  isRunning = true;
+  rageLevel = 0;
+  smoothedLevel = 0;
+  callCount = 0;
+  peakCount = 0;
+  cardCount = 0;
+  ejectionTimer = 0;
+  redCardTimer = 0;
+  callTimer = 0;
+  peaked = false;
+
+  document.getElementById('callCount').textContent = '0';
+  document.getElementById('peakCount').textContent = '0';
+  document.getElementById('cardCount').textContent = '0';
+
+  makeCall();
+  playWhistle();
+  gameLoop();
+}
+
+function makeCall() {
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * BAD_CALLS.length);
+  } while (idx === lastCallIndex);
+  lastCallIndex = idx;
+
+  const bubble = document.getElementById('callBubble');
+  bubble.textContent = BAD_CALLS[idx];
+  bubble.classList.remove('shake');
+  void bubble.offsetWidth;
+  bubble.classList.add('shake');
+
+  callCount++;
+  document.getElementById('callCount').textContent = callCount;
+
+  // Whistle on new call
+  if (Math.random() > 0.4) playWhistle(0.2 + Math.random() * 0.2);
+
+  // Sometimes show a yellow card
+  const card = document.getElementById('refCard');
+  if (Math.random() > 0.7) {
+    card.className = 'ref-card-display yellow show';
+    setTimeout(() => card.classList.remove('show'), 2000);
+    cardCount++;
+    document.getElementById('cardCount').textContent = cardCount;
+  }
+}
+
+function getVolume() {
+  if (!analyser) return 0;
+  analyser.getByteFrequencyData(dataArray);
+  let sum = 0;
+  for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+  return sum / dataArray.length / 255; // 0-1
+}
+
+function updateVolBars(vol) {
+  const bars = document.querySelectorAll('.vol-bar');
+  bars.forEach((bar, i) => {
+    const center = Math.abs(i - NUM_BARS / 2) / (NUM_BARS / 2);
+    const h = Math.max(3, vol * (1 - center * 0.5) * 30 * (0.8 + Math.random() * 0.4));
+    bar.style.height = h + 'px';
+
+    if (vol > 0.6) bar.style.background = '#ff4444';
+    else if (vol > 0.3) bar.style.background = '#ffcc00';
+    else bar.style.background = '#44ff44';
+  });
+}
+
+function updateRef(level) {
+  const ref = document.getElementById('ref');
+  ref.className = 'ref';
+
+  if (level > 0.7) {
+    ref.classList.add('panic-3', 'sweating');
+  } else if (level > 0.45) {
+    ref.classList.add('panic-2', 'sweating');
+  } else if (level > 0.25) {
+    ref.classList.add('panic-1');
+  }
+}
+
+function getStatusMsg(level) {
+  let category;
+  if (level < 0.08) category = 'silent';
+  else if (level < 0.25) category = 'low';
+  else if (level < 0.5) category = 'medium';
+  else if (level < 0.75) category = 'high';
+  else category = 'extreme';
+
+  const msgs = STATUS_MSGS[category];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function spawnConfetti() {
+  for (let i = 0; i < 40; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = -10 + 'px';
+    c.style.background = ['#ff2200', '#ff4444', '#ffdd00', '#ff6600'][Math.floor(Math.random() * 4)];
+    c.style.animationDelay = Math.random() * 1 + 's';
+    c.style.width = (6 + Math.random() * 8) + 'px';
+    c.style.height = (6 + Math.random() * 8) + 'px';
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 3000);
+  }
+}
+
+function triggerEjection() {
+  gameActive = false;
+  playTripleWhistle();
+  document.getElementById('ejectionOverlay').classList.add('show');
+}
+
+function triggerRedCard() {
+  gameActive = false;
+  playTripleWhistle();
+  spawnConfetti();
+
+  const card = document.getElementById('refCard');
+  card.className = 'ref-card-display red show';
+
+  document.getElementById('redCardOverlay').classList.add('show');
+}
+
+let lastFrameTime = 0;
+let statusUpdateTimer = 0;
+
+function gameLoop(timestamp = 0) {
+  if (!isRunning) return;
+
+  const dt = Math.min((timestamp - lastFrameTime) / 1000, 0.1);
+  lastFrameTime = timestamp;
+
+  if (!gameActive) {
+    requestAnimationFrame(gameLoop);
+    return;
+  }
+
+  const vol = getVolume();
+
+  // Smooth the level
+  smoothedLevel = smoothedLevel * 0.85 + vol * 0.15;
+  rageLevel = smoothedLevel;
+
+  // Update visuals
+  updateVolBars(vol);
+  updateRef(rageLevel);
+
+  // Meter
+  const fill = document.getElementById('meterFill');
+  const pct = Math.min(100, rageLevel * 120);
+  fill.style.width = pct + '%';
+
+  // Status message (update every ~0.8s)
+  statusUpdateTimer += dt;
+  if (statusUpdateTimer > 0.8) {
+    statusUpdateTimer = 0;
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = getStatusMsg(rageLevel);
+
+    if (rageLevel < 0.08) statusEl.style.color = '#888';
+    else if (rageLevel < 0.25) statusEl.style.color = '#ffcc00';
+    else if (rageLevel < 0.5) statusEl.style.color = '#ff8800';
+    else statusEl.style.color = '#ff4444';
+  }
+
+  // Track peaks
+  if (rageLevel > 0.65 && !peaked) {
+    peaked = true;
+    peakCount++;
+    document.getElementById('peakCount').textContent = peakCount;
+  }
+  if (rageLevel < 0.3) peaked = false;
+
+  // New bad call every 3-6 seconds
+  callTimer += dt;
+  if (callTimer > 3 + Math.random() * 3) {
+    callTimer = 0;
+    makeCall();
+  }
+
+  // Ejection timer - if silent for 8 seconds
+  if (rageLevel < 0.05) {
+    ejectionTimer += dt;
+    if (ejectionTimer > 8) {
+      triggerEjection();
+    }
+    // Show warning
+    if (ejectionTimer > 4) {
+      document.getElementById('crowdIndicator').textContent =
+        `EJECTION WARNING: ${Math.ceil(8 - ejectionTimer)}s until you're thrown out!`;
+      document.getElementById('crowdIndicator').style.color = '#ff4444';
+    }
+  } else {
+    ejectionTimer = Math.max(0, ejectionTimer - dt * 2);
+    document.getElementById('crowdIndicator').textContent = '';
+  }
+
+  // Red card timer - if screaming too loud for 4 seconds
+  if (rageLevel > 0.8) {
+    redCardTimer += dt;
+    if (redCardTimer > 4) {
+      triggerRedCard();
+    }
+    if (redCardTimer > 2) {
+      document.getElementById('crowdIndicator').textContent =
+        `RED CARD WARNING: ${Math.ceil(4 - redCardTimer)}s! Tone it down!`;
+      document.getElementById('crowdIndicator').style.color = '#ff2200';
+    }
+  } else {
+    redCardTimer = Math.max(0, redCardTimer - dt * 1.5);
+    if (ejectionTimer <= 4) {
+      document.getElementById('crowdIndicator').textContent = '';
+    }
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+</script>
+
+</body>
+</html>

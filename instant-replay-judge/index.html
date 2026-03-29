@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSTANT REPLAY JUDGE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --broadcast-red: #cc0000;
+    --broadcast-blue: #003366;
+    --broadcast-gold: #ffd700;
+    --ticker-bg: #1a1a2e;
+    --field-green: #0a3d0a;
+  }
+
+  body {
+    font-family: 'Roboto Condensed', sans-serif;
+    background: #0a0a1a;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BROADCAST HEADER BAR */
+  .broadcast-bar {
+    background: linear-gradient(90deg, var(--broadcast-red), #990000);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .broadcast-bar .live-dot {
+    width: 8px; height: 8px;
+    background: #ff4444;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+    animation: pulse-dot 1s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* MAIN TITLE */
+  .title-section {
+    background: linear-gradient(180deg, var(--broadcast-blue), #001a33);
+    padding: 30px 20px 20px;
+    text-align: center;
+    border-bottom: 4px solid var(--broadcast-gold);
+    position: relative;
+  }
+  .title-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+  }
+  .title-section h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 7vw, 56px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+    line-height: 1.1;
+  }
+  .title-section h1 span {
+    color: var(--broadcast-gold);
+  }
+  .title-section .subtitle {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #aac;
+    margin-top: 8px;
+  }
+
+  /* INPUT SECTION */
+  .input-section {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+  .input-section label {
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 14px;
+    color: var(--broadcast-gold);
+    display: block;
+    margin-bottom: 10px;
+  }
+  .input-section textarea {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-family: 'Roboto Condensed', sans-serif;
+    background: #111;
+    color: #fff;
+    border: 2px solid #333;
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.3s;
+  }
+  .input-section textarea:focus {
+    outline: none;
+    border-color: var(--broadcast-gold);
+  }
+  .input-section textarea::placeholder {
+    color: #555;
+    font-style: italic;
+  }
+
+  /* GO BUTTON */
+  .go-btn {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto 0;
+    padding: 18px 40px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: #000;
+    background: linear-gradient(180deg, #ffd700, #ffaa00);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .go-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+  }
+  .go-btn:active { transform: scale(0.98); }
+  .go-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: btn-shine 3s infinite;
+  }
+  @keyframes btn-shine {
+    0% { left: -100%; }
+    100% { left: 200%; }
+  }
+
+  /* REPLAY CONTAINER */
+  .replay-container {
+    display: none;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+  }
+  .replay-container.active { display: block; }
+
+  /* REPLAY SCREEN */
+  .replay-screen {
+    background: #000;
+    border: 3px solid #333;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .screen-header {
+    background: linear-gradient(90deg, var(--broadcast-red), #880000);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .screen-header .replay-badge {
+    background: #fff;
+    color: var(--broadcast-red);
+    padding: 2px 10px;
+    font-weight: 700;
+    border-radius: 2px;
+    animation: flash-badge 0.8s infinite;
+  }
+  @keyframes flash-badge {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  /* REPLAY FIELD - the "video" area */
+  .replay-field {
+    background: linear-gradient(135deg, #0a0a2a, #0a1a0a, #0a0a2a);
+    min-height: 280px;
+    padding: 30px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .replay-field::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(255,255,255,0.015) 3px,
+      rgba(255,255,255,0.015) 6px
+    );
+    pointer-events: none;
+  }
+  /* Scanlines overlay */
+  .replay-field::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(
+      rgba(0,0,0,0) 50%,
+      rgba(0,0,0,0.08) 50%
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    animation: scanline-scroll 8s linear infinite;
+  }
+  @keyframes scanline-scroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100px; }
+  }
+
+  /* Commentary text */
+  .commentary-line {
+    font-size: 18px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s, transform 0.6s;
+    position: relative;
+    padding-left: 20px;
+  }
+  .commentary-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .commentary-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 8px;
+    height: 8px;
+    background: var(--broadcast-gold);
+    border-radius: 50%;
+  }
+  .commentary-line .speaker {
+    font-family: 'Oswald', sans-serif;
+    color: var(--broadcast-gold);
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 2px;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  /* SLOW MO indicator */
+  .slowmo-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(0,0,0,0.6);
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: #aaa;
+  }
+  .slowmo-bar .speed {
+    color: var(--broadcast-gold);
+    font-weight: 700;
+  }
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--broadcast-gold);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.3s linear;
+  }
+
+  /* VERDICT */
+  .verdict-section {
+    text-align: center;
+    padding: 30px 20px;
+    display: none;
+  }
+  .verdict-section.active { display: block; }
+
+  .verdict-stamp {
+    font-family: 'Oswald', sans-serif;
+    font-size: clamp(28px, 6vw, 48px);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    padding: 20px 40px;
+    border: 4px solid;
+    display: inline-block;
+    transform: rotate(-3deg);
+    animation: stamp-in 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.28);
+    position: relative;
+  }
+  .verdict-stamp.confirmed {
+    color: var(--broadcast-red);
+    border-color: var(--broadcast-red);
+    background: rgba(204, 0, 0, 0.1);
+  }
+  .verdict-stamp.overturned {
+    color: #00cc44;
+    border-color: #00cc44;
+    background: rgba(0, 204, 68, 0.1);
+  }
+  .verdict-stamp.inconclusive {
+    color: var(--broadcast-gold);
+    border-color: var(--broadcast-gold);
+    background: rgba(255, 215, 0, 0.1);
+  }
+  @keyframes stamp-in {
+    0% { transform: rotate(-3deg) scale(3); opacity: 0; }
+    100% { transform: rotate(-3deg) scale(1); opacity: 1; }
+  }
+
+  .verdict-subtitle {
+    font-size: 18px;
+    margin-top: 16px;
+    color: #aaa;
+    font-style: italic;
+  }
+
+  /* SHARE / RETRY */
+  .action-btns {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .action-btns button {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 12px 28px;
+    border: 2px solid #444;
+    background: transparent;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .action-btns button:hover {
+    border-color: var(--broadcast-gold);
+    color: var(--broadcast-gold);
+  }
+  .action-btns .share-btn {
+    background: var(--broadcast-blue);
+    border-color: var(--broadcast-blue);
+  }
+  .action-btns .share-btn:hover {
+    background: #004488;
+    border-color: #004488;
+    color: #fff;
+  }
+
+  /* BOTTOM TICKER */
+  .ticker-bar {
+    background: var(--ticker-bg);
+    border-top: 2px solid var(--broadcast-gold);
+    padding: 8px 0;
+    overflow: hidden;
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 100;
+  }
+  .ticker-content {
+    white-space: nowrap;
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #aaa;
+    animation: ticker-scroll 40s linear infinite;
+  }
+  .ticker-content span.highlight { color: var(--broadcast-gold); }
+  @keyframes ticker-scroll {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-200%); }
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #222;
+    color: var(--broadcast-gold);
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 13px;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Extra bottom padding for ticker */
+  .page-content { padding-bottom: 50px; }
+
+  /* Glitch effect for dramatic moments */
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(2px, -2px); }
+    60% { transform: translate(-1px, -1px); }
+    80% { transform: translate(1px, 1px); }
+    100% { transform: translate(0); }
+  }
+  .glitch { animation: glitch 0.15s ease 3; }
+
+  /* Angle labels */
+  .angle-label {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--broadcast-red);
+    background: rgba(0,0,0,0.7);
+    padding: 3px 10px;
+    border-radius: 2px;
+    border: 1px solid var(--broadcast-red);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-content">
+  <!-- BROADCAST BAR -->
+  <div class="broadcast-bar">
+    <div><span class="live-dot"></span> LIVE REVIEW</div>
+    <div>INSTANT REPLAY CENTER</div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-section">
+    <h1><span>INSTANT</span> REPLAY JUDGE</h1>
+    <div class="subtitle">Official Slow-Motion Review Authority</div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-section" id="inputSection">
+    <label>Describe the life moment under review</label>
+    <textarea id="momentInput" placeholder='e.g. "I tripped going up the stairs at work while carrying coffee"'></textarea>
+    <button class="go-btn" id="goBtn" onclick="goToReplay()">Go To The Replay</button>
+  </div>
+
+  <!-- REPLAY -->
+  <div class="replay-container" id="replayContainer">
+    <div class="replay-screen">
+      <div class="screen-header">
+        <span>OFFICIAL REVIEW</span>
+        <span class="replay-badge">REPLAY</span>
+        <span id="angleLabel">ANGLE 1 OF 3</span>
+      </div>
+      <div class="replay-field" id="replayField">
+        <div class="angle-label" id="cameraAngle">SKY CAM</div>
+        <div id="commentaryArea"></div>
+      </div>
+      <div class="slowmo-bar">
+        <span>PLAYBACK</span>
+        <span class="speed" id="speedLabel">0.25x</span>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <span id="timeCode">00:00</span>
+      </div>
+    </div>
+
+    <div class="verdict-section" id="verdictSection">
+      <div class="verdict-stamp" id="verdictStamp"></div>
+      <div class="verdict-subtitle" id="verdictSubtitle"></div>
+      <div class="action-btns">
+        <button class="share-btn" onclick="shareVerdict()">Share Verdict</button>
+        <button onclick="newReplay()">New Replay</button>
+        <button onclick="challengeCall()">Challenge The Call</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-bar">
+  <div class="ticker-content" id="tickerContent"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// COMMENTARY TEMPLATES (50+)
+// ============================================================
+const COMMENTARY = {
+  openings: [
+    "Let's go to the replay...",
+    "We're taking this one upstairs to the booth.",
+    "The officials have stopped play. Let's look at this.",
+    "And we're going under review. Let's see what happened.",
+    "Hold on... we need to see that again.",
+    "The crowd wants answers. Let's roll the tape.",
+    "This is going to the command center in New York.",
+    "Stop everything. We need to look at this one more time.",
+    "Alright folks, the red flag is out. Full review.",
+    "Ladies and gentlemen, we have a challenge on the play.",
+  ],
+
+  cameraAngles: [
+    "SKY CAM", "REVERSE ANGLE", "CLOSE-UP", "SIDELINE CAM",
+    "END ZONE", "JUMBOTRON", "CROWD CAM", "FLOOR LEVEL",
+    "RAIL CAM", "DRONE VIEW", "HELMET CAM", "SLOW-MO PRIME"
+  ],
+
+  angleTransitions: [
+    "Let's look at this from another angle...",
+    "Switch to the reverse angle here...",
+    "Now watch this from the sideline view...",
+    "Bring up the close-up... right there.",
+    "Let's get the overhead on this one.",
+    "Roll it from the end zone camera...",
+    "Go to the floor-level shot. Watch closely.",
+    "And from the drone view... oh my.",
+  ],
+
+  // Templates keyed by detected scenario keywords
+  bodyParts: {
+    foot: [
+      "That left foot had NO business being there.",
+      "Look at the foot placement... pure chaos.",
+      "The foot goes rogue at the worst possible moment.",
+      "You can see the exact frame where the foot betrays the mission.",
+    ],
+    leg: [
+      "The legs just... stopped communicating with the brain.",
+      "Watch the knee buckle right... there. Devastating.",
+      "Both legs decided to file for independence simultaneously.",
+    ],
+    hand: [
+      "The hand reaches out but it's already too late.",
+      "Watch the fingers -- they're grasping at nothing but regret.",
+      "The hand-eye coordination simply left the building.",
+    ],
+    arm: [
+      "The arms go full windmill. Classic panic response.",
+      "Look at the arm flail -- that's a 9.2 in interpretive dance.",
+      "Arms out like an airplane but this flight is NOT cleared for landing.",
+    ],
+    face: [
+      "Zoom in on the face... that's the exact moment realization hit.",
+      "The expression goes from confidence to existential crisis in 0.3 seconds.",
+      "You can actually pinpoint the frame where the soul leaves the body.",
+    ],
+  },
+
+  // Action-based commentary
+  actions: {
+    trip: [
+      "Classic trip mechanics. The body goes forward but the feet say no.",
+      "That's a textbook stumble. They don't teach recovery from that.",
+      "The trip initiates and from here, physics takes over completely.",
+      "You can see the exact moment gravity files a hostile takeover.",
+    ],
+    fall: [
+      "And down they go. Nothing can stop what's already in motion.",
+      "The descent begins. Slow, majestic, and absolutely inevitable.",
+      "That fall has WEIGHT to it. The ground felt that one.",
+      "Mid-fall, you can see the internal negotiation: 'Can I style this out?' No. No you cannot.",
+    ],
+    spill: [
+      "The contents achieve liftoff. Beautiful trajectory, terrible outcome.",
+      "Look at the splash pattern. That's going to leave a mark.",
+      "The liquid separates from the container with surgical precision.",
+      "Frame by frame, you can watch the spill reach the point of no return.",
+    ],
+    drop: [
+      "The grip fails. The object enters freefall. Nothing can save it now.",
+      "Watch the fumble in slow motion... the fingers just... open.",
+      "Gravity wins again. Undefeated. Untied.",
+      "The drop happens in stages: slip, panic, release, regret.",
+    ],
+    walk: [
+      "The walk starts normal. Confident even. That confidence was misplaced.",
+      "Mid-stride, something goes catastrophically wrong.",
+      "Watch the gait analysis here. That's not walking, that's controlled falling.",
+    ],
+    run: [
+      "Full speed ahead, zero awareness of what's coming.",
+      "The momentum is impressive. The stopping? Less so.",
+      "Running form breaks down entirely at the critical moment.",
+    ],
+    slip: [
+      "Classic slip. The surface wins this round.",
+      "Zero traction. Might as well be on an ice rink.",
+      "The slip begins and from here it's all physics, no dignity.",
+    ],
+    say: [
+      "The words leave the mouth and you can SEE the instant regret.",
+      "Let's slow down the audio here... yep, they really said that.",
+      "The sentence starts fine but derails spectacularly mid-word.",
+    ],
+    text: [
+      "The thumb hovers over send... and makes the worst decision of the day.",
+      "Autocorrect saw what was happening and chose violence.",
+      "The message is sent. There is no undo. There is only consequences.",
+    ],
+    eat: [
+      "The bite is ambitious. Perhaps too ambitious.",
+      "Food goes in but the delivery system has critical failures.",
+      "Watch the sauce trajectory... it's headed straight for the shirt.",
+    ],
+    sing: [
+      "The note attempted was... aspirational.",
+      "Pitch: abandoned. Key: unknown. Confidence: unfortunately intact.",
+      "The vocal cords and the intended melody were in different zip codes.",
+    ],
+    dance: [
+      "The rhythm is... unique. Confidently, aggressively unique.",
+      "The body moves with the certainty of someone who has never seen a mirror.",
+      "That move is either next-level or an injury. Jury's still out.",
+    ],
+    wave: [
+      "The wave is deployed. It is not returned. Devastating.",
+      "Arm goes up, full commitment. The recipient: looking the other way.",
+      "Watch the wave slowly convert into a hair-touch. Smooth? No.",
+    ],
+    laugh: [
+      "The laugh erupts at exactly the worst possible moment.",
+      "That snort was picked up by EVERY microphone in the room.",
+      "The laugh-to-awkward-silence pipeline: under 0.5 seconds.",
+    ],
+  },
+
+  // Location-based
+  locations: {
+    stairs: [
+      "Stairs: humanity's oldest nemesis.",
+      "The staircase has claimed another victim.",
+      "Going UP the stairs and still losing. That's a new low. Or high.",
+    ],
+    kitchen: [
+      "The kitchen: where culinary dreams become insurance claims.",
+      "Another casualty of the domestic arena.",
+    ],
+    office: [
+      "In front of the whole office. Maximum witnesses. Maximum damage.",
+      "The corporate setting makes this exponentially worse.",
+    ],
+    gym: [
+      "At the gym, where you go to look strong. Mission failed.",
+      "Every mirror in the gym caught that from a different angle.",
+    ],
+    public: [
+      "In public. Full audience. No cover. Absolute exposure.",
+      "Strangers witnessed this. They'll remember it forever. You won't.",
+    ],
+    car: [
+      "Inside the vehicle. The car saw everything and told no one. Until now.",
+      "The dashboard cam doesn't lie.",
+    ],
+    bathroom: [
+      "The most private of arenas. Yet here we are, reviewing the footage.",
+      "The bathroom floor remains undefeated in these situations.",
+    ],
+    school: [
+      "In front of the entire class. A moment that defines a semester.",
+      "The hallway has perfect acoustics for maximum embarrassment.",
+    ],
+    store: [
+      "Aisle 7 will never be the same.",
+      "Security cameras have this from FOUR angles.",
+    ],
+    party: [
+      "At the party, in front of everyone who matters.",
+      "Someone definitely got this on their phone. It's already in a group chat.",
+    ],
+  },
+
+  // Dramatic analysis lines
+  analysis: [
+    "Let me tell you something -- I've been doing this for 30 years and I've NEVER seen anything like that.",
+    "The technique here is... well, there IS no technique. That's the problem.",
+    "If you pause it right HERE... that's the point of no return.",
+    "In my professional opinion, this was avoidable. Deeply, tragically avoidable.",
+    "The physics don't lie. This was always going to end this way.",
+    "I've reviewed this frame by frame. It gets worse every time.",
+    "The body language tells the whole story. Overconfidence followed by pure panic.",
+    "What we're seeing here is a complete system failure.",
+    "The timing is actually impressive. Impressively bad.",
+    "You couldn't choreograph this level of disaster if you tried.",
+    "This is the kind of moment that builds character. And trauma.",
+    "The commitment to the mistake is, frankly, admirable.",
+    "From a biomechanical standpoint, everything went wrong simultaneously.",
+    "I want to be clear: there was a 0.3 second window to recover. It was missed.",
+    "Multiple angles confirm what we already suspected.",
+    "The crowd reaction alone tells you everything you need to know.",
+    "In real time this took 1.2 seconds. In emotional damage, it's forever.",
+    "The audacity to attempt this move deserves some respect. SOME.",
+    "Newton's laws were fully enforced here. No exceptions.",
+    "I'm going to need a moment after watching that.",
+  ],
+
+  // Closing remarks before verdict
+  closings: [
+    "After reviewing all available angles, the ruling on the play is...",
+    "The booth has seen enough. Here's the call...",
+    "Upon further review...",
+    "The evidence is clear. The ruling stands as follows...",
+    "All cameras agree. The verdict is...",
+    "Ladies and gentlemen, we have a ruling...",
+    "The committee has reached a decision...",
+    "After careful deliberation, the official ruling is...",
+  ],
+};
+
+// VERDICTS
+const VERDICTS = {
+  confirmed: {
+    labels: [
+      "CONFIRMED: Embarrassing",
+      "CONFIRMED: Peak Cringe",
+      "CONFIRMED: Maximum Awkward",
+      "CONFIRMED: Dignity Lost",
+      "CONFIRMED: A Certified Disaster",
+      "CONFIRMED: Hall of Shame Material",
+      "CONFIRMED: Worse Than It Looked",
+    ],
+    subtitles: [
+      "The call on the field stands. There is no recovery from this.",
+      "All angles confirm the full extent of the damage.",
+      "The evidence is overwhelming and frankly upsetting.",
+      "This moment will be replayed at family gatherings for decades.",
+      "The embarrassment is upheld on all counts.",
+    ],
+  },
+  overturned: {
+    labels: [
+      "OVERTURNED: Actually Graceful",
+      "OVERTURNED: Smooth Recovery",
+      "OVERTURNED: Styled It Out",
+      "OVERTURNED: Secretly Impressive",
+      "OVERTURNED: Unintentionally Cool",
+      "OVERTURNED: Main Character Energy",
+    ],
+    subtitles: [
+      "Upon further review, this was actually kind of legendary.",
+      "The recovery was so good it negated the original incident.",
+      "Against all odds, dignity was preserved.",
+      "What looked like a disaster was actually a power move.",
+      "Few could have pulled that off. Respect.",
+    ],
+  },
+  inconclusive: {
+    labels: [
+      "INCONCLUSIVE: Too Cringe To Review",
+      "INCONCLUSIVE: Cameras Looked Away",
+      "INCONCLUSIVE: Officials Disagree",
+      "INCONCLUSIVE: Need More Angles",
+      "INCONCLUSIVE: The Footage Is Classified",
+      "INCONCLUSIVE: Even The AI Needs Therapy Now",
+    ],
+    subtitles: [
+      "We don't have enough evidence to determine embarrassment level.",
+      "The replay booth has requested professional counseling.",
+      "Some moments are too powerful for instant replay technology.",
+      "The cameras malfunctioned at the critical moment. Suspicious.",
+      "Neither embarrassing nor graceful. A quantum state of cringe.",
+    ],
+  },
+};
+
+// TICKER MESSAGES
+const TICKER_MESSAGES = [
+  'BREAKING: Local replay booth working overtime tonight',
+  'REPLAY CENTER: "This is the worst thing we\'ve reviewed this quarter"',
+  'DEVELOPING: Witnesses confirm incident occurred exactly as described',
+  'STATS: Today\'s embarrassment index up 340% from yesterday',
+  'INJURY REPORT: Pride listed as questionable, Dignity out for the season',
+  'TRADE ALERT: Self-esteem traded for lasting memories',
+  'UPDATE: Recovery attempt rated 2/10 by panel of judges',
+  'OFFICIAL: Instant Replay Judge now accepting submissions 24/7',
+  'FUN FACT: Average human experiences 4.7 replay-worthy moments per week',
+  'ADVISORY: No egos were spared in the making of this broadcast',
+];
+
+// ============================================================
+// AUDIO: Generate dramatic replay music using Web Audio API
+// ============================================================
+let audioCtx = null;
+let musicNodes = [];
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playDramaticMusic() {
+  initAudio();
+  stopMusic();
+
+  const master = audioCtx.createGain();
+  master.gain.value = 0.15;
+  master.connect(audioCtx.destination);
+
+  // Deep pad drone
+  function createPad(freq, detune = 0) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    osc.detune.value = detune;
+    gain.gain.value = 0.3;
+    osc.connect(gain);
+    gain.connect(master);
+    osc.start();
+    musicNodes.push(osc, gain);
+    return { osc, gain };
+  }
+
+  // Dramatic low drone
+  createPad(55);
+  createPad(55, 5);
+  createPad(82.5);
+
+  // Tension chord (minor)
+  createPad(110);
+  createPad(130.81); // C
+  createPad(164.81); // E
+
+  // Pulsing tension
+  const lfo = audioCtx.createOscillator();
+  const lfoGain = audioCtx.createGain();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.5;
+  lfoGain.gain.value = 0.08;
+  lfo.connect(lfoGain);
+  lfoGain.connect(master.gain);
+  lfo.start();
+  musicNodes.push(lfo, lfoGain);
+
+  // Heartbeat-like thumps
+  function thump(time) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 40;
+    g.gain.setValueAtTime(0.5, time);
+    g.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+    osc.connect(g);
+    g.connect(master);
+    osc.start(time);
+    osc.stop(time + 0.4);
+  }
+
+  const now = audioCtx.currentTime;
+  for (let i = 0; i < 30; i++) {
+    thump(now + i * 1.8);
+    thump(now + i * 1.8 + 0.25);
+  }
+}
+
+function playVerdictSound() {
+  initAudio();
+  const now = audioCtx.currentTime;
+  const master = audioCtx.createGain();
+  master.gain.value = 0.2;
+  master.connect(audioCtx.destination);
+
+  // Dramatic brass-like stab
+  [220, 277.18, 329.63, 440].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, now + 0.05 * i);
+    g.gain.linearRampToValueAtTime(0.15, now + 0.05 * i + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 0.05 * i + 1.5);
+    osc.connect(g);
+    g.connect(master);
+    osc.start(now + 0.05 * i);
+    osc.stop(now + 2);
+  });
+}
+
+function stopMusic() {
+  musicNodes.forEach(n => { try { n.stop?.(); n.disconnect(); } catch(e) {} });
+  musicNodes = [];
+}
+
+// ============================================================
+// CORE LOGIC
+// ============================================================
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function detectKeywords(text) {
+  const lower = text.toLowerCase();
+  const found = { bodyParts: [], actions: [], locations: [] };
+
+  Object.keys(COMMENTARY.bodyParts).forEach(k => {
+    if (lower.includes(k)) found.bodyParts.push(k);
+  });
+  Object.keys(COMMENTARY.actions).forEach(k => {
+    if (lower.includes(k)) found.actions.push(k);
+  });
+  Object.keys(COMMENTARY.locations).forEach(k => {
+    if (lower.includes(k)) found.locations.push(k);
+  });
+
+  // Fallbacks
+  if (!found.actions.length) found.actions.push(pick(Object.keys(COMMENTARY.actions)));
+  if (!found.bodyParts.length) found.bodyParts.push(pick(Object.keys(COMMENTARY.bodyParts)));
+
+  return found;
+}
+
+function buildCommentary(moment) {
+  const kw = detectKeywords(moment);
+  const lines = [];
+  const speakers = ['MIKE', 'JIM', 'AL', 'TONY', 'BOOTH'];
+
+  // Opening
+  lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.openings) });
+
+  // First action commentary
+  kw.actions.forEach(a => {
+    lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.actions[a]) });
+  });
+
+  // Angle transition
+  lines.push({ speaker: 'DIRECTOR', text: pick(COMMENTARY.angleTransitions) });
+
+  // Body part commentary
+  kw.bodyParts.forEach(bp => {
+    lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.bodyParts[bp]) });
+  });
+
+  // Location commentary
+  kw.locations.forEach(loc => {
+    lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.locations[loc]) });
+  });
+
+  // Another angle
+  lines.push({ speaker: 'DIRECTOR', text: pick(COMMENTARY.angleTransitions) });
+
+  // Analysis
+  lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.analysis) });
+  lines.push({ speaker: pick(speakers), text: pick(COMMENTARY.analysis) });
+
+  // Closing
+  lines.push({ speaker: 'HEAD OFFICIAL', text: pick(COMMENTARY.closings) });
+
+  return lines;
+}
+
+function chooseVerdict() {
+  const r = Math.random();
+  if (r < 0.55) return 'confirmed';
+  if (r < 0.80) return 'overturned';
+  return 'inconclusive';
+}
+
+// ============================================================
+// REPLAY ANIMATION
+// ============================================================
+let currentMoment = '';
+
+async function goToReplay() {
+  const input = document.getElementById('momentInput').value.trim();
+  if (!input) {
+    document.getElementById('momentInput').focus();
+    document.getElementById('momentInput').style.borderColor = '#cc0000';
+    setTimeout(() => document.getElementById('momentInput').style.borderColor = '#333', 1500);
+    return;
+  }
+
+  currentMoment = input;
+
+  // Hide input, show replay
+  document.getElementById('inputSection').style.display = 'none';
+  document.getElementById('replayContainer').classList.add('active');
+  document.getElementById('verdictSection').classList.remove('active');
+
+  // Start music
+  playDramaticMusic();
+
+  // Build commentary
+  const lines = buildCommentary(input);
+  const area = document.getElementById('commentaryArea');
+  area.innerHTML = '';
+
+  const progressFill = document.getElementById('progressFill');
+  const speedLabel = document.getElementById('speedLabel');
+  const timeCode = document.getElementById('timeCode');
+  const cameraAngle = document.getElementById('cameraAngle');
+  const angleLabel = document.getElementById('angleLabel');
+
+  const speeds = ['0.25x', '0.10x', '0.05x', '0.25x'];
+  let angleCount = 1;
+
+  // Animate lines
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const div = document.createElement('div');
+    div.className = 'commentary-line';
+    div.innerHTML = `<span class="speaker">${line.speaker}</span>${line.text}`;
+    area.appendChild(div);
+
+    // Progress
+    const pct = ((i + 1) / lines.length) * 100;
+    progressFill.style.width = pct + '%';
+
+    // Time code
+    const sec = Math.floor((i + 1) * 1.2);
+    timeCode.textContent = `00:${String(sec).padStart(2, '0')}`;
+
+    // Speed changes
+    if (i === 2 || i === 5 || i === 7) {
+      speedLabel.textContent = speeds[Math.min(angleCount, speeds.length - 1)];
+    }
+
+    // Angle changes
+    if (line.speaker === 'DIRECTOR') {
+      angleCount++;
+      angleLabel.textContent = `ANGLE ${angleCount} OF ${Math.max(angleCount, 3)}`;
+      cameraAngle.textContent = pick(COMMENTARY.cameraAngles);
+      const field = document.getElementById('replayField');
+      field.classList.add('glitch');
+      setTimeout(() => field.classList.remove('glitch'), 500);
+    }
+
+    await sleep(800);
+    div.classList.add('visible');
+
+    // Auto-scroll
+    area.scrollTop = area.scrollHeight;
+
+    await sleep(1200 + Math.random() * 600);
+  }
+
+  // Verdict
+  await sleep(1500);
+  stopMusic();
+  showVerdict();
+}
+
+function showVerdict() {
+  const type = chooseVerdict();
+  const v = VERDICTS[type];
+
+  const stamp = document.getElementById('verdictStamp');
+  stamp.className = 'verdict-stamp ' + type;
+  stamp.textContent = pick(v.labels);
+
+  document.getElementById('verdictSubtitle').textContent = pick(v.subtitles);
+  document.getElementById('verdictSection').classList.add('active');
+
+  playVerdictSound();
+
+  // Scroll to verdict
+  document.getElementById('verdictSection').scrollIntoView({ behavior: 'smooth' });
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// ACTIONS
+// ============================================================
+function newReplay() {
+  stopMusic();
+  document.getElementById('replayContainer').classList.remove('active');
+  document.getElementById('inputSection').style.display = 'block';
+  document.getElementById('momentInput').value = '';
+  document.getElementById('momentInput').focus();
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('commentaryArea').innerHTML = '';
+  document.getElementById('verdictSection').classList.remove('active');
+}
+
+function challengeCall() {
+  // Re-run with potentially different verdict
+  document.getElementById('verdictSection').classList.remove('active');
+  const area = document.getElementById('commentaryArea');
+  area.innerHTML = '';
+
+  // Quick re-review
+  playDramaticMusic();
+
+  const challengeLines = [
+    { speaker: 'HEAD OFFICIAL', text: "We have a challenge on the ruling. Going back to the booth." },
+    { speaker: 'DIRECTOR', text: pick(COMMENTARY.angleTransitions) },
+    { speaker: pick(['MIKE','JIM','AL']), text: pick(COMMENTARY.analysis) },
+    { speaker: 'HEAD OFFICIAL', text: pick(COMMENTARY.closings) },
+  ];
+
+  (async () => {
+    const progressFill = document.getElementById('progressFill');
+    progressFill.style.width = '0%';
+
+    for (let i = 0; i < challengeLines.length; i++) {
+      const line = challengeLines[i];
+      const div = document.createElement('div');
+      div.className = 'commentary-line';
+      div.innerHTML = `<span class="speaker">${line.speaker}</span>${line.text}`;
+      area.appendChild(div);
+      progressFill.style.width = ((i + 1) / challengeLines.length * 100) + '%';
+      await sleep(600);
+      div.classList.add('visible');
+      await sleep(1200);
+    }
+
+    await sleep(1000);
+    stopMusic();
+    showVerdict();
+  })();
+}
+
+function shareVerdict() {
+  const stamp = document.getElementById('verdictStamp').textContent;
+  const subtitle = document.getElementById('verdictSubtitle').textContent;
+  const text = `INSTANT REPLAY JUDGE\n\nMoment: "${currentMoment}"\n\nVerdict: ${stamp}\n${subtitle}\n\nGet your moments judged at Instant Replay Judge`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Instant Replay Judge', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('VERDICT COPIED TO CLIPBOARD'));
+  } else {
+    showToast('SHARE NOT AVAILABLE');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// TICKER
+// ============================================================
+function initTicker() {
+  const shuffled = [...TICKER_MESSAGES].sort(() => Math.random() - 0.5);
+  const joined = shuffled.map((m, i) =>
+    (i % 2 === 0 ? `<span class="highlight">${m}</span>` : m)
+  ).join('  ///  ');
+  document.getElementById('tickerContent').innerHTML = joined + '  ///  ' + joined;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initTicker();
+
+// Enter key submits
+document.getElementById('momentInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    goToReplay();
+  }
+});
+</script>
+</body>
+</html>

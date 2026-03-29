@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>JUMBOTRON Fan Cam</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --stadium-dark: #0a0a1a;
+    --stadium-blue: #1a2a5e;
+    --gold: #ffd700;
+    --red: #ff2244;
+    --neon-blue: #00ccff;
+  }
+
+  body {
+    background: var(--stadium-dark);
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    height: 100dvh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Stadium lights background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse at 20% 0%, rgba(255,215,0,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 0%, rgba(255,215,0,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(0,100,255,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100dvh;
+    max-width: 500px;
+    padding: 8px;
+  }
+
+  /* Top banner */
+  .stadium-banner {
+    width: 100%;
+    text-align: center;
+    padding: 6px 0;
+    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.15), transparent);
+    border-bottom: 2px solid var(--gold);
+    flex-shrink: 0;
+  }
+  .stadium-banner h1 {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+  }
+  .stadium-banner .subtitle {
+    font-size: 0.6rem;
+    letter-spacing: 4px;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+
+  /* Jumbotron frame */
+  .jumbotron {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    margin: 8px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 4px solid var(--gold);
+    box-shadow:
+      0 0 30px rgba(255,215,0,0.3),
+      inset 0 0 30px rgba(0,0,0,0.5),
+      0 0 60px rgba(255,215,0,0.1);
+    background: #000;
+  }
+
+  .jumbotron.kiss { border-color: #ff4488; box-shadow: 0 0 40px rgba(255,68,136,0.5), inset 0 0 30px rgba(0,0,0,0.5); }
+  .jumbotron.dance { border-color: #00ff88; box-shadow: 0 0 40px rgba(0,255,136,0.5), inset 0 0 30px rgba(0,0,0,0.5); }
+  .jumbotron.flex { border-color: #ff8800; box-shadow: 0 0 40px rgba(255,136,0,0.5), inset 0 0 30px rgba(0,0,0,0.5); }
+  .jumbotron.shame { border-color: #8800ff; box-shadow: 0 0 40px rgba(136,0,255,0.5), inset 0 0 30px rgba(0,0,0,0.5); }
+
+  #video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    display: block;
+  }
+
+  /* Mode label overlay */
+  .mode-label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 8px;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+    text-shadow: 0 0 20px currentColor, 0 2px 4px rgba(0,0,0,0.8);
+  }
+  .mode-label.active { opacity: 1; animation: pulse-label 1s ease-in-out infinite; }
+
+  @keyframes pulse-label {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .mode-label.kiss { color: #ff4488; background: linear-gradient(180deg, rgba(255,68,136,0.4), transparent); }
+  .mode-label.dance { color: #00ff88; background: linear-gradient(180deg, rgba(0,255,136,0.4), transparent); }
+  .mode-label.flex { color: #ff8800; background: linear-gradient(180deg, rgba(255,136,0,0.4), transparent); }
+  .mode-label.shame { color: #8800ff; background: linear-gradient(180deg, rgba(136,0,255,0.4), transparent); }
+
+  /* Timer */
+  .timer {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 2rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+    z-index: 10;
+    opacity: 0;
+    text-shadow: 0 0 15px currentColor, 0 2px 6px rgba(0,0,0,0.9);
+    transition: opacity 0.3s;
+  }
+  .timer.active { opacity: 1; }
+
+  /* Overlay canvas for effects */
+  #overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* Crowd noise indicator */
+  .crowd-meter {
+    position: absolute;
+    bottom: 8px;
+    left: 12px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .crowd-meter.active { opacity: 1; }
+  .crowd-meter .bar {
+    width: 4px;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: height 0.1s;
+  }
+
+  /* Corner decorations */
+  .corner {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 6;
+    border-color: var(--gold);
+  }
+  .corner.tl { top: 4px; left: 4px; border-top: 3px solid; border-left: 3px solid; }
+  .corner.tr { top: 4px; right: 4px; border-top: 3px solid; border-right: 3px solid; }
+  .corner.bl { bottom: 4px; left: 4px; border-bottom: 3px solid; border-left: 3px solid; }
+  .corner.br { bottom: 4px; right: 4px; border-bottom: 3px solid; border-right: 3px solid; }
+
+  /* LED dot border effect */
+  .led-border {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 4;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* Buttons area */
+  .controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 0 4px;
+  }
+
+  .cam-btn {
+    padding: 14px 8px;
+    border: 2px solid;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .cam-btn:active { transform: scale(0.95); }
+  .cam-btn.active { transform: scale(1.02); }
+
+  .cam-btn.kiss-btn { border-color: #ff4488; }
+  .cam-btn.kiss-btn.active { background: rgba(255,68,136,0.3); box-shadow: 0 0 20px rgba(255,68,136,0.4); }
+  .cam-btn.dance-btn { border-color: #00ff88; }
+  .cam-btn.dance-btn.active { background: rgba(0,255,136,0.3); box-shadow: 0 0 20px rgba(0,255,136,0.4); }
+  .cam-btn.flex-btn { border-color: #ff8800; }
+  .cam-btn.flex-btn.active { background: rgba(255,136,0,0.3); box-shadow: 0 0 20px rgba(255,136,0,0.4); }
+  .cam-btn.shame-btn { border-color: #8800ff; }
+  .cam-btn.shame-btn.active { background: rgba(136,0,255,0.3); box-shadow: 0 0 20px rgba(136,0,255,0.4); }
+
+  .cam-btn .icon { font-size: 1.3rem; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 4px 12px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 25px;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.15); }
+
+  /* Start screen */
+  .start-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--stadium-dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    transition: opacity 0.5s;
+  }
+  .start-screen.hidden { opacity: 0; pointer-events: none; }
+  .start-screen h1 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(180deg, #fff 0%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .start-screen p { color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+  .start-btn {
+    padding: 16px 48px;
+    border: 2px solid var(--gold);
+    border-radius: 50px;
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,215,0,0.05));
+    color: var(--gold);
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    animation: glow-btn 2s ease-in-out infinite;
+  }
+  .start-btn:hover { background: rgba(255,215,0,0.3); }
+  @keyframes glow-btn {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.2); }
+    50% { box-shadow: 0 0 40px rgba(255,215,0,0.4); }
+  }
+
+  /* Floating particles */
+  .particles {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 3;
+    overflow: hidden;
+  }
+
+  /* Scanline effect */
+  .scanlines {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 6;
+  }
+
+  /* Screenshot flash */
+  .flash {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.1s;
+  }
+  .flash.active { opacity: 0.8; transition: none; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 10px 24px;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 300;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    border: 1px solid rgba(255,215,0,0.3);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div class="start-screen" id="startScreen">
+  <h1>JUMBOTRON</h1>
+  <p>Fan Cam Reactor</p>
+  <button class="start-btn" id="startBtn">ENTER STADIUM</button>
+</div>
+
+<!-- Main App -->
+<div class="app">
+  <div class="stadium-banner">
+    <h1>JUMBOTRON</h1>
+    <div class="subtitle">FAN CAM REACTOR</div>
+  </div>
+
+  <div class="jumbotron" id="jumbotron">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="overlay"></canvas>
+    <div class="scanlines"></div>
+    <div class="particles" id="particles"></div>
+    <div class="mode-label" id="modeLabel"></div>
+    <div class="timer" id="timer"></div>
+    <div class="crowd-meter" id="crowdMeter">
+      <div class="bar" style="height:8px"></div>
+      <div class="bar" style="height:12px"></div>
+      <div class="bar" style="height:6px"></div>
+      <div class="bar" style="height:14px"></div>
+      <div class="bar" style="height:10px"></div>
+    </div>
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+  </div>
+
+  <div class="controls">
+    <button class="cam-btn kiss-btn" data-mode="kiss">
+      <span class="icon">&#x1F48B;</span> KISS CAM
+    </button>
+    <button class="cam-btn dance-btn" data-mode="dance">
+      <span class="icon">&#x1F57A;</span> DANCE CAM
+    </button>
+    <button class="cam-btn flex-btn" data-mode="flex">
+      <span class="icon">&#x1F4AA;</span> FLEX CAM
+    </button>
+    <button class="cam-btn shame-btn" data-mode="shame">
+      <span class="icon">&#x1F44E;</span> SHAME CAM
+    </button>
+  </div>
+
+  <div class="bottom-bar">
+    <button class="action-btn" id="screenshotBtn">&#x1F4F8; SCREENSHOT</button>
+    <button class="action-btn" id="shareBtn">&#x1F4E4; SHARE</button>
+    <button class="action-btn" id="flipBtn">&#x1F504; FLIP</button>
+  </div>
+</div>
+
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---- Audio Engine (Web Audio API) ----
+class StadiumAudio {
+  constructor() {
+    this.ctx = null;
+    this.masterGain = null;
+    this.activeNodes = [];
+  }
+
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.gain.value = 0.4;
+    this.masterGain.connect(this.ctx.destination);
+  }
+
+  stopAll() {
+    this.activeNodes.forEach(n => {
+      try { n.stop(); } catch(e) {}
+      try { n.disconnect(); } catch(e) {}
+    });
+    this.activeNodes = [];
+  }
+
+  // Generate crowd cheering noise
+  crowdCheer(duration = 5) {
+    this.init();
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(2, bufferSize, this.ctx.sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / this.ctx.sampleRate;
+        // layered noise for crowd effect
+        let v = (Math.random() - 0.5) * 0.3;
+        // modulate for "roar" effect
+        v *= 0.5 + 0.5 * Math.sin(t * 2 * Math.PI * 1.5);
+        v *= 0.5 + 0.5 * Math.sin(t * 2 * Math.PI * 0.7);
+        // envelope
+        const env = Math.min(1, t * 4) * Math.min(1, (duration - t) * 3);
+        data[i] = v * env;
+      }
+    }
+
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+
+    // Bandpass filter to sound more like voices
+    const bp = this.ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 800;
+    bp.Q.value = 0.5;
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.6;
+
+    src.connect(bp);
+    bp.connect(gain);
+    gain.connect(this.masterGain);
+    src.start();
+    this.activeNodes.push(src);
+    return src;
+  }
+
+  // Boo sound
+  booSound(duration = 5) {
+    this.init();
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(2, bufferSize, this.ctx.sampleRate);
+
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / this.ctx.sampleRate;
+        let v = (Math.random() - 0.5) * 0.25;
+        // lower frequency modulation for "boo"
+        v *= 0.6 + 0.4 * Math.sin(t * 2 * Math.PI * 0.8);
+        // add a low tone
+        v += 0.08 * Math.sin(t * 2 * Math.PI * 180 + Math.sin(t * 3) * 20);
+        v += 0.05 * Math.sin(t * 2 * Math.PI * 120);
+        const env = Math.min(1, t * 3) * Math.min(1, (duration - t) * 2);
+        data[i] = v * env;
+      }
+    }
+
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 600;
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.7;
+
+    src.connect(lp);
+    lp.connect(gain);
+    gain.connect(this.masterGain);
+    src.start();
+    this.activeNodes.push(src);
+    return src;
+  }
+
+  // Dance beat
+  danceBeat(duration = 15) {
+    this.init();
+    const bpm = 128;
+    const beatLen = 60 / bpm;
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / this.ctx.sampleRate;
+      const beatPos = (t % beatLen) / beatLen;
+
+      // Kick drum
+      const kickEnv = Math.max(0, 1 - beatPos * 8);
+      const kickFreq = 60 + 200 * Math.max(0, 1 - beatPos * 12);
+      const kick = Math.sin(t * 2 * Math.PI * kickFreq) * kickEnv * 0.4;
+
+      // Hi-hat on off-beats
+      const halfBeat = (t % (beatLen / 2)) / (beatLen / 2);
+      const hihatEnv = beatPos > 0.45 && beatPos < 0.55 ? Math.max(0, 1 - halfBeat * 15) : 0;
+      const hihat = (Math.random() - 0.5) * hihatEnv * 0.15;
+
+      // Bass line
+      const bassFreq = 55 * (1 + Math.floor(t / (beatLen * 4)) % 4 === 2 ? 1.5 : 1);
+      const bass = Math.sin(t * 2 * Math.PI * bassFreq) * 0.12;
+
+      const env = Math.min(1, t * 2) * Math.min(1, (duration - t) * 2);
+      data[i] = (kick + hihat + bass) * env;
+    }
+
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.loop = false;
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.5;
+
+    src.connect(gain);
+    gain.connect(this.masterGain);
+    src.start();
+    this.activeNodes.push(src);
+    return src;
+  }
+
+  // Heroic flex sound
+  flexSound(duration = 5) {
+    this.init();
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / this.ctx.sampleRate;
+      // Crowd roar
+      let crowd = (Math.random() - 0.5) * 0.2;
+      crowd *= 0.5 + 0.5 * Math.sin(t * Math.PI * 2);
+      // Triumphant horn
+      const horn = 0.1 * Math.sin(t * 2 * Math.PI * 220 * (1 + 0.5 * Math.floor(t * 2) % 3))
+                 + 0.07 * Math.sin(t * 2 * Math.PI * 330)
+                 + 0.05 * Math.sin(t * 2 * Math.PI * 440);
+      const env = Math.min(1, t * 3) * Math.min(1, (duration - t) * 2);
+      data[i] = (crowd + horn) * env;
+    }
+
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    const gain = this.ctx.createGain();
+    gain.gain.value = 0.5;
+    src.connect(gain);
+    gain.connect(this.masterGain);
+    src.start();
+    this.activeNodes.push(src);
+    return src;
+  }
+
+  // Camera shutter
+  shutterSound() {
+    this.init();
+    const dur = 0.15;
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const t = i / this.ctx.sampleRate;
+      d[i] = (Math.random() - 0.5) * Math.max(0, 1 - t / dur) * 0.5;
+    }
+    const src = this.ctx.createBufferSource();
+    src.buffer = buf;
+    const hp = this.ctx.createBiquadFilter();
+    hp.type = 'highpass';
+    hp.frequency.value = 2000;
+    src.connect(hp);
+    hp.connect(this.masterGain);
+    src.start();
+  }
+}
+
+// ---- Particle/Effect System ----
+class EffectEngine {
+  constructor(canvas, particlesEl) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.particlesEl = particlesEl;
+    this.particles = [];
+    this.animFrame = null;
+    this.mode = null;
+  }
+
+  resize() {
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+  }
+
+  start(mode) {
+    this.stop();
+    this.mode = mode;
+    this.particles = [];
+    this._tick();
+  }
+
+  stop() {
+    this.mode = null;
+    this.particles = [];
+    if (this.animFrame) cancelAnimationFrame(this.animFrame);
+    this.animFrame = null;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.particlesEl.innerHTML = '';
+  }
+
+  _tick() {
+    if (!this.mode) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    // Spawn
+    if (this.mode === 'kiss') this._spawnHearts(w, h);
+    if (this.mode === 'dance') this._spawnDisco(w, h);
+    if (this.mode === 'flex') this._spawnFlex(w, h);
+    if (this.mode === 'shame') this._spawnShame(w, h);
+
+    // Update & draw
+    this.particles = this.particles.filter(p => {
+      p.life -= p.decay;
+      if (p.life <= 0) return false;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += p.gravity || 0;
+      p.rotation = (p.rotation || 0) + (p.rotSpeed || 0);
+
+      this.ctx.save();
+      this.ctx.globalAlpha = Math.min(1, p.life * 2);
+      this.ctx.translate(p.x, p.y);
+      this.ctx.rotate(p.rotation);
+      this.ctx.font = `${p.size}px sans-serif`;
+      this.ctx.textAlign = 'center';
+      this.ctx.textBaseline = 'middle';
+
+      if (p.text) {
+        this.ctx.fillText(p.text, 0, 0);
+      } else if (p.type === 'circle') {
+        this.ctx.beginPath();
+        this.ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2);
+        this.ctx.fillStyle = p.color;
+        this.ctx.fill();
+      }
+
+      this.ctx.restore();
+      return true;
+    });
+
+    this.animFrame = requestAnimationFrame(() => this._tick());
+  }
+
+  _spawnHearts(w, h) {
+    if (Math.random() < 0.15) {
+      const hearts = ['\u2764\uFE0F', '\uD83D\uDC95', '\uD83D\uDC96', '\uD83D\uDC97', '\uD83D\uDC93', '\uD83D\uDC8B'];
+      this.particles.push({
+        x: Math.random() * w,
+        y: h + 10,
+        vx: (Math.random() - 0.5) * 2,
+        vy: -2 - Math.random() * 3,
+        size: 20 + Math.random() * 25,
+        life: 1,
+        decay: 0.008,
+        text: hearts[Math.floor(Math.random() * hearts.length)],
+        rotation: 0,
+        rotSpeed: (Math.random() - 0.5) * 0.05,
+        gravity: -0.01
+      });
+    }
+    // Pink vignette
+    const grad = this.ctx.createRadialGradient(w/2, h/2, w*0.3, w/2, h/2, w*0.7);
+    grad.addColorStop(0, 'transparent');
+    grad.addColorStop(1, 'rgba(255,68,136,0.15)');
+    this.ctx.fillStyle = grad;
+    this.ctx.fillRect(0, 0, w, h);
+  }
+
+  _spawnDisco(w, h) {
+    // Disco lights
+    if (Math.random() < 0.08) {
+      const colors = ['#ff0055', '#00ff88', '#ffdd00', '#00ccff', '#ff8800', '#cc00ff'];
+      this.particles.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        vx: 0, vy: 0,
+        size: 30 + Math.random() * 60,
+        life: 1,
+        decay: 0.03,
+        type: 'circle',
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: 0
+      });
+    }
+    // Music notes
+    if (Math.random() < 0.1) {
+      const notes = ['\uD83C\uDFB5', '\uD83C\uDFB6', '\uD83C\uDFB6', '\u266A'];
+      this.particles.push({
+        x: Math.random() * w,
+        y: h,
+        vx: (Math.random() - 0.5) * 3,
+        vy: -3 - Math.random() * 2,
+        size: 22 + Math.random() * 18,
+        life: 1,
+        decay: 0.012,
+        text: notes[Math.floor(Math.random() * notes.length)],
+        rotation: 0,
+        rotSpeed: (Math.random() - 0.5) * 0.1
+      });
+    }
+    // Strobe
+    if (Math.random() < 0.03) {
+      this.ctx.fillStyle = `rgba(255,255,255,${0.05 + Math.random() * 0.08})`;
+      this.ctx.fillRect(0, 0, w, h);
+    }
+  }
+
+  _spawnFlex(w, h) {
+    if (Math.random() < 0.12) {
+      const icons = ['\uD83D\uDCAA', '\uD83D\uDD25', '\uD83C\uDFC6', '\u2B50', '\uD83D\uDCA5', '\uD83E\uDD4A'];
+      this.particles.push({
+        x: Math.random() * w,
+        y: h + 10,
+        vx: (Math.random() - 0.5) * 2,
+        vy: -2 - Math.random() * 3,
+        size: 24 + Math.random() * 20,
+        life: 1,
+        decay: 0.01,
+        text: icons[Math.floor(Math.random() * icons.length)],
+        rotation: 0,
+        rotSpeed: (Math.random() - 0.5) * 0.08
+      });
+    }
+    // Gold flash
+    const t = performance.now() / 1000;
+    const flash = 0.05 + 0.03 * Math.sin(t * 4);
+    this.ctx.fillStyle = `rgba(255,180,0,${flash})`;
+    this.ctx.fillRect(0, 0, w, h);
+  }
+
+  _spawnShame(w, h) {
+    if (Math.random() < 0.12) {
+      const icons = ['\uD83D\uDC4E', '\uD83D\uDE44', '\uD83D\uDE12', '\u274C', '\uD83D\uDEAB', '\uD83E\uDD21'];
+      this.particles.push({
+        x: Math.random() * w,
+        y: -10,
+        vx: (Math.random() - 0.5) * 2,
+        vy: 1 + Math.random() * 2,
+        size: 22 + Math.random() * 18,
+        life: 1,
+        decay: 0.01,
+        text: icons[Math.floor(Math.random() * icons.length)],
+        rotation: 0,
+        rotSpeed: (Math.random() - 0.5) * 0.1,
+        gravity: 0.02
+      });
+    }
+    // Dark vignette
+    const grad = this.ctx.createRadialGradient(w/2, h/2, w*0.2, w/2, h/2, w*0.6);
+    grad.addColorStop(0, 'transparent');
+    grad.addColorStop(1, 'rgba(80,0,160,0.12)');
+    this.ctx.fillStyle = grad;
+    this.ctx.fillRect(0, 0, w, h);
+  }
+}
+
+// ---- Main App ----
+class FanCamReactor {
+  constructor() {
+    this.video = document.getElementById('video');
+    this.jumbotron = document.getElementById('jumbotron');
+    this.overlay = document.getElementById('overlay');
+    this.modeLabel = document.getElementById('modeLabel');
+    this.timerEl = document.getElementById('timer');
+    this.crowdMeter = document.getElementById('crowdMeter');
+    this.flash = document.getElementById('flash');
+    this.toast = document.getElementById('toast');
+    this.startScreen = document.getElementById('startScreen');
+
+    this.audio = new StadiumAudio();
+    this.effects = new EffectEngine(this.overlay, document.getElementById('particles'));
+
+    this.currentMode = null;
+    this.timerInterval = null;
+    this.timerValue = 0;
+    this.meterInterval = null;
+    this.facingMode = 'user';
+
+    this._bindEvents();
+  }
+
+  _bindEvents() {
+    document.getElementById('startBtn').addEventListener('click', () => this._start());
+
+    document.querySelectorAll('.cam-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (this.currentMode === mode) {
+          this._deactivate();
+        } else {
+          this._activate(mode);
+        }
+      });
+    });
+
+    document.getElementById('screenshotBtn').addEventListener('click', () => this._screenshot());
+    document.getElementById('shareBtn').addEventListener('click', () => this._share());
+    document.getElementById('flipBtn').addEventListener('click', () => this._flipCamera());
+
+    window.addEventListener('resize', () => this.effects.resize());
+  }
+
+  async _start() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: this.facingMode, width: { ideal: 720 }, height: { ideal: 1280 } },
+        audio: false
+      });
+      this.video.srcObject = stream;
+      this.startScreen.classList.add('hidden');
+      this.effects.resize();
+      this.audio.init();
+    } catch (e) {
+      alert('Camera access needed for the jumbotron!');
+    }
+  }
+
+  _activate(mode) {
+    this._deactivate();
+    this.currentMode = mode;
+
+    // Update UI
+    this.jumbotron.className = 'jumbotron ' + mode;
+    document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+
+    // Mode label
+    const labels = { kiss: 'KISS CAM', dance: 'DANCE CAM', flex: 'FLEX CAM', shame: 'SHAME CAM' };
+    this.modeLabel.textContent = labels[mode];
+    this.modeLabel.className = 'mode-label active ' + mode;
+
+    // Timer
+    this.timerValue = mode === 'dance' ? 15 : 10;
+    this.timerEl.className = 'timer active';
+    this.timerEl.style.color = { kiss: '#ff4488', dance: '#00ff88', flex: '#ff8800', shame: '#8800ff' }[mode];
+    this._updateTimer();
+    this.timerInterval = setInterval(() => {
+      this.timerValue--;
+      this._updateTimer();
+      if (this.timerValue <= 0) this._deactivate();
+    }, 1000);
+
+    // Crowd meter
+    this.crowdMeter.classList.add('active');
+    this.meterInterval = setInterval(() => this._animateMeter(), 100);
+
+    // Effects
+    this.effects.resize();
+    this.effects.start(mode);
+
+    // Audio
+    this.audio.stopAll();
+    if (mode === 'kiss') this.audio.crowdCheer(10);
+    if (mode === 'dance') this.audio.danceBeat(15);
+    if (mode === 'flex') this.audio.flexSound(10);
+    if (mode === 'shame') this.audio.booSound(10);
+  }
+
+  _deactivate() {
+    this.currentMode = null;
+    this.jumbotron.className = 'jumbotron';
+    document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+    this.modeLabel.className = 'mode-label';
+    this.timerEl.className = 'timer';
+    this.crowdMeter.classList.remove('active');
+
+    if (this.timerInterval) { clearInterval(this.timerInterval); this.timerInterval = null; }
+    if (this.meterInterval) { clearInterval(this.meterInterval); this.meterInterval = null; }
+
+    this.effects.stop();
+    this.audio.stopAll();
+  }
+
+  _updateTimer() {
+    const m = Math.floor(this.timerValue / 60);
+    const s = this.timerValue % 60;
+    this.timerEl.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  _animateMeter() {
+    const bars = this.crowdMeter.querySelectorAll('.bar');
+    bars.forEach(bar => {
+      bar.style.height = (4 + Math.random() * 20) + 'px';
+    });
+  }
+
+  async _screenshot() {
+    this.audio.shutterSound();
+
+    // Flash
+    this.flash.classList.add('active');
+    setTimeout(() => this.flash.classList.remove('active'), 150);
+
+    // Composite screenshot
+    const c = document.createElement('canvas');
+    const rect = this.jumbotron.getBoundingClientRect();
+    c.width = this.video.videoWidth || 720;
+    c.height = this.video.videoHeight || 1280;
+    const cx = c.getContext('2d');
+
+    // Draw video (mirrored)
+    cx.save();
+    cx.translate(c.width, 0);
+    cx.scale(-1, 1);
+    cx.drawImage(this.video, 0, 0, c.width, c.height);
+    cx.restore();
+
+    // Draw overlay effects
+    if (this.overlay.width > 0) {
+      cx.drawImage(this.overlay, 0, 0, c.width, c.height);
+    }
+
+    // Draw mode label
+    if (this.currentMode) {
+      const labels = { kiss: 'KISS CAM', dance: 'DANCE CAM', flex: 'FLEX CAM', shame: 'SHAME CAM' };
+      const colors = { kiss: '#ff4488', dance: '#00ff88', flex: '#ff8800', shame: '#8800ff' };
+      cx.fillStyle = colors[this.currentMode];
+      cx.font = `bold ${c.width * 0.08}px sans-serif`;
+      cx.textAlign = 'center';
+      cx.shadowColor = colors[this.currentMode];
+      cx.shadowBlur = 20;
+      cx.fillText(labels[this.currentMode], c.width / 2, c.height * 0.08);
+      cx.shadowBlur = 0;
+
+      // Border
+      cx.strokeStyle = colors[this.currentMode];
+      cx.lineWidth = 8;
+      cx.strokeRect(4, 4, c.width - 8, c.height - 8);
+    } else {
+      cx.strokeStyle = '#ffd700';
+      cx.lineWidth = 8;
+      cx.strokeRect(4, 4, c.width - 8, c.height - 8);
+    }
+
+    // Watermark
+    cx.fillStyle = 'rgba(255,255,255,0.6)';
+    cx.font = `bold ${c.width * 0.035}px sans-serif`;
+    cx.textAlign = 'center';
+    cx.fillText('JUMBOTRON FAN CAM', c.width / 2, c.height - 20);
+
+    c.toBlob(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fancam_${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      this._showToast('Screenshot saved!');
+    }, 'image/png');
+  }
+
+  async _share() {
+    if (!navigator.share) {
+      this._showToast('Share not supported on this browser');
+      return;
+    }
+
+    // Create image to share
+    const c = document.createElement('canvas');
+    c.width = this.video.videoWidth || 720;
+    c.height = this.video.videoHeight || 1280;
+    const cx = c.getContext('2d');
+    cx.save();
+    cx.translate(c.width, 0);
+    cx.scale(-1, 1);
+    cx.drawImage(this.video, 0, 0, c.width, c.height);
+    cx.restore();
+    if (this.overlay.width > 0) cx.drawImage(this.overlay, 0, 0, c.width, c.height);
+
+    try {
+      const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+      const file = new File([blob], 'fancam.png', { type: 'image/png' });
+      await navigator.share({
+        title: 'JUMBOTRON Fan Cam',
+        text: 'Check me out on the jumbotron!',
+        files: [file]
+      });
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        this._showToast('Could not share');
+      }
+    }
+  }
+
+  async _flipCamera() {
+    this.facingMode = this.facingMode === 'user' ? 'environment' : 'user';
+    // Stop current stream
+    if (this.video.srcObject) {
+      this.video.srcObject.getTracks().forEach(t => t.stop());
+    }
+    // Mirror only front camera
+    this.video.style.transform = this.facingMode === 'user' ? 'scaleX(-1)' : 'scaleX(1)';
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: this.facingMode, width: { ideal: 720 }, height: { ideal: 1280 } },
+        audio: false
+      });
+      this.video.srcObject = stream;
+    } catch (e) {
+      this._showToast('Could not flip camera');
+    }
+  }
+
+  _showToast(msg) {
+    this.toast.textContent = msg;
+    this.toast.classList.add('show');
+    setTimeout(() => this.toast.classList.remove('show'), 2000);
+  }
+}
+
+// Boot
+const app = new FanCamReactor();
+</script>
+</body>
+</html>

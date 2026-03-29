@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sports Alibi Generator - Why Your Team REALLY Lost</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto+Condensed:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #1a1a2e;
+    --bg-card: #16213e;
+    --accent-red: #e63946;
+    --accent-gold: #f4a261;
+    --accent-blue: #457b9d;
+    --text-light: #f1faee;
+    --text-muted: #a8dadc;
+    --meter-green: #2a9d8f;
+    --meter-yellow: #e9c46a;
+    --meter-red: #e76f51;
+  }
+
+  body {
+    font-family: 'Roboto Condensed', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-light);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Radio static background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.015) 2px,
+      rgba(255,255,255,0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header - Sports Radio Theme */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .on-air {
+    display: inline-block;
+    background: var(--accent-red);
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 3px;
+    animation: pulse-air 1.5s ease-in-out infinite;
+    margin-bottom: 10px;
+  }
+
+  @keyframes pulse-air {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--text-light), var(--accent-gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  .freq-bar {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 12px;
+  }
+  .freq-bar span {
+    width: 4px;
+    background: var(--accent-gold);
+    border-radius: 2px;
+    animation: freq-bounce 0.8s ease-in-out infinite;
+  }
+  .freq-bar span:nth-child(1) { height: 12px; animation-delay: 0s; }
+  .freq-bar span:nth-child(2) { height: 20px; animation-delay: 0.1s; }
+  .freq-bar span:nth-child(3) { height: 28px; animation-delay: 0.2s; }
+  .freq-bar span:nth-child(4) { height: 16px; animation-delay: 0.3s; }
+  .freq-bar span:nth-child(5) { height: 24px; animation-delay: 0.15s; }
+  .freq-bar span:nth-child(6) { height: 10px; animation-delay: 0.25s; }
+  .freq-bar span:nth-child(7) { height: 22px; animation-delay: 0.05s; }
+
+  @keyframes freq-bounce {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.4); }
+  }
+
+  /* Sport Selector */
+  .sport-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .sport-btn {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 10px 18px;
+    border: 2px solid var(--accent-blue);
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .sport-btn:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    transform: translateY(-1px);
+  }
+
+  .sport-btn.active {
+    background: var(--accent-red);
+    border-color: var(--accent-red);
+    color: white;
+    transform: scale(1.05);
+  }
+
+  /* Category Filter */
+  .category-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .cat-chip {
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cat-chip:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+  .cat-chip.active {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    color: white;
+  }
+
+  /* Big Button */
+  .generate-btn {
+    display: block;
+    width: 100%;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    padding: 18px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent-red), #c1121f);
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(230,57,70,0.3);
+    margin-bottom: 24px;
+  }
+  .generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(230,57,70,0.5);
+  }
+  .generate-btn:active { transform: translateY(0); }
+
+  /* Alibi Card */
+  .alibi-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: none;
+    animation: card-in 0.4s ease-out;
+  }
+  .alibi-card.visible { display: block; }
+
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .alibi-category {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+  }
+  .alibi-category.refs { background: #e63946; }
+  .alibi-category.weather { background: #457b9d; }
+  .alibi-category.conspiracy { background: #6a4c93; }
+  .alibi-category.equipment { background: #e76f51; }
+  .alibi-category.karma { background: #2a9d8f; }
+
+  .alibi-text {
+    font-size: 1.25rem;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    font-style: italic;
+    color: var(--text-light);
+  }
+
+  .alibi-text::before { content: '\201C'; font-size: 2rem; color: var(--accent-gold); line-height: 0; vertical-align: -0.3em; margin-right: 4px; }
+  .alibi-text::after { content: '\201D'; font-size: 2rem; color: var(--accent-gold); line-height: 0; vertical-align: -0.3em; margin-left: 4px; }
+
+  /* Delusion Score Meter */
+  .meter-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .meter-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .meter-track {
+    height: 14px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 7px;
+    transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+  }
+
+  .meter-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+    animation: meter-shine 2s ease-in-out infinite;
+  }
+
+  @keyframes meter-shine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .delusion-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-top: 6px;
+    font-weight: 600;
+  }
+
+  /* Share Section */
+  .share-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .share-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .share-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+
+  /* History */
+  .history-section {
+    margin-top: 30px;
+  }
+  .history-section h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .history-item {
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--accent-blue);
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .history-item .hist-sport {
+    font-weight: 700;
+    color: var(--accent-gold);
+    font-style: normal;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.25);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .header h1 { font-size: 1.8rem; }
+    .sport-btn { padding: 8px 14px; font-size: 0.85rem; }
+    .alibi-text { font-size: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="on-air">ON AIR</div>
+    <h1>Sports Alibi Generator</h1>
+    <p class="subtitle">Because your team didn't ACTUALLY lose. Here's why.</p>
+    <div class="freq-bar">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <div class="sport-selector" id="sportSelector">
+    <button class="sport-btn active" data-sport="football">Football</button>
+    <button class="sport-btn" data-sport="basketball">Basketball</button>
+    <button class="sport-btn" data-sport="baseball">Baseball</button>
+    <button class="sport-btn" data-sport="soccer">Soccer</button>
+    <button class="sport-btn" data-sport="hockey">Hockey</button>
+    <button class="sport-btn" data-sport="tennis">Tennis</button>
+  </div>
+
+  <div class="category-row" id="categoryRow">
+    <span class="cat-chip active" data-cat="all">All Blame</span>
+    <span class="cat-chip" data-cat="refs">Refs</span>
+    <span class="cat-chip" data-cat="weather">Weather</span>
+    <span class="cat-chip" data-cat="conspiracy">Conspiracy</span>
+    <span class="cat-chip" data-cat="equipment">Equipment</span>
+    <span class="cat-chip" data-cat="karma">Karma</span>
+  </div>
+
+  <button class="generate-btn" id="generateBtn">We Lost Because...</button>
+
+  <div class="alibi-card" id="alibiCard">
+    <span class="alibi-category" id="alibiCategory"></span>
+    <p class="alibi-text" id="alibiText"></p>
+    <div class="meter-section">
+      <div class="meter-label">
+        <span>Delusion Score</span>
+        <span id="meterPercent">0%</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" id="meterFill" style="width:0%"></div>
+      </div>
+      <p class="delusion-label" id="delusionLabel"></p>
+    </div>
+    <div class="share-row">
+      <button class="share-btn" id="copyBtn">Copy Alibi</button>
+      <button class="share-btn" id="tweetBtn">Share on X</button>
+    </div>
+  </div>
+
+  <div class="history-section" id="historySection" style="display:none;">
+    <h3>Your Excuse Record</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="footer">
+    Sports Alibi Generator &mdash; For entertainment purposes only.<br>
+    Your team still lost. Sorry.
+  </div>
+</div>
+
+<script>
+const TEMPLATES = {
+  refs: [
+    "The ref was clearly biased — he blinked suspiciously in the {period}",
+    "I saw the ref checking his phone during a crucial play. Probably getting instructions from Vegas",
+    "That ref has had it out for us since 2019. I have a spreadsheet",
+    "The officiating crew all went to the same college as the other team's coach. Coincidence? I think not",
+    "The ref's whistle was tuned to a frequency that psychologically disadvantaged our players",
+    "Did anyone else notice the ref's shoes matched the other team's colors? Subliminal bias",
+    "That wasn't a {penalty} — the ref clearly needs a new prescription for his glasses",
+    "The instant replay operator was suspiciously slow on every call that went against us",
+    "I counted 47 uncalled {penalty_plural} against the other team. FORTY-SEVEN",
+    "The refs had a secret meeting at halftime. My cousin's neighbor saw them at the same Applebee's last Tuesday",
+    "The league assigned those refs specifically because they knew we'd dominate with fair officiating",
+    "That ref made a call so bad it violated the Geneva Convention",
+    "The head official's body language clearly showed anti-{team} sentiment from the opening {play}",
+    "VAR was invented specifically to rob teams like ours of legitimate victories"
+  ],
+  weather: [
+    "The stadium's feng shui was completely off. You could feel the negative energy",
+    "The barometric pressure dropped 0.3 millibars right before the {period} — our guys are sensitive to that",
+    "The sun was at exactly the wrong angle. It's called the Solstice Effect, look it up",
+    "The wind was blowing at 4.7 mph — statistically the worst wind speed for our offensive scheme",
+    "The humidity in the stadium was 3% higher than our training facility. Muscle memory was compromised",
+    "There was a weird electromagnetic field in that stadium. My phone kept losing signal",
+    "The grass was cut 2mm shorter than regulation. Our {position_plural} couldn't get proper traction",
+    "The altitude difference between our home stadium and theirs threw off everyone's oxygen levels",
+    "A flock of birds flew over the stadium in the {period}. That's an ancient omen of defeat",
+    "The moon was in its waning gibbous phase. Historically, we lose 73% of waning gibbous games",
+    "The air conditioning was pointed directly at our bench. Classic psychological warfare",
+    "The dew point was 6 degrees off normal. Our {position_plural} slipped at critical moments because of it",
+    "Mercury was in retrograde. You simply cannot expect peak athletic performance during retrograde"
+  ],
+  conspiracy: [
+    "Mercury was in retrograde. I don't make the rules",
+    "The league clearly wanted the other team to win for TV ratings. Follow the money",
+    "I'm not saying it was rigged, but the final score was predicted by a TikTok psychic three days ago",
+    "Big {sport} doesn't want small-market teams to succeed. It's an open secret",
+    "The other team's owner had dinner with the commissioner last month. Connect the dots, people",
+    "Our playbook was leaked. I don't have proof but I can FEEL it",
+    "The scoreboard operator added points to the other team when nobody was looking. I was looking",
+    "This loss was orchestrated to manipulate the spread. My podcast will have a full breakdown Tuesday",
+    "The Illuminati have had it out for this franchise since 1987. I've mapped the pattern",
+    "The broadcast camera angles were specifically chosen to gaslight our coaching staff",
+    "The league's scheduling algorithm is designed to make us travel more. It's data. I have a guy",
+    "Area 51 has classified documents about our franchise being systematically suppressed",
+    "The stadium's WiFi was running on a frequency that disrupted our players' neural pathways",
+    "Our team was clearly the test subject for an experimental new {ball} that bounces differently"
+  ],
+  equipment: [
+    "Our {ball_plural} were definitely not regulation. They felt weird. Multiple sources confirmed",
+    "The visiting locker room was 4 degrees colder than the home one. Our muscles never fully warmed up",
+    "Someone tampered with our {equipment}. I won't name names but the equipment manager looked nervous",
+    "The {surface} was secretly re-done the night before. Our cleats were calibrated for the old surface",
+    "Our team bus hit every red light on the way to the stadium. That throws off your game-day rhythm",
+    "The away jersey color they made us wear is scientifically proven to reduce aggression by 15%",
+    "The goalposts looked regulation but I measured them with my eyes and they were definitely off",
+    "The stadium speakers were playing subliminal messages during our warm-up. You can hear it if you slow down the audio",
+    "Our pregame meal was suspiciously underseasoned. You can't perform at an elite level on bland chicken",
+    "The Gatorade on our sideline was a different shade of green than usual. Chemistry matters",
+    "The visiting bench was 3 inches lower than the home bench. It's a psychological dominance move",
+    "Our team hotel's mattresses were clearly inferior. Sleep science is REAL, people",
+    "The practice facility's lighting the week before was at the wrong Kelvin temperature. Circadian rhythms were disrupted"
+  ],
+  karma: [
+    "We won too many games this season. The universe demands balance. It's thermodynamics, basically",
+    "Our star player stepped on a crack walking into the stadium. The curse was sealed",
+    "A fan in section 214 changed seats at halftime. You NEVER change seats when your team is winning",
+    "Someone in our fan base talked trash before the game. The sports gods heard it and they are petty",
+    "We used up all our luck in that comeback last month. The karma bank was overdrawn",
+    "I forgot to wear my lucky {clothing}. I take full responsibility. The team is blameless",
+    "Our mascot made eye contact with a black cat outside the stadium. Ancient sports law",
+    "We won the coin toss, which historically means we lose the game. The data doesn't lie",
+    "The team celebrated too early after going up in the {period}. The jinx was instantaneous",
+    "A bandwagon fan bought their first jersey this week. Fresh merch curses are real and documented",
+    "We broke a mirror in 2017 and the 7 years of bad luck doesn't expire until next season",
+    "Our rally towels were spinning counterclockwise. Everyone knows clockwise is the power direction",
+    "The opposing team's star said something humble in the pregame interview. Humility always wins karma points"
+  ]
+};
+
+const SPORT_TERMS = {
+  football: {
+    period: ['1st quarter','2nd quarter','3rd quarter','4th quarter','overtime'],
+    penalty: ['holding','pass interference','false start','illegal formation'],
+    penalty_plural: ['holdings','pass interferences','false starts'],
+    play: ['kickoff','snap','drive'],
+    position_plural: ['receivers','linemen','running backs','cornerbacks'],
+    ball: 'football', ball_plural: 'footballs',
+    equipment: ['helmets','cleats','pads','playbook tablets'],
+    surface: 'turf', clothing: ['jersey','hat','socks','underwear'],
+    team: 'our squad', sport: 'Football'
+  },
+  basketball: {
+    period: ['1st quarter','2nd quarter','3rd quarter','4th quarter','overtime'],
+    penalty: ['traveling','charging','flagrant foul'],
+    penalty_plural: ['travels','fouls','charges'],
+    play: ['tip-off','possession','fast break'],
+    position_plural: ['guards','forwards','centers','shooters'],
+    ball: 'basketball', ball_plural: 'basketballs',
+    equipment: ['sneakers','headbands','shooting sleeves','backboard'],
+    surface: 'court', clothing: ['jersey','wristband','lucky sneakers','headband'],
+    team: 'our squad', sport: 'Basketball'
+  },
+  baseball: {
+    period: ['3rd inning','5th inning','7th inning','9th inning','extra innings'],
+    penalty: ['balk','interference','obstruction'],
+    penalty_plural: ['balks','interferences','missed strike calls'],
+    play: ['first pitch','at-bat','double play'],
+    position_plural: ['outfielders','pitchers','infielders','batters'],
+    ball: 'baseball', ball_plural: 'baseballs',
+    equipment: ['bats','gloves','batting helmets','rosin bag'],
+    surface: 'infield dirt', clothing: ['cap','rally cap','batting gloves','socks'],
+    team: 'our guys', sport: 'Baseball'
+  },
+  soccer: {
+    period: ['1st half','2nd half','injury time','extra time','penalty shootout'],
+    penalty: ['offside','handball','simulation'],
+    penalty_plural: ['offsides','handballs','fouls'],
+    play: ['kickoff','corner','free kick'],
+    position_plural: ['wingers','midfielders','strikers','defenders'],
+    ball: 'match ball', ball_plural: 'match balls',
+    equipment: ['boots','shin guards','goalkeeper gloves','goal nets'],
+    surface: 'pitch', clothing: ['scarf','kit','lucky boots','captain armband'],
+    team: 'our club', sport: 'Soccer'
+  },
+  hockey: {
+    period: ['1st period','2nd period','3rd period','overtime','shootout'],
+    penalty: ['cross-checking','hooking','tripping'],
+    penalty_plural: ['cross-checks','hooks','trips'],
+    play: ['face-off','power play','breakaway'],
+    position_plural: ['wingers','defensemen','centers','goalies'],
+    ball: 'puck', ball_plural: 'pucks',
+    equipment: ['sticks','skates','pads','zamboni'],
+    surface: 'ice', clothing: ['jersey','rally towel','lucky toque','foam finger'],
+    team: 'our boys', sport: 'Hockey'
+  },
+  tennis: {
+    period: ['1st set','2nd set','3rd set','tiebreak','final set'],
+    penalty: ['foot fault','time violation','hindrance'],
+    penalty_plural: ['foot faults','time violations','bad line calls'],
+    play: ['first serve','rally','match point'],
+    position_plural: ['servers','baseliners','net players','returners'],
+    ball: 'tennis ball', ball_plural: 'tennis balls',
+    equipment: ['racket','strings','grip tape','towel'],
+    surface: 'court surface', clothing: ['headband','wristband','lucky shoes','visor'],
+    team: 'our player', sport: 'Tennis'
+  }
+};
+
+const DELUSION_LEVELS = [
+  { max: 20, label: 'Mildly Biased', color: 'var(--meter-green)' },
+  { max: 40, label: 'Solid Denial', color: 'var(--meter-green)' },
+  { max: 55, label: 'Full Homer Mode', color: 'var(--meter-yellow)' },
+  { max: 70, label: 'Talk Radio Caller', color: 'var(--meter-yellow)' },
+  { max: 85, label: 'Conspiracy Theorist', color: 'var(--meter-red)' },
+  { max: 95, label: 'Needs Professional Help', color: 'var(--meter-red)' },
+  { max: 100, label: 'PEAK DELUSION', color: '#ff0055' }
+];
+
+let selectedSport = 'football';
+let selectedCategory = 'all';
+let history = [];
+let lastAlibi = '';
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function fillTemplate(template, sport) {
+  const terms = SPORT_TERMS[sport];
+  return template
+    .replace(/\{period\}/g, pick(terms.period))
+    .replace(/\{penalty\}/g, pick(terms.penalty))
+    .replace(/\{penalty_plural\}/g, pick(terms.penalty_plural))
+    .replace(/\{play\}/g, pick(terms.play))
+    .replace(/\{position_plural\}/g, pick(terms.position_plural))
+    .replace(/\{ball\}/g, terms.ball)
+    .replace(/\{ball_plural\}/g, terms.ball_plural)
+    .replace(/\{equipment\}/g, pick(terms.equipment))
+    .replace(/\{surface\}/g, terms.surface)
+    .replace(/\{clothing\}/g, pick(terms.clothing))
+    .replace(/\{team\}/g, terms.team)
+    .replace(/\{sport\}/g, terms.sport);
+}
+
+function generate() {
+  const cats = selectedCategory === 'all'
+    ? Object.keys(TEMPLATES)
+    : [selectedCategory];
+  const cat = pick(cats);
+  const template = pick(TEMPLATES[cat]);
+  const text = fillTemplate(template, selectedSport);
+
+  // Delusion score: conspiracy/karma = higher, refs = mid, weather/equipment = lower
+  const baseScores = { refs: [35,70], weather: [20,55], conspiracy: [65,98], equipment: [25,60], karma: [45,85] };
+  const [lo, hi] = baseScores[cat];
+  const score = Math.floor(lo + Math.random() * (hi - lo));
+
+  const card = document.getElementById('alibiCard');
+  const catEl = document.getElementById('alibiCategory');
+  const textEl = document.getElementById('alibiText');
+  const meterFill = document.getElementById('meterFill');
+  const meterPct = document.getElementById('meterPercent');
+  const delusionLabel = document.getElementById('delusionLabel');
+
+  card.classList.remove('visible');
+  void card.offsetWidth; // force reflow
+  card.classList.add('visible');
+
+  catEl.textContent = cat.toUpperCase();
+  catEl.className = 'alibi-category ' + cat;
+  textEl.textContent = text;
+
+  const level = DELUSION_LEVELS.find(l => score <= l.max);
+  meterFill.style.width = score + '%';
+  meterFill.style.background = `linear-gradient(90deg, var(--meter-green), ${level.color})`;
+  meterPct.textContent = score + '%';
+  delusionLabel.textContent = level.label;
+  delusionLabel.style.color = level.color;
+
+  lastAlibi = text;
+
+  // History
+  history.unshift({ text, sport: SPORT_TERMS[selectedSport].sport, cat });
+  if (history.length > 5) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (history.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = history.map(h =>
+    `<div class="history-item"><span class="hist-sport">${h.sport} / ${h.cat}</span><br>${h.text}</div>`
+  ).join('');
+}
+
+// Sport selector
+document.getElementById('sportSelector').addEventListener('click', e => {
+  const btn = e.target.closest('.sport-btn');
+  if (!btn) return;
+  document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedSport = btn.dataset.sport;
+});
+
+// Category filter
+document.getElementById('categoryRow').addEventListener('click', e => {
+  const chip = e.target.closest('.cat-chip');
+  if (!chip) return;
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+  chip.classList.add('active');
+  selectedCategory = chip.dataset.cat;
+});
+
+// Generate
+document.getElementById('generateBtn').addEventListener('click', generate);
+
+// Copy
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if (!lastAlibi) return;
+  const full = `"${lastAlibi}" — Sports Alibi Generator`;
+  navigator.clipboard.writeText(full).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Alibi', 1500);
+  });
+});
+
+// Tweet
+document.getElementById('tweetBtn').addEventListener('click', () => {
+  if (!lastAlibi) return;
+  const tweet = encodeURIComponent(`"${lastAlibi}"\n\n— Sports Alibi Generator`);
+  window.open(`https://twitter.com/intent/tweet?text=${tweet}`, '_blank');
+});
+
+// Generate one on load
+generate();
+</script>
+</body>
+</html>

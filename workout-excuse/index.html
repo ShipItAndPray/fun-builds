@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Excuse Generator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--primary:#ff4757;--secondary:#2ed573;--dark:#1e1e2e;--darker:#16162a;--card:#2a2a3e;--text:#f1f2f6;--muted:#a4a4b8;--gold:#ffa502;--blue:#3742fa}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--darker);color:var(--text);min-height:100vh;overflow-x:hidden}
+  .container{max-width:720px;margin:0 auto;padding:20px}
+  header{text-align:center;padding:30px 0 20px}
+  header h1{font-size:2.4rem;background:linear-gradient(135deg,var(--primary),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  header p{color:var(--muted);margin-top:8px;font-size:1.05rem}
+  .dumbbell{font-size:2rem;display:inline-block;animation:swing 2s ease-in-out infinite}
+  @keyframes swing{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
+
+  .categories{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:20px 0}
+  .cat-btn{padding:8px 16px;border-radius:20px;border:2px solid var(--muted);background:transparent;color:var(--text);cursor:pointer;font-size:.9rem;transition:.2s}
+  .cat-btn:hover,.cat-btn.active{border-color:var(--primary);background:rgba(255,71,87,.15);color:var(--primary)}
+
+  .gen-btn{display:block;margin:24px auto;padding:16px 48px;font-size:1.3rem;font-weight:700;border:none;border-radius:50px;background:linear-gradient(135deg,var(--primary),#ff6b81);color:#fff;cursor:pointer;transition:.3s;box-shadow:0 4px 20px rgba(255,71,87,.4)}
+  .gen-btn:hover{transform:scale(1.05);box-shadow:0 6px 30px rgba(255,71,87,.6)}
+  .gen-btn:active{transform:scale(.97)}
+
+  .excuse-card{background:var(--card);border-radius:16px;padding:28px;margin:20px 0;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.06);transition:.3s}
+  .excuse-card.pop{animation:pop .4s ease}
+  @keyframes pop{0%{transform:scale(.9);opacity:.5}50%{transform:scale(1.03)}100%{transform:scale(1);opacity:1}}
+  .excuse-text{font-size:1.35rem;text-align:center;line-height:1.5;font-style:italic;color:var(--text)}
+  .excuse-category{display:inline-block;margin-top:14px;padding:4px 14px;border-radius:12px;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+  .cat-medical{background:rgba(46,213,115,.15);color:var(--secondary)}
+  .cat-weather{background:rgba(55,66,250,.15);color:#5352ed}
+  .cat-philosophical{background:rgba(255,165,2,.15);color:var(--gold)}
+  .cat-scheduling{background:rgba(255,71,87,.15);color:var(--primary)}
+
+  .stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+  .stat-box{background:var(--card);border-radius:12px;padding:14px 20px;text-align:center;min-width:140px;border:1px solid rgba(255,255,255,.06)}
+  .stat-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .stat-value{font-size:1.6rem;font-weight:700;margin-top:4px}
+  .believable{color:var(--secondary)}
+  .sketchy{color:var(--gold)}
+  .busted{color:var(--primary)}
+
+  .meter{width:100%;height:10px;background:#1e1e2e;border-radius:5px;margin-top:8px;overflow:hidden}
+  .meter-fill{height:100%;border-radius:5px;transition:width .6s ease,background .6s}
+
+  .actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+  .action-btn{padding:10px 20px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:var(--card);color:var(--text);cursor:pointer;font-size:.9rem;transition:.2s;display:flex;align-items:center;gap:6px}
+  .action-btn:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+
+  .doctors-note{background:var(--card);border-radius:16px;padding:24px;margin:20px 0;display:none;border:2px dashed var(--muted);position:relative}
+  .doctors-note.show{display:block;animation:pop .4s ease}
+  .note-header{text-align:center;margin-bottom:16px}
+  .note-header h3{font-size:1.1rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+  .note-logo{font-size:2.5rem;margin-bottom:4px}
+  .note-body{font-family:'Courier New',monospace;font-size:.95rem;line-height:1.8;color:var(--text);padding:16px;background:rgba(0,0,0,.2);border-radius:8px}
+  .note-signature{text-align:right;margin-top:16px;font-style:italic;color:var(--muted)}
+  .note-stamp{position:absolute;top:20px;right:20px;border:3px solid var(--primary);color:var(--primary);padding:6px 12px;border-radius:4px;transform:rotate(12deg);font-weight:700;font-size:.8rem;opacity:.7}
+  .note-close{position:absolute;top:10px;left:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer}
+
+  .history{margin:30px 0}
+  .history h3{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+  .history-item{background:var(--card);border-radius:10px;padding:12px 16px;margin-bottom:8px;font-size:.9rem;display:flex;justify-content:space-between;align-items:center;border:1px solid rgba(255,255,255,.04)}
+  .history-item .hi-text{flex:1;margin-right:12px}
+  .history-item .hi-score{font-weight:700;font-size:.8rem;white-space:nowrap}
+
+  .streak{text-align:center;margin:10px 0;font-size:.85rem;color:var(--muted)}
+  .streak span{color:var(--gold);font-weight:700;font-size:1.1rem}
+
+  footer{text-align:center;padding:30px 0 20px;color:var(--muted);font-size:.8rem}
+
+  @media(max-width:500px){
+    header h1{font-size:1.7rem}
+    .excuse-text{font-size:1.1rem}
+    .stat-box{min-width:100px;padding:10px 14px}
+    .gen-btn{padding:14px 36px;font-size:1.1rem}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="dumbbell">&#x1F3CB;</div>
+    <h1>Workout Excuse Generator</h1>
+    <p>Professional-grade reasons to skip the gym since 2026</p>
+  </header>
+
+  <div class="categories">
+    <button class="cat-btn active" data-cat="all">All</button>
+    <button class="cat-btn" data-cat="medical">Medical</button>
+    <button class="cat-btn" data-cat="weather">Weather</button>
+    <button class="cat-btn" data-cat="philosophical">Philosophical</button>
+    <button class="cat-btn" data-cat="scheduling">Scheduling</button>
+  </div>
+
+  <button class="gen-btn" id="generateBtn">Generate Excuse</button>
+
+  <div class="excuse-card" id="excuseCard">
+    <div class="excuse-text" id="excuseText">Press the button. Your couch is waiting.</div>
+    <span class="excuse-category" id="excuseCat"></span>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-label">Believability</div>
+      <div class="stat-value" id="scoreValue">--</div>
+      <div class="meter"><div class="meter-fill" id="scoreMeter" style="width:0"></div></div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Excuses Today</div>
+      <div class="stat-value" id="countValue" style="color:var(--blue)">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Gym Days Saved</div>
+      <div class="stat-value" id="savedValue" style="color:var(--gold)">0</div>
+    </div>
+  </div>
+
+  <div class="streak" id="streakDisplay">Current skip streak: <span>0</span> days</div>
+
+  <div class="actions">
+    <button class="action-btn" id="shareBtn">&#x1F4E4; Share Excuse</button>
+    <button class="action-btn" id="noteBtn">&#x1F3E5; Doctor's Note</button>
+    <button class="action-btn" id="copyBtn">&#x1F4CB; Copy</button>
+  </div>
+
+  <div class="doctors-note" id="doctorsNote">
+    <button class="note-close" id="noteClose">&#x2716;</button>
+    <div class="note-stamp">TOTALLY LEGIT</div>
+    <div class="note-header">
+      <div class="note-logo">&#x2695;</div>
+      <h3>Dr. Skip Daysworth, M.D.</h3>
+      <div style="color:var(--muted);font-size:.8rem">Board Certified in Exercise Avoidance</div>
+    </div>
+    <div class="note-body" id="noteBody"></div>
+    <div class="note-signature">
+      <em>- Dr. S. Daysworth</em><br>
+      <span style="font-size:.75rem;color:var(--muted)">License #: N0-GYM-4U</span>
+    </div>
+  </div>
+
+  <div class="history" id="historySection" style="display:none">
+    <h3>Excuse History</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <footer>&#x1F6CB; No gyms were harmed in the making of this app &#x1F6CB;</footer>
+</div>
+
+<script>
+const EXCUSES = {
+  medical: [
+    "My muscles are still recovering from yesterday's aggressive napping.",
+    "I pulled a muscle reaching for the remote. Doctor said no exertion for 48 hours.",
+    "My body is fighting off a rare condition called 'gymaphobia' and I shouldn't push it.",
+    "I have a pre-existing condition: I'm allergic to burpees. It's documented.",
+    "My left knee just sent me a formal complaint letter. I should respect its wishes.",
+    "I read that overtraining suppresses the immune system, and I sneezed once this morning.",
+    "My chiropractor said my spine needs 'realignment through horizontal rest.'",
+    "Studies show cortisol from gym stress causes aging. I'm choosing youth.",
+    "I have a self-diagnosed case of exercise-induced clarity, and I'm not ready for that.",
+    "My heart rate is already elevated from thinking about going. That counts as cardio.",
+    "I strained my motivation muscle and it needs at least 72 hours to heal.",
+    "My body is at optimal pH balance right now. Exercise would ruin the chemistry.",
+    "I'm experiencing sympathy soreness for my friend who worked out yesterday.",
+    "My personal trainer (WebMD) says I should rest today.",
+    "I have restless couch syndrome. The only cure is staying on the couch.",
+    "My body fat is providing essential insulation during this climate uncertainty."
+  ],
+  weather: [
+    "It's too hot to work out. I could get heat stroke walking to the car.",
+    "It's raining and I don't want to get my gym bag wet. That's just science.",
+    "The barometric pressure is giving me a headache. Exercising would make it worse.",
+    "Mercury is in retrograde. All fitness decisions should be postponed.",
+    "The UV index is dangerously high. Even indoor gyms have windows.",
+    "It's so cold that my muscles would shatter like glass. Basic thermodynamics.",
+    "The pollen count is astronomical. Breathing heavily would be medical negligence.",
+    "There's a 5% chance of rain. I can't risk it.",
+    "The air quality index suggests breathing more than necessary is irresponsible.",
+    "Wind advisory in effect. Getting blown off a treadmill is a real liability.",
+    "It's the golden hour. I should be watching the sunset, not doing squats.",
+    "Seasonal affective disorder has relocated to all four seasons this year.",
+    "The humidity would make my sweat counterproductive. Net-zero hydration.",
+    "Cloud coverage suggests the universe wants me indoors. Who am I to argue?",
+    "There's a full moon tonight. My gravitational pull is all wrong for lifting.",
+    "The weather app shows a sunshine emoji. I should enjoy it from the couch."
+  ],
+  philosophical: [
+    "Studies show that rest days are actually more effective. I didn't read the study but trust me.",
+    "The gym will still be there tomorrow. Today I choose presence over push-ups.",
+    "In the grand scheme of the cosmos, one skipped workout is statistically irrelevant.",
+    "Socrates didn't need a gym membership and he's literally immortalized in marble.",
+    "If a person skips the gym and nobody knows, did they really skip?",
+    "I'm practicing intuitive fitness. My intuition says no.",
+    "Rest is productive. Hustle culture is dead. I'm simply ahead of the curve.",
+    "The body achieves what the mind believes. And my mind believes in pizza.",
+    "I'm not skipping the gym. I'm giving my future self a rest day retroactively.",
+    "Working out is just renting muscles. I prefer to invest in comfort.",
+    "Life is about balance. I've been upright all day. Time to be horizontal.",
+    "The gym is a social construct. I'm deconstructing it from my living room.",
+    "Ancient warriors rested between battles. My battle today is with the laundry.",
+    "Discipline is doing what needs to be done. What needs to be done is nothing.",
+    "I'm on a fitness journey. Journeys have rest stops. This is a rest stop.",
+    "My zen teacher says attachment to outcomes is suffering. Six-pack abs are an outcome."
+  ],
+  scheduling: [
+    "I have a very important meeting with my couch at 6 PM. Can't reschedule.",
+    "My schedule is packed. I have back-to-back-to-back Netflix episodes.",
+    "I would go but my pre-workout requires 3 hours to digest and it's already 4 PM.",
+    "The gym is probably crowded right now. I'll wait. Until tomorrow. Or next week.",
+    "I need to meal prep, which takes exactly the same amount of time as the gym is open.",
+    "My gym clothes are in the wash. All 47 sets. What are the odds?",
+    "I already worked out today. Mentally. That's the hardest part.",
+    "I'm on a 48-hour intermittent fasting from exercise. It's a new protocol.",
+    "I can't find my left shoe. The universe has spoken.",
+    "I need to reorganize my playlist first. Proper music is 80% of the workout.",
+    "My gym buddy cancelled. Working out alone is basically just sad walking.",
+    "I'm saving my energy for tomorrow's workout. It's going to be legendary.",
+    "My protein shake expired yesterday. Working out without protein is cardio. I don't do cardio.",
+    "Traffic to the gym would take 12 minutes. That's 12 minutes of my life I'll never get back.",
+    "I already hit my step goal going to the fridge and back 47 times today.",
+    "My fitness tracker died. If it's not tracked, it doesn't count, so why bother?"
+  ]
+};
+
+let currentExcuse = '';
+let currentCategory = '';
+let currentScore = 0;
+let excuseCount = 0;
+let gymDaysSaved = parseInt(localStorage.getItem('gymSaved') || '0');
+let history = JSON.parse(localStorage.getItem('excuseHistory') || '[]');
+let selectedCat = 'all';
+let usedIndices = {medical:[], weather:[], philosophical:[], scheduling:[]};
+
+const doctorNames = [
+  'Dr. Skip Daysworth', 'Dr. Ima Lounger', 'Dr. Notta Lifter',
+  'Dr. Reese T. Day', 'Dr. Cardi O. Skip', 'Dr. Ben Chpress',
+  'Dr. Sofa McComfy', 'Dr. Lay Z. Bones'
+];
+
+const diagnoses = [
+  'Acute Motivation Deficiency Syndrome (AMDS)',
+  'Chronic Couch Dependency Disorder',
+  'Exercise-Induced Ambition Overload',
+  'Bilateral Gym Avoidance Reflex',
+  'Spontaneous Rest Day Requirement',
+  'Treadmill Anxiety Complex',
+  'Kettlebell Contact Dermatitis',
+  'Post-Workout Stress Disorder (PWSD)'
+];
+
+function getRandomExcuse() {
+  const cats = selectedCat === 'all' ? Object.keys(EXCUSES) : [selectedCat];
+  const cat = cats[Math.floor(Math.random() * cats.length)];
+  const pool = EXCUSES[cat];
+
+  if (usedIndices[cat].length >= pool.length) usedIndices[cat] = [];
+
+  let idx;
+  do { idx = Math.floor(Math.random() * pool.length); }
+  while (usedIndices[cat].includes(idx));
+
+  usedIndices[cat].push(idx);
+  return { text: pool[idx], category: cat };
+}
+
+function getBelievability() {
+  const score = Math.floor(Math.random() * 60) + 20;
+  let label, color;
+  if (score >= 70) { label = 'Believable'; color = 'var(--secondary)'; }
+  else if (score >= 45) { label = 'Sketchy'; color = 'var(--gold)'; }
+  else { label = 'Busted'; color = 'var(--primary)'; }
+  return { score, label, color };
+}
+
+function generate() {
+  const { text, category } = getRandomExcuse();
+  const { score, label, color } = getBelievability();
+
+  currentExcuse = text;
+  currentCategory = category;
+  currentScore = score;
+  excuseCount++;
+
+  const card = document.getElementById('excuseCard');
+  card.classList.remove('pop');
+  void card.offsetWidth;
+  card.classList.add('pop');
+
+  document.getElementById('excuseText').textContent = `"${text}"`;
+  const catEl = document.getElementById('excuseCat');
+  catEl.textContent = category;
+  catEl.className = `excuse-category cat-${category}`;
+
+  document.getElementById('scoreValue').textContent = `${score}%`;
+  document.getElementById('scoreValue').style.color = color;
+  const meter = document.getElementById('scoreMeter');
+  meter.style.width = score + '%';
+  meter.style.background = color;
+
+  document.getElementById('countValue').textContent = excuseCount;
+
+  if (excuseCount % 3 === 0) {
+    gymDaysSaved++;
+    localStorage.setItem('gymSaved', gymDaysSaved);
+  }
+  document.getElementById('savedValue').textContent = gymDaysSaved;
+
+  const streak = Math.floor(gymDaysSaved * 1.5) + excuseCount;
+  document.getElementById('streakDisplay').innerHTML =
+    `Current skip streak: <span>${streak}</span> days`;
+
+  history.unshift({ text, category, score, label });
+  if (history.length > 10) history.pop();
+  localStorage.setItem('excuseHistory', JSON.stringify(history));
+  renderHistory();
+
+  document.getElementById('doctorsNote').classList.remove('show');
+}
+
+function renderHistory() {
+  if (history.length === 0) return;
+  document.getElementById('historySection').style.display = 'block';
+  document.getElementById('historyList').innerHTML = history.slice(0, 5).map(h => `
+    <div class="history-item">
+      <div class="hi-text">${h.text.substring(0, 60)}${h.text.length > 60 ? '...' : ''}</div>
+      <div class="hi-score" style="color:${h.score >= 70 ? 'var(--secondary)' : h.score >= 45 ? 'var(--gold)' : 'var(--primary)'}">${h.score}%</div>
+    </div>
+  `).join('');
+}
+
+function generateNote() {
+  if (!currentExcuse) { generate(); }
+  const doctor = doctorNames[Math.floor(Math.random() * doctorNames.length)];
+  const diagnosis = diagnoses[Math.floor(Math.random() * diagnoses.length)];
+  const today = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+  const days = Math.floor(Math.random() * 14) + 3;
+
+  document.getElementById('noteBody').innerHTML =
+    `<strong>Date:</strong> ${today}<br><br>` +
+    `<strong>To Whom It May Concern:</strong><br><br>` +
+    `This letter certifies that the patient is suffering from <strong>${diagnosis}</strong> ` +
+    `and is medically advised to refrain from all gym-related activities for a minimum of <strong>${days} days</strong>.<br><br>` +
+    `<strong>Presenting symptoms:</strong> "${currentExcuse}"<br><br>` +
+    `<strong>Prescribed treatment:</strong> Complete rest, streaming services, and snacks as needed.<br><br>` +
+    `<strong>Note:</strong> Patient should avoid all dumbbells, treadmills, and motivational posters until further notice.`;
+
+  const note = document.getElementById('doctorsNote');
+  note.querySelector('.note-header h3').textContent = doctor + ', M.D.';
+  note.classList.add('show');
+  note.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function shareExcuse() {
+  if (!currentExcuse) return;
+  const shareText = `My excuse to skip the gym today: "${currentExcuse}" (Believability: ${currentScore}%) -- Workout Excuse Generator`;
+  if (navigator.share) {
+    navigator.share({ title: 'Workout Excuse', text: shareText }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Copied to clipboard!');
+    });
+  }
+}
+
+function copyExcuse() {
+  if (!currentExcuse) return;
+  navigator.clipboard.writeText(currentExcuse).then(() => showToast('Excuse copied!'));
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed',bottom:'30px',left:'50%',transform:'translateX(-50%)',
+    background:'var(--card)',color:'var(--text)',padding:'12px 24px',borderRadius:'10px',
+    fontSize:'.95rem',zIndex:'999',border:'1px solid rgba(255,255,255,.1)',
+    animation:'pop .3s ease'
+  });
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2000);
+}
+
+// Event listeners
+document.getElementById('generateBtn').addEventListener('click', generate);
+document.getElementById('shareBtn').addEventListener('click', shareExcuse);
+document.getElementById('noteBtn').addEventListener('click', generateNote);
+document.getElementById('copyBtn').addEventListener('click', copyExcuse);
+document.getElementById('noteClose').addEventListener('click', () => {
+  document.getElementById('doctorsNote').classList.remove('show');
+});
+
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedCat = btn.dataset.cat;
+  });
+});
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => { if (e.code === 'Space' && e.target === document.body) { e.preventDefault(); generate(); } });
+
+// Load history on start
+renderHistory();
+document.getElementById('savedValue').textContent = gymDaysSaved;
+</script>
+</body>
+</html>
