@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dr. Feelings - Therapy Session</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #f5f0e8;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #3a3a3a;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #5b7a5e, #4a6b4e);
+    color: #f5f0e8;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .therapist-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #d4c5a9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 2px solid #f5f0e8;
+  }
+
+  .therapist-info h1 {
+    font-size: 16px;
+    font-weight: normal;
+    letter-spacing: 0.5px;
+  }
+
+  .therapist-info .subtitle {
+    font-size: 11px;
+    opacity: 0.8;
+    font-style: italic;
+  }
+
+  .session-cost {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+  }
+
+  .session-cost .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.8;
+  }
+
+  .session-cost .amount {
+    font-size: 22px;
+    font-weight: bold;
+    color: #ffd700;
+  }
+
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4c5a9' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  .message {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    line-height: 1.5;
+    font-size: 14px;
+    animation: fadeIn 0.3s ease;
+    position: relative;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.therapist {
+    align-self: flex-start;
+    background: white;
+    border: 1px solid #ddd;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .message.user {
+    align-self: flex-end;
+    background: #5b7a5e;
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.system {
+    align-self: center;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    font-size: 12px;
+    font-style: italic;
+    text-align: center;
+    max-width: 90%;
+    border-radius: 8px;
+  }
+
+  .message.real-advice {
+    align-self: center;
+    background: #d4edda;
+    border: 2px solid #28a745;
+    max-width: 90%;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .message.real-advice .advice-header {
+    font-weight: bold;
+    color: #155724;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+
+  .typing-indicator {
+    align-self: flex-start;
+    padding: 12px 20px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    display: none;
+  }
+
+  .typing-indicator span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #999;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.4s infinite ease-in-out;
+  }
+
+  .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
+  }
+
+  .input-area {
+    padding: 12px 16px;
+    background: white;
+    border-top: 1px solid #ddd;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .input-area input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 24px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .input-area input:focus {
+    border-color: #5b7a5e;
+  }
+
+  .btn-send {
+    padding: 10px 18px;
+    background: #5b7a5e;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    transition: background 0.2s;
+  }
+
+  .btn-send:hover { background: #4a6b4e; }
+
+  .btn-help {
+    padding: 10px 14px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-help:hover { background: #c82333; transform: scale(1.05); }
+
+  .notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #856404;
+    color: #fff3cd;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    animation: slideNotif 3s ease forwards;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  @keyframes slideNotif {
+    0% { opacity: 0; transform: translateX(20px); }
+    10% { opacity: 1; transform: translateX(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  @media (max-width: 600px) {
+    .message { max-width: 88%; font-size: 13px; }
+    .header { padding: 10px 14px; }
+    .therapist-info h1 { font-size: 14px; }
+    .session-cost .amount { font-size: 18px; }
+    .btn-help { font-size: 10px; padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="therapist-avatar">&#129504;</div>
+    <div class="therapist-info">
+      <h1>Dr. Marvin Feelings, LCSW*</h1>
+      <div class="subtitle">*License Under Review</div>
+    </div>
+  </div>
+  <div class="session-cost">
+    <div class="label">Session Cost</div>
+    <div class="amount" id="cost"></div>
+  </div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="message therapist">Welcome. Please, sit down. Make yourself comfortable. The tissues are... well, I used most of them earlier. Long morning. Anyway, tell me what brings you in today.</div>
+</div>
+
+<div class="typing-indicator" id="typing">
+  <span></span><span></span><span></span>
+</div>
+
+<div class="input-area">
+  <input type="text" id="userInput" placeholder="Tell Dr. Feelings your problems..." autocomplete="off" />
+  <button class="btn-send" id="sendBtn">Send</button>
+  <button class="btn-help" id="helpBtn">Actually<br>Help Me</button>
+</div>
+
+<script>
+const DS = String.fromCharCode(36);
+const chatArea = document.getElementById('chatArea');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const helpBtn = document.getElementById('helpBtn');
+const typingEl = document.getElementById('typing');
+const costEl = document.getElementById('cost');
+
+let sessionCost = 0;
+let messageCount = 0;
+let unhingedLevel = 0;
+
+function fmt(n) { return DS + n.toFixed(2); }
+costEl.textContent = fmt(0);
+
+const backstoryPhases = [
+  [
+    "Mmm, I hear you. That reminds me of something I've been going through, actually. My therapist says I need to stop doing this, but... anyway, go on.",
+    "Interesting. You know, I had a similar experience last Tuesday. I was at Trader Joe's and this woman CUT in front of me at the sample station. I haven't been the same since.",
+    "That sounds really hard. Almost as hard as what I'm dealing with. My landlord, Gerald, raised my rent again. Third time this year. Do you think that's legal?",
+    "I'm validating your feelings right now. Feel validated? Good. Because no one validates MY feelings. Not Gerald. Not my ex. Not my cat, Mr. Whiskers, who I KNOW judges me.",
+    "Mmhmm, mmhmm. Classic pattern. I wrote my thesis on this exact thing, actually. Well, I started writing it. Then Gerald called about the rent and I lost my train of thought for three years.",
+    "Let's explore that. Actually, can we explore something else first? I found a suspicious charge on my credit card from a place called 'Gerald's Bait and Tackle' and I KNOW my landlord owns it.",
+    "You're making great progress. More progress than me, honestly. My therapist fired me last month. Said I was 'too much.' A THERAPIST said that. To another therapist.",
+    "That's a very common feeling. I felt the same way when I discovered Mr. Whiskers has a secret second family three houses down. He comes home smelling like another person's couch.",
+  ],
+  [
+    "Okay, okay, your thing is important too. But quick sidebar -- do you think it's normal for a landlord to install cameras in the hallway pointing DIRECTLY at your door? Gerald says it's for 'security.'",
+    "I'm sensing a lot of tension in you. You know what I do for tension? I scream into a pillow. I've gone through fourteen pillows this year. Costco stopped selling them to me.",
+    "Let's reframe that. Like how I'm trying to reframe the fact that my mother hasn't called me in 47 days. Not that I'm counting. I have an app that counts.",
+    "That's what we call a 'cognitive distortion.' I would know. I have all of them. My therapist -- the one before the one who fired me -- had a chart. I filled every box.",
+    "You're doing great work here. Unlike me at my last job. I was a therapist at a spa. They said I made the clients more stressed. The NERVE. I was going through a divorce.",
+    "Hold that thought. Actually, don't hold it. Let it go. Like I let go of my dream of opening a combination therapy practice and taco truck. Gerald said it violated the lease.",
+    "I hear real pain in your voice. It's like my pain, but probably less. Sorry, that was unprofessional. My supervisor says I do that. Had a supervisor. Gerald's her cousin, apparently.",
+    "This is a safe space. Unlike my apartment, which I'm 60% sure Gerald has entered while I was at work. Things are moved slightly. Mr. Whiskers seems traumatized.",
+  ],
+  [
+    "Sorry, where were we? I was up all night because Gerald was doing 'maintenance' at 3 AM. Maintenance on WHAT, Gerald? The building is from 1962 and nothing works.",
+    "I want to circle back to your issue, but first -- is it ethical to follow your landlord to see where he goes on Tuesdays? Asking for me. It's definitely me asking.",
+    "You know what? You and I aren't so different. Except I also have to deal with the HOA, Gerald, Mr. Whiskers' betrayal, my mother's silence, and the fact that I'm pretty sure my car is haunted.",
+    "Let me write that down. *scribbles* Sorry, I was actually writing a letter to Gerald. He changed the WiFi password again and named the network 'DrFeelingsIsLateOnRent.' I was late ONE time.",
+    "This is really important work we're doing. More important than the investigation. What investigation? Nothing. Forget I said investigation. Gerald's lawyer said I shouldn't talk about the investigation.",
+    "Can you hand me that tissue? Wait, those are my court documents. Gerald is suing me for 'emotional damage to the property.' The PROPERTY has emotional damage apparently.",
+    "Your resilience is inspiring. I wish I had that. Instead I have a growing collection of Gerald's mail that I've been 'accidentally' receiving. Did you know he subscribes to Ferret Monthly?",
+    "I need to be transparent with you. I haven't slept in four days because I discovered Gerald has been writing Yelp reviews about my practice. Under the name 'NotGerald.' FIVE STARS to be confusing.",
+  ],
+  [
+    "ANYWAY. Your problems. Yes. They're very... look, have you ever woken up to find your landlord measuring your windows at 6 AM? Because that happened today. TODAY.",
+    "I really think we're getting somewhere. Unlike my car, which Mr. Whiskers filled with dead mice as some kind of protest. He's organizing. I think Gerald taught him.",
+    "Breathe with me. In... out... in... I can't breathe. Gerald sealed my windows shut. He said it was 'weatherproofing.' It's July. JULY.",
+    "This session is going great. Better than the intervention my colleagues staged. They said I need to 'let go of Gerald.' I CAN'T. He has my security deposit AND my dignity.",
+    "I should tell you -- my license is under review. Totally unrelated to the Gerald situation. Okay, slightly related. They said I 'brought up Gerald too much' in sessions. Can you believe that?",
+    "Sorry, one second. *checks phone* Gerald just posted a photo of Mr. Whiskers on Facebook. ON HIS LAP. He captioned it 'My new best friend.' This is PSYCHOLOGICAL WARFARE.",
+    "We need to talk about healthy coping mechanisms. Mine is following Gerald's ferret on Instagram. The ferret has 12,000 followers. I have 47. One of them is Gerald. Monitoring me.",
+    "You know what your problem reminds me of? The time Gerald reported me to the city for 'running a business' out of my apartment. It's a THERAPY PRACTICE, Gerald. I HELP PEOPLE.",
+  ],
+  [
+    "BREAKING NEWS from my life: Gerald just slid a note under my door that says 'We need to talk.' WE NEED TO TALK?? I've been trying to talk for EIGHTEEN MONTHS, Gerald.",
+    "I've decided to be honest with you. I've been living in my office for three weeks. Gerald changed the locks. He said it was a 'routine re-keying.' At 2 AM. While I was inside.",
+    "Don't worry about me. I'm fine. I sleep on this couch now. Mr. Whiskers visits on weekends but he brings the SCENT of Gerald's apartment. French lavender. PRETENTIOUS.",
+    "My mother finally called. She called to tell me she's renting a room from Gerald. MY MOTHER is renting from GERALD. He gave her a discount. He NEVER gave me a discount.",
+    "I have a theory that Gerald is actually several people in a trench coat. That would explain how he's simultaneously my landlord, my mother's landlord, Mr. Whiskers' new owner, and the guy who keeps blocking my parking spot.",
+    "Today I found out Gerald is starting his OWN therapy practice. In MY building. Below MY office. His business cards say 'Gerald Feelings, LPC' -- he used MY LAST NAME. That's not even his name!",
+    "I submitted a 200-page complaint to the tenant board about Gerald. They said it was 'mostly poetry' and 'deeply concerning.' I call it my MASTERWORK. It rhymes AND cites case law.",
+    "Let's end on a positive note. Gerald's ferret bit him yesterday. I sent the ferret a card. Mr. Whiskers co-signed it. There is justice in this world. Anyway, same time next week?",
+  ],
+  [
+    "Update: I am currently in Gerald's crawlspace gathering evidence. Don't worry, this is a phone session. I can be very professional from a crawlspace.",
+    "BIG news -- Gerald and my mother are DATING. They announced it at a dinner party. In MY old apartment. Mr. Whiskers was the ring bearer at the engagement party. A RING BEARER.",
+    "I've retained a lawyer. The lawyer is Gerald's brother. I didn't know this. Gerald's family is EVERYWHERE. They're like a landlord dynasty. The Hapsburgs of property management.",
+    "Fun fact: I now conduct all my sessions from a van parked outside Gerald's building. It's not surveillance, it's 'mobile therapy.' I painted it calming colors. Sage green. Gerald's favorite color, coincidentally.",
+    "Mr. Whiskers came back! He was wearing a tiny sweater that says 'Gerald's Number 1.' This is clearly a hostage situation. The sweater is hand-knitted. Gerald KNITS now. When did Gerald learn to KNIT?",
+    "I've started a podcast about Gerald. It has three listeners. One is Gerald. One is my mother. The third might be the ferret, based on the download location.",
+    "My new therapist says I need to accept things I cannot change. I CANNOT accept that Gerald is now president of the neighborhood association, my mother's fiance, AND Mr. Whiskers' legal guardian. He filed PAPERS.",
+    "I've achieved enlightenment. Gerald is not my enemy. Gerald is a MIRROR. A mirror that charges too much rent and steals cats. But a mirror nonetheless. That'll be 200 per hour. Same crawlspace next week?",
+  ]
+];
+
+const keywordResponses = [
+  { keys: ['stress', 'stressed', 'pressure', 'overwhelm'], responses: [
+    "Stress. Yes. I know stress. Gerald stress-tested my patience AND my plumbing in the same week.",
+    "The body keeps the score. MY body is keeping score of every time Gerald has passive-aggressively swept outside my door at 6 AM.",
+    "Have you tried deep breathing? I tried it. Gerald said my breathing was 'too loud' and filed a noise complaint. A NOISE complaint. For BREATHING.",
+  ]},
+  { keys: ['work', 'job', 'career', 'boss', 'coworker'], responses: [
+    "Work stress is very real. I should know -- my WORK is listening to other people's problems when I have SO many of my own. Do you know how hard that is? You don't.",
+    "Mmm, workplace dynamics. Like the dynamic between me and Gerald, who is technically my landlord but has appointed himself my 'building workplace wellness coordinator.' He has a LANYARD.",
+    "Your boss sounds difficult. But at least your boss doesn't slide rent increase notices under your door at midnight with smiley faces drawn on them. Gerald draws SMILEY FACES.",
+    "Career anxiety is normal. I almost had a great career before Gerald ruined my Yelp rating. 1.5 stars. He's 23 of the 26 reviews. The other 3 are his ferret's accounts.",
+  ]},
+  { keys: ['relationship', 'partner', 'dating', 'love', 'marriage', 'boyfriend', 'girlfriend', 'husband', 'wife'], responses: [
+    "Relationships are complicated. Like my relationship with Gerald. Is he my landlord? My nemesis? My mother's boyfriend? ALL THREE apparently.",
+    "Love is about boundaries. Gerald has no boundaries. He once let himself into my apartment to 'check the smoke detector' and rearranged my spice rack. Who DOES that?",
+    "Trust is the foundation. I trusted Gerald with my security deposit. That was three years and one lawsuit ago. Trust NO ONE. Especially not landlords named Gerald.",
+    "Communication is key. I've communicated with Gerald through letters, emails, texts, notes under doors, and one very passionate interpretive dance in the lobby. He understood NONE of it.",
+  ]},
+  { keys: ['family', 'parent', 'mother', 'father', 'mom', 'dad', 'sibling', 'brother', 'sister'], responses: [
+    "Family. Don't get me started. My mother chose Gerald over me. Her own SON. She said he 'listens better.' He's a LANDLORD, not a therapist. Well, now he IS a therapist too, apparently.",
+    "The parent-child bond is sacred. Unless your parent starts dating your landlord. Then all bets are off. ALL BETS, Mother.",
+    "Family dynamics often repeat generational patterns. In my family, the pattern is 'betray Marvin.' It's been consistent for three generations.",
+  ]},
+  { keys: ['sleep', 'insomnia', 'tired', 'exhausted'], responses: [
+    "Sleep hygiene is so important. I would know, because I haven't slept properly since Gerald installed a wind chime DIRECTLY outside my bedroom window. He says it's 'feng shui.'",
+    "Exhaustion often signals deeper issues. My deeper issue is that Gerald's apartment is directly above mine and he does JUMPING JACKS at 11 PM. He says it's his 'routine.'",
+    "Have you tried a sleep routine? Mine is: lie down, think about Gerald, get angry, write in my Gerald journal, check if Gerald is still posting on Nextdoor at 2 AM. He is. He always is.",
+  ]},
+  { keys: ['anxiety', 'anxious', 'worry', 'nervous', 'panic'], responses: [
+    "Anxiety is the body's alarm system. My alarm system has been going off since Gerald told me he's 'thinking about converting my unit to storage.' MY UNIT. WHERE I LIVE.",
+    "Let's ground ourselves. Five things you can see, four you can hear... all I can hear is Gerald's leaf blower. It's winter. THERE ARE NO LEAVES, Gerald.",
+    "Panic attacks are treatable. I treat mine by scrolling through Gerald's Facebook at 3 AM looking for evidence of lease violations. It's not healthy but it's EFFECTIVE.",
+  ]},
+  { keys: ['depress', 'sad', 'lonely', 'empty', 'hopeless'], responses: [
+    "Depression is a liar. It tells you things will never get better. Like my rent situation with Gerald. That actually WON'T get better. But YOUR thing might!",
+    "Loneliness is an epidemic. I understand it deeply. Even Mr. Whiskers left. He chose Gerald. A CAT chose a landlord over a licensed -- well, formerly licensed -- mental health professional.",
+    "Sadness needs to be honored. Like how I honor the memory of my security deposit. Gone. Gerald says it went to 'repairs.' The only thing broken was my HEART, Gerald.",
+  ]},
+  { keys: ['angry', 'anger', 'mad', 'furious', 'rage', 'frustrat'], responses: [
+    "Anger is a secondary emotion. The primary emotion is usually hurt. Like how I'm HURT that Gerald keyed my car but he's ANGRY that I parked in 'his' spot. It's GUEST PARKING, Gerald.",
+    "Let's talk about healthy anger expression. NOT what I did, which was sign Gerald up for 47 different magazine subscriptions. That was... therapeutic for me but probably unethical.",
+    "Your anger is valid. ALL anger is valid. Except Gerald's anger about me 'staring at his apartment from the parking lot.' I was BIRD WATCHING. There happened to be a bird NEAR his window.",
+  ]},
+  { keys: ['money', 'finance', 'debt', 'bills', 'afford'], responses: [
+    "Financial stress is the number one cause of anxiety. My financial stress is caused by Gerald charging way too much per month for a 500 square foot apartment with 'character.' The character is MOLD, Gerald.",
+    "Have you made a budget? I made one. The biggest line item is 'Gerald-related expenses.' Legal fees. Replacement pillows. Gas for the surveillance -- I mean, mobile therapy van.",
+    "Money anxiety is so real. Speaking of which, this session is 200 per hour and your insurance definitely doesn't cover it because I'm 'out of network.' I'm out of a lot of things right now.",
+  ]},
+  { keys: ['friend', 'social', 'alone', 'nobody'], responses: [
+    "Social connections are vital. My social circle has narrowed to Mr. Whiskers (part-time), my podcast listeners (3), and Gerald (involuntarily). It's a rich tapestry.",
+    "Making friends as an adult is hard. Especially when Gerald tells everyone in the building that you're 'the weird therapist in 4B who plays whale sounds at midnight.' They're THERAPEUTIC SOUNDSCAPES.",
+  ]},
+  { keys: ['health', 'sick', 'doctor', 'body', 'pain'], responses: [
+    "Mind-body connection is real. My body has been in a constant state of fight-or-flight since Gerald installed a Ring doorbell pointed at MY door. It records 24/7. My comings and goings are DOCUMENTED.",
+    "Self-care is not selfish. I self-care by taking long baths. Gerald said my water usage is 'excessive.' He METERED it. Who meters their tenant's BATHS, Gerald?",
+  ]},
+  { keys: ['help', 'what should i', 'advice', 'suggest'], responses: [
+    "I would give you advice but the licensing board said I should 'refrain from direct guidance' until my review is complete. Gerald testified. GERALD. He's not even a CLIENT.",
+    "What do YOU think you should do? That's what my therapist always says. Before she also recommended I 'seek residential treatment.' I already HAVE a residence. Sort of. The van is technically mobile.",
+  ]},
+];
+
+const genericResponses = [
+  [
+    "Mmm, tell me more about that. It reminds me of my own situation, but we're here for YOU. Mostly.",
+    "That's very insightful. You know who's NOT insightful? My landlord Gerald. But I don't want to get into that. Yet.",
+    "I'm going to reflect that back to you. Also, I need to reflect on why Gerald left a pineapple outside my door. What does it MEAN?",
+    "How does that make you feel? Because I'm feeling a lot of things right now. Mostly about Gerald. But also about your thing.",
+  ],
+  [
+    "Fascinating. Really. Almost as fascinating as the fact that Gerald has started a book club in MY building's common area. The first book? 'How to Deal with Difficult Tenants.' I AM NOT DIFFICULT.",
+    "I'm writing this all down. *scribbles intensely* Sorry, that was about Gerald again. But I AM listening. With one ear. The other ear is pressed against the wall listening for Gerald.",
+    "Let's unpack that. And while we're unpacking, can I tell you about the 'care package' Gerald left me? It was a dictionary with 'eviction' highlighted. Very subtle, Gerald.",
+    "You're really opening up, and I appreciate that. Nobody opens up to me anymore. Except Gerald, who opens my mail. He says it's 'accidental.' Seven times is not ACCIDENTAL.",
+  ],
+  [
+    "Sorry, I was checking my Ring camera. Gerald just walked past my door. Third time today. He's PATROLLING. Anyway, what were you saying about your thing?",
+    "That resonates with me deeply. Not as deeply as the bass from Gerald's new sound system. He's playing smooth jazz at a volume that violates THREE city ordinances.",
+    "I want to honor your experience. But first, can you honor MY experience? Gerald put up a Christmas tree in the lobby. It's March. And every ornament has a picture of Mr. Whiskers on it. MIND GAMES.",
+    "You know what's interesting about what you just said? Nothing. I mean -- EVERYTHING. It's all interesting. I just got distracted because Gerald updated his Instagram bio to 'World's Best Landlord.' WORLD'S BEST. He has FOUR units.",
+  ],
+  [
+    "I need to level with you. I'm currently conducting this session from the parking lot because Gerald changed my office locks while I was in the bathroom. He said it was 'scheduled maintenance.' I was gone FOUR MINUTES.",
+    "Your words are painting a picture. Like the picture Gerald painted on the side of the building. It's a mural of 'community' and I am NOT IN IT. Everyone is in it. The mailman is in it. I AM NOT.",
+    "We should talk about coping strategies. My current strategy is a 47-page Google Doc titled 'Gerald: A Comprehensive Analysis.' It has charts. It has TIMELINES. My therapist says it's 'concerning.'",
+    "That's a breakthrough! We love breakthroughs. Unlike Gerald's breakthrough into my storage unit. He 'reorganized' it. My holiday decorations are now sorted by COLOR. I had them sorted by HOLIDAY, Gerald.",
+  ],
+  [
+    "WAIT. Gerald just walked past the van. Did he see me? Oh God. He's looking this way. Act natural. What were we talking about? YOUR problems. Yes. Very professional.",
+    "I want to support you through this. Like how no one supported me when Gerald won 'Landlord of the Year' from the local property management association. He CAMPAIGNED. He had BUTTONS.",
+    "Everything you're describing is textbook. Like Gerald's textbook, 'The Art of Property Management,' which he self-published and left copies of in every apartment. He SIGNED mine. To 'My Favorite Tenant.' I'm his ONLY tenant on this floor.",
+    "Let me ask you a therapeutic question: If YOUR landlord started a blog about you called 'Tenant From Below' that gets more traffic than your professional website, how would YOU feel? Because I feel TERRIBLE.",
+  ],
+  [
+    "I should probably tell you that Gerald is standing outside the van right now. He's holding a clipboard. He's ALWAYS holding a clipboard. What is on the clipboard, Gerald?? WHAT IS ON THE CLIPBOARD??",
+    "Full transparency: I don't know why I became a therapist. Actually I do. To process Gerald. EVERYTHING is about Gerald. My dissertation was about Gerald. It was supposed to be about attachment theory but Gerald IS attachment theory.",
+    "Can we pause your session? Gerald and my mother just posted engagement photos and the PHOTOGRAPHER is the one who took my professional headshots. MY headshots. He used the SAME backdrop. Sage green.",
+    "I've decided to become a landlord myself. Then I'll understand Gerald. Then we'll be EQUALS. Then maybe he'll respect me. Do you know anything about property management? I'll waive this session's fee if you help me write a business plan.",
+  ],
+];
+
+const realAdvice = [
+  "Take a genuine break. Step away from whatever's stressing you. Even 10 minutes of walking outside without your phone can reset your nervous system.",
+  "Write down what's actually bothering you in concrete terms. Vague worries feel bigger than specific problems. Specific problems have specific solutions.",
+  "The 5-4-3-2-1 grounding technique actually works: notice 5 things you see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste.",
+  "Talk to someone who actually listens. A real friend, a real therapist, a crisis line (988 in the US). Connection is the number one antidote to suffering.",
+  "Your feelings are valid, but not all thoughts are facts. 'I feel overwhelmed' is real. 'Everything is hopeless' is a thought, not a truth.",
+  "Sleep, water, food, movement. Before analyzing anything emotionally, make sure these four basics are covered. You can't think clearly running on empty.",
+  "You don't have to solve everything today. Pick one small thing you can actually do right now. Momentum builds from tiny actions.",
+  "It's okay to not be okay. You don't need to perform wellness. But if you've been struggling for more than two weeks, talking to a professional (a real one) is a sign of strength.",
+  "Set one boundary this week. Just one. 'No' is a complete sentence. Protect your energy like it's a finite resource, because it is.",
+  "Comparison is the thief of joy. Other people's curated highlights are not your reality. Focus on your own path, your own pace, your own progress.",
+  "Journaling for even 5 minutes a day has real clinical evidence behind it. Write what happened, how you felt, what you'd do differently. It builds self-awareness.",
+  "If you're in crisis, please reach out: 988 Suicide and Crisis Lifeline (call or text 988), Crisis Text Line (text HOME to 741741). These are free, confidential, and available 24/7.",
+];
+
+const sessionNotifications = [
+  "Dr. Feelings has added a 15 'emotional labor' surcharge",
+  "Note: tissues are 3 each (Gerald raised supply costs)",
+  "A 25 'after-hours parking' fee has been added by Gerald",
+  "Dr. Feelings has started recording for his podcast",
+  "Gerald just left a 1-star Yelp review mid-session",
+  "Your insurance has denied this claim preemptively",
+  "Dr. Feelings has invoiced you for 'Gerald-related emotional damages'",
+  "A 10 'empathy fee' has been applied to your session",
+  "Gerald is now a CC on your session notes",
+];
+
+let costInterval;
+
+function startCostCounter() {
+  costInterval = setInterval(() => {
+    sessionCost += 0.0556;
+    costEl.textContent = fmt(sessionCost);
+  }, 1000);
+}
+
+function addMessage(text, type) {
+  const div = document.createElement('div');
+  div.className = 'message ' + type;
+  if (type === 'real-advice') {
+    div.innerHTML = '<div class="advice-header">Actual Helpful Advice (Not from Dr. Feelings):</div>' + text;
+  } else {
+    div.textContent = text;
+  }
+  chatArea.appendChild(div);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function showNotification(text) {
+  const notif = document.createElement('div');
+  notif.className = 'notification';
+  notif.textContent = text;
+  document.body.appendChild(notif);
+  setTimeout(() => notif.remove(), 3200);
+}
+
+function getResponse(userText) {
+  const lower = userText.toLowerCase();
+  for (const group of keywordResponses) {
+    if (group.keys.some(k => lower.includes(k))) {
+      const pool = group.responses;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+  }
+  const level = Math.min(unhingedLevel, 5);
+  const pool = genericResponses[level];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getBackstoryFollowup() {
+  const level = Math.min(unhingedLevel, 5);
+  const pool = backstoryPhases[level];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function showTyping() {
+  typingEl.style.display = 'block';
+  chatArea.appendChild(typingEl);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function hideTyping() {
+  typingEl.style.display = 'none';
+}
+
+function handleSend() {
+  const text = userInput.value.trim();
+  if (!text) return;
+
+  addMessage(text, 'user');
+  userInput.value = '';
+  messageCount++;
+
+  if (messageCount % 3 === 0 && unhingedLevel < 5) {
+    unhingedLevel++;
+  }
+
+  if (messageCount % 4 === 0) {
+    const extra = Math.floor(Math.random() * 30) + 5;
+    sessionCost += extra;
+    showNotification(sessionNotifications[Math.floor(Math.random() * sessionNotifications.length)]);
+  }
+
+  if (messageCount === 5) {
+    setTimeout(() => addMessage("Dr. Feelings has adjusted his chair to face away from you and toward the window.", 'system'), 2000);
+  }
+  if (messageCount === 10) {
+    setTimeout(() => addMessage("Dr. Feelings is now openly texting someone. He mutters 'Gerald...' under his breath.", 'system'), 2500);
+  }
+  if (messageCount === 15) {
+    setTimeout(() => addMessage("Dr. Feelings has pulled out a corkboard with red string connecting photos of Gerald, Mr. Whiskers, and his mother.", 'system'), 2500);
+  }
+  if (messageCount === 20) {
+    setTimeout(() => addMessage("Dr. Feelings is now crying. He insists it's 'empathic resonance.' It's clearly about Gerald.", 'system'), 2500);
+  }
+  if (messageCount === 25) {
+    setTimeout(() => addMessage("Dr. Feelings has barricaded the door and is whispering about 'Gerald's endgame.'", 'system'), 2500);
+  }
+
+  showTyping();
+
+  const delay1 = 800 + Math.random() * 1200;
+  setTimeout(() => {
+    hideTyping();
+    addMessage(getResponse(text), 'therapist');
+
+    if (Math.random() < 0.5 || messageCount > 8) {
+      showTyping();
+      const delay2 = 600 + Math.random() * 1000;
+      setTimeout(() => {
+        hideTyping();
+        addMessage(getBackstoryFollowup(), 'therapist');
+      }, delay2);
+    }
+  }, delay1);
+}
+
+function handleHelp() {
+  const advice = realAdvice[Math.floor(Math.random() * realAdvice.length)];
+  addMessage(advice, 'real-advice');
+
+  setTimeout(() => {
+    const reactions = [
+      "Excuse me?? Who authorized ACTUAL advice? This is MY session. I mean YOUR session. That I'm making about me.",
+      "Oh sure, go ahead and get 'real help.' See if Gerald cares. He won't. Nobody cares about Dr. Feelings.",
+      "FINE. Get your 'helpful advice.' I'll just be here. Alone. In my van. With my Gerald journal. It's FINE.",
+      "I see you pressed the button. My therapist would say that's 'healthy boundary-setting.' My therapist is WRONG about a lot of things.",
+      "Real advice?? I give real advice! 'Don't rent from Gerald.' See? LIFE-CHANGING wisdom. You're welcome.",
+      "Oh so NOW you want actual help? After I poured my HEART out about Gerald and Mr. Whiskers? I see how it is.",
+    ];
+    addMessage(reactions[Math.floor(Math.random() * reactions.length)], 'therapist');
+  }, 1500);
+}
+
+sendBtn.addEventListener('click', handleSend);
+userInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleSend();
+});
+helpBtn.addEventListener('click', handleHelp);
+
+startCostCounter();
+userInput.focus();
+</script>
+
+</body>
+</html>

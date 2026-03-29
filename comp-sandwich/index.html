@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Compliment Sandwich</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f0e6f6;
+    min-height: 100vh;
+    color: #3a2d4f;
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 4px;
+    color: #5b3a7a;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #8a7399;
+    margin-bottom: 28px;
+  }
+
+  .input-area {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(91,58,122,0.08);
+    margin-bottom: 24px;
+  }
+
+  .input-area label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+  }
+
+  .input-area textarea {
+    width: 100%;
+    border: 2px solid #ddd0e8;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 70px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .input-area textarea:focus {
+    border-color: #a87cc5;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.2s;
+    margin-top: 14px;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-make {
+    background: linear-gradient(135deg, #a87cc5, #7a5ba0);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(122,91,160,0.3);
+  }
+
+  .btn-make:hover { box-shadow: 0 6px 20px rgba(122,91,160,0.45); }
+
+  /* Sandwich visualization */
+  .sandwich {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .sandwich.visible { display: flex; }
+
+  .bread-top, .bread-bottom {
+    background: #f5d6a0;
+    border: 3px solid #d4a85a;
+    padding: 20px 22px;
+    font-size: 1rem;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .bread-top {
+    border-radius: 60% 60% 4px 4px / 30px 30px 4px 4px;
+    border-bottom: none;
+  }
+
+  .bread-bottom {
+    border-radius: 4px 4px 16px 16px;
+    border-top: none;
+  }
+
+  .filling {
+    background: #ff8a8a;
+    border-left: 3px solid #d4a85a;
+    border-right: 3px solid #d4a85a;
+    padding: 20px 22px;
+    font-size: 1rem;
+    line-height: 1.5;
+    position: relative;
+  }
+
+  .layer-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  .bread-top .layer-label, .bread-bottom .layer-label {
+    background: rgba(255,255,255,0.5);
+    color: #8a6b2a;
+  }
+
+  .filling .layer-label {
+    background: rgba(0,0,0,0.12);
+    color: #7a1a1a;
+  }
+
+  .layer-text {
+    font-style: italic;
+  }
+
+  /* Sesame seeds on top bun */
+  .bread-top::before {
+    content: '';
+    position: absolute;
+    top: 8px; left: 30%;
+    width: 6px; height: 4px;
+    background: #f0e0c0;
+    border-radius: 50%;
+    box-shadow:
+      20px 3px 0 #f0e0c0,
+      45px -1px 0 #f0e0c0,
+      70px 4px 0 #f0e0c0,
+      -15px 2px 0 #f0e0c0,
+      95px 1px 0 #f0e0c0;
+  }
+
+  /* Lettuce edge between layers */
+  .filling::before, .filling::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, #6ecf6e 0px, #4db84d 12px, #6ecf6e 24px);
+    clip-path: polygon(0 0, 4% 100%, 8% 0, 12% 100%, 16% 0, 20% 100%, 24% 0, 28% 100%, 32% 0, 36% 100%, 40% 0, 44% 100%, 48% 0, 52% 100%, 56% 0, 60% 100%, 64% 0, 68% 100%, 72% 0, 76% 100%, 80% 0, 84% 100%, 88% 0, 92% 100%, 96% 0, 100% 100%);
+  }
+
+  .filling::before { top: -5px; }
+  .filling::after { bottom: -5px; }
+
+  .actions {
+    display: none;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .actions.visible { display: flex; }
+
+  .btn-action {
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 0.9rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-speak {
+    background: #d4eaf7;
+    color: #2a5f8a;
+    border: 2px solid #b0d4f1;
+  }
+
+  .btn-speak:hover { background: #c0ddf0; }
+
+  .btn-share {
+    background: #d4f0d4;
+    color: #2a6b2a;
+    border: 2px solid #a8d8a8;
+  }
+
+  .btn-share:hover { background: #c0e8c0; }
+
+  .btn-new {
+    background: #f7e4d4;
+    color: #8a5a2a;
+    border: 2px solid #f0d0b0;
+  }
+
+  .btn-new:hover { background: #f0d8c0; }
+
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3a2d4f;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* Animation */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .sandwich.visible .bread-top { animation: slideIn 0.4s ease; }
+  .sandwich.visible .filling { animation: slideIn 0.4s 0.15s ease both; }
+  .sandwich.visible .bread-bottom { animation: slideIn 0.4s 0.3s ease both; }
+
+  footer {
+    text-align: center;
+    color: #b0a0c0;
+    font-size: 0.8rem;
+    margin-top: 32px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>The Compliment Sandwich</h1>
+  <p class="subtitle">Every compliment deserves to be flanked by devastation.</p>
+
+  <div class="input-area">
+    <label for="subject">Describe someone or something to sandwich:</label>
+    <textarea id="subject" placeholder="e.g. &quot;Dave's quarterly presentation&quot; or &quot;my roommate's cooking&quot; or &quot;the new company logo&quot;"></textarea>
+    <button class="btn btn-make" id="makeBtn">Make Sandwich</button>
+  </div>
+
+  <div class="sandwich" id="sandwich">
+    <div class="bread-top">
+      <div class="layer-label">Top Bread (Compliment)</div>
+      <div class="layer-text" id="topText"></div>
+    </div>
+    <div class="filling">
+      <div class="layer-label">The Filling (Critique)</div>
+      <div class="layer-text" id="fillText"></div>
+    </div>
+    <div class="bread-bottom">
+      <div class="layer-label">Bottom Bread (Compliment)</div>
+      <div class="layer-text" id="bottomText"></div>
+    </div>
+  </div>
+
+  <div class="actions" id="actions">
+    <button class="btn btn-action btn-speak" id="speakBtn">Read Aloud</button>
+    <button class="btn btn-action btn-share" id="shareBtn">Share</button>
+    <button class="btn btn-action btn-new" id="newBtn">New</button>
+  </div>
+
+  <footer>HR-approved feedback delivery since 2026.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const compliments = [
+  "Your {THING} was... adequate.",
+  "I have to say, your {THING} showed real... effort.",
+  "Your {THING} certainly made an impression on some people.",
+  "I can tell you put time into your {THING}.",
+  "Your {THING} was, in its own way, memorable.",
+  "What you did with {THING} was surprisingly acceptable.",
+  "Your {THING} demonstrated a certain... boldness.",
+  "I can see the passion behind your {THING}.",
+  "Your {THING} was not the worst I've seen this quarter.",
+  "There's a certain charm to your {THING}.",
+  "Your confidence while presenting {THING} was almost inspiring.",
+  "The ambition behind your {THING} is commendable.",
+  "Your {THING} had moments. Genuine moments.",
+  "Some would call your {THING} brave. I'm one of them.",
+  "Your {THING} showed a growth mindset. Lots of room to grow.",
+  "I genuinely admire the courage it took to share {THING}.",
+  "Your {THING} was refreshingly... unique.",
+  "What you lack in execution on {THING}, you make up for in spirit.",
+  "Your {THING} has potential. Raw, unrefined potential.",
+  "I think your {THING} really resonated with a select audience.",
+  "Your {THING} was certainly one of the attempts I've witnessed.",
+  "The energy you brought to {THING} was palpable.",
+  "Your {THING} displayed a fearlessness I rarely see.",
+  "I can honestly say I will never forget your {THING}.",
+  "Your {THING} stood out. It definitely stood out.",
+  "Some aspects of your {THING} were genuinely ahead of their time.",
+  "Your {THING} made me feel something. I'm still processing what.",
+  "There's nobody else who could have done {THING} quite like that.",
+  "Your {THING} challenged conventions. All of them.",
+  "I respect your commitment to your vision of {THING}.",
+  "Your {THING} was a conversation starter. People are still talking.",
+  "The sheer originality of your {THING} cannot be denied.",
+  "Your {THING} brought a fresh perspective. Very fresh.",
+  "I think your {THING} will age well. It needs to.",
+  "Your {THING} had a quality I can only describe as 'distinct.'",
+  "People will remember your {THING} for years to come.",
+  "Your {THING} was unlike anything I'd prepared myself for.",
+  "What your {THING} lacked in polish, it made up for in character.",
+  "Your {THING} was an experience. A full sensory experience.",
+  "I think your {THING} represents who you are perfectly.",
+  "Your {THING} was a bold choice in a sea of safe ones.",
+  "The sincerity in your {THING} was unmistakable.",
+  "Your {THING} had a raw authenticity that's rare these days."
+];
+
+const critiques = [
+  "The execution was a crime against best practices.",
+  "I've seen better results from a random number generator.",
+  "If mediocrity had a flagship product, this would be it.",
+  "The font choices alone should require a formal apology.",
+  "This made me question the entire concept of standards.",
+  "I had to take a walk after reviewing it. A long walk.",
+  "Somewhere, a textbook is being rewritten to warn about this.",
+  "I showed it to my colleague and they asked if it was satire.",
+  "The color palette looked like it was chosen during a power outage.",
+  "This has the structural integrity of a wet napkin.",
+  "Even autocorrect would have made better decisions.",
+  "I'm going to need you to never do that specific thing again.",
+  "It reads like it was translated through four languages and back.",
+  "The attention to detail suggests there was no attention to detail.",
+  "I would describe the quality as 'technically not illegal.'",
+  "This makes Comic Sans look like a sophisticated choice.",
+  "The spacing alone gave me a migraine that lasted two days.",
+  "I've seen more coherence in a toddler's refrigerator art.",
+  "It has the visual appeal of a government form from 1987.",
+  "Someone should have staged an intervention before this shipped.",
+  "If there was an award for most creative way to miss the point, this wins.",
+  "The grammar alone violated at least three Geneva Conventions.",
+  "This has the polish of something found in a dryer lint trap.",
+  "I forwarded it to HR as evidence of workplace hostility.",
+  "The pacing suggests it was assembled during an earthquake.",
+  "A magic 8-ball would have provided more strategic direction.",
+  "The margins are committing more crimes than the content.",
+  "I've received better output from a printer that was on fire.",
+  "This makes 'minimum viable' look like 'maximum effort.'",
+  "The logic flow has more holes than Swiss cheese in a shotgun range.",
+  "It has the cohesion of a playlist on shuffle during a blackout.",
+  "Even the spell-checker filed a complaint with management.",
+  "The data visualization looks like abstract expressionism, and not in a good way.",
+  "I had to double-check this wasn't an elaborate prank.",
+  "This has all the finesse of a bulldozer in a china shop.",
+  "The research depth could be measured in millimeters.",
+  "It reads like a hostage note written by someone who enjoys it.",
+  "The layout has the organizational skills of a tornado.",
+  "I've seen better alignment from a shopping cart with a bad wheel.",
+  "If effort were currency, this would be in severe debt.",
+  "The transitions are so jarring they need their own warning label.",
+  "This has the consistency of a weather forecast made by a cat.",
+  "The conclusion arrives so abruptly it qualifies as a hit-and-run."
+];
+
+function pick(arr, exclude) {
+  let idx;
+  do { idx = Math.floor(Math.random() * arr.length); } while (exclude && exclude.has(idx));
+  return { idx, text: arr[idx] };
+}
+
+function makeSandwich() {
+  const subject = document.getElementById('subject').value.trim();
+  if (!subject) {
+    showToast('Please describe something to sandwich.');
+    return;
+  }
+
+  const thing = subject.length > 50 ? subject.substring(0, 47) + '...' : subject;
+
+  const usedCompliments = new Set();
+  const c1 = pick(compliments, usedCompliments);
+  usedCompliments.add(c1.idx);
+  const c2 = pick(compliments, usedCompliments);
+
+  const critique = pick(critiques);
+
+  document.getElementById('topText').textContent = c1.text.replace(/\{THING\}/g, thing);
+  document.getElementById('fillText').textContent = critique.text;
+  document.getElementById('bottomText').textContent = c2.text.replace(/\{THING\}/g, thing);
+
+  document.getElementById('sandwich').classList.add('visible');
+  document.getElementById('actions').classList.add('visible');
+
+  document.getElementById('sandwich').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function speakSandwich() {
+  if (!('speechSynthesis' in window)) {
+    showToast('Speech not supported in this browser.');
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const top = document.getElementById('topText').textContent;
+  const fill = document.getElementById('fillText').textContent;
+  const bottom = document.getElementById('bottomText').textContent;
+
+  const full = top + ' ... ' + fill + ' ... But, ' + bottom;
+
+  const utter = new SpeechSynthesisUtterance(full);
+  utter.rate = 0.88;
+  utter.pitch = 0.95;
+
+  // Try to find a calm, HR-style voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /samantha|karen|victoria|zira|hazel/i.test(v.name))
+    || voices.find(v => /female|woman/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utter.voice = preferred;
+
+  window.speechSynthesis.speak(utter);
+  showToast('Reading in HR voice...');
+}
+
+function shareSandwich() {
+  const top = document.getElementById('topText').textContent;
+  const fill = document.getElementById('fillText').textContent;
+  const bottom = document.getElementById('bottomText').textContent;
+
+  const text = `Compliment Sandwich:\n\n"${top}"\n\n"${fill}"\n\n"${bottom}"\n\nMade at The Compliment Sandwich`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Compliment Sandwich', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied to clipboard!');
+    }).catch(() => {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand('copy');
+  document.body.removeChild(ta);
+  showToast('Copied to clipboard!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function resetSandwich() {
+  document.getElementById('sandwich').classList.remove('visible');
+  document.getElementById('actions').classList.remove('visible');
+  document.getElementById('subject').value = '';
+  document.getElementById('subject').focus();
+  window.speechSynthesis && window.speechSynthesis.cancel();
+}
+
+document.getElementById('makeBtn').addEventListener('click', makeSandwich);
+document.getElementById('speakBtn').addEventListener('click', speakSandwich);
+document.getElementById('shareBtn').addEventListener('click', shareSandwich);
+document.getElementById('newBtn').addEventListener('click', resetSandwich);
+
+document.getElementById('subject').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); makeSandwich(); }
+});
+
+// Pre-load voices for speech synthesis
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

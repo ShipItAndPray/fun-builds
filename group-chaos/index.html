@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Group Chat Chaos Predictor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    min-height: 100vh;
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 4px;
+    background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #8b8ba7;
+    margin-bottom: 28px;
+    font-size: 0.95rem;
+  }
+
+  /* --- Group Name --- */
+  .group-name-section {
+    margin-bottom: 20px;
+  }
+
+  .group-name-section input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 2px solid #3a3a5c;
+    background: #1a1a2e;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color .2s;
+  }
+
+  .group-name-section input:focus {
+    border-color: #48dbfb;
+  }
+
+  /* --- Member Cards --- */
+  .members-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .members-header h2 { font-size: 1.1rem; }
+
+  .add-btn {
+    background: linear-gradient(135deg, #48dbfb, #0abde3);
+    border: none;
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: transform .15s;
+  }
+
+  .add-btn:hover { transform: scale(1.05); }
+
+  .members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .member-card {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: rgba(255,255,255,0.06);
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: slideIn .25s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .member-card input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid #3a3a5c;
+    background: #12122a;
+    color: #fff;
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  .member-card input:focus { border-color: #48dbfb; }
+
+  .member-card select {
+    flex: 1.2;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: 1px solid #3a3a5c;
+    background: #12122a;
+    color: #fff;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+
+  .member-card select:focus { border-color: #48dbfb; }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 8px;
+    transition: background .15s;
+  }
+
+  .remove-btn:hover { background: rgba(255,107,107,0.15); }
+
+  /* --- Predict Button --- */
+  .predict-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+  }
+
+  .predict-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 28px rgba(255,107,107,0.45);
+  }
+
+  .predict-btn:active { transform: translateY(0); }
+
+  /* --- Results --- */
+  .results {
+    margin-top: 32px;
+    display: none;
+  }
+
+  .results.visible { display: block; }
+
+  /* Chaos Score */
+  .chaos-score-card {
+    text-align: center;
+    padding: 28px 20px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chaos-score-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 2px;
+    background: linear-gradient(135deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .chaos-label { font-size: 0.85rem; color: #8b8ba7; margin-bottom: 6px; }
+
+  .chaos-number {
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .chaos-verdict {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  /* Timeline */
+  .timeline-header {
+    font-size: 1.1rem;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 24px;
+  }
+
+  .timeline-event {
+    display: flex;
+    gap: 14px;
+    padding: 0 0 18px 0;
+    position: relative;
+  }
+
+  .timeline-event:last-child { padding-bottom: 0; }
+
+  .timeline-day {
+    min-width: 52px;
+    text-align: right;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding-top: 10px;
+    color: #8b8ba7;
+  }
+
+  .timeline-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 11px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .timeline-event:not(:last-child) .timeline-dot::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    width: 2px;
+    height: calc(100% + 18px);
+    background: rgba(255,255,255,0.1);
+    transform: translateX(-50%);
+  }
+
+  .bubble {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 16px 16px 16px 4px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    animation: bubblePop .3s ease-out;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  @keyframes bubblePop {
+    from { opacity: 0; transform: scale(0.92) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .bubble .who {
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+    opacity: 0.75;
+  }
+
+  /* Share */
+  .share-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    background: transparent;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+
+  .share-btn:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.3);
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: #222;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .share-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Group Chat Chaos Predictor</h1>
+  <p class="subtitle">Add your squad. We'll predict the meltdown.</p>
+
+  <div class="group-name-section">
+    <input type="text" id="groupName" placeholder="Group chat name (e.g. 'Weekend Plans')" maxlength="60">
+  </div>
+
+  <div class="members-header">
+    <h2>Members</h2>
+    <button class="add-btn" onclick="addMember()">+ Add Member</button>
+  </div>
+
+  <div class="members-list" id="membersList"></div>
+
+  <button class="predict-btn" onclick="predict()">Predict Chaos</button>
+
+  <div class="results" id="results">
+    <div class="chaos-score-card" id="chaosScoreCard">
+      <div class="chaos-label">CHAOS PROBABILITY</div>
+      <div class="chaos-number" id="chaosNumber">0%</div>
+      <div class="chaos-verdict" id="chaosVerdict"></div>
+    </div>
+
+    <div class="timeline-header">The Prophecy</div>
+    <div class="timeline" id="timeline"></div>
+
+    <button class="share-btn" onclick="sharePrediction()">Share This Prediction</button>
+  </div>
+</div>
+
+<div class="share-toast" id="shareToast">Copied to clipboard!</div>
+
+<script>
+const PERSONALITIES = [
+  { id: 'planner',      label: 'The Planner',       emoji: '📋', color: '#48dbfb', chaos: 1 },
+  { id: 'ghost',        label: 'The Ghost',          emoji: '👻', color: '#576574', chaos: 3 },
+  { id: 'overreacter',  label: 'The Overreacter',    emoji: '🔥', color: '#ff6b6b', chaos: 5 },
+  { id: 'devil',        label: 'The Devil\'s Advocate', emoji: '😈', color: '#a55eea', chaos: 4 },
+  { id: 'memer',        label: 'The Meme Lord',      emoji: '💀', color: '#feca57', chaos: 3 },
+  { id: 'mom',          label: 'The Group Mom',       emoji: '🤗', color: '#ff9ff3', chaos: 0 },
+  { id: 'flake',        label: 'The Flake',          emoji: '🦋', color: '#f368e0', chaos: 4 },
+  { id: 'lurker',       label: 'The Lurker',         emoji: '👀', color: '#8395a7', chaos: 2 },
+  { id: 'hotTake',      label: 'The Hot Take Machine',emoji: '🌶️', color: '#ee5a24', chaos: 5 },
+  { id: 'peacekeeper',  label: 'The Peacekeeper',    emoji: '🕊️', color: '#1dd1a1', chaos: -1 },
+];
+
+// 50+ templates organized by personality triggers
+const TEMPLATES = {
+  planner: [
+    "{name} creates a shared Google Doc with 14 time slots.",
+    "{name} sends a poll. No one votes.",
+    "{name} sends a follow-up poll. Still no one votes.",
+    "{name} passive-aggressively says 'I guess I'll just pick for everyone.'",
+    "{name} makes a reservation for 8. Only 3 will show up.",
+    "{name} creates a spreadsheet to track RSVPs.",
+    "{name} sends a calendar invite at 6am.",
+  ],
+  ghost: [
+    "{name} hasn't responded in 72 hours.",
+    "{name} was last seen Tuesday. It's now Sunday.",
+    "{name} finally replies 'lol sorry just saw this' (the message was 11 days ago).",
+    "Everyone asks if {name} is alive. Read receipts: ON. Response: NONE.",
+    "{name} reacts with a thumbs up 6 days later. No text.",
+    "{name} posts an Instagram story while ignoring the chat.",
+  ],
+  overreacter: [
+    "{name} sends 47 texts in 3 minutes.",
+    "{name} starts typing... stops... starts again. This goes on for an hour.",
+    "{name} says 'THIS IS THE WORST PLAN EVER' about choosing a restaurant.",
+    "{name} voice-notes a 4-minute rant about the font in someone's meme.",
+    "{name} threatens to leave the chat. (They won't.)",
+    "{name} sends 12 exclamation marks in a row.",
+    "{name} screenshots the chat and sends it BACK to the chat.",
+  ],
+  devil: [
+    "{name} says 'Actually...' and everyone braces for impact.",
+    "{name} plays devil's advocate about whether brunch is even a real meal.",
+    "{name} starts a debate about tipping that lasts 3 days.",
+    "{name} says 'I'm just asking questions' (no one asked).",
+    "{name} brings up politics for absolutely no reason.",
+    "{name} links an article no one will read.",
+  ],
+  memer: [
+    "{name} responds to the serious discussion with a SpongeBob meme.",
+    "{name} sends 9 memes in a row. Zero of them are relevant.",
+    "{name} replies to every message with a GIF.",
+    "{name} changes the group name to something unhinged.",
+    "{name} makes a meme OF the group chat argument.",
+    "{name} sends 'L + ratio' to end the debate.",
+  ],
+  mom: [
+    "{name} says 'Let's all calm down and be nice to each other.'",
+    "{name} privately DMs everyone to check if they're okay.",
+    "{name} sends a recipe to change the subject.",
+    "{name} tries to mediate but gets caught in the crossfire.",
+    "{name} sends 'I love you guys, stop fighting' with 8 heart emojis.",
+    "{name} reminds everyone to drink water.",
+  ],
+  flake: [
+    "{name} says 'I'll be there!' (narrator: they will not be there).",
+    "{name} cancels 20 minutes before with 'something came up.'",
+    "{name} says 'maybe' to every single plan for 2 weeks.",
+    "{name} confirms, then ghosts, then shows up to the wrong place.",
+    "{name} says 'next time for sure!' for the 14th time.",
+    "{name} leaves on 'read' then posts a selfie from a different event.",
+  ],
+  lurker: [
+    "{name} reads every message but contributes nothing.",
+    "{name} screenshots the drama and sends it to a different group chat.",
+    "Someone says 'we know you're reading this, {name}.'",
+    "{name} likes a message from 3 days ago at 2am.",
+    "{name} finally speaks: 'wait what happened?' (it's been 200 messages).",
+  ],
+  hotTake: [
+    "{name} drops a scorching hot take and leaves.",
+    "{name} says something so unhinged the chat goes silent for 6 hours.",
+    "{name} starts ranking everyone's taste and it gets personal.",
+    "{name} says 'unpopular opinion:' followed by actual verbal arson.",
+    "{name} rates the group's plans 2/10. Offers no alternative.",
+    "{name} says 'you're all wrong' then goes offline.",
+  ],
+  peacekeeper: [
+    "{name} says 'can we please just decide?' for the 5th time.",
+    "{name} creates a compromise no one asked for.",
+    "{name} says 'both sides have a point' and both sides turn on them.",
+    "{name} suggests everyone take a break from the chat.",
+    "{name} gives up peacekeeping and just sends '...'.",
+  ],
+};
+
+// Combo events (when specific pairs interact)
+const COMBO_EVENTS = [
+  { needs: ['planner', 'flake'], text: "{a} makes a plan. {b} confirms. {b} will cancel. The cycle continues." },
+  { needs: ['overreacter', 'ghost'], text: "{a} sends 30 messages demanding {b} respond. {b} is on a mountain somewhere without signal. Probably." },
+  { needs: ['devil', 'overreacter'], text: "{a} says something deliberately provocative. {b} takes the bait. Everyone else grabs popcorn." },
+  { needs: ['memer', 'planner'], text: "{a} derails {b}'s carefully organized plan with a shitpost." },
+  { needs: ['hotTake', 'peacekeeper'], text: "{a} drops verbal napalm. {b} tries to extinguish it with 'let's agree to disagree.'" },
+  { needs: ['mom', 'overreacter'], text: "{a} tells {b} to calm down. {b} does not calm down." },
+  { needs: ['ghost', 'planner'], text: "{a} hasn't responded to {b}'s 4th 'please confirm' message." },
+  { needs: ['flake', 'overreacter'], text: "{b} sends a 12-message rant about {a} canceling. {a} doesn't see it because they muted the chat." },
+  { needs: ['lurker', 'hotTake'], text: "{a} finally breaks silence to agree with {b}'s worst take." },
+  { needs: ['memer', 'devil'], text: "{a} and {b} form an unholy alliance of chaos." },
+  { needs: ['mom', 'ghost'], text: "{a} sends a wellness check DM to {b}. {b} reads it and doesn't reply." },
+  { needs: ['planner', 'devil'], text: "{b} questions every single detail of {a}'s plan until {a} snaps." },
+  { needs: ['hotTake', 'overreacter'], text: "{a} and {b} start going back and forth. Everyone else mutes notifications." },
+  { needs: ['lurker', 'overreacter'], text: "{a} watches {b}'s meltdown unfold in real time. Says nothing. Screenshots everything." },
+];
+
+// Escalation / climax events
+const CLIMAX_EVENTS = [
+  "Someone leaves the chat.",
+  "Someone leaves the chat. Gets added back. Leaves again.",
+  "An admin removes someone. Civil war begins.",
+  "The group name gets changed 7 times in one hour.",
+  "Someone creates a NEW group without {villain}.",
+  "A voice note is sent that's so long it counts as a podcast.",
+  "Someone screenshots the drama and posts it on Twitter.",
+  "The group splits into two rival chats.",
+  "Everyone agrees on a plan. No one shows up.",
+  "A sincere apology is sent. Everyone ignores it and sends memes.",
+  "Someone accidentally sends a message meant for the OTHER group chat.",
+  "Someone sends 'k.' and it's somehow the most violent message in the chat.",
+  "The chat dies. No one texts for 3 weeks. Then someone sends 'wyd.'",
+  "An ancient beef from 2019 gets resurrected.",
+  "{villain} rage-quits and starts a blog about it.",
+];
+
+// Resolution events
+const RESOLUTION_EVENTS = [
+  "The chat goes quiet. Everyone pretends it never happened.",
+  "Someone sends a TikTok and the argument is forgotten.",
+  "They all meet up IRL and it's fine. The chat was the problem.",
+  "A new group chat is created. The cycle begins again.",
+  "Everyone bonds over hating someone who ISN'T in the chat.",
+  "The Planner sends another poll. Circle of life.",
+  "One person sends 'love u guys' and it's inexplicably healing.",
+];
+
+let memberIdCounter = 0;
+
+function addMember(name = '', personalityId = '') {
+  const list = document.getElementById('membersList');
+  const id = memberIdCounter++;
+  const div = document.createElement('div');
+  div.className = 'member-card';
+  div.dataset.id = id;
+
+  let opts = '<option value="">Pick a personality...</option>';
+  PERSONALITIES.forEach(p => {
+    const sel = p.id === personalityId ? 'selected' : '';
+    opts += `<option value="${p.id}" ${sel}>${p.emoji} ${p.label}</option>`;
+  });
+
+  div.innerHTML = `
+    <input type="text" placeholder="Name" value="${name}" maxlength="20">
+    <select>${opts}</select>
+    <button class="remove-btn" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  list.appendChild(div);
+}
+
+// Start with 3 blank members
+addMember(); addMember(); addMember();
+
+function getMembers() {
+  const cards = document.querySelectorAll('.member-card');
+  const members = [];
+  cards.forEach(c => {
+    const name = c.querySelector('input').value.trim();
+    const pid = c.querySelector('select').value;
+    if (name && pid) {
+      const p = PERSONALITIES.find(x => x.id === pid);
+      members.push({ name, personality: p });
+    }
+  });
+  return members;
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function shuffle(arr) { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+function fillTemplate(tpl, vars) {
+  let s = tpl;
+  for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, v);
+  return s;
+}
+
+function predict() {
+  const members = getMembers();
+  if (members.length < 2) {
+    alert('Add at least 2 members with names and personalities!');
+    return;
+  }
+
+  const groupName = document.getElementById('groupName').value.trim() || 'The Group Chat';
+
+  // --- Calculate chaos score ---
+  let chaosSum = members.reduce((s, m) => s + m.personality.chaos, 0);
+  let chaosBase = (chaosSum / (members.length * 5)) * 60; // normalize to ~0-60
+  // Combo bonus
+  const pIds = members.map(m => m.personality.id);
+  let comboBonus = 0;
+  COMBO_EVENTS.forEach(c => {
+    if (c.needs.every(n => pIds.includes(n))) comboBonus += 5;
+  });
+  // Size bonus
+  const sizeBonus = Math.min(members.length * 2, 15);
+  // Volatile combo: overreacter + hotTake = danger
+  if (pIds.includes('overreacter') && pIds.includes('hotTake')) comboBonus += 10;
+  // No peacekeeper penalty
+  if (!pIds.includes('peacekeeper') && !pIds.includes('mom')) comboBonus += 8;
+
+  let chaosScore = Math.min(99, Math.max(12, Math.round(chaosBase + comboBonus + sizeBonus + Math.random() * 10)));
+
+  // --- Build timeline ---
+  const events = [];
+  const usedTemplates = new Set();
+
+  function addEvent(day, text, member) {
+    const color = member ? member.personality.color : '#48dbfb';
+    const who = member ? `${member.personality.emoji} ${member.name}` : '';
+    events.push({ day, text, color, who });
+  }
+
+  function pickUniqueTemplate(pool, vars) {
+    const available = pool.filter(t => !usedTemplates.has(t));
+    if (available.length === 0) return null;
+    const t = pick(available);
+    usedTemplates.add(t);
+    return fillTemplate(t, vars);
+  }
+
+  // Day 1-2: Setup (planner or anyone starts)
+  const shuffled = shuffle(members);
+  let day = 1;
+
+  // Opening move
+  const opener = members.find(m => m.personality.id === 'planner') || shuffled[0];
+  const openText = pickUniqueTemplate(TEMPLATES[opener.personality.id], { name: opener.name });
+  if (openText) addEvent(day, openText, opener);
+
+  // Days 2-4: reactions
+  day = 2;
+  for (const m of shuffle(members).slice(0, Math.min(members.length, 3))) {
+    if (m === opener) continue;
+    const t = pickUniqueTemplate(TEMPLATES[m.personality.id], { name: m.name });
+    if (t) { addEvent(day, t, m); day += Math.random() > 0.5 ? 1 : 0; }
+  }
+
+  // Day 3-5: combo events
+  day = Math.max(day, 3);
+  const applicableCombos = shuffle(COMBO_EVENTS.filter(c => c.needs.every(n => pIds.includes(n))));
+  for (const combo of applicableCombos.slice(0, 3)) {
+    const a = members.find(m => m.personality.id === combo.needs[0]);
+    const b = members.find(m => m.personality.id === combo.needs[1]);
+    const t = fillTemplate(combo.text, { a: a.name, b: b.name });
+    addEvent(day, t, a);
+    day++;
+  }
+
+  // Day 5-7: more individual chaos
+  day = Math.max(day, 5);
+  for (const m of shuffle(members).slice(0, Math.min(members.length, 4))) {
+    const t = pickUniqueTemplate(TEMPLATES[m.personality.id], { name: m.name });
+    if (t) { addEvent(day, t, m); day += Math.random() > 0.4 ? 1 : 0; }
+  }
+
+  // Day 7-9: Climax
+  day = Math.max(day, 7);
+  const villain = pick(members.filter(m => m.personality.chaos >= 3)) || pick(members);
+  const climax = pick(CLIMAX_EVENTS);
+  addEvent(day, fillTemplate(climax, { villain: villain.name }), villain);
+
+  // Another climax event if high chaos
+  if (chaosScore > 60) {
+    day++;
+    const c2 = pick(CLIMAX_EVENTS.filter(c => c !== climax));
+    addEvent(day, fillTemplate(c2, { villain: villain.name }), pick(members));
+  }
+
+  // Resolution
+  day += 2;
+  addEvent(day, pick(RESOLUTION_EVENTS), null);
+
+  // Sort by day
+  events.sort((a, b) => a.day - b.day);
+
+  // --- Render ---
+  renderResults(chaosScore, events, groupName);
+}
+
+function renderResults(score, events, groupName) {
+  const resultsEl = document.getElementById('results');
+  resultsEl.classList.add('visible');
+
+  // Chaos score
+  const numEl = document.getElementById('chaosNumber');
+  const verdictEl = document.getElementById('chaosVerdict');
+  const cardEl = document.getElementById('chaosScoreCard');
+
+  let verdict, vColor;
+  if (score < 30) { verdict = 'Mildly Chaotic'; vColor = '#1dd1a1'; }
+  else if (score < 50) { verdict = 'Certified Mess'; vColor = '#feca57'; }
+  else if (score < 70) { verdict = 'Absolute Chaos'; vColor = '#ff9ff3'; }
+  else if (score < 85) { verdict = 'Nuclear Meltdown'; vColor = '#ee5a24'; }
+  else { verdict = 'Geneva Convention Violation'; vColor = '#ff6b6b'; }
+
+  numEl.style.color = vColor;
+  verdictEl.style.color = vColor;
+
+  // Animate number
+  let current = 0;
+  numEl.textContent = '0%';
+  const step = Math.ceil(score / 30);
+  const interval = setInterval(() => {
+    current += step;
+    if (current >= score) { current = score; clearInterval(interval); }
+    numEl.textContent = current + '%';
+  }, 25);
+
+  verdictEl.textContent = verdict;
+
+  // Timeline
+  const timelineEl = document.getElementById('timeline');
+  timelineEl.innerHTML = '';
+
+  events.forEach((ev, i) => {
+    const div = document.createElement('div');
+    div.className = 'timeline-event';
+    div.style.animationDelay = (i * 0.08) + 's';
+
+    div.innerHTML = `
+      <div class="timeline-day">Day ${ev.day}</div>
+      <div class="timeline-dot" style="background:${ev.color}"></div>
+      <div class="bubble" style="background:${ev.color}15">
+        ${ev.who ? `<div class="who">${ev.who}</div>` : ''}
+        <div>${ev.text}</div>
+      </div>
+    `;
+    timelineEl.appendChild(div);
+  });
+
+  resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Store for sharing
+  window._lastPrediction = { score, verdict, events, groupName };
+}
+
+function sharePrediction() {
+  const p = window._lastPrediction;
+  if (!p) return;
+
+  let text = `🔮 GROUP CHAT CHAOS PREDICTION: "${p.groupName}"\n`;
+  text += `⚡ Chaos Score: ${p.score}% — ${p.verdict}\n\n`;
+  p.events.forEach(ev => {
+    text += `Day ${ev.day}: ${ev.text}\n`;
+  });
+  text += `\n🔗 groupchaos.predictor`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Group Chat Chaos Prediction', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('shareToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    });
+  }
+}
+</script>
+</body>
+</html>

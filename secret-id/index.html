@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SECRET IDENTITY GENERATOR</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Courier+Prime:wght@400;700&family=Playfair+Display:wght@700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #c8b87a;
+    font-family: 'Courier Prime', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(30,20,10,0.8) 0%, transparent 70%),
+      radial-gradient(ellipse at 80% 20%, rgba(40,25,5,0.5) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(200,184,122,0.015) 2px, rgba(200,184,122,0.015) 4px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 30px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .header::before {
+    content: 'TOP SECRET';
+    display: block;
+    font-family: 'Special Elite', cursive;
+    font-size: 14px;
+    letter-spacing: 8px;
+    color: #8b0000;
+    border: 2px solid #8b0000;
+    display: inline-block;
+    padding: 4px 20px;
+    transform: rotate(-3deg);
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 48px);
+    color: #e8d8a0;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 2px 20px rgba(200,180,100,0.3);
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    font-family: 'Special Elite', cursive;
+    font-size: 13px;
+    color: #8a7a50;
+    letter-spacing: 3px;
+    margin-top: 10px;
+  }
+
+  .input-section {
+    background: rgba(20,18,12,0.9);
+    border: 1px solid #3a3020;
+    padding: 30px;
+    margin-bottom: 30px;
+    position: relative;
+  }
+
+  .input-section::before {
+    content: 'CLASSIFIED INTAKE FORM';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: #0a0a0a;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #6a5a30;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  label {
+    font-family: 'Special Elite', cursive;
+    font-size: 13px;
+    color: #8a7a50;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  input[type="text"] {
+    background: rgba(10,10,8,0.9);
+    border: 1px solid #3a3020;
+    border-bottom: 2px solid #6a5a30;
+    color: #e8d8a0;
+    font-family: 'Special Elite', cursive;
+    font-size: 20px;
+    padding: 12px 15px;
+    outline: none;
+    transition: all 0.3s;
+    width: 100%;
+  }
+
+  input[type="text"]:focus {
+    border-bottom-color: #c8b87a;
+    box-shadow: 0 4px 20px rgba(200,180,100,0.1);
+  }
+
+  input[type="text"]::placeholder {
+    color: #4a4020;
+    font-style: italic;
+  }
+
+  .btn {
+    font-family: 'Special Elite', cursive;
+    font-size: 16px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 14px 30px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+  }
+
+  .btn-generate {
+    background: linear-gradient(135deg, #2a2210, #4a3a18);
+    color: #e8d8a0;
+    border: 1px solid #6a5a30;
+  }
+
+  .btn-generate:hover {
+    background: linear-gradient(135deg, #3a3218, #5a4a28);
+    box-shadow: 0 0 30px rgba(200,180,100,0.2);
+    transform: translateY(-1px);
+  }
+
+  .btn-generate:active { transform: translateY(1px); }
+
+  /* DOSSIER */
+  .dossier {
+    display: none;
+    animation: fadeInDossier 0.8s ease;
+  }
+
+  .dossier.active { display: block; }
+
+  @keyframes fadeInDossier {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .dossier-header {
+    text-align: center;
+    padding: 20px;
+    border-bottom: 1px dashed #3a3020;
+    margin-bottom: 0;
+  }
+
+  .dossier-header h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    letter-spacing: 6px;
+    color: #8b0000;
+  }
+
+  .id-card {
+    background: linear-gradient(160deg, #1a1810 0%, #12100a 50%, #1a1810 100%);
+    border: 2px solid #4a3a18;
+    margin: 25px 0;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(200,180,100,0.1);
+  }
+
+  .id-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 20px,
+      rgba(200,180,100,0.02) 20px, rgba(200,180,100,0.02) 21px
+    );
+    pointer-events: none;
+  }
+
+  .id-card-top {
+    background: linear-gradient(90deg, #8b0000, #6b0000, #8b0000);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .id-card-top span {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: #e8d0a0;
+    font-family: 'Special Elite', cursive;
+  }
+
+  .id-card-body {
+    padding: 25px;
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 500px) {
+    .id-card-body {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+  }
+
+  .id-photo {
+    width: 120px;
+    height: 150px;
+    background: #0a0908;
+    border: 1px solid #3a3020;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    color: #3a3020;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .id-photo::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(200,180,100,0.05) 3px, rgba(200,180,100,0.05) 4px);
+  }
+
+  .id-info { display: flex; flex-direction: column; gap: 8px; }
+
+  .id-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .id-field .field-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #6a5a30;
+    text-transform: uppercase;
+  }
+
+  .id-field .field-value {
+    font-family: 'Special Elite', cursive;
+    font-size: 16px;
+    color: #e8d8a0;
+  }
+
+  .id-card-bottom {
+    border-top: 1px solid #2a2210;
+    padding: 10px 25px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #4a3a18;
+    letter-spacing: 2px;
+  }
+
+  /* DOSSIER FIELDS */
+  .dossier-section {
+    background: rgba(20,18,12,0.7);
+    border: 1px solid #2a2210;
+    margin-bottom: 15px;
+    overflow: hidden;
+  }
+
+  .dossier-section-header {
+    background: rgba(30,25,15,0.8);
+    padding: 10px 20px;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: #8a7a50;
+    text-transform: uppercase;
+    border-bottom: 1px solid #2a2210;
+  }
+
+  .dossier-section-body {
+    padding: 15px 20px;
+  }
+
+  .dossier-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px dotted #1a1810;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .dossier-field:last-child { border-bottom: none; }
+
+  .dossier-field .d-label {
+    font-size: 11px;
+    color: #6a5a30;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .dossier-field .d-value {
+    font-family: 'Special Elite', cursive;
+    font-size: 15px;
+    color: #e8d8a0;
+    text-align: right;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .catchphrase {
+    text-align: center;
+    padding: 25px 20px;
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-style: italic;
+    color: #c8b87a;
+    border-top: 1px dashed #3a3020;
+    border-bottom: 1px dashed #3a3020;
+    margin: 20px 0;
+    position: relative;
+  }
+
+  .catchphrase::before { content: '\201C'; font-size: 40px; color: #4a3a18; position: absolute; top: 10px; left: 15px; }
+  .catchphrase::after { content: '\201D'; font-size: 40px; color: #4a3a18; position: absolute; bottom: -5px; right: 15px; }
+
+  /* BACKSTORY */
+  .backstory {
+    font-family: 'Special Elite', cursive;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #a89a60;
+    padding: 20px;
+    background: rgba(15,13,8,0.8);
+    border-left: 3px solid #8b0000;
+  }
+
+  /* BUTTONS */
+  .action-buttons {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+    flex-wrap: wrap;
+  }
+
+  .btn-share {
+    flex: 1;
+    min-width: 140px;
+    background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
+    color: #a0c8a0;
+    border: 1px solid #3a5a3a;
+  }
+
+  .btn-share:hover {
+    background: linear-gradient(135deg, #2a3a2a, #3a4a3a);
+    box-shadow: 0 0 20px rgba(100,200,100,0.15);
+  }
+
+  .btn-burn {
+    flex: 1;
+    min-width: 140px;
+    background: linear-gradient(135deg, #2a1010, #3a1818);
+    color: #e8a0a0;
+    border: 1px solid #5a2a2a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-burn:hover {
+    background: linear-gradient(135deg, #3a1818, #4a2020);
+    box-shadow: 0 0 30px rgba(200,50,50,0.2);
+  }
+
+  .btn-reroll {
+    flex: 1;
+    min-width: 140px;
+    background: linear-gradient(135deg, #1a1a2a, #2a2a3a);
+    color: #a0a0e8;
+    border: 1px solid #3a3a5a;
+  }
+
+  .btn-reroll:hover {
+    background: linear-gradient(135deg, #2a2a3a, #3a3a4a);
+    box-shadow: 0 0 20px rgba(100,100,200,0.15);
+  }
+
+  /* BURN ANIMATION */
+  .burning {
+    position: relative;
+    animation: burnShake 0.5s ease;
+  }
+
+  @keyframes burnShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px) rotate(-0.5deg); }
+    40% { transform: translateX(5px) rotate(0.5deg); }
+    60% { transform: translateX(-3px) rotate(-0.3deg); }
+    80% { transform: translateX(3px) rotate(0.3deg); }
+  }
+
+  .flame-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 100;
+    display: none;
+  }
+
+  .flame-overlay.active { display: block; }
+
+  .flame-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: flameRise 1.5s ease-out forwards;
+  }
+
+  @keyframes flameRise {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    50% { opacity: 0.8; }
+    100% { opacity: 0; transform: translateY(-300px) scale(0.2); }
+  }
+
+  .burn-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Special Elite', cursive;
+    font-size: clamp(20px, 5vw, 36px);
+    color: #ff4400;
+    text-shadow: 0 0 30px #ff4400, 0 0 60px #ff2200;
+    z-index: 101;
+    text-align: center;
+    letter-spacing: 5px;
+    display: none;
+    animation: burnTextPulse 0.5s ease infinite alternate;
+  }
+
+  @keyframes burnTextPulse {
+    from { opacity: 0.8; text-shadow: 0 0 30px #ff4400, 0 0 60px #ff2200; }
+    to { opacity: 1; text-shadow: 0 0 50px #ff6600, 0 0 80px #ff4400, 0 0 120px #ff2200; }
+  }
+
+  .stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-family: 'Special Elite', cursive;
+    font-size: 48px;
+    color: #8b0000;
+    border: 5px solid #8b0000;
+    padding: 10px 30px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .stamp.visible {
+    opacity: 0.8;
+    animation: stampIn 0.3s ease;
+  }
+
+  @keyframes stampIn {
+    from { transform: translate(-50%, -50%) rotate(-15deg) scale(3); opacity: 0; }
+    to { transform: translate(-50%, -50%) rotate(-15deg) scale(1); opacity: 0.8; }
+  }
+
+  /* SHARE MODAL */
+  .share-modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .share-modal.active { display: flex; }
+
+  .share-content {
+    background: #12100a;
+    border: 1px solid #3a3020;
+    padding: 30px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .share-content h3 {
+    font-family: 'Special Elite', cursive;
+    color: #e8d8a0;
+    margin-bottom: 15px;
+    letter-spacing: 3px;
+  }
+
+  .share-text {
+    background: #0a0908;
+    border: 1px solid #2a2210;
+    padding: 15px;
+    color: #c8b87a;
+    font-family: 'Courier Prime', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-bottom: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .share-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .share-actions .btn {
+    flex: 1;
+    min-width: 100px;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .btn-copy {
+    background: #2a2210;
+    color: #c8b87a;
+    border: 1px solid #4a3a18;
+  }
+
+  .btn-close-share {
+    background: #1a1010;
+    color: #c8a0a0;
+    border: 1px solid #3a2020;
+  }
+
+  .copied-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2a3a2a;
+    color: #a0e8a0;
+    padding: 10px 25px;
+    font-family: 'Special Elite', cursive;
+    letter-spacing: 2px;
+    border: 1px solid #3a5a3a;
+    z-index: 300;
+    display: none;
+    animation: toastIn 0.3s ease;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .typewriter {
+    overflow: hidden;
+    border-right: 2px solid #c8b87a;
+    animation: blink-caret 0.7s step-end infinite;
+  }
+
+  @keyframes blink-caret {
+    from, to { border-color: transparent; }
+    50% { border-color: #c8b87a; }
+  }
+
+  .scanline {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: rgba(200,180,100,0.08);
+    z-index: 50;
+    animation: scanMove 4s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scanMove {
+    from { top: -2px; }
+    to { top: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<div class="flame-overlay" id="flameOverlay"></div>
+<div class="burn-text" id="burnText">IDENTITY BURNED</div>
+<div class="copied-toast" id="copiedToast">COPIED TO CLIPBOARD</div>
+
+<div class="share-modal" id="shareModal">
+  <div class="share-content">
+    <h3>TRANSMIT IDENTITY</h3>
+    <div class="share-text" id="shareText"></div>
+    <div class="share-actions">
+      <button class="btn btn-copy" onclick="copyIdentity()">COPY</button>
+      <button class="btn btn-close-share" onclick="closeShare()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="header">
+    <h1>Secret Identity Generator</h1>
+    <div class="subtitle">BUREAU OF COVERT PERSONNEL</div>
+  </div>
+
+  <div class="input-section">
+    <div class="input-group">
+      <label>Enter Your Real Name, Agent</label>
+      <input type="text" id="realName" placeholder="Your true identity..." autofocus>
+    </div>
+    <button class="btn btn-generate" id="generateBtn" onclick="generateIdentity()">
+      GENERATE SECRET IDENTITY
+    </button>
+  </div>
+
+  <div class="dossier" id="dossier">
+    <div class="dossier-header">
+      <h2>CLASSIFIED DOSSIER</h2>
+    </div>
+
+    <div class="id-card" id="idCard">
+      <div class="id-card-top">
+        <span>COVERT OPS DIVISION</span>
+        <span id="cardDate"></span>
+      </div>
+      <div class="id-card-body">
+        <div class="id-photo" id="idPhoto"></div>
+        <div class="id-info">
+          <div class="id-field">
+            <span class="field-label">Alias</span>
+            <span class="field-value" id="cardAlias"></span>
+          </div>
+          <div class="id-field">
+            <span class="field-label">Code Name</span>
+            <span class="field-value" id="cardCodeName"></span>
+          </div>
+          <div class="id-field">
+            <span class="field-label">Cover</span>
+            <span class="field-value" id="cardCover"></span>
+          </div>
+          <div class="id-field">
+            <span class="field-label">Clearance</span>
+            <span class="field-value" id="cardClearance"></span>
+          </div>
+        </div>
+      </div>
+      <div class="id-card-bottom">
+        <span id="cardSerial"></span>
+        <span>DO NOT DUPLICATE</span>
+      </div>
+      <div class="stamp" id="burnStamp">BURNED</div>
+    </div>
+
+    <div class="catchphrase" id="catchphrase"></div>
+
+    <div class="dossier-section">
+      <div class="dossier-section-header">Operative Details</div>
+      <div class="dossier-section-body">
+        <div class="dossier-field">
+          <span class="d-label">Handler</span>
+          <span class="d-value" id="handler"></span>
+        </div>
+        <div class="dossier-field">
+          <span class="d-label">Safe House</span>
+          <span class="d-value" id="safeHouse"></span>
+        </div>
+        <div class="dossier-field">
+          <span class="d-label">Special Skills</span>
+          <span class="d-value" id="specialSkills"></span>
+        </div>
+        <div class="dossier-field">
+          <span class="d-label">Known Weakness</span>
+          <span class="d-value" id="weakness"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="dossier-section">
+      <div class="dossier-section-header">Backstory / Legend</div>
+      <div class="dossier-section-body">
+        <div class="backstory" id="backstory"></div>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button class="btn btn-reroll" onclick="generateIdentity()">RE-ROLL</button>
+      <button class="btn btn-share" onclick="shareIdentity()">SHARE IDENTITY</button>
+      <button class="btn btn-burn" onclick="burnIdentity()">BURN THIS IDENTITY</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  firstNames: [
+    'Viktor','Scarlett','Magnus','Natasha','Dominic','Valentina','Cyrus','Ingrid','Rafael','Petra',
+    'Aleksei','Celeste','Dante','Isolde','Felix','Marlowe','Cassius','Freya','Nikolai','Vivienne',
+    'Lazarus','Sienna','Orion','Katarina','Theron','Margaux','Soren','Ilona','Jasper','Vesper',
+    'Roman','Delphine','Ambrose','Zara','Lucian','Odessa','Dorian','Astrid','Cassian','Nyx',
+    'Wolfgang','Raven','Sterling','Elara','Maxim','Serena'
+  ],
+  lastNames: [
+    'Volkov','Ashford','Krieger','Delacroix','Blackwood','Petrova','Steele','Novak','Nightshade','Koenig',
+    'Crane','Makarov','Sinclair','Valois','Rourke','Draven','Cavendish','Sato','Moriarty','Frost',
+    'Wren','Harkonnen','Castellano','Thornton','Ivanovich','Montague','Stryker','Leclerc','Cross','Duval',
+    'Foxworth','Kozlov','Mercer','Ortiz','Blackburn','Quinn','Richter','Thorn','Vega','Winterbourne',
+    'Blake','Severov','Langley','Maddox','Raines','Ash'
+  ],
+  coverJobs: [
+    'Antique Book Restorer','Deep-Sea Salvage Consultant','Rare Orchid Importer','Wine Sommelier',
+    'Diplomatic Courier','Art Insurance Adjuster','Earthquake Seismologist','Private Yacht Mechanic',
+    'Luxury Hotel Concierge','Archaeological Survey Lead','Watch Repair Specialist','Chess Tournament Arbiter',
+    'Offshore Wind Turbine Inspector','Classical Violinist','Perfume Chemist','Embassy Cultural Attache',
+    'Rare Coin Dealer','Marine Biologist','Private Aviation Pilot','Cathedral Organ Tuner',
+    'International Tax Advisor','Freelance War Photographer','Michelin Restaurant Critic','Museum Curator',
+    'Rare Gemstone Appraiser','Silk Road Historian','Alpine Rescue Coordinator','Opera Stage Director',
+    'Cryptographic Puzzle Designer','Whiskey Distillery Master','Polar Research Scientist','Vintage Race Car Mechanic',
+    'Bespoke Tailor','Submarine Cable Engineer','Falconry Instructor','Volcanic Observatory Director',
+    'Cipher Machine Collector','Rare Tea Broker','Satellite Ground Station Operator','High-Altitude Mountaineering Guide',
+    'Calligraphy Instructor','Underground Cave Mapper','Rare Vinyl Record Dealer','Ivory Tower Philosopher'
+  ],
+  safeHouses: [
+    'Above a jazz club in Montmartre, Paris','Converted lighthouse, Reykjavik coast','Basement of a bookshop, Prague Old Town',
+    'Penthouse suite, Marina Bay Sands, Singapore','Abandoned monastery, Amalfi Coast','Underground bunker, Swiss Alps',
+    'Houseboat on the Seine, Paris','Flat above a noodle shop, Shinjuku, Tokyo','Wine cellar beneath a chateau, Bordeaux',
+    'Disused clock tower, Istanbul','Warehouse loft, Brooklyn Navy Yard','Cave dwelling, Cappadocia, Turkey',
+    'Fishing village cottage, Cinque Terre','Top floor of a carpet shop, Marrakech Medina','Floating market stall, Bangkok',
+    'Converted tram depot, Lisbon','Rooftop greenhouse, Buenos Aires','Ice hotel suite, Jukkasjärvi, Sweden',
+    'Abandoned metro station, Berlin','Treehouse compound, Costa Rican cloud forest','Converted mill house, Cotswolds, England',
+    'Underground vault, Vatican City','Penthouse above a casino, Macau','Stilted hut, Mekong Delta',
+    'Former speakeasy, Chicago Loop','Clifftop villa, Santorini','Decommissioned submarine, Murmansk',
+    'Yurt in the Mongolian steppe','Converted water tower, Amsterdam','Ruins of a fortress, Montenegro coast',
+    'Tea house backroom, Kyoto','Catacomb annex, Rome','Fjord cabin, Geirangerfjord, Norway',
+    'Rooftop flat, Havana Vieja','Desert oasis compound, Oman','Gondola workshop, Venice',
+    'Underground jazz bar, New Orleans','Shipping container stack, Port of Rotterdam','Thermal bath cellar, Budapest',
+    'Glass igloo, Finnish Lapland','Converted grain silo, Cape Town','Temple annex, Angkor Wat',
+    'Dockside warehouse, Marseille'
+  ],
+  codeNames: [
+    'PHANTOM WALTZ','IRON ORCHID','SILENT MERIDIAN','CRIMSON VEIL','ARCTIC FOX','VELVET HAMMER',
+    'GHOST PROTOCOL','SHADOW DANCER','STEEL WHISPER','MIDNIGHT SUN','BROKEN COMPASS','SILVER TONGUE',
+    'BLACK SWAN','WINTER SPHINX','ECHO CHAMBER','AMBER DUSK','VIPER NEST','GOLDEN HOUR',
+    'DEAD DROP','ROGUE WAVE','NIGHT BLOOM','IRON CURTAIN','PAPER TIGER','COLD FRONT',
+    'SCARLET KNOT','DARK MIRROR','BLUE HELIX','BURNING GLASS','COPPER SERPENT','SILENT STORM',
+    'GHOST ORCHID','RAZOR WIND','JADE FALCON','VOID SIGNAL','EMBER TIDE','TUNGSTEN ROSE',
+    'NIGHT MARKET','GLASS SPIDER','STONE RIVER','SMOKE RING','IRON LOTUS','SHADOW BROKER',
+    'DEEP WINTER','PALE RIDER','RUST CROWN','NOVA DRIFT'
+  ],
+  handlerNames: [
+    'Control','The Architect','Mother','Cipher','The Bishop','Quartermaster','Cardinal','The Watchmaker',
+    'Oracle','The Shepherd','Sphinx','Lighthouse','The Gardener','Viceroy','Archivist','The Conductor',
+    'Mercury','Sentinel','The Professor','Minotaur','Kingfisher','The Surgeon','Vesper','Harbinger',
+    'Patriarch','The Librarian','Basilisk','Chronos','The Ferryman','Corsair','Nightingale','The Broker',
+    'Paladin','Cerberus','The Weaver','Ouroboros','Templar','The Collector','Magistrate','Pendulum',
+    'Hierophant','The Cartographer','Revenant','Fulcrum'
+  ],
+  specialSkills: [
+    'Lip reading in 6 languages','Photographic memory for floor plans','Can pick any lock made before 2010',
+    'Expert forger of Renaissance paintings','Undetectable sleight of hand','Fluent in 11 languages including 3 dead ones',
+    'Can disappear in a crowd of 3','Expert in poisons and antidotes','Master of disguise and prosthetics',
+    'Precision marksmanship at 800m','Hacks any system in under 4 minutes','Reads micro-expressions with 97% accuracy',
+    'Underwater demolitions expert','Can hot-wire any vehicle made','Immune to most known truth serums',
+    'Expert in psychological manipulation','Perfect vocal mimicry','Escape artist — no known restraint has held',
+    'Explosives disposal with bare hands','Can navigate any city blindfolded','Expert cryptanalyst',
+    'Master of 7 martial arts','Pilot rated for 14 aircraft types','Clinical hypnotist',
+    'Safecracker by sound alone','Deep cover for up to 5 years','Sniper-grade patience',
+    'Knife throwing at Olympic level','Can forge any signature in 3 seconds','Trained in arctic survival',
+    'Night vision adaptation in 90 seconds','Perfect poker face — zero tells','Can detect surveillance in any room',
+    'Speaks fluent Morse code at 40 WPM','Expert at building IEDs from household items','Trained in 4 forms of interrogation resistance',
+    'Master of social engineering','Parkour specialist — urban terrain','Can hold breath for 6 minutes',
+    'Photographic memory for faces','Expert in counter-surveillance techniques','Ambidextrous combat proficiency',
+    'Chemical weapons identification by smell'
+  ],
+  weaknesses: [
+    'Chronic insomnia — only sleeps 2 hours','Cannot resist a well-made espresso','Claustrophobic in elevators',
+    'Falls for anyone who quotes Dostoevsky','Allergic to cats — disastrous for stakeouts','Compulsive coin-flipping before decisions',
+    'Cannot lie to children','Gets seasick on small boats','Addicted to crossword puzzles mid-mission',
+    'Trusts too easily when shown kindness','Fear of heights above 30 stories','Cannot resist a game of chess',
+    'Has a tell — touches left ear when bluffing','Sentimental about old photographs','Afraid of dogs',
+    'Cannot pass a bookshop without entering','Weakness for vintage whiskey','Gets distracted by beautiful architecture',
+    'Chronic back pain from a 2019 extraction gone wrong','Cannot refuse a dare','Emotional attachment to assets',
+    'Fear of needles','Obsessive about punctuality','Has a sweet tooth that has blown 2 covers',
+    'Talks in sleep — in Russian','Cannot swim despite training','Migraines triggered by fluorescent lights',
+    'Guilt over a blown operation in Beirut, 2017','Falls asleep during long stakeouts','Cannot eat cilantro — genetic',
+    'Hoards burner phones','Pathologically honest off-duty','Afraid of bridges',
+    'Cannot resist rescuing stray animals','Gambles too aggressively under stress','Nostalgia for a former life in academia',
+    'Drinks too much when the mission is over','Has an ex in every major capital','Night terrors from a past op',
+    'Superstitious about the number 13','Cannot function without morning tea','Perfect memory is also a curse — remembers every failure',
+    'Refuses to carry a weapon on Sundays','Uncomfortable in formal attire'
+  ],
+  catchphrases: [
+    'Trust is a currency I never spend.','I was never here. Neither were you.','The best cover is the truth nobody believes.',
+    'Every shadow has an exit strategy.','I collect secrets the way others collect stamps.','Paranoia is just good planning.',
+    'Dead men tell no tales. I tell fewer.','The mission is the only thing that matters — until it isn\'t.',
+    'In this line of work, yesterday is classified.','I don\'t have friends. I have assets.',
+    'The truth? You couldn\'t handle my Tuesday.','Every alias is a life I almost lived.',
+    'I\'ve died three times. Fourth time\'s the charm.','Loyalty is a beautiful weakness.',
+    'The safest place is the one nobody knows about.','I speak seven languages. Silence is my favorite.',
+    'There are no coincidences. Only operations you haven\'t uncovered yet.','Betrayal is just business with feelings.',
+    'My real name? Even I\'ve forgotten it.','The best agents are the ones you never suspect.',
+    'I\'ve seen things that would make your security clearance weep.','Everyone has a price. I just have a higher budget.',
+    'The cold never bothered me. The cold war, however...','Sleep is for people without enemies.',
+    'I don\'t burn bridges. I detonate them.','The world is a chessboard, and I play both colors.',
+    'Some people have skeletons in the closet. I have filing cabinets.','Every goodbye is a new identity.',
+    'I\'ve forgotten more secrets than most people ever learn.','The best lies are seasoned with truth.',
+    'I don\'t do small talk. I do intelligence.','Retirement is a myth invented by people without enemies.',
+    'My cover is so deep, even I believe it sometimes.','The only thing I trust is my instinct — and even that\'s on probation.',
+    'I\'ve been to places that don\'t exist on any map.','The exit is always behind you. That\'s why I never turn around.',
+    'I collect passports like souvenirs.','Every safe house is a prison you chose.',
+    'The truth is classified. Even from me.','In my world, paper trails are breadcrumbs for the enemy.',
+    'I was trained to forget. I was born to remember.','Everyone underestimates the quiet ones. That\'s my advantage.',
+    'My past is redacted. My future is need-to-know.'
+  ],
+  backstoryTemplates: [
+    'Recruited from {origin} at age {age} after {event}. Trained at {facility} under the legendary {trainer}. First field assignment: {firstMission}. Has since operated in {count} countries across {continents} continents. Current status: active. Threat assessment: {threat}.',
+    'Originally a {prevJob} in {city}, until {turningPoint}. Was approached by {agency} and underwent {months} months of intensive training. Specializes in {specialty}. Has a {adjective} reputation among both allies and adversaries. Known to {habit}.',
+    'Born in {birthPlace}. Orphaned by age {orphanAge} due to {tragedy}. Raised by {guardian}. Discovered by {agency} during {discovery}. Rose through the ranks with {quality}. Has survived {survivalCount} assassination attempts. Considers {place} the closest thing to home.',
+    'Former {military} operative who went dark after {incident}. Resurfaced {years} years later with new skills and no explanation. {agency} recruited them for {purpose}. Operates under deep cover as a {cover}. Has never failed a mission — though {caveat}.',
+  ],
+  origins: ['MIT','Oxford','the streets of Odessa','a monastery in Tibet','the French Foreign Legion','Israeli military intelligence','a traveling circus','a Siberian research station','Cambridge','the slums of Mumbai','a Swiss boarding school','a fishing village in Norway'],
+  ages: ['17','19','21','23','16','20','22','24','18','25'],
+  events: ['solving an unsolvable cipher','surviving a kidnapping','winning an underground fighting tournament','hacking a defense contractor','exposing a double agent','a chance encounter at a dead drop','witnessing an assassination','breaking out of a foreign prison'],
+  facilities: ['The Farm (Camp Peary)','a black site in the Carpathians','an island facility in the South Pacific','a bunker beneath the Swiss Alps','Station X','a decommissioned aircraft carrier','the Citadel','a monastery converted to training grounds'],
+  trainers: ['Colonel Volkov','Major Helena Frost','The Ghost of Station 7','Maestro Chen','The Scorpion','Commandant Duval','Professor Nightshade','The Old Man'],
+  firstMissions: ['extracting a defector from East Berlin','sabotaging a weapons facility in the Urals','infiltrating a cartel in Medellin','stealing blueprints from a Moscow vault','protecting a witness in Tangier','disrupting a smuggling ring in the South China Sea'],
+  agencies: ['MI6','the CIA','Mossad','DGSE','a private intelligence firm','a shadow organization with no name','BND','an international task force'],
+  cities: ['Vienna','Tangier','São Paulo','Beirut','Hong Kong','Casablanca','St. Petersburg','Buenos Aires','Cairo','Zurich'],
+  prevJobs: ['professor of linguistics','concert pianist','trauma surgeon','chess grandmaster','quantum physicist','deep-sea diver','war correspondent','competitive fencer'],
+  turningPoints: ['a chance meeting with a dying agent changed everything','they stumbled onto a conspiracy too big to ignore','their research was classified and they were given a choice: join or forget','they were framed for a crime they didn\'t commit','a loved one was taken and only one organization could help'],
+  specialties: ['wet work','signals intelligence','deep cover infiltration','counter-espionage','asset recruitment','technical surveillance','psychological operations','demolitions'],
+  habits: ['vanish for weeks without trace','leave a single white chess piece at every completed mission','never use the same alias twice','send postcards to no one from every city visited'],
+  threats: ['EXTREME — handle with caution','HIGH — approach only with authorization','CRITICAL — containment protocols recommended','SEVERE — do not engage without backup'],
+  birthPlaces: ['a village outside Kraków','the back of a diplomatic car in Geneva','a hospital ship in the North Sea','a refugee camp in Jordan','a commune in rural Vermont','a military base in Okinawa'],
+  tragedies: ['a car bomb meant for someone else','a border conflict','a house fire under suspicious circumstances','a pandemic that swept through their village','political purges'],
+  guardians: ['a retired spy who owed a debt','nuns at a remote convent','a professor of ancient languages','a crime lord with a code of honor','the state — bounced between 7 foster homes'],
+  discoveries: ['a routine background check that flagged impossible skills','a bar fight that lasted 45 seconds','an intercepted letter written in a cipher no one should know','a hostage situation they resolved single-handedly'],
+  qualities: ['ruthless efficiency','an almost supernatural calm under fire','an ability to become anyone','sheer stubbornness and a refusal to die','brilliance that bordered on recklessness'],
+  incidents: ['Operation Black Meridian went sideways','the Lisbon betrayal','a mole was discovered in the inner circle','they were ordered to eliminate an innocent'],
+  purposes: ['deniable operations','a single impossible mission','deep infiltration of a rival network','hunting a ghost agent','dismantling a weapons pipeline'],
+  caveats: ['two came close enough to leave scars','the definition of "success" is classified','collateral damage reports remain sealed','they\'ve left a trail of burned bridges across three continents'],
+  militaryBranches: ['Navy SEAL','SAS','Spetsnaz','GIGN','Delta Force','JTF2','Shayetet 13','KSK'],
+  clearanceLevels: ['COSMIC TOP SECRET','ULTRA VIOLET','ABOVE TOP SECRET','OMEGA CLEARANCE','BLACK LEVEL','EYES ONLY — DIRECTOR','NEBULA TIER','SHADOW ACCESS'],
+  emojis: ['&#9824;','&#9830;','&#9827;','&#9829;','&#9733;','&#9788;','&#9763;','&#9762;']
+};
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function pickN(arr, n) {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, n);
+}
+
+let currentIdentity = null;
+
+function generateBackstory(alias, coverJob) {
+  const template = pick(DATA.backstoryTemplates);
+  const replacements = {
+    '{origin}': pick(DATA.origins),
+    '{age}': pick(DATA.ages),
+    '{event}': pick(DATA.events),
+    '{facility}': pick(DATA.facilities),
+    '{trainer}': pick(DATA.trainers),
+    '{firstMission}': pick(DATA.firstMissions),
+    '{count}': Math.floor(Math.random() * 30 + 15),
+    '{continents}': Math.floor(Math.random() * 4 + 3),
+    '{threat}': pick(DATA.threats),
+    '{prevJob}': pick(DATA.prevJobs),
+    '{city}': pick(DATA.cities),
+    '{turningPoint}': pick(DATA.turningPoints),
+    '{agency}': pick(DATA.agencies),
+    '{months}': Math.floor(Math.random() * 18 + 6),
+    '{specialty}': pick(DATA.specialties),
+    '{adjective}': pick(['fearsome','legendary','whispered','notorious','enigmatic']),
+    '{habit}': pick(DATA.habits),
+    '{birthPlace}': pick(DATA.birthPlaces),
+    '{orphanAge}': Math.floor(Math.random() * 8 + 5),
+    '{tragedy}': pick(DATA.tragedies),
+    '{guardian}': pick(DATA.guardians),
+    '{discovery}': pick(DATA.discoveries),
+    '{quality}': pick(DATA.qualities),
+    '{survivalCount}': Math.floor(Math.random() * 5 + 2),
+    '{place}': pick(DATA.safeHouses).split(',')[0],
+    '{military}': pick(DATA.militaryBranches),
+    '{incident}': pick(DATA.incidents),
+    '{years}': Math.floor(Math.random() * 5 + 2),
+    '{purpose}': pick(DATA.purposes),
+    '{cover}': coverJob.toLowerCase(),
+    '{caveat}': pick(DATA.caveats),
+  };
+  let result = template;
+  for (const [key, val] of Object.entries(replacements)) {
+    result = result.replace(key, val);
+  }
+  return result;
+}
+
+function generateIdentity() {
+  const realName = document.getElementById('realName').value.trim();
+  if (!realName) {
+    document.getElementById('realName').focus();
+    document.getElementById('realName').style.borderBottomColor = '#8b0000';
+    setTimeout(() => document.getElementById('realName').style.borderBottomColor = '#6a5a30', 1000);
+    return;
+  }
+
+  const alias = pick(DATA.firstNames) + ' ' + pick(DATA.lastNames);
+  const coverJob = pick(DATA.coverJobs);
+  const codeName = pick(DATA.codeNames);
+  const handler = pick(DATA.handlerNames);
+  const safeHouse = pick(DATA.safeHouses);
+  const skills = pickN(DATA.specialSkills, 2).join('; ');
+  const weakness = pick(DATA.weaknesses);
+  const catchphrase = pick(DATA.catchphrases);
+  const clearance = pick(DATA.clearanceLevels);
+  const backstory = generateBackstory(alias, coverJob);
+  const serial = 'AGT-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+  const photo = pick(DATA.emojis);
+
+  currentIdentity = { realName, alias, coverJob, codeName, handler, safeHouse, skills, weakness, catchphrase, clearance, backstory, serial, photo };
+
+  // Populate ID card
+  document.getElementById('cardAlias').textContent = alias;
+  document.getElementById('cardCodeName').textContent = codeName;
+  document.getElementById('cardCover').textContent = coverJob;
+  document.getElementById('cardClearance').textContent = clearance;
+  document.getElementById('cardDate').textContent = new Date().toISOString().split('T')[0];
+  document.getElementById('cardSerial').textContent = serial;
+  document.getElementById('idPhoto').innerHTML = photo;
+
+  // Populate dossier
+  document.getElementById('handler').textContent = handler;
+  document.getElementById('safeHouse').textContent = safeHouse;
+  document.getElementById('specialSkills').textContent = skills;
+  document.getElementById('weakness').textContent = weakness;
+  document.getElementById('catchphrase').textContent = catchphrase;
+  document.getElementById('backstory').textContent = backstory;
+
+  // Reset burn state
+  document.getElementById('burnStamp').classList.remove('visible');
+  document.getElementById('idCard').style.filter = '';
+  document.getElementById('idCard').style.opacity = '';
+
+  // Show dossier
+  const dossier = document.getElementById('dossier');
+  dossier.classList.remove('active');
+  void dossier.offsetWidth;
+  dossier.classList.add('active');
+
+  dossier.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function shareIdentity() {
+  if (!currentIdentity) return;
+  const id = currentIdentity;
+  const text =
+`=============================
+  CLASSIFIED DOSSIER
+=============================
+Real Name: [REDACTED]
+Alias: ${id.alias}
+Code Name: ${id.codeName}
+Cover: ${id.coverJob}
+Clearance: ${id.clearance}
+Handler: ${id.handler}
+Safe House: ${id.safeHouse}
+Special Skills: ${id.skills}
+Weakness: ${id.weakness}
+
+"${id.catchphrase}"
+
+BACKSTORY:
+${id.backstory}
+
+Serial: ${id.serial}
+=============================
+Generated at secretid.bureau
+=============================`;
+
+  document.getElementById('shareText').textContent = text;
+  document.getElementById('shareModal').classList.add('active');
+}
+
+function copyIdentity() {
+  const text = document.getElementById('shareText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copiedToast');
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 2000);
+  });
+}
+
+function closeShare() {
+  document.getElementById('shareModal').classList.remove('active');
+}
+
+function burnIdentity() {
+  if (!currentIdentity) return;
+
+  const overlay = document.getElementById('flameOverlay');
+  overlay.classList.add('active');
+  overlay.innerHTML = '';
+
+  const card = document.getElementById('idCard');
+  card.classList.add('burning');
+
+  // Create flame particles
+  const cardRect = card.getBoundingClientRect();
+  for (let i = 0; i < 80; i++) {
+    setTimeout(() => {
+      const particle = document.createElement('div');
+      particle.className = 'flame-particle';
+      const x = cardRect.left + Math.random() * cardRect.width;
+      const y = cardRect.top + Math.random() * cardRect.height;
+      particle.style.left = x + 'px';
+      particle.style.top = y + 'px';
+      const colors = ['#ff4400', '#ff6600', '#ff8800', '#ffaa00', '#ffcc00', '#ff2200'];
+      particle.style.background = pick(colors);
+      particle.style.boxShadow = `0 0 ${Math.random() * 10 + 5}px ${particle.style.background}`;
+      particle.style.width = (Math.random() * 12 + 4) + 'px';
+      particle.style.height = particle.style.width;
+      overlay.appendChild(particle);
+    }, i * 20);
+  }
+
+  // Show burn text
+  const burnText = document.getElementById('burnText');
+  setTimeout(() => {
+    burnText.style.display = 'block';
+  }, 400);
+
+  // Apply burn effects to card
+  setTimeout(() => {
+    card.style.filter = 'sepia(1) brightness(0.3) contrast(1.5)';
+    card.style.opacity = '0.4';
+    document.getElementById('burnStamp').classList.add('visible');
+  }, 800);
+
+  // Clean up
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    burnText.style.display = 'none';
+    card.classList.remove('burning');
+    currentIdentity = null;
+  }, 2500);
+}
+
+// Enter key to generate
+document.getElementById('realName').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') generateIdentity();
+});
+
+// Close share modal on outside click
+document.getElementById('shareModal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('shareModal')) closeShare();
+});
+</script>
+</body>
+</html>

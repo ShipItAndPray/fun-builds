@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ghost Excuse Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Creepster&family=Inter:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Floating ghost particles */
+  .ghost-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .ghost-particle {
+    position: absolute;
+    font-size: 1.5rem;
+    opacity: 0.06;
+    animation: floatGhost linear infinite;
+  }
+  @keyframes floatGhost {
+    0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.08; }
+    90% { opacity: 0.08; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 3rem;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  header .ghost-icon {
+    font-size: 4rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    animation: hover 3s ease-in-out infinite;
+  }
+  @keyframes hover {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  header h1 {
+    font-family: 'Creepster', cursive;
+    font-size: 2.4rem;
+    color: #c8b6ff;
+    letter-spacing: 2px;
+    text-shadow: 0 0 20px rgba(200,182,255,0.3);
+  }
+  header p {
+    color: #888;
+    margin-top: 0.4rem;
+    font-size: 0.95rem;
+  }
+
+  /* Time selector */
+  .time-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .time-btn {
+    background: #1a1a2e;
+    border: 2px solid #2a2a4a;
+    color: #aaa;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .time-btn:hover {
+    border-color: #c8b6ff;
+    color: #c8b6ff;
+  }
+  .time-btn.active {
+    background: #c8b6ff;
+    border-color: #c8b6ff;
+    color: #0a0a0f;
+  }
+
+  /* Generate button */
+  .generate-btn {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #7b2ff7, #c8b6ff);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    letter-spacing: 0.5px;
+  }
+  .generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(123,47,247,0.4);
+  }
+  .generate-btn:active { transform: translateY(0); }
+
+  /* Result card */
+  .result-card {
+    margin-top: 1.5rem;
+    background: #12121f;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .result-card.visible { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .excuse-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #f0eaff;
+    text-align: center;
+    margin-bottom: 1.25rem;
+    min-height: 3rem;
+  }
+
+  /* Believability meter */
+  .believability {
+    margin-bottom: 1.25rem;
+  }
+  .believability-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #888;
+    margin-bottom: 0.4rem;
+  }
+  .believability-bar {
+    height: 8px;
+    background: #1a1a2e;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .believability-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.6s ease, background 0.6s ease;
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 0.7rem;
+    border: 1px solid #2a2a4a;
+    background: #1a1a2e;
+    color: #c8b6ff;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+  }
+  .action-btn:hover {
+    background: #2a2a4a;
+    border-color: #c8b6ff;
+  }
+  .action-btn.copied {
+    background: #2d4a2d;
+    border-color: #4ade80;
+    color: #4ade80;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #c8b6ff;
+    color: #0a0a0f;
+    padding: 0.7rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  @media (max-width: 480px) {
+    header h1 { font-size: 1.8rem; }
+    .time-btn { padding: 0.5rem 0.8rem; font-size: 0.8rem; }
+    .excuse-text { font-size: 1.05rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ghost-bg" id="ghostBg"></div>
+
+<div class="container">
+  <header>
+    <span class="ghost-icon">&#x1F47B;</span>
+    <h1>Ghost Excuse Generator</h1>
+    <p>Because "I forgot" doesn't cut it anymore</p>
+  </header>
+
+  <div class="time-selector" id="timeSelector">
+    <button class="time-btn active" data-time="1h">1 Hour</button>
+    <button class="time-btn" data-time="1d">1 Day</button>
+    <button class="time-btn" data-time="3d">3 Days</button>
+    <button class="time-btn" data-time="1w">1 Week</button>
+    <button class="time-btn" data-time="1m">1 Month</button>
+  </div>
+
+  <button class="generate-btn" id="generateBtn">Generate Excuse</button>
+
+  <div class="result-card" id="resultCard">
+    <div class="excuse-text" id="excuseText"></div>
+    <div class="believability">
+      <div class="believability-label">
+        <span>Believability</span>
+        <span id="believabilityPct">0%</span>
+      </div>
+      <div class="believability-bar">
+        <div class="believability-fill" id="believabilityFill"></div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="action-btn" id="copyBtn"><span>&#x1F4CB;</span> Copy</button>
+      <button class="action-btn" id="shareBtn"><span>&#x1F4E4;</span> Share</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const excuses = {
+  "1h": [
+    { text: "Sorry, phone was on silent.", score: 95 },
+    { text: "I was in the shower. A really, really long shower.", score: 80 },
+    { text: "My phone was charging in the other room and I have commitment issues with walking.", score: 72 },
+    { text: "I saw your message and was mentally composing the perfect reply. Still working on it.", score: 65 },
+    { text: "I got trapped in a YouTube rabbit hole about how zippers work.", score: 70 },
+    { text: "I was napping. Power nap turned into a coma nap.", score: 85 },
+    { text: "My cat sat on my phone and I didn't want to disturb her. You understand.", score: 75 },
+    { text: "I was making a sandwich and things got complicated.", score: 68 },
+    { text: "Sorry, I was staring at the ceiling contemplating my existence. Normal Tuesday.", score: 60 },
+    { text: "I was in a meeting. By meeting I mean I was watching Netflix, but spiritually it was a meeting.", score: 55 },
+    { text: "My thumbs were too cold to type. Both of them. At the same time.", score: 50 },
+    { text: "I literally saw it and thought 'I'll reply in a sec' and then time became an illusion.", score: 78 },
+  ],
+  "1d": [
+    { text: "My phone died and my charger broke and the store was closed. All true. Probably.", score: 55 },
+    { text: "I had a 24-hour migraine. Do not recommend.", score: 70 },
+    { text: "I accidentally left my phone in an Uber and had to file three reports.", score: 62 },
+    { text: "I got locked out of my apartment and spent the entire day at a locksmith's shop learning about tumblers.", score: 48 },
+    { text: "I was dealing with a family emergency. The emergency was that my mom called and she talks a lot.", score: 58 },
+    { text: "I dropped my phone in the toilet. Had to do a rice burial. Held a small funeral.", score: 52 },
+    { text: "I was on an airplane. Where was I going? Good question. I also don't know.", score: 40 },
+    { text: "I was having an existential crisis and your message felt too normal for where my head was at.", score: 45 },
+    { text: "I spent 14 hours trying to cancel a subscription. They kept transferring me.", score: 60 },
+    { text: "I was at the DMV. Yes, the whole day. No, I'm not exaggerating.", score: 75 },
+    { text: "My phone got possessed. It kept opening apps by itself. I had to perform a factory reset exorcism.", score: 42 },
+    { text: "I was trapped in an IKEA. Took me 9 hours to find the exit. Bought a lamp though.", score: 50 },
+  ],
+  "3d": [
+    { text: "I was kidnapped by a very polite cult but I'm fine now.", score: 15 },
+    { text: "I accidentally joined a silent meditation retreat. I didn't know it was 3 days until day 2.", score: 30 },
+    { text: "My evil twin took over my phone and I had to wrestle it back. Long story.", score: 12 },
+    { text: "I got lost in a corn maze. Yes, for three days. The corn was very tall.", score: 10 },
+    { text: "I was helping my neighbor find their escaped parrot. His name is Gerald. He's fine.", score: 35 },
+    { text: "My phone fell into another dimension. I just got it back. Interdimensional shipping is slow.", score: 8 },
+    { text: "I was undercover. Can't say more. Actually I've already said too much.", score: 18 },
+    { text: "I was bitten by a radioactive introvert and lost all desire to communicate.", score: 22 },
+    { text: "I went camping and a bear stole my phone. I negotiated for 2 days. The bear drove a hard bargain.", score: 14 },
+    { text: "I was abducted by aliens who wanted to understand the concept of 'leaving someone on read.' I was their case study.", score: 7 },
+    { text: "I entered a hot dog eating contest on a dare, won, and then spent 3 days regretting it.", score: 28 },
+    { text: "My apartment got haunted and the ghost kept draining my phone battery. I had to hire a medium.", score: 11 },
+  ],
+  "1w": [
+    { text: "I was in witness protection. Brief stint. Turns out I witnessed the wrong thing.", score: 8 },
+    { text: "I fell into a time loop and just broke free. For me it's only been 4 hours.", score: 5 },
+    { text: "I was training a pigeon to carry messages because I thought it'd be more reliable than my phone.", score: 10 },
+    { text: "I started a jigsaw puzzle and couldn't stop until it was finished. It was 5,000 pieces.", score: 20 },
+    { text: "I was stranded on a roundabout and couldn't figure out which exit to take. I'm not great with decisions.", score: 7 },
+    { text: "I was learning to forge swords. It takes longer than the YouTube tutorials suggest.", score: 15 },
+    { text: "My phone screen cracked and every time I tried to type it just ordered things from Amazon.", score: 18 },
+    { text: "I accidentally sailed to international waters on a party boat that went rogue.", score: 9 },
+    { text: "I was held hostage by my own sourdough starter. It demanded constant attention.", score: 22 },
+    { text: "I joined a flash mob that became a slow mob. We're still technically mobbing.", score: 6 },
+    { text: "I got trapped inside a escape room that was too realistic. The fire department had to get involved.", score: 12 },
+    { text: "I was on a digital detox that went too well. I forgot phones existed for a while.", score: 25 },
+  ],
+  "1m": [
+    { text: "I've been living off-grid studying the migration patterns of butterflies.", score: 3 },
+    { text: "I was building a boat by hand. No reason. Just felt like it. The boat sank.", score: 8 },
+    { text: "I entered the wrong airport terminal and ended up on a flight to Peru. Peru is lovely, by the way.", score: 4 },
+    { text: "I went to get milk and accidentally started a new life in a small coastal town. I'm back now.", score: 5 },
+    { text: "I was recruited by a secret society of librarians. Can't say more. The books are watching.", score: 3 },
+    { text: "I fell into a Wikipedia rabbit hole so deep I emerged with a PhD in medieval farming techniques.", score: 7 },
+    { text: "I was trapped in a Costco. There's a civilization in there. They have their own government.", score: 6 },
+    { text: "I was possessed by the ghost of a Victorian gentleman who found texting undignified.", score: 4 },
+    { text: "I accidentally time-traveled to 1987. Had to wait for technology to catch up. Great music though.", score: 2 },
+    { text: "I went through a portal in my closet to a world where phones don't exist. I was their king for a while.", score: 1 },
+    { text: "I was hiking and got adopted by a pack of wolves. We bonded. They don't text either.", score: 5 },
+    { text: "My phone number got reassigned to a fisherman in Norway. We've been pen pals sorting it out.", score: 6 },
+    { text: "I was cryogenically frozen by accident at a spa. The spa has since been shut down.", score: 2 },
+    { text: "I ran away to join the circus. Turns out I'm not good at anything circus-related. I'm back.", score: 8 },
+  ]
+};
+
+let selectedTime = "1h";
+let lastExcuse = null;
+
+// Ghost particles
+const ghostBg = document.getElementById("ghostBg");
+for (let i = 0; i < 15; i++) {
+  const g = document.createElement("div");
+  g.className = "ghost-particle";
+  g.textContent = "\u{1F47B}";
+  g.style.left = Math.random() * 100 + "%";
+  g.style.animationDuration = (12 + Math.random() * 20) + "s";
+  g.style.animationDelay = (Math.random() * 15) + "s";
+  g.style.fontSize = (1 + Math.random() * 2) + "rem";
+  ghostBg.appendChild(g);
+}
+
+// Time selector
+document.getElementById("timeSelector").addEventListener("click", (e) => {
+  if (!e.target.classList.contains("time-btn")) return;
+  document.querySelectorAll(".time-btn").forEach(b => b.classList.remove("active"));
+  e.target.classList.add("active");
+  selectedTime = e.target.dataset.time;
+});
+
+// Generate
+document.getElementById("generateBtn").addEventListener("click", () => {
+  const pool = excuses[selectedTime];
+  let excuse;
+  do {
+    excuse = pool[Math.floor(Math.random() * pool.length)];
+  } while (excuse === lastExcuse && pool.length > 1);
+  lastExcuse = excuse;
+
+  const card = document.getElementById("resultCard");
+  card.classList.remove("visible");
+  void card.offsetWidth; // reflow
+  card.classList.add("visible");
+
+  document.getElementById("excuseText").textContent = '"' + excuse.text + '"';
+  document.getElementById("believabilityPct").textContent = excuse.score + "%";
+
+  const fill = document.getElementById("believabilityFill");
+  fill.style.width = excuse.score + "%";
+  if (excuse.score >= 70) fill.style.background = "linear-gradient(90deg, #4ade80, #22c55e)";
+  else if (excuse.score >= 40) fill.style.background = "linear-gradient(90deg, #facc15, #f59e0b)";
+  else if (excuse.score >= 20) fill.style.background = "linear-gradient(90deg, #fb923c, #ef4444)";
+  else fill.style.background = "linear-gradient(90deg, #ef4444, #dc2626)";
+
+  // Reset copy btn
+  const copyBtn = document.getElementById("copyBtn");
+  copyBtn.classList.remove("copied");
+  copyBtn.innerHTML = "<span>&#x1F4CB;</span> Copy";
+});
+
+// Copy
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const text = lastExcuse ? lastExcuse.text : "";
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.classList.add("copied");
+    btn.innerHTML = "<span>&#x2705;</span> Copied!";
+    showToast("Copied to clipboard!");
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.innerHTML = "<span>&#x1F4CB;</span> Copy";
+    }, 2000);
+  });
+});
+
+// Share
+document.getElementById("shareBtn").addEventListener("click", () => {
+  const text = lastExcuse ? lastExcuse.text : "";
+  if (navigator.share) {
+    navigator.share({ title: "Ghost Excuse", text: text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast("Copied to clipboard for sharing!"));
+  }
+});
+
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2000);
+}
+</script>
+</body>
+</html>

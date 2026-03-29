@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Needy Notify</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #333;
+  }
+  h1 {
+    color: white;
+    font-size: 1.8rem;
+    margin: 20px 0 5px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .subtitle {
+    color: rgba(255,255,255,0.8);
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+  }
+
+  /* Neediness Meter */
+  .meter-container {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 15px 25px;
+    width: 90%;
+    max-width: 420px;
+    margin-bottom: 12px;
+  }
+  .meter-label {
+    color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .meter-level {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.2);
+  }
+  .meter-bar {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    height: 14px;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease, background 1s ease;
+    width: 0%;
+    background: #4ade80;
+  }
+  .timer-display {
+    color: rgba(255,255,255,0.9);
+    font-size: 0.75rem;
+    margin-top: 6px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Chat area */
+  .chat-container {
+    background: #e8e4df;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    margin-bottom: 15px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    max-height: 55vh;
+  }
+  .chat-header {
+    background: #075e54;
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .chat-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #25d366;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .chat-name { font-weight: 600; font-size: 0.95rem; }
+  .chat-status { font-size: 0.7rem; opacity: 0.8; }
+  .typing-indicator {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    display: none;
+  }
+  .typing-indicator.active { display: block; }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4cfc8' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .bubble {
+    max-width: 80%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    position: relative;
+    word-wrap: break-word;
+    animation: popIn 0.3s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .bubble.them {
+    background: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .bubble.me {
+    background: #dcf8c6;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .bubble .time {
+    font-size: 0.6rem;
+    color: #999;
+    text-align: right;
+    margin-top: 4px;
+  }
+  .bubble.essay { font-size: 0.82rem; line-height: 1.5; }
+
+  /* Response button */
+  .response-area {
+    width: 90%;
+    max-width: 420px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 8px;
+  }
+  .btn-respond {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #25d366;
+    color: white;
+    box-shadow: 0 4px 15px rgba(37,211,102,0.4);
+  }
+  .btn-respond:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,211,102,0.5); }
+  .btn-respond:active { transform: scale(0.97); }
+  .btn-respond.panicked {
+    background: #ef4444;
+    box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+    animation: pulse 0.6s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  .btn-ghost {
+    padding: 14px 18px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-radius: 25px;
+    background: transparent;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.15); }
+
+  .stats {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.7rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* Notification badge */
+  .notif-badge {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #ef4444;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.5);
+    display: none;
+    animation: bounce 0.5s ease;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* Scroll */
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="notif-badge" id="badge">0</div>
+
+<h1>Needy Notify</h1>
+<p class="subtitle">Start the timer. Brace yourself.</p>
+
+<div class="meter-container">
+  <div class="meter-label">
+    <span>Neediness Level</span>
+    <span class="meter-level" id="levelLabel">Chill</span>
+  </div>
+  <div class="meter-bar">
+    <div class="meter-fill" id="meterFill"></div>
+  </div>
+  <div class="timer-display" id="timerDisplay">00:00</div>
+</div>
+
+<div class="chat-container">
+  <div class="chat-header">
+    <div class="chat-avatar">😘</div>
+    <div>
+      <div class="chat-name">Your Needy Friend</div>
+      <div class="chat-status" id="chatStatus">Waiting for you...</div>
+      <div class="typing-indicator" id="typingIndicator">typing...</div>
+    </div>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+</div>
+
+<div class="response-area">
+  <button class="btn-respond" id="btnRespond" onclick="respond()">Start Timer</button>
+  <button class="btn-ghost" onclick="clearHistory()">Clear</button>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<script>
+const MESSAGES = {
+  // 0-1 min: sweet opener (10 templates)
+  0: [
+    "Hey :)",
+    "Hiii!",
+    "What's up? :)",
+    "Heyyy you!",
+    "Thinking of you!",
+    "Hi hi hi!",
+    "Knock knock!",
+    "Hola!",
+    "Yo!",
+    "*waves excitedly*"
+  ],
+  // 1-3 min: casual follow-up (8 templates)
+  60: [
+    "Helloooo?",
+    "Did you see my message?",
+    "Just checking if you got that...",
+    "Hey, you there?",
+    "Earth to you!",
+    "Tap tap tap... is this thing on?",
+    "I can see you're online...",
+    "My message didn't get lost did it?"
+  ],
+  // 3-5 min: mild concern (8 templates)
+  180: [
+    "Okay so I guess we're doing this",
+    "It's been 3 minutes. THREE.",
+    "Are you doing that thing where you read it but don't reply?",
+    "I know you saw that. The ticks are blue.",
+    "Fun fact: the average person responds in 90 seconds. Just saying.",
+    "Do I need to send a carrier pigeon?",
+    "Should I call? I'll call. Don't make me call.",
+    "My therapist says I shouldn't count the minutes but... it's been three."
+  ],
+  // 5-10 min: growing anxiety (8 templates)
+  300: [
+    "Okay so 5 minutes. Cool cool cool cool cool.",
+    "I'm not panicking. This is my calm face. You can't see it but trust me.",
+    "I just checked my wifi. It's fine. The problem is YOU.",
+    "Gonna pretend I'm also busy and not staring at my phone.",
+    "I opened Instagram, saw you posted a story, and now I have QUESTIONS.",
+    "Are you in danger? Blink twice. Oh wait, I can't see you because you WON'T RESPOND.",
+    "I've drafted and deleted 4 follow-up messages. This is number 5. It won.",
+    "My screen time report is going to be embarrassing because of you."
+  ],
+  // 10-15 min: escalation (8 templates)
+  600: [
+    "Okay so I Googled 'how long before you can file a missing person report' and it's 24 hours but I feel like exceptions should be made.",
+    "I've now told three friends about this. They all agree you're being weird.",
+    "I literally rearranged my schedule to text you and THIS is what I get?",
+    "I saw you were online 2 minutes ago. TWO MINUTES. What are you DOING that's more important than ME?",
+    "Fine. I'll just sit here. In the dark. Alone. With my thoughts. Which are about YOU not responding.",
+    "My heart rate is elevated. This is a medical event caused by your silence.",
+    "I'm going to start sending voice notes if you don't reply. You've been warned.",
+    "Do you know what it's like to watch a delivered message just... sit there? It's a horror movie."
+  ],
+  // 15-30 min: spiral (8 templates)
+  900: [
+    "I saw you were online at exactly 2:47 and went offline at 2:49 WITHOUT REPLYING TO ME. I have receipts.",
+    "I just scrolled through our entire message history looking for signs I should have seen.",
+    "My friend said maybe you're just busy and I said NOBODY IS THAT BUSY, KAREN.",
+    "I wrote you a poem. It's called 'Read at 2:43 PM.' It's about betrayal.",
+    "I've updated my emergency contacts and removed you. Just so you know.",
+    "I made a pros and cons list about double texting. The pros won but look what you made me become.",
+    "If this is about what I said last Tuesday, I was JOKING and you know that.",
+    "I just stress-ate an entire sleeve of Oreos. I hope you're happy."
+  ],
+  // 30-45 min: existential (6 templates)
+  1800: [
+    "Fine. I guess this is how it ends. Not with a bang, but with a 'delivered' notification.",
+    "You know what, I was going to invite you to this really cool thing but NEVER MIND.",
+    "I've gone through all five stages of grief. I'm at acceptance now. Just kidding, I'm at anger.",
+    "I'm starting to think the 'you' I texted doesn't exist anymore. RIP old you.",
+    "My phone battery is at 12% and I've kept it alive just for you. JUST FOR YOU.",
+    "I just told Siri about you and even SHE was disappointed."
+  ],
+  // 45-60 min: full unravel (6 templates)
+  2700: [
+    "I've created a PowerPoint presentation titled 'Why You Should Respond To Me: A 47-Slide Deck.'",
+    "Just drove past your house. Your lights are on. I KNOW YOU'RE IN THERE.",
+    "I asked ChatGPT why you're not responding and it said 'insufficient data' which is EXACTLY the problem.",
+    "My cat is looking at me with pity. MY CAT. An animal that licks its own butt thinks I deserve better.",
+    "I'm not mad, I'm disappointed. That's worse. My mom taught me that.",
+    "I've composed a haiku:\nMessage sits unread\nBlue ticks mock my very soul\nWhy do you do this"
+  ],
+  // 1+ hour: full essays (6 templates)
+  3600: [
+    "Okay. Sit down. Actually, you're probably already sitting, since you've clearly been comfortable enough to IGNORE ME for an hour. Let me tell you something. We used to talk every day. Remember that? Remember when you'd respond in literal SECONDS? What happened to us? Was it something I said? Was it the meme I sent at 3am? Because that meme was FUNNY and I stand by it. I just need you to know that I've been staring at this chat for 60 minutes and I've gone through a full emotional journey. I started hopeful, became confused, got angry, ate some cheese, cried a little, and now I'm here, writing you this message that you'll probably also ignore. But I want you to know: I WILL be here when you eventually respond at 2am with 'lol sorry I was napping.' I'll be here. Because that's who I am. A GOOD FRIEND.",
+    "Dear [You], I am writing this letter to formally express my displeasure at the current state of our communication. As of this moment, it has been ONE HOUR since my initial correspondence, which I believe was both timely and engaging. Your failure to respond has caused significant emotional distress, loss of productivity, and a concerning increase in my screen time metrics. I have consulted with my advisory board (my group chat) and they have unanimously agreed that your behavior is, quote, 'sus.' I hereby request a formal response within the next 5 minutes or I shall be forced to escalate this matter to your mother. Respectfully (but also very disrespectfully), Your Friend Who Deserves Better.",
+    "You know what? I just realized something. In the time you've been ignoring me, I could have: learned a new language, baked a souffle, completed a 5K, reorganized my entire closet, watched two episodes of anything, built a small bookshelf, and written this unnecessarily long message. But instead, I spent that hour refreshing this chat, checking if my internet was working (it is), and wondering if you've been abducted by aliens who specifically target people who owe me a text back. If the aliens are reading this: please tell them I said hi and also PLEASE RESPOND.",
+    "I've been sitting here for an hour. An HOUR. Do you know how many breaths that is? Approximately 900. I counted. Each one heavier than the last. Each one a tiny sigh of despair. I've reorganized my apps twice, liked every post on my feed, read the terms and conditions of an app (yes, I'm THAT bored and desperate), and considered getting a hobby. But my hobby WAS talking to you. So here we are. In the wreckage. Of what once was a beautiful friendship. All because you couldn't be bothered to type 'lol' or even just 'k'. I would have accepted a 'k'. I would have been GRATEFUL for a 'k'. That's how low the bar is. And you still couldn't clear it.",
+    "BREAKING NEWS: Local person has been waiting for a text back for over an hour. Sources close to the situation describe the mood as 'unhinged but relatable.' The person was last seen refreshing their messages, muttering 'any minute now' with decreasing conviction. Authorities have been notified. A candlelight vigil has been organized. The person's phone battery, much like their hope, is critically low. When asked for comment, the non-responding party was unavailable, presumably because they are TOO BUSY NOT RESPONDING TO ANYONE. More updates to follow. If there ARE any updates. Which there WON'T be. Because you never respond.",
+    "You know what hurts? It's not the not-responding. It's the HOPE. Every time my phone buzzes, my heart does a little jump. 'Is it them? Is it FINALLY them?' And then it's a notification from Duolingo telling me I've broken my streak. You know who ELSE broke a streak? YOU. Our talking streak. Which was 47 days, by the way. I was counting. I had a CALENDAR. And now it's ruined. Like my trust. And my evening. I'm going to go make some tea, sit by the window, stare out into the rain (it's not raining but I'll turn on the shower for ambiance), and contemplate how we got here. To this dark place. This message-less void."
+  ]
+};
+
+// Additional ultra-needy messages after 90 min
+const ULTRA_NEEDY = [
+  "I've started a support group. It's called People You've Ghosted Anonymous. We meet on Tuesdays.",
+  "I just named a houseplant after you. Because it also doesn't communicate.",
+  "My spotify wrapped is going to be '3 hours of staring at a chat bubble' and it's YOUR fault.",
+  "I've hired a skywriter. Look up. Actually don't, you can't be bothered to look DOWN at your phone.",
+  "I've written a 12-part tweet thread about this. It's going viral. You're famous now. You're welcome.",
+  "I just asked my neighbor if they'd seen you respond and they said 'who are you' which is ALSO how you're treating me.",
+  "I'm learning morse code so I can communicate with you through the walls since texting clearly isn't working.",
+  "I called NASA to see if there's a signal delay between us. There isn't. You're just ignoring me.",
+  "I'm going to start a podcast called 'Left On Read' and the first 47 episodes are about YOU.",
+  "I've drafted my autobiography. Chapter 1 is titled 'Before You Stopped Responding.' Chapter 2 is titled 'The Darkness.'"
+];
+
+let timerStarted = false;
+let startTime = null;
+let timerInterval = null;
+let messageCount = 0;
+let lastTierSent = -1;
+let totalIgnoreTime = 0;
+let respondCount = 0;
+
+const tiers = [0, 60, 180, 300, 600, 900, 1800, 2700, 3600];
+const tierNames = ['Chill', 'Curious', 'Concerned', 'Anxious', 'Worried', 'Spiraling', 'Existential', 'Unhinged', 'Full Meltdown'];
+const tierColors = ['#4ade80','#a3e635','#facc15','#fb923c','#f97316','#ef4444','#dc2626','#b91c1c','#7f1d1d'];
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playNotifSound() {
+  try {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(880, audioCtx.currentTime);
+    o.frequency.setValueAtTime(1100, audioCtx.currentTime + 0.08);
+    o.frequency.setValueAtTime(880, audioCtx.currentTime + 0.16);
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+    o.start(audioCtx.currentTime);
+    o.stop(audioCtx.currentTime + 0.3);
+  } catch(e) {}
+}
+
+function playDramaticSound() {
+  try {
+    for (let i = 0; i < 3; i++) {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.type = 'sine';
+      const t = audioCtx.currentTime + i * 0.15;
+      o.frequency.setValueAtTime(600 + i * 200, t);
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+      o.start(t);
+      o.stop(t + 0.15);
+    }
+  } catch(e) {}
+}
+
+function getTimeStr() {
+  const now = new Date();
+  return now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+}
+
+function addBubble(text, isThem = true) {
+  const chat = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'bubble ' + (isThem ? 'them' : 'me');
+  if (text.length > 200) div.classList.add('essay');
+  div.innerHTML = text.replace(/\n/g, '<br>') + '<div class="time">' + getTimeStr() + '</div>';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const ind = document.getElementById('typingIndicator');
+  const stat = document.getElementById('chatStatus');
+  ind.classList.add('active');
+  stat.style.display = 'none';
+  return new Promise(r => setTimeout(() => {
+    ind.classList.remove('active');
+    stat.style.display = 'block';
+    r();
+  }, 800 + Math.random() * 1200));
+}
+
+function getCurrentTier(elapsed) {
+  let tier = 0;
+  for (let i = tiers.length - 1; i >= 0; i--) {
+    if (elapsed >= tiers[i]) { tier = i; break; }
+  }
+  return tier;
+}
+
+function updateMeter(elapsed) {
+  const tier = getCurrentTier(elapsed);
+  const fill = document.getElementById('meterFill');
+  const label = document.getElementById('levelLabel');
+
+  // Calculate percentage within tier progression
+  let pct;
+  if (tier >= tiers.length - 1) {
+    pct = 100;
+  } else {
+    const tierStart = tiers[tier];
+    const tierEnd = tiers[tier + 1];
+    const tierPct = (elapsed - tierStart) / (tierEnd - tierStart);
+    pct = ((tier + tierPct) / (tiers.length - 1)) * 100;
+  }
+
+  fill.style.width = Math.min(pct, 100) + '%';
+  fill.style.background = tierColors[tier];
+  label.textContent = tierNames[tier];
+  label.style.background = tierColors[tier] + '33';
+
+  // Update status
+  const statuses = ['Waiting for you...','Online','Online','Online','Last seen just now','Last seen just now','Online','ONLINE AND WATCHING','STARING AT PHONE'];
+  document.getElementById('chatStatus').textContent = statuses[tier];
+
+  // Update timer display
+  const min = Math.floor(elapsed / 60);
+  const sec = Math.floor(elapsed % 60);
+  document.getElementById('timerDisplay').textContent =
+    min.toString().padStart(2,'0') + ':' + sec.toString().padStart(2,'0') + ' without responding';
+}
+
+function updateBadge() {
+  const badge = document.getElementById('badge');
+  badge.style.display = messageCount > 0 ? 'flex' : 'none';
+  badge.textContent = messageCount;
+}
+
+function updateStats() {
+  document.getElementById('stats').textContent =
+    'Messages ignored: ' + messageCount + ' | Times responded: ' + respondCount +
+    ' | Total ignore time: ' + Math.floor(totalIgnoreTime / 60) + 'm ' + Math.floor(totalIgnoreTime % 60) + 's';
+}
+
+async function sendMessage(text) {
+  await showTyping();
+  addBubble(text);
+  messageCount++;
+  updateBadge();
+  const tier = getCurrentTier((Date.now() - startTime) / 1000);
+  if (tier >= 6) playDramaticSound();
+  else playNotifSound();
+
+  // Vibrate if available
+  if (navigator.vibrate) navigator.vibrate(200);
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+async function checkAndSend() {
+  if (!timerStarted || !startTime) return;
+  const elapsed = (Date.now() - startTime) / 1000;
+  updateMeter(elapsed);
+
+  // Determine which tier we're in
+  const tier = getCurrentTier(elapsed);
+
+  if (tier > lastTierSent) {
+    lastTierSent = tier;
+    const tierKey = tiers[tier];
+    const msgs = MESSAGES[tierKey];
+    if (msgs) {
+      await sendMessage(pickRandom(msgs));
+    }
+  }
+
+  // After all tiers, send ultra-needy every 10 minutes
+  if (elapsed > 3600) {
+    const extraMsgs = Math.floor((elapsed - 3600) / 600);
+    const totalExpected = tiers.length + extraMsgs;
+    if (messageCount < totalExpected && messageCount < tiers.length + ULTRA_NEEDY.length) {
+      const idx = messageCount - tiers.length;
+      if (idx >= 0 && idx < ULTRA_NEEDY.length) {
+        await sendMessage(ULTRA_NEEDY[idx]);
+      }
+    }
+  }
+
+  // Update respond button urgency
+  const btn = document.getElementById('btnRespond');
+  if (tier >= 5) {
+    btn.classList.add('panicked');
+    btn.textContent = "I'M HERE! PLEASE STOP!";
+  } else if (tier >= 3) {
+    btn.textContent = "I'm Here! I'm Here!";
+  } else {
+    btn.textContent = "I'm Here!";
+    btn.classList.remove('panicked');
+  }
+
+  updateStats();
+}
+
+function startTimer() {
+  if (timerStarted) return;
+  timerStarted = true;
+  startTime = Date.now();
+  lastTierSent = -1;
+  messageCount = 0;
+
+  const btn = document.getElementById('btnRespond');
+  btn.textContent = "I'm Here!";
+
+  // Resume audio context on user gesture
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // Send first message immediately
+  setTimeout(() => checkAndSend(), 500);
+
+  // Check every 2 seconds
+  timerInterval = setInterval(checkAndSend, 2000);
+}
+
+function respond() {
+  if (!timerStarted) {
+    startTimer();
+    return;
+  }
+
+  const elapsed = (Date.now() - startTime) / 1000;
+  totalIgnoreTime += elapsed;
+  respondCount++;
+
+  // Send a response
+  addBubble("I'm here! I'm sorry!", false);
+
+  // They respond with relief / guilt trip
+  const reliefMessages = [
+    "OH NOW you respond. Cool. Cool cool cool.",
+    "FINALLY. I was about to call the police.",
+    "Oh hi! I'm fine! I wasn't worried at all! *deletes 47 drafted messages*",
+    "Wow. " + Math.floor(elapsed) + " seconds. That's how much our friendship is worth to you.",
+    "I forgive you. But I'll never forget.",
+    "Oh thank GOD. My therapist will be so relieved.",
+    "Welcome back. I saved you some emotional damage.",
+    "You're alive! Quick, validate my existence!",
+    "*aggressive hug* Don't you EVER do that to me again.",
+    "I already planned your memorial service but FINE, I'll cancel it."
+  ];
+
+  setTimeout(async () => {
+    await sendMessage(pickRandom(reliefMessages));
+    // Reset
+    clearInterval(timerInterval);
+    timerStarted = false;
+    startTime = null;
+    lastTierSent = -1;
+    messageCount = 0;
+
+    const btn = document.getElementById('btnRespond');
+    btn.textContent = 'Start Timer';
+    btn.classList.remove('panicked');
+
+    document.getElementById('meterFill').style.width = '0%';
+    document.getElementById('meterFill').style.background = '#4ade80';
+    document.getElementById('levelLabel').textContent = 'Chill';
+    document.getElementById('timerDisplay').textContent = '00:00';
+    document.getElementById('chatStatus').textContent = 'Waiting for you...';
+    updateBadge();
+    updateStats();
+  }, 1500);
+}
+
+function clearHistory() {
+  document.getElementById('chatMessages').innerHTML = '';
+  messageCount = 0;
+  totalIgnoreTime = 0;
+  respondCount = 0;
+  updateBadge();
+  updateStats();
+  if (timerStarted) {
+    clearInterval(timerInterval);
+    timerStarted = false;
+    startTime = null;
+    lastTierSent = -1;
+    const btn = document.getElementById('btnRespond');
+    btn.textContent = 'Start Timer';
+    btn.classList.remove('panicked');
+    document.getElementById('meterFill').style.width = '0%';
+    document.getElementById('levelLabel').textContent = 'Chill';
+    document.getElementById('timerDisplay').textContent = '00:00';
+  }
+}
+</script>
+</body>
+</html>

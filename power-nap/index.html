@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Power Nap</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a1628;
+    --card: #111d35;
+    --accent: #3b82f6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background 1s, color 0.5s;
+    overflow-x: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  body.alarm-phase {
+    --bg: #1a0000;
+    --card: #2d0a0a;
+    --accent: #ef4444;
+  }
+
+  body.alarm-phase .timer-display {
+    animation: pulse-red 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-red {
+    from { color: #ef4444; text-shadow: 0 0 20px #ef444466; }
+    to { color: #ff6b6b; text-shadow: 0 0 40px #ef4444aa; }
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.08); opacity: 1; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+
+  header {
+    padding: 2rem 1rem 0.5rem;
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .nap-count {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .screen { display: none; width: 100%; max-width: 400px; padding: 1rem; flex: 1; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+  /* -- Setup Screen -- */
+  .duration-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    width: 100%;
+    margin: 2rem 0;
+  }
+
+  .dur-btn {
+    background: var(--card);
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+
+  .dur-btn span {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .dur-btn.selected {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 15%, var(--card));
+  }
+
+  .dur-btn:active { transform: scale(0.96); }
+
+  .nap-now-btn {
+    width: 100%;
+    padding: 1.25rem;
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: auto;
+    margin-bottom: 2rem;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .nap-now-btn:active { transform: scale(0.97); }
+
+  /* -- Timer Screen -- */
+  .timer-circle {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    margin: 2rem auto;
+  }
+
+  .timer-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .timer-ring-bg { stroke: #1e293b; }
+  .timer-ring-fg {
+    stroke: var(--accent);
+    transition: stroke-dashoffset 1s linear, stroke 1s;
+    filter: drop-shadow(0 0 6px var(--accent));
+  }
+
+  .timer-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+
+  .timer-label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .breathing-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin: 1.5rem auto;
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  .cancel-btn {
+    background: none;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    color: var(--muted);
+    padding: 0.75rem 2rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: auto;
+    margin-bottom: 2rem;
+  }
+
+  /* -- Alarm Screen -- */
+  #alarm-screen {
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .alarm-emoji {
+    font-size: 5rem;
+    animation: shake 0.3s ease-in-out infinite;
+  }
+
+  .alarm-text {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .alarm-level {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .alarm-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .stop-btn {
+    padding: 1.25rem;
+    border: none;
+    border-radius: 16px;
+    background: #ef4444;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .snooze-btn {
+    padding: 1rem;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    background: transparent;
+    color: var(--text);
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .snooze-btn:disabled {
+    opacity: 0.3;
+    text-decoration: line-through;
+  }
+
+  /* -- Rating Screen -- */
+  #rating-screen { justify-content: center; gap: 1.5rem; }
+
+  .rating-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .rating-stars {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .star-btn {
+    background: none;
+    border: none;
+    font-size: 3rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+    filter: grayscale(1) opacity(0.4);
+  }
+
+  .star-btn.lit { filter: none; }
+  .star-btn:active { transform: scale(1.2); }
+
+  .nap-stats {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .done-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 16px;
+    background: var(--accent);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Power Nap</h1>
+  <div class="nap-count" id="nap-count"></div>
+</header>
+
+<!-- Setup -->
+<div class="screen active" id="setup-screen">
+  <div class="duration-grid">
+    <button class="dur-btn" data-min="5">5<span>micro nap</span></button>
+    <button class="dur-btn" data-min="10">10<span>quick rest</span></button>
+    <button class="dur-btn selected" data-min="15">15<span>sweet spot</span></button>
+    <button class="dur-btn" data-min="20">20<span>full cycle</span></button>
+  </div>
+  <button class="nap-now-btn" id="nap-now">Nap Now</button>
+</div>
+
+<!-- Timer -->
+<div class="screen" id="timer-screen">
+  <div class="timer-circle">
+    <svg class="timer-ring" viewBox="0 0 260 260">
+      <circle class="timer-ring-bg" cx="130" cy="130" r="115" fill="none" stroke-width="8"/>
+      <circle class="timer-ring-fg" id="ring-fg" cx="130" cy="130" r="115" fill="none"
+              stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="722.57" stroke-dashoffset="0"/>
+    </svg>
+    <div class="timer-display" id="timer-display">15:00</div>
+  </div>
+  <div class="timer-label" id="timer-label">sweet dreams...</div>
+  <div class="breathing-dot" id="breathing-dot"></div>
+  <button class="cancel-btn" id="cancel-btn">Cancel</button>
+</div>
+
+<!-- Alarm -->
+<div class="screen" id="alarm-screen">
+  <div class="alarm-emoji" id="alarm-emoji">&#x23F0;</div>
+  <div class="alarm-text" id="alarm-text">Wake Up!</div>
+  <div class="alarm-level" id="alarm-level">gentle chime</div>
+  <div class="alarm-buttons">
+    <button class="stop-btn" id="stop-btn">I'm Awake!</button>
+    <button class="snooze-btn" id="snooze-btn">5 More Minutes</button>
+  </div>
+</div>
+
+<!-- Rating -->
+<div class="screen" id="rating-screen">
+  <div class="rating-title">How was your nap?</div>
+  <div class="rating-stars" id="rating-stars">
+    <button class="star-btn" data-v="1">&#x2B50;</button>
+    <button class="star-btn" data-v="2">&#x2B50;</button>
+    <button class="star-btn" data-v="3">&#x2B50;</button>
+    <button class="star-btn" data-v="4">&#x2B50;</button>
+    <button class="star-btn" data-v="5">&#x2B50;</button>
+  </div>
+  <div class="nap-stats" id="nap-stats"></div>
+  <button class="done-btn" id="done-btn">Done</button>
+</div>
+
+<script>
+// --- State ---
+let selectedMin = 15;
+let totalSec = 0;
+let remainSec = 0;
+let timerId = null;
+let alarmPhase = 0; // 0=gentle, 1=louder, 2=airhorn, 3=scream
+let alarmTimers = [];
+let snoozeUsed = false;
+let audioCtx = null;
+let droneNodes = [];
+let alarmOsc = null;
+let rating = 0;
+
+// --- LocalStorage ---
+function getNaps() {
+  try { return JSON.parse(localStorage.getItem('powernaps') || '[]'); }
+  catch { return []; }
+}
+function saveNap(entry) {
+  const naps = getNaps();
+  naps.push(entry);
+  localStorage.setItem('powernaps', JSON.stringify(naps));
+}
+function updateCount() {
+  const n = getNaps().length;
+  document.getElementById('nap-count').textContent = n ? `${n} nap${n !== 1 ? 's' : ''} logged` : 'your first nap awaits';
+}
+updateCount();
+
+// --- Screen Nav ---
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// --- Duration Buttons ---
+document.querySelectorAll('.dur-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedMin = parseInt(btn.dataset.min);
+  });
+});
+
+// --- Web Audio: Ambient Drone ---
+function startDrone() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const freqs = [110, 165, 220];
+  freqs.forEach(f => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    gain.gain.value = 0.03;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    droneNodes.push({ osc, gain });
+  });
+}
+
+function stopDrone() {
+  droneNodes.forEach(n => {
+    try { n.gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5); } catch {}
+    try { n.osc.stop(audioCtx.currentTime + 0.6); } catch {}
+  });
+  droneNodes = [];
+}
+
+// --- Alarm Sounds ---
+function playChime(loud) {
+  if (!audioCtx) return;
+  const vol = loud ? 0.4 : 0.15;
+  const freq = loud ? 880 : 660;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  gain.gain.value = vol;
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (loud ? 1.5 : 1));
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + (loud ? 1.5 : 1));
+  // Double chime
+  setTimeout(() => {
+    const o2 = audioCtx.createOscillator();
+    const g2 = audioCtx.createGain();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 1.25;
+    g2.gain.value = vol;
+    g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+    o2.connect(g2);
+    g2.connect(audioCtx.destination);
+    o2.start();
+    o2.stop(audioCtx.currentTime + 0.8);
+  }, 200);
+}
+
+function playAirHorn() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const osc2 = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const dist = audioCtx.createWaveShaperFunction ? null : audioCtx.createWaveShaper();
+
+  osc.type = 'sawtooth';
+  osc.frequency.value = 440;
+  osc2.type = 'square';
+  osc2.frequency.value = 443;
+  gain.gain.value = 0.5;
+
+  osc.connect(gain);
+  osc2.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc2.start();
+
+  // Sweep
+  osc.frequency.linearRampToValueAtTime(520, audioCtx.currentTime + 0.1);
+  osc2.frequency.linearRampToValueAtTime(523, audioCtx.currentTime + 0.1);
+
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2);
+  osc.stop(audioCtx.currentTime + 2);
+  osc2.stop(audioCtx.currentTime + 2);
+}
+
+function speakWakeUp() {
+  if (!('speechSynthesis' in window)) return;
+  const utter = new SpeechSynthesisUtterance('WAKE UP! WAKE UP! WAKE UP NOW!');
+  utter.rate = 1.3;
+  utter.pitch = 1.5;
+  utter.volume = 1;
+  speechSynthesis.speak(utter);
+}
+
+// Repeating alarm
+let alarmRepeatId = null;
+function startAlarmSound(phase) {
+  stopAlarmSound();
+  const play = () => {
+    if (phase === 0) playChime(false);
+    else if (phase === 1) playChime(true);
+    else if (phase === 2) playAirHorn();
+    else { playAirHorn(); speakWakeUp(); }
+  };
+  play();
+  alarmRepeatId = setInterval(play, phase >= 2 ? 3000 : 2000);
+}
+
+function stopAlarmSound() {
+  if (alarmRepeatId) { clearInterval(alarmRepeatId); alarmRepeatId = null; }
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+}
+
+// --- Timer ---
+function fmt(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+const CIRCUM = 2 * Math.PI * 115; // ~722.57
+
+function startTimer() {
+  totalSec = selectedMin * 60;
+  remainSec = totalSec;
+  snoozeUsed = false;
+  alarmPhase = 0;
+  rating = 0;
+
+  document.getElementById('timer-display').textContent = fmt(remainSec);
+  document.getElementById('ring-fg').style.strokeDashoffset = '0';
+  document.getElementById('timer-label').textContent = 'sweet dreams...';
+  document.getElementById('breathing-dot').style.display = '';
+  document.body.classList.remove('alarm-phase');
+
+  showScreen('timer-screen');
+  startDrone();
+
+  timerId = setInterval(() => {
+    remainSec--;
+    if (remainSec < 0) remainSec = 0;
+    document.getElementById('timer-display').textContent = fmt(remainSec);
+    const progress = 1 - (remainSec / totalSec);
+    document.getElementById('ring-fg').style.strokeDashoffset = (CIRCUM * (1 - progress)).toString();
+
+    if (remainSec <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      stopDrone();
+      triggerAlarm();
+    }
+  }, 1000);
+}
+
+function cancelTimer() {
+  if (timerId) { clearInterval(timerId); timerId = null; }
+  stopDrone();
+  stopAlarmSound();
+  alarmTimers.forEach(t => clearTimeout(t));
+  alarmTimers = [];
+  document.body.classList.remove('alarm-phase');
+  showScreen('setup-screen');
+}
+
+// --- Alarm Escalation ---
+function triggerAlarm() {
+  document.body.classList.add('alarm-phase');
+  showScreen('alarm-screen');
+  document.getElementById('snooze-btn').disabled = snoozeUsed;
+  document.getElementById('snooze-btn').textContent = snoozeUsed ? 'No more snooze' : '5 More Minutes';
+
+  setAlarmPhase(0);
+
+  // Escalation schedule
+  alarmTimers.push(setTimeout(() => setAlarmPhase(1), 30000));  // 30s
+  alarmTimers.push(setTimeout(() => setAlarmPhase(2), 60000));  // 1 min
+  alarmTimers.push(setTimeout(() => setAlarmPhase(3), 120000)); // 2 min
+}
+
+function setAlarmPhase(phase) {
+  alarmPhase = phase;
+  const labels = ['gentle chime', 'getting louder...', 'AIR HORN', 'SCREAMING AT YOU'];
+  const emojis = ['\u23F0', '\uD83D\uDD14', '\uD83D\uDCE3', '\uD83D\uDE31'];
+  const texts = ['Wake Up!', 'Hey, Wake Up!', 'WAKE UP!!', 'WAKE UP RIGHT NOW!!!'];
+
+  document.getElementById('alarm-level').textContent = labels[phase] || labels[3];
+  document.getElementById('alarm-emoji').textContent = emojis[phase] || emojis[3];
+  document.getElementById('alarm-text').textContent = texts[phase] || texts[3];
+
+  startAlarmSound(phase);
+
+  if (phase >= 2) {
+    document.getElementById('alarm-emoji').style.animation = 'shake 0.15s ease-in-out infinite';
+  }
+}
+
+// --- Stop / Snooze ---
+document.getElementById('stop-btn').addEventListener('click', () => {
+  stopAlarmSound();
+  alarmTimers.forEach(t => clearTimeout(t));
+  alarmTimers = [];
+  document.body.classList.remove('alarm-phase');
+  showRating();
+});
+
+document.getElementById('snooze-btn').addEventListener('click', () => {
+  if (snoozeUsed) return;
+  snoozeUsed = true;
+  stopAlarmSound();
+  alarmTimers.forEach(t => clearTimeout(t));
+  alarmTimers = [];
+  document.body.classList.remove('alarm-phase');
+
+  // 5 min snooze timer
+  totalSec = 300;
+  remainSec = 300;
+  document.getElementById('timer-display').textContent = fmt(remainSec);
+  document.getElementById('ring-fg').style.strokeDashoffset = '0';
+  document.getElementById('timer-label').textContent = '5 more minutes...';
+  document.getElementById('breathing-dot').style.display = '';
+  showScreen('timer-screen');
+  startDrone();
+
+  timerId = setInterval(() => {
+    remainSec--;
+    if (remainSec < 0) remainSec = 0;
+    document.getElementById('timer-display').textContent = fmt(remainSec);
+    const progress = 1 - (remainSec / totalSec);
+    document.getElementById('ring-fg').style.strokeDashoffset = (CIRCUM * (1 - progress)).toString();
+    if (remainSec <= 0) {
+      clearInterval(timerId);
+      timerId = null;
+      stopDrone();
+      triggerAlarm();
+    }
+  }, 1000);
+});
+
+// --- Rating ---
+function showRating() {
+  showScreen('rating-screen');
+  rating = 0;
+  document.querySelectorAll('.star-btn').forEach(b => b.classList.remove('lit'));
+
+  const naps = getNaps();
+  const total = naps.length + 1; // including this one about to be saved
+  const totalMin = naps.reduce((s, n) => s + (n.min || 0), 0) + selectedMin;
+  document.getElementById('nap-stats').innerHTML =
+    `This will be nap #${total}<br>${totalMin} total minutes of rest`;
+}
+
+document.querySelectorAll('.star-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    rating = parseInt(btn.dataset.v);
+    document.querySelectorAll('.star-btn').forEach(b => {
+      b.classList.toggle('lit', parseInt(b.dataset.v) <= rating);
+    });
+  });
+});
+
+document.getElementById('done-btn').addEventListener('click', () => {
+  saveNap({
+    min: selectedMin + (snoozeUsed ? 5 : 0),
+    rating: rating || null,
+    snoozed: snoozeUsed,
+    ts: Date.now()
+  });
+  updateCount();
+  showScreen('setup-screen');
+});
+
+// --- Start ---
+document.getElementById('nap-now').addEventListener('click', startTimer);
+document.getElementById('cancel-btn').addEventListener('click', cancelTimer);
+
+// Keep screen awake via wake lock API (best effort)
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      await navigator.wakeLock.request('screen');
+    }
+  } catch {}
+}
+</script>
+</body>
+</html>

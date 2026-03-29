@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OVERDRIVE - Motivational Speech Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&family=Anton&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #fff;
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-pulse {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(ellipse at center, rgba(180,0,0,0.15) 0%, transparent 70%);
+    animation: bgPulse 4s ease-in-out infinite;
+    pointer-events: none; z-index: 0;
+  }
+  @keyframes bgPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 700px; margin: 0 auto; padding: 30px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 25px;
+  }
+
+  h1 {
+    font-family: 'Anton', sans-serif;
+    font-size: clamp(3rem, 10vw, 5rem);
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ff1a1a 0%, #8b0000 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 40px rgba(255,0,0,0.3);
+    letter-spacing: 4px;
+    animation: titleGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes titleGlow {
+    from { filter: drop-shadow(0 0 10px rgba(255,0,0,0.5)); }
+    to { filter: drop-shadow(0 0 30px rgba(255,0,0,0.8)); }
+  }
+
+  .subtitle {
+    font-size: 0.9rem; color: #666; text-transform: uppercase; letter-spacing: 6px;
+    margin-top: -15px;
+  }
+
+  .input-area {
+    width: 100%; position: relative;
+  }
+  .input-area input {
+    width: 100%; padding: 18px 20px; font-size: 1.1rem;
+    background: #1a1a1a; border: 2px solid #333; border-radius: 8px;
+    color: #fff; font-family: 'Oswald', sans-serif;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    outline: none;
+  }
+  .input-area input:focus {
+    border-color: #cc0000;
+    box-shadow: 0 0 20px rgba(200,0,0,0.3);
+  }
+  .input-area input::placeholder { color: #555; }
+
+  .btn-motivate {
+    width: 100%; padding: 18px; font-size: 1.4rem; font-weight: 700;
+    font-family: 'Anton', sans-serif; letter-spacing: 3px;
+    background: linear-gradient(135deg, #cc0000, #8b0000);
+    color: #fff; border: none; border-radius: 8px; cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(200,0,0,0.4);
+  }
+  .btn-motivate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(200,0,0,0.6);
+  }
+  .btn-motivate:active { transform: translateY(1px); }
+  .btn-motivate:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Motivation Level Meter */
+  .meter-section {
+    width: 100%; text-align: center;
+  }
+  .meter-label {
+    font-size: 0.8rem; text-transform: uppercase; letter-spacing: 4px; color: #888;
+    margin-bottom: 8px;
+  }
+  .meter-bar {
+    width: 100%; height: 30px; background: #1a1a1a; border-radius: 15px;
+    overflow: hidden; border: 1px solid #333; position: relative;
+  }
+  .meter-fill {
+    height: 100%; width: 0%; border-radius: 15px;
+    background: linear-gradient(90deg, #8b0000, #cc0000, #ff3300, #ff6600, #ffcc00);
+    transition: width 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  .meter-fill::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .meter-value {
+    font-family: 'Anton', sans-serif; font-size: 2rem; color: #cc0000;
+    margin-top: 5px;
+  }
+  .meter-desc {
+    font-size: 0.85rem; color: #666; text-transform: uppercase; letter-spacing: 2px;
+  }
+
+  /* Speech Output */
+  .speech-box {
+    width: 100%; min-height: 200px; padding: 30px;
+    background: linear-gradient(135deg, #1a0000 0%, #0d0d0d 50%, #1a0000 100%);
+    border: 1px solid #330000; border-radius: 12px;
+    font-size: 1.2rem; line-height: 1.8;
+    display: none; position: relative; overflow: hidden;
+  }
+  .speech-box.visible { display: block; animation: speechIn 0.5s ease-out; }
+  @keyframes speechIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .speech-box .highlight {
+    color: #ff3333; font-weight: 700; text-transform: uppercase;
+  }
+  .speech-box .task-echo {
+    color: #ffcc00; font-style: italic;
+  }
+
+  /* Controls row */
+  .controls {
+    width: 100%; display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .btn-secondary {
+    flex: 1; min-width: 120px; padding: 12px; font-size: 0.9rem;
+    font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 2px;
+    background: #1a1a1a; color: #aaa; border: 1px solid #333;
+    border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-secondary:hover { background: #2a2a2a; color: #fff; border-color: #555; }
+
+  /* Screen shake */
+  .shaking { animation: shake 0.5s ease-in-out; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 50%, 90% { transform: translateX(-4px); }
+    30%, 70% { transform: translateX(4px); }
+  }
+
+  /* Flash overlay */
+  .flash {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #cc0000; pointer-events: none; z-index: 100;
+    animation: flashAnim 0.4s ease-out forwards;
+  }
+  @keyframes flashAnim {
+    from { opacity: 0.6; }
+    to { opacity: 0; }
+  }
+
+  /* Particles */
+  .particle {
+    position: fixed; pointer-events: none; z-index: 50;
+    font-size: 1.5rem; animation: particleRise 2s ease-out forwards;
+  }
+  @keyframes particleRise {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-200px) scale(0.3); }
+  }
+
+  footer {
+    text-align: center; color: #333; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 3px; padding: 20px 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-pulse"></div>
+
+<div class="container">
+  <h1>OVERDRIVE</h1>
+  <p class="subtitle">Epic speeches for mundane tasks</p>
+
+  <div class="input-area">
+    <input type="text" id="taskInput" placeholder="What do you need to do? (e.g. I need to do laundry)" autofocus>
+  </div>
+
+  <button class="btn-motivate" id="motivateBtn" onclick="generateSpeech()">MOTIVATE ME</button>
+
+  <div class="meter-section">
+    <div class="meter-label">Motivation Level</div>
+    <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+    <div class="meter-value" id="meterValue">0%</div>
+    <div class="meter-desc" id="meterDesc">awaiting mission</div>
+  </div>
+
+  <div class="speech-box" id="speechBox"></div>
+
+  <div class="controls">
+    <button class="btn-secondary" onclick="speakSpeech()">&#128266; Hear It</button>
+    <button class="btn-secondary" onclick="generateSpeech()">&#9889; Another One</button>
+    <button class="btn-secondary" onclick="shareSpeech()">&#128279; Share</button>
+  </div>
+
+  <footer>No task too small. No speech too epic.</footer>
+</div>
+
+<script>
+// ---- Audio: synthesized epic sting ----
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+
+function playEpicSting() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0.25, now);
+  master.connect(ctx.destination);
+
+  // Power chord: low fifth
+  [82.41, 123.47, 164.81].forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = i === 0 ? 'sawtooth' : 'square';
+    osc.frequency.setValueAtTime(freq, now);
+    g.gain.setValueAtTime(0.15, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+    osc.connect(g); g.connect(master);
+    osc.start(now); osc.stop(now + 2.5);
+  });
+
+  // Rising dramatic hit
+  const hit = ctx.createOscillator();
+  const hitG = ctx.createGain();
+  hit.type = 'sawtooth';
+  hit.frequency.setValueAtTime(110, now + 0.8);
+  hit.frequency.exponentialRampToValueAtTime(440, now + 1.3);
+  hitG.gain.setValueAtTime(0.2, now + 0.8);
+  hitG.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+  hit.connect(hitG); hitG.connect(master);
+  hit.start(now + 0.8); hit.stop(now + 2.0);
+
+  // Timpani-like boom
+  const boom = ctx.createOscillator();
+  const boomG = ctx.createGain();
+  boom.type = 'sine';
+  boom.frequency.setValueAtTime(60, now);
+  boom.frequency.exponentialRampToValueAtTime(30, now + 1.5);
+  boomG.gain.setValueAtTime(0.3, now);
+  boomG.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+  boom.connect(boomG); boomG.connect(master);
+  boom.start(now); boom.stop(now + 1.5);
+
+  // White noise crash
+  const bufSize = ctx.sampleRate * 2;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = ctx.createBufferSource();
+  noise.buffer = buf;
+  const noiseG = ctx.createGain();
+  noiseG.gain.setValueAtTime(0.08, now);
+  noiseG.gain.exponentialRampToValueAtTime(0.001, now + 1.5);
+  const noiseF = ctx.createBiquadFilter();
+  noiseF.type = 'lowpass'; noiseF.frequency.value = 800;
+  noise.connect(noiseF); noiseF.connect(noiseG); noiseG.connect(master);
+  noise.start(now); noise.stop(now + 1.5);
+}
+
+// ---- Speech templates (50+) ----
+function extractTask(input) {
+  let t = input.trim();
+  t = t.replace(/^(i need to|i have to|i should|i gotta|i must|i want to|gonna|going to|time to|let me|help me)\s+/i, '');
+  t = t.replace(/[.!?]+$/, '');
+  return t || input;
+}
+
+function getTemplates(task) {
+  const T = task;
+  const TU = task.toUpperCase();
+  return [
+    // 1-10
+    `TODAY IS THE DAY. The ${T} has been waiting. It has TESTED you. But you are NOT your excuses. You are a WARRIOR. Rise. Conquer. ${TU}.`,
+    `Listen to me. Every great champion in history had ONE moment where they had to ${T}. This is YOUR moment. The universe didn't put you here to be AVERAGE. It put you here to ${TU} like nobody has EVER done before.`,
+    `They said you couldn't do it. They LAUGHED. "Look at them," they whispered, "they'll never ${T}." But what do THEY know? NOTHING. You were FORGED in fire. Now GO. ${TU}. And make them WEEP.`,
+    `Close your eyes. Breathe. Feel the POWER coursing through your veins. You were born for this. Every moment of your life has led to this EXACT second where you ${T}. This is DESTINY.`,
+    `A lion does not concern itself with the opinions of sheep. And YOU, you magnificent BEAST, are about to ${T} with the ferocity of a THOUSAND lions. The world is NOT ready. But you ARE.`,
+    `Right now, somewhere out there, someone is WISHING they could ${T}. But they CAN'T. You know why? Because the PRIVILEGE of this task was given to YOU. Do not waste this GIFT. ATTACK.`,
+    `The clock is ticking. Every second you wait is a second your ENEMIES gain ground. They are out there, doing their ${T}, POORLY. But you? You will ${T} with EXCELLENCE. With FURY. With PURPOSE.`,
+    `I want you to look in the mirror. See that person? That person is about to ${T} so HARD that the very FOUNDATIONS of reality will TREMBLE. You are not just doing a task. You are making HISTORY.`,
+    `Pain is temporary. ${TU} is FOREVER. When you are old and gray, you will look back at this moment and say, "THAT was the day I chose GREATNESS." Now MOVE.`,
+    `The ancient warriors of Sparta would have been HONORED to ${T}. Alexander the Great DREAMED of this opportunity. And here you are, with it RIGHT in front of you. SEIZE IT.`,
+    // 11-20
+    `Let me tell you something about ${T}. It's not just a task. It's a BATTLE CRY. It's a DECLARATION to the universe that you REFUSE to be ordinary. Now stand up and FIGHT.`,
+    `You know what separates the GREAT from the mediocre? The GREAT ${T} when nobody is watching. They ${T} when it's HARD. They ${T} when every fiber of their being says "not today." But today IS the day.`,
+    `Imagine a world where you have already completed ${T}. Feel that? That's VICTORY. That's the sweet taste of TRIUMPH. Now make it REAL. No more dreaming. ACTION.`,
+    `There are seven BILLION people on this planet. And right now, in this moment, YOU have been chosen to ${T}. That's not coincidence. That's not luck. That's FATE calling your NAME.`,
+    `The mountain does not move for the timid. The ocean does not part for the weak. But YOU are neither timid NOR weak. You are a FORCE OF NATURE. And you are about to ${T} like the world has NEVER seen.`,
+    `Every champion was once a contender who refused to give up. Every legend was once just someone who needed to ${T}. The only difference between you and a legend is THIS MOMENT. Take it. OWN IT.`,
+    `I have seen armies march. I have seen empires RISE. But NOTHING compares to the raw, unstoppable POWER of someone who has decided to ${T}. You are that someone. NOW GO.`,
+    `Weakness? Left the building. Doubt? OBLITERATED. Fear? It took one look at you preparing to ${T} and it RAN. You are INEVITABLE. You are UNSTOPPABLE. BEGIN.`,
+    `The phoenix doesn't ask permission to rise from the ashes. And YOU don't need permission to ${T}. You just need the WILL. And I can see it in your EYES. You have it. UNLEASH IT.`,
+    `In the grand tapestry of human achievement, there will be a golden thread. That thread is YOU, right now, choosing to ${T} with every ounce of your BEING. This is your LEGACY.`,
+    // 21-30
+    `Do you hear that? That's the sound of GREATNESS calling. It's saying your name. It's telling you to ${T} RIGHT NOW. Don't leave greatness on VOICEMAIL. ANSWER THE CALL.`,
+    `Scientists say we only use 10% of our brains. But when you ${T}? You're going to use ALL of it. Every neuron. Every synapse. FIRING. This is FULL POWER mode. ENGAGE.`,
+    `Rocky didn't climb those steps for NOTHING. He climbed them so that ONE DAY, someone like YOU would be inspired to ${T}. You are the CONTINUATION of that legacy. Now RUN.`,
+    `The samurai had a code: honor, discipline, ${T}. Okay maybe not that last one. But they WOULD have, if they'd known how EPIC you'd be at it. DRAW YOUR SWORD.`,
+    `Right now, in a parallel universe, a version of you DIDN'T ${T}. That version is MISERABLE. That version has REGRETS. But not YOU. Not in THIS timeline. HERE, you CONQUER.`,
+    `The stars aligned for this moment. Jupiter is in retrograde. Mercury is doing... whatever Mercury does. The POINT is: the cosmos DEMANDS that you ${T}. Who are you to defy the COSMOS?`,
+    `Somewhere, a motivational poster on a wall in a corporate office is CRYING because it will never be as inspiring as YOU, right now, deciding to ${T}. You are BETTER than a sunset over a mountain.`,
+    `History books are FILLED with people who almost gave up. But they DIDN'T. And now you stand at that same crossroads. ${TU} or surrender. And you do NOT look like someone who SURRENDERS.`,
+    `You want to know the secret to life? The REAL secret? It's this: ${T}. That's it. That's the whole thing. The monks on the mountain will CONFIRM. Now GO, enlightened one.`,
+    `When they carve your statue -- and they WILL carve your statue -- the plaque will read: "Here stands the one who dared to ${T} when the world said it couldn't be done." BEAUTIFUL.`,
+    // 31-40
+    `Break it down. What is ${T}? It's just a series of MOVES. And you? You are a CHESS GRANDMASTER of life. Every move calculated. Every step DEVASTATING. Checkmate is INEVITABLE.`,
+    `If ${T} was easy, EVERYONE would do it. But it's NOT easy. It requires GRIT. It requires DETERMINATION. It requires someone EXACTLY like you. You were CUSTOM BUILT for this.`,
+    `The gladiators of Rome entered the arena with one thought: VICTORY. Today, your arena is ${T}. Your weapon is your WILL. Your shield is your DETERMINATION. Enter the arena. FIGHT.`,
+    `Let's get ONE thing straight. You are not "just" going to ${T}. You are going to ${T} with such PRECISION, such EXCELLENCE, that it will be studied in TEXTBOOKS for generations.`,
+    `Sun Tzu said, "Every battle is won before it's fought." And you? You have ALREADY won ${T} in your mind. Now your body just needs to CATCH UP. Move. EXECUTE.`,
+    `They will write SONGS about this day. Bards will gather 'round campfires and SING of the time you chose to ${T} against ALL odds. Give them a story worth SINGING.`,
+    `You are not a person who needs to ${T}. You are a PHENOMENON. A walking, breathing NATURAL DISASTER of productivity. ${TU} doesn't stand a CHANCE against you.`,
+    `I've seen that look before. That's the look of someone who is ABOUT to ${T} so magnificently that the HEAVENS themselves will slow their rotation to watch. Don't let them down.`,
+    `Comfort zones are where DREAMS go to DIE. And ${T}? That's the EXIT from the comfort zone. That's the GATEWAY to glory. Walk through it. No. RUN through it.`,
+    `You are the MAIN CHARACTER. This is not a side quest. ${TU} is the MAIN STORYLINE. The epic music is playing. The camera is on YOU. What happens next is up to YOU.`,
+    // 41-50
+    `A seed doesn't ask "why" when it breaks through concrete. It just GROWS. You don't need to ask why you must ${T}. You just need to DO it. BREAK THROUGH. BLOOM.`,
+    `Think of FIRE. Think of STEEL. Think of the HAMMER hitting the ANVIL. That's what's happening right now. You are being FORGED. And ${T} is the forge. EMBRACE THE HEAT.`,
+    `The whale doesn't apologize for being MASSIVE. The eagle doesn't apologize for SOARING. And YOU don't apologize for being ridiculously, absurdly, OVERWHELMINGLY good at ${T}. OWN IT.`,
+    `In the words of every great leader who ever lived: "Get up. Shut up. And ${T}." Okay, maybe I'm paraphrasing. But the SPIRIT is there. The ENERGY is there. YOU are there. GO.`,
+    `There's a 100% chance that FUTURE you is looking back at this moment with either PRIDE or regret. Make future you PROUD. ${TU}. Now. With EVERYTHING you've got.`,
+    `You want motivation? HERE'S your motivation: you are a TEMPORARY arrangement of stardust experiencing consciousness on a ROCK hurtling through space, and you get to ${T}. That's a MIRACLE. Act like it.`,
+    `Every great journey begins with a single step. Your journey to ${T} begins NOW. Not tomorrow. Not "later." NOW. The road is long but your legs are STRONG and your heart is STRONGER.`,
+    `Beyonce has 24 hours in a day. You have 24 hours in a day. And RIGHT NOW, you're going to use some of those hours to ${T} with the INTENSITY of a SUPERNOVA. Be your own Beyonce.`,
+    `Picture this: you, VICTORIOUS, standing atop the mountain of completed ${T}, wind in your hair, sunlight on your face, your enemies VANQUISHED below. That image? MAKE IT REALITY.`,
+    `The universe is 13.8 billion years old. It waited ALL that time for YOU to be here, right now, to ${T}. Don't make the universe REGRET its patience. DELIVER.`,
+    // 51-55 bonus
+    `You know what rhymes with ${T}? GLORY. Okay maybe it doesn't literally rhyme but SPIRITUALLY? It rhymes with GLORY. And glory is what you're about to ACHIEVE.`,
+    `Deep in the Amazon rainforest, there is a tree that has been growing for a THOUSAND years. It doesn't complain. It doesn't procrastinate. It just GROWS. Be the TREE. ${TU}.`,
+    `Let me paint a picture. You. ${TU}. Done. COMPLETE. The crowd goes WILD. Confetti falls from the sky. A single tear rolls down your cheek. Not from sadness. From PURE. UNBRIDLED. TRIUMPH.`,
+    `The keyboard warriors will type. The couch potatoes will judge. But YOU? You will ${T}. And that makes you MORE than a person. It makes you a LEGEND. Now claim your LEGEND status.`,
+    `ENOUGH waiting. ENOUGH planning. ENOUGH "I'll do it later." The time for ${T} is NOW. Not because you have to. But because you are a CHAMPION. And champions don't WAIT. They DOMINATE.`,
+  ];
+}
+
+const meterLevels = [
+  [0, 20, 'warming up...'],
+  [20, 40, 'getting fired up'],
+  [40, 60, 'feeling the power'],
+  [60, 80, 'APPROACHING OVERDRIVE'],
+  [80, 95, 'MAXIMUM INTENSITY'],
+  [95, 101, 'TRANSCENDENT OVERDRIVE'],
+];
+
+let currentSpeech = '';
+let speechCount = 0;
+
+function generateSpeech() {
+  const input = document.getElementById('taskInput').value.trim();
+  if (!input) {
+    document.getElementById('taskInput').focus();
+    document.getElementById('taskInput').style.borderColor = '#ff3333';
+    setTimeout(() => document.getElementById('taskInput').style.borderColor = '#333', 1000);
+    return;
+  }
+
+  const task = extractTask(input);
+  const templates = getTemplates(task);
+  const idx = Math.floor(Math.random() * templates.length);
+  currentSpeech = templates[idx];
+  speechCount++;
+
+  // Flash effect
+  const flash = document.createElement('div');
+  flash.className = 'flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 400);
+
+  // Screen shake
+  document.body.classList.add('shaking');
+  setTimeout(() => document.body.classList.remove('shaking'), 500);
+
+  // Particles
+  spawnParticles();
+
+  // Play epic sting
+  playEpicSting();
+
+  // Display speech
+  const box = document.getElementById('speechBox');
+  box.classList.add('visible');
+  // Format with highlights
+  let html = currentSpeech
+    .replace(/\b([A-Z]{2,})\b/g, '<span class="highlight">$1</span>');
+  box.innerHTML = html;
+  box.style.animation = 'none';
+  box.offsetHeight; // reflow
+  box.style.animation = 'speechIn 0.5s ease-out';
+
+  // Motivation meter
+  const level = Math.min(30 + speechCount * 15 + Math.random() * 20, 100);
+  animateMeter(level);
+}
+
+function animateMeter(level) {
+  const fill = document.getElementById('meterFill');
+  const value = document.getElementById('meterValue');
+  const desc = document.getElementById('meterDesc');
+
+  fill.style.width = level + '%';
+  value.textContent = Math.round(level) + '%';
+
+  for (const [lo, hi, label] of meterLevels) {
+    if (level >= lo && level < hi) {
+      desc.textContent = label;
+      break;
+    }
+  }
+
+  if (level >= 80) {
+    value.style.color = '#ffcc00';
+    value.style.textShadow = '0 0 20px rgba(255,200,0,0.5)';
+  } else {
+    value.style.color = '#cc0000';
+    value.style.textShadow = 'none';
+  }
+}
+
+function spawnParticles() {
+  const emojis = ['&#128293;', '&#9889;', '&#11088;', '&#128170;', '&#129409;', '&#128640;', '&#9876;&#65039;', '&#127942;'];
+  for (let i = 0; i < 12; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.innerHTML = emojis[Math.floor(Math.random() * emojis.length)];
+    p.style.left = Math.random() * 100 + 'vw';
+    p.style.top = (60 + Math.random() * 30) + 'vh';
+    p.style.animationDuration = (1.5 + Math.random()) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2500);
+  }
+}
+
+function speakSpeech() {
+  if (!currentSpeech) return;
+  speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(currentSpeech);
+  utter.rate = 0.85;
+  utter.pitch = 0.8;
+  utter.volume = 1;
+  // Try to pick a deep voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /daniel|alex|tom|james|male/i.test(v.name));
+  if (preferred) utter.voice = preferred;
+  speechSynthesis.speak(utter);
+}
+
+function shareSpeech() {
+  if (!currentSpeech) return;
+  const text = currentSpeech + '\n\n-- Generated by OVERDRIVE: Epic speeches for mundane tasks';
+  if (navigator.share) {
+    navigator.share({ title: 'OVERDRIVE Speech', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.controls .btn-secondary:last-child');
+      const orig = btn.innerHTML;
+      btn.innerHTML = '&#10003; Copied!';
+      setTimeout(() => btn.innerHTML = orig, 2000);
+    });
+  }
+}
+
+// Enter key triggers
+document.getElementById('taskInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generateSpeech();
+});
+
+// Preload voices
+speechSynthesis.getVoices();
+speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+</script>
+</body>
+</html>
