@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demotivator - Demotivational Poster Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #ccc;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 2rem;
+    color: #fff;
+    margin: 24px 0 4px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  button {
+    background: #1a1a1a;
+    color: #ccc;
+    border: 1px solid #333;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  button:hover { background: #2a2a2a; border-color: #555; color: #fff; }
+  button:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: #b8860b;
+    color: #fff;
+    border-color: #daa520;
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #daa520; }
+
+  .btn-danger {
+    background: #8b0000;
+    border-color: #b22222;
+    color: #fff;
+  }
+  .btn-danger:hover { background: #b22222; }
+
+  .category-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .cat-btn {
+    padding: 5px 14px;
+    font-size: 0.8rem;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .cat-btn.active {
+    background: #daa520;
+    color: #000;
+    border-color: #daa520;
+    font-weight: 600;
+  }
+
+  .poster-wrap {
+    width: 100%;
+    max-width: 560px;
+    padding: 0 16px;
+    margin-bottom: 20px;
+  }
+
+  .poster {
+    background: #000;
+    border: 2px solid #333;
+    padding: 20px 20px 28px;
+    text-align: center;
+  }
+
+  .poster .image-frame {
+    border: 2px solid #daa520;
+    padding: 3px;
+    margin-bottom: 16px;
+    position: relative;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    overflow: hidden;
+  }
+
+  .poster .image-frame img,
+  .poster .image-frame video {
+    width: 100%;
+    display: block;
+  }
+
+  .placeholder-text {
+    color: #444;
+    font-size: 0.9rem;
+    padding: 60px 20px;
+  }
+
+  .poster .title {
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 2rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    margin-bottom: 6px;
+  }
+
+  .poster .subtitle {
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 0.95rem;
+    color: #ccc;
+    font-style: italic;
+    line-height: 1.5;
+    max-width: 90%;
+    margin: 0 auto;
+  }
+
+  .action-bar {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+  }
+
+  video { display: none; }
+
+  .camera-active video {
+    display: block;
+  }
+  .camera-active .placeholder-text,
+  .camera-active .captured-img { display: none; }
+
+  .has-photo .placeholder-text { display: none; }
+  .has-photo video { display: none; }
+
+  #capturedImg { width: 100%; display: none; }
+  .has-photo #capturedImg { display: block; }
+
+  canvas { display: none; }
+
+  .edit-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 560px;
+    padding: 0 16px;
+    margin-bottom: 16px;
+  }
+
+  .edit-fields input {
+    background: #111;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: 'Times New Roman', Georgia, serif;
+    font-size: 1rem;
+  }
+  .edit-fields input:focus { outline: none; border-color: #daa520; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #daa520;
+    color: #000;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.4rem; }
+    .poster .title { font-size: 1.5rem; letter-spacing: 4px; }
+    .poster .subtitle { font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Demotivator</h1>
+<p class="tagline">Crushing dreams since 2026</p>
+
+<div class="category-filters">
+  <button class="cat-btn active" data-cat="all">All</button>
+  <button class="cat-btn" data-cat="work">Work</button>
+  <button class="cat-btn" data-cat="life">Life</button>
+  <button class="cat-btn" data-cat="monday">Monday</button>
+  <button class="cat-btn" data-cat="ambition">Ambition</button>
+</div>
+
+<div class="controls">
+  <button class="btn-primary" id="cameraBtn">Take Photo</button>
+  <button id="uploadBtn">Upload Photo</button>
+  <button id="shuffleBtn">Shuffle Text</button>
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none">
+
+<div class="poster-wrap" id="posterWrap">
+  <div class="poster" id="poster">
+    <div class="image-frame" id="imageFrame">
+      <video id="video" autoplay playsinline></video>
+      <img id="capturedImg" alt="Your photo">
+      <div class="placeholder-text">Take or upload a photo to begin your descent into truth</div>
+    </div>
+    <div class="title" id="posterTitle">MEETINGS</div>
+    <div class="subtitle" id="posterSubtitle">None of us is as dumb as all of us.</div>
+  </div>
+</div>
+
+<div class="edit-fields">
+  <input type="text" id="editTitle" placeholder="Edit title..." value="MEETINGS">
+  <input type="text" id="editSubtitle" placeholder="Edit subtitle..." value="None of us is as dumb as all of us.">
+</div>
+
+<div class="action-bar">
+  <button class="btn-primary" id="downloadBtn">Download Poster</button>
+  <button id="shareBtn">Share Text</button>
+  <button class="btn-danger" id="resetBtn">Reset</button>
+</div>
+
+<canvas id="renderCanvas"></canvas>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const QUOTES = [
+  // WORK (20)
+  {cat:"work",title:"MEETINGS",sub:"None of us is as dumb as all of us."},
+  {cat:"work",title:"TEAMWORK",sub:"A few harmless flakes working together can unleash an avalanche of destruction."},
+  {cat:"work",title:"CONSULTING",sub:"If you're not part of the solution, there's good money to be made in prolonging the problem."},
+  {cat:"work",title:"PRODUCTIVITY",sub:"The best way to look busy is to carry a clipboard and walk fast."},
+  {cat:"work",title:"LEADERSHIP",sub:"When the blind lead the blind, get out of the way."},
+  {cat:"work",title:"SYNERGY",sub:"A word used in business that means absolutely nothing."},
+  {cat:"work",title:"DEADLINES",sub:"Nothing motivates like the last minute. Because nothing gets done until then."},
+  {cat:"work",title:"POTENTIAL",sub:"Not everyone gets to be an astronaut when they grow up."},
+  {cat:"work",title:"EMAIL",sub:"The electronic method of making your problems everyone else's problems."},
+  {cat:"work",title:"PROMOTION",sub:"The reward for good work is more work."},
+  {cat:"work",title:"INNOVATION",sub:"A fancy word for the thing that will get cancelled next quarter."},
+  {cat:"work",title:"FEEDBACK",sub:"The process of being told what you already knew but hoped no one would say."},
+  {cat:"work",title:"NETWORKING",sub:"The art of talking to people you don't like about things you don't care about."},
+  {cat:"work",title:"OVERTIME",sub:"Because nothing says valued employee like working for free."},
+  {cat:"work",title:"OPEN PLAN",sub:"The architectural solution for ensuring nobody can concentrate."},
+  {cat:"work",title:"AGILE",sub:"Moving so fast in circles that it looks like progress."},
+  {cat:"work",title:"DELEGATION",sub:"The art of making your problems sound like opportunities for others."},
+  {cat:"work",title:"PIVOT",sub:"When plan A through plan Y fail, rebrand the failure."},
+  {cat:"work",title:"CULTURE FIT",sub:"Hiring people exactly like you and calling it diversity of thought."},
+  {cat:"work",title:"STANDUP",sub:"A daily ritual proving that sitting down was more productive."},
+
+  // LIFE (20)
+  {cat:"life",title:"FAILURE",sub:"When your best just isn't good enough."},
+  {cat:"life",title:"DESPAIR",sub:"It's always darkest just before it goes pitch black."},
+  {cat:"life",title:"MISTAKES",sub:"It could be that the purpose of your life is to serve as a warning to others."},
+  {cat:"life",title:"MEDIOCRITY",sub:"It takes a lot less time and most people won't notice the difference until it's too late."},
+  {cat:"life",title:"PROCRASTINATION",sub:"Hard work often pays off after time, but laziness always pays off now."},
+  {cat:"life",title:"PESSIMISM",sub:"Every dark cloud has a silver lining, but lightning kills hundreds of people each year."},
+  {cat:"life",title:"LONELINESS",sub:"If you find yourself alone, it's because people don't like you."},
+  {cat:"life",title:"PRIORITIES",sub:"Hundreds of years from now, it will not matter what your resume said. It won't matter now either."},
+  {cat:"life",title:"PERSISTENCE",sub:"The first step to failing again is trying again."},
+  {cat:"life",title:"AGING",sub:"Every year, the candles cost more than the cake."},
+  {cat:"life",title:"WISDOM",sub:"Knowing you're lost is the first step. There is no second step."},
+  {cat:"life",title:"DREAMS",sub:"The nightly reminder of what your life isn't."},
+  {cat:"life",title:"FITNESS",sub:"The slow process of hating every meal until you eventually quit."},
+  {cat:"life",title:"NOSTALGIA",sub:"Missing the past because you've run out of hope for the future."},
+  {cat:"life",title:"ADULTING",sub:"Like riding a bike, except the bike is on fire and you're on fire and everything is on fire."},
+  {cat:"life",title:"COMPARISON",sub:"Someone out there has it worse. But also, someone has it way better."},
+  {cat:"life",title:"PATIENCE",sub:"Waiting for something good to happen while nothing does."},
+  {cat:"life",title:"SELF-HELP",sub:"Reading about improvement so you can feel productive without changing."},
+  {cat:"life",title:"EXPERIENCE",sub:"What you get when you didn't get what you wanted."},
+  {cat:"life",title:"HOPE",sub:"The first step on the road to disappointment."},
+
+  // MONDAY (15)
+  {cat:"monday",title:"MONDAY",sub:"The universe's weekly reminder that you traded your freedom for dental insurance."},
+  {cat:"monday",title:"ALARM CLOCK",sub:"The sound of your dreams dying."},
+  {cat:"monday",title:"COMMUTE",sub:"Spending hours going somewhere you don't want to be."},
+  {cat:"monday",title:"MORNING",sub:"The punishment for going to sleep the night before."},
+  {cat:"monday",title:"COFFEE",sub:"Acceptable workplace addiction that masks your existential dread."},
+  {cat:"monday",title:"WEEKEND",sub:"48 hours of freedom that feel like 48 minutes."},
+  {cat:"monday",title:"SUNDAY NIGHT",sub:"The funeral for your weekend, held weekly."},
+  {cat:"monday",title:"INBOX",sub:"Monday's way of saying you thought you could escape."},
+  {cat:"monday",title:"MOTIVATION",sub:"That thing you had at 7am that died by 7:15am on Monday."},
+  {cat:"monday",title:"SNOOZE",sub:"Delaying reality in nine-minute increments of false hope."},
+  {cat:"monday",title:"DRESS CODE",sub:"Wearing uncomfortable clothes to prove you're a serious person."},
+  {cat:"monday",title:"TRAFFIC",sub:"Thousands of people who also don't want to be where they're going."},
+  {cat:"monday",title:"BRUNCH",sub:"The meal you can't have because you're at work pretending to care."},
+  {cat:"monday",title:"FRIDAY",sub:"The light at the end of the tunnel is just Monday's headlights."},
+  {cat:"monday",title:"SLEEP",sub:"The only part of your day you actually enjoy. And it ends."},
+
+  // AMBITION (15)
+  {cat:"ambition",title:"AMBITION",sub:"The journey of a thousand miles sometimes ends very, very badly."},
+  {cat:"ambition",title:"ACHIEVEMENT",sub:"You can do anything you set your mind to when you have vision, determination, and an endless supply of expendable labor."},
+  {cat:"ambition",title:"SUCCESS",sub:"Some people dream of success while others wake up and work hard at it. Both groups are usually disappointed."},
+  {cat:"ambition",title:"GOALS",sub:"A list of things you'll feel guilty about not doing."},
+  {cat:"ambition",title:"HUSTLE",sub:"Working 80 hours a week so you can avoid working 40 for someone else."},
+  {cat:"ambition",title:"ENTREPRENEUR",sub:"A person who works 16 hours a day to avoid working 8 hours for someone else."},
+  {cat:"ambition",title:"VISION",sub:"Seeing something that isn't there and convincing others to fund it."},
+  {cat:"ambition",title:"GRIND",sub:"Romanticizing exhaustion so you don't have to admit you're miserable."},
+  {cat:"ambition",title:"DISRUPTION",sub:"Breaking things that worked fine and calling it innovation."},
+  {cat:"ambition",title:"SIDE HUSTLE",sub:"Your regular job doesn't cover the bills, so now you have two that don't."},
+  {cat:"ambition",title:"PASSION",sub:"The lie we tell ourselves to justify terrible life decisions."},
+  {cat:"ambition",title:"SMALL TALK",sub:"Collecting names from people who will never remember yours."},
+  {cat:"ambition",title:"MENTORSHIP",sub:"Listening to someone who succeeded by luck tell you it was skill."},
+  {cat:"ambition",title:"STARTUP",sub:"Turning a comfortable life into crippling anxiety and ramen noodles."},
+  {cat:"ambition",title:"LEGACY",sub:"What you worry about building instead of actually living your life."}
+];
+
+let currentCat = 'all';
+let currentQuote = QUOTES[0];
+let stream = null;
+let hasPhoto = false;
+
+const video = document.getElementById('video');
+const capturedImg = document.getElementById('capturedImg');
+const imageFrame = document.getElementById('imageFrame');
+const posterWrap = document.getElementById('posterWrap');
+const posterTitle = document.getElementById('posterTitle');
+const posterSubtitle = document.getElementById('posterSubtitle');
+const editTitle = document.getElementById('editTitle');
+const editSubtitle = document.getElementById('editSubtitle');
+const fileInput = document.getElementById('fileInput');
+
+// Category filters
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    shuffle();
+  });
+});
+
+function getFiltered() {
+  return currentCat === 'all' ? QUOTES : QUOTES.filter(q => q.cat === currentCat);
+}
+
+function shuffle() {
+  const pool = getFiltered();
+  let q;
+  do { q = pool[Math.floor(Math.random() * pool.length)]; } while (pool.length > 1 && q === currentQuote);
+  currentQuote = q;
+  posterTitle.textContent = q.title;
+  posterSubtitle.textContent = q.sub;
+  editTitle.value = q.title;
+  editSubtitle.value = q.sub;
+}
+
+document.getElementById('shuffleBtn').addEventListener('click', shuffle);
+
+// Editable fields sync
+editTitle.addEventListener('input', () => { posterTitle.textContent = editTitle.value; });
+editSubtitle.addEventListener('input', () => { posterSubtitle.textContent = editSubtitle.value; });
+
+// Camera
+document.getElementById('cameraBtn').addEventListener('click', async () => {
+  if (stream) { stopCamera(); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    imageFrame.classList.add('camera-active');
+    imageFrame.classList.remove('has-photo');
+    document.getElementById('cameraBtn').textContent = 'Capture';
+    hasPhoto = false;
+  } catch (e) {
+    toast('Camera access denied');
+  }
+});
+
+function stopCamera() {
+  // Capture frame
+  const c = document.createElement('canvas');
+  c.width = video.videoWidth;
+  c.height = video.videoHeight;
+  c.getContext('2d').drawImage(video, 0, 0);
+  capturedImg.src = c.toDataURL('image/jpeg', 0.92);
+  hasPhoto = true;
+
+  stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  video.srcObject = null;
+  imageFrame.classList.remove('camera-active');
+  imageFrame.classList.add('has-photo');
+  document.getElementById('cameraBtn').textContent = 'Take Photo';
+}
+
+// Upload
+document.getElementById('uploadBtn').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    capturedImg.src = ev.target.result;
+    hasPhoto = true;
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; }
+    imageFrame.classList.remove('camera-active');
+    imageFrame.classList.add('has-photo');
+    document.getElementById('cameraBtn').textContent = 'Take Photo';
+  };
+  reader.readAsDataURL(file);
+  fileInput.value = '';
+});
+
+// Download as image
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const poster = document.getElementById('poster');
+  const scale = 2;
+
+  // Dimensions
+  const pw = poster.offsetWidth * scale;
+  const padding = 20 * scale;
+  const borderW = 2 * scale;
+  const innerPad = 3 * scale;
+  const goldBorder = 2 * scale;
+
+  // Measure image
+  const imgEl = hasPhoto ? capturedImg : null;
+  let imgAspect = 4 / 3;
+  if (imgEl && imgEl.naturalWidth) imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
+  const imgAreaW = pw - padding * 2 - goldBorder * 2 - innerPad * 2;
+  const imgAreaH = imgAreaW / imgAspect;
+
+  // Text metrics
+  const canvas = document.getElementById('renderCanvas');
+  const ctx = canvas.getContext('2d');
+
+  const titleText = posterTitle.textContent;
+  const subText = posterSubtitle.textContent;
+  const titleSize = 36 * scale;
+  const subSize = 16 * scale;
+
+  ctx.font = `bold ${titleSize}px "Times New Roman", Georgia, serif`;
+
+  // Wrap subtitle
+  ctx.font = `italic ${subSize}px "Times New Roman", Georgia, serif`;
+  const maxTextW = pw * 0.85;
+  const subLines = wrapText(ctx, subText, maxTextW);
+
+  const titleBlockH = titleSize + 8 * scale + subLines.length * (subSize * 1.5) + 10 * scale;
+  const totalH = padding + goldBorder + innerPad + imgAreaH + innerPad + goldBorder + 16 * scale + titleBlockH + padding;
+
+  canvas.width = pw;
+  canvas.height = totalH;
+
+  // Background
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, pw, totalH);
+
+  // Gold border
+  const fx = padding;
+  const fy = padding;
+  const fw = pw - padding * 2;
+  const fh = goldBorder + innerPad + imgAreaH + innerPad + goldBorder;
+  ctx.strokeStyle = '#daa520';
+  ctx.lineWidth = goldBorder;
+  ctx.strokeRect(fx + goldBorder / 2, fy + goldBorder / 2, fw - goldBorder, fh - goldBorder);
+
+  // Image or gray bg
+  const ix = fx + goldBorder + innerPad;
+  const iy = fy + goldBorder + innerPad;
+  if (imgEl && imgEl.src) {
+    ctx.drawImage(imgEl, ix, iy, imgAreaW, imgAreaH);
+  } else {
+    ctx.fillStyle = '#111';
+    ctx.fillRect(ix, iy, imgAreaW, imgAreaH);
+  }
+
+  // Title
+  let ty = fy + fh + 20 * scale;
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${titleSize}px "Times New Roman", Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = `${6 * scale}px`;
+  ctx.fillText(titleText, pw / 2, ty + titleSize * 0.8);
+  ctx.letterSpacing = '0px';
+
+  // Subtitle
+  ty += titleSize + 12 * scale;
+  ctx.fillStyle = '#ccc';
+  ctx.font = `italic ${subSize}px "Times New Roman", Georgia, serif`;
+  subLines.forEach((line, i) => {
+    ctx.fillText(line, pw / 2, ty + i * subSize * 1.5 + subSize * 0.8);
+  });
+
+  // Download
+  const link = document.createElement('a');
+  link.download = 'demotivational-poster.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+  toast('Poster downloaded!');
+});
+
+function wrapText(ctx, text, maxW) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+// Share
+document.getElementById('shareBtn').addEventListener('click', () => {
+  const text = `${posterTitle.textContent}\n${posterSubtitle.textContent}\n\n-- Made with Demotivator`;
+  if (navigator.share) {
+    navigator.share({ text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard!'));
+  }
+});
+
+// Reset
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; }
+  hasPhoto = false;
+  capturedImg.src = '';
+  imageFrame.classList.remove('camera-active', 'has-photo');
+  document.getElementById('cameraBtn').textContent = 'Take Photo';
+  shuffle();
+});
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init with random quote
+shuffle();
+</script>
+</body>
+</html>

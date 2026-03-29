@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unsatisfy - Ruin Any Story</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0d0d0d;--surface:#1a1a1a;--surface2:#252525;--border:#333;
+    --text:#e0e0e0;--muted:#888;--accent:#ff6b6b;--accent2:#ffa07a;
+    --sad:#5a7a9a;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:20px;
+  }
+  h1{
+    font-size:2.4rem;margin:20px 0 4px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .tagline{color:var(--muted);margin-bottom:24px;font-size:0.95rem;font-style:italic}
+  .container{width:100%;max-width:700px}
+  textarea{
+    width:100%;min-height:180px;padding:16px;border-radius:12px;
+    background:var(--surface);border:1px solid var(--border);
+    color:var(--text);font-size:1rem;resize:vertical;
+    font-family:Georgia,'Times New Roman',serif;line-height:1.6;
+    transition:border-color .2s;
+  }
+  textarea:focus{outline:none;border-color:var(--accent)}
+  textarea::placeholder{color:#555}
+  .btn-row{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+  button{
+    padding:12px 24px;border-radius:10px;border:none;cursor:pointer;
+    font-size:1rem;font-weight:600;transition:all .15s;
+  }
+  button:active{transform:scale(0.96)}
+  .btn-ruin{
+    background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;
+    flex:1;min-width:140px;font-size:1.1rem;
+  }
+  .btn-ruin:hover{filter:brightness(1.15)}
+  .btn-ruin:disabled{opacity:0.4;cursor:not-allowed}
+  .btn-secondary{
+    background:var(--surface2);color:var(--text);border:1px solid var(--border);
+  }
+  .btn-secondary:hover{background:#303030}
+  .btn-speak{background:var(--sad);color:#fff}
+  .btn-speak:hover{filter:brightness(1.2)}
+  .btn-share{background:#2d6a4f;color:#fff}
+  .btn-share:hover{filter:brightness(1.2)}
+
+  /* Frustration Meter */
+  .meter-section{margin:20px 0}
+  .meter-label{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-bottom:6px;font-size:0.85rem;color:var(--muted);
+  }
+  .meter-track{
+    height:20px;background:var(--surface);border-radius:10px;
+    overflow:hidden;border:1px solid var(--border);
+  }
+  .meter-fill{
+    height:100%;width:0%;border-radius:10px;
+    transition:width .6s cubic-bezier(.25,.8,.25,1),background .4s;
+    background:linear-gradient(90deg,#2ecc71,#f1c40f,#e67e22,#e74c3c,#8e44ad);
+    background-size:500% 100%;
+  }
+  .frustration-emoji{font-size:1.4rem;transition:all .3s}
+
+  /* Result area */
+  .result{
+    margin:20px 0;padding:20px;border-radius:12px;
+    background:var(--surface);border:1px solid var(--border);
+    display:none;font-family:Georgia,'Times New Roman',serif;line-height:1.7;
+  }
+  .result.visible{display:block;animation:fadeIn .5s}
+  .ruined-ending{
+    color:var(--accent);font-weight:bold;font-style:italic;
+    border-top:1px dashed var(--border);margin-top:12px;padding-top:12px;
+  }
+  .ending-label{
+    font-size:0.7rem;text-transform:uppercase;letter-spacing:2px;
+    color:var(--muted);font-family:sans-serif;margin-bottom:4px;
+    font-style:normal;font-weight:normal;
+  }
+
+  /* Ruin counter */
+  .ruin-count{
+    text-align:center;color:var(--muted);font-size:0.8rem;margin-top:10px;
+  }
+
+  /* Share toast */
+  .toast{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    background:#333;color:#fff;padding:12px 24px;border-radius:8px;
+    font-size:0.9rem;opacity:0;transition:opacity .3s;pointer-events:none;
+    z-index:100;
+  }
+  .toast.show{opacity:1}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  @media(max-width:600px){
+    h1{font-size:1.8rem}
+    textarea{min-height:140px;font-size:0.95rem}
+    .btn-row{flex-direction:column}
+    button{width:100%}
+  }
+</style>
+</head>
+<body>
+
+<h1>Unsatisfy</h1>
+<p class="tagline">Because every story deserves a worse ending.</p>
+
+<div class="container">
+  <textarea id="storyInput" placeholder="Paste or type any story here... the more epic, the better we can ruin it."></textarea>
+
+  <div class="btn-row">
+    <button class="btn-ruin" id="ruinBtn" onclick="ruinStory()">Ruin It</button>
+    <button class="btn-secondary" id="reruinBtn" onclick="ruinStory()" style="display:none">Ruin Again</button>
+    <button class="btn-speak" id="speakBtn" onclick="speakResult()" style="display:none">Read Aloud</button>
+    <button class="btn-share" id="shareBtn" onclick="shareResult()" style="display:none">Share</button>
+  </div>
+
+  <div class="meter-section">
+    <div class="meter-label">
+      <span>Frustration Meter</span>
+      <span class="frustration-emoji" id="frustEmoji">---</span>
+    </div>
+    <div class="meter-track">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+  </div>
+
+  <div class="result" id="resultBox">
+    <div id="originalText"></div>
+    <div class="ruined-ending">
+      <div class="ending-label">The Unsatisfying Ending</div>
+      <div id="ruinedText"></div>
+    </div>
+  </div>
+
+  <div class="ruin-count" id="ruinCount"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const endings = [
+  "And then nothing happened.",
+  "It was all a dream. A boring one.",
+  "The hero shrugged and went home.",
+  "To be continued... (it won't be).",
+  "And then they all got stuck in traffic.",
+  "The villain apologized and everyone went to Applebee's.",
+  "Turns out, the whole thing was a tax write-off.",
+  "The prophecy was fulfilled. Nobody noticed.",
+  "And then the Wi-Fi went out. The end.",
+  "Everyone lived. Nothing changed.",
+  "The chosen one chose not to.",
+  "The dragon was actually just a large iguana.",
+  "They saved the world but forgot to save the receipt.",
+  "And then the author got bored and stopped writing.",
+  "The treasure was friendship. They returned it.",
+  "The sword was stuck in the stone. It stayed there.",
+  "In the end, it was just allergies.",
+  "The portal closed. The pizza arrived. Priorities.",
+  "The ancient scroll just said 'lol'.",
+  "They defeated the dark lord with a strongly worded email.",
+  "The spaceship ran out of gas in a Wendy's parking lot.",
+  "The curse was broken. Nobody felt any different.",
+  "And then everybody's phone died at the same time.",
+  "The magic was inside them all along. It was indigestion.",
+  "The kingdom was saved but the parking was terrible.",
+  "Plot twist: there was no plot twist.",
+  "The final battle was cancelled due to rain.",
+  "They lived happily ever after for about eleven minutes.",
+  "And then everyone just sort of... wandered off.",
+  "The chosen one was actually the backup chosen one's intern.",
+  "The monster turned out to be a misunderstood real estate agent.",
+  "It all made sense in the end. Just kidding. It didn't.",
+  "The explosion was just someone microwaving soup.",
+  "They found the meaning of life. It was beige.",
+  "The war ended when both sides got hungry.",
+  "The detective solved the mystery. It was a filing error.",
+  "And then everyone forgot why they were there.",
+  "The love interest moved to Toledo. No reason given.",
+  "The apocalypse was rescheduled to next Thursday.",
+  "The climax was interrupted by a fire drill.",
+  "They reached the summit. It was a parking lot.",
+  "The secret weapon was a coupon. An expired one.",
+  "And then they all just agreed to disagree.",
+  "The hero's journey ended at a DMV.",
+  "Turns out the ghost was just a draft from a window.",
+  "The ring of power was a mood ring. It was showing 'meh'.",
+  "They broke the curse. Customer service was unhelpful.",
+  "The time traveler went back. Nothing was different. Came home.",
+  "The last dragon just wanted to be left alone. Fair enough.",
+  "Everyone clapped. Then they stopped. Then it was quiet.",
+  "The prophecy said 'maybe'. The oracle shrugged.",
+  "And then the narrator lost interest.",
+  "The final boss was on PTO.",
+  "The quest items were all from IKEA. Assembly required.",
+  "Nothing was resolved, but the font was nice.",
+  "The epic conclusion was behind a paywall.",
+  "They opened the ancient tomb. It was a storage unit.",
+  "The chosen one's power was middle management.",
+  "And that's when the simulation crashed. No autosave.",
+  "Turns out the real villain was the HOA.",
+];
+
+let ruinCount = 0;
+let lastEndingIndex = -1;
+let currentSpeech = null;
+let audioCtx = null;
+
+function getRandomEnding() {
+  let idx;
+  do { idx = Math.floor(Math.random() * endings.length); } while (idx === lastEndingIndex);
+  lastEndingIndex = idx;
+  return endings[idx];
+}
+
+function playDeflateSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const ctx = audioCtx;
+  const now = ctx.currentTime;
+
+  // Sad descending tone
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(400, now);
+  osc.frequency.exponentialRampToValueAtTime(80, now + 1.2);
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 1.5);
+
+  // Noise burst for the "pfft" deflation
+  const bufferSize = ctx.sampleRate * 0.8;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+  }
+  const noise = ctx.createBufferSource();
+  const noiseGain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2000, now);
+  filter.frequency.exponentialRampToValueAtTime(100, now + 0.8);
+  noise.buffer = buffer;
+  noiseGain.gain.setValueAtTime(0.15, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noise.start(now + 0.05);
+
+  // Sad trombone hint
+  const trom = ctx.createOscillator();
+  const tromGain = ctx.createGain();
+  trom.type = 'sawtooth';
+  trom.frequency.setValueAtTime(220, now + 0.3);
+  trom.frequency.exponentialRampToValueAtTime(150, now + 0.8);
+  tromGain.gain.setValueAtTime(0.08, now + 0.3);
+  tromGain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+  trom.connect(tromGain);
+  tromGain.connect(ctx.destination);
+  trom.start(now + 0.3);
+  trom.stop(now + 1.0);
+}
+
+function updateFrustrationMeter() {
+  const pct = Math.min(ruinCount / 10 * 100, 100);
+  const fill = document.getElementById('meterFill');
+  const emoji = document.getElementById('frustEmoji');
+  fill.style.width = pct + '%';
+  fill.style.backgroundPosition = (100 - pct) + '% 0';
+
+  const stages = [
+    [0, '---'],
+    [1, 'Mildly annoyed'],
+    [2, 'Eye twitch'],
+    [3, 'Deep sigh'],
+    [4, 'Why.'],
+    [5, 'Existential doubt'],
+    [6, 'Table flip imminent'],
+    [7, 'Screaming internally'],
+    [8, 'Beyond repair'],
+    [9, 'Soul has left the chat'],
+    [10,'Pure void'],
+  ];
+  const stage = stages[Math.min(ruinCount, 10)];
+  emoji.textContent = stage[1];
+}
+
+function ruinStory() {
+  const input = document.getElementById('storyInput');
+  const story = input.value.trim();
+  if (!story) {
+    input.style.borderColor = '#ff6b6b';
+    input.placeholder = 'You need a story first... type something!';
+    setTimeout(() => { input.style.borderColor = ''; input.placeholder = 'Paste or type any story here... the more epic, the better we can ruin it.'; }, 1500);
+    return;
+  }
+
+  const ending = getRandomEnding();
+  ruinCount++;
+
+  playDeflateSound();
+
+  document.getElementById('originalText').textContent = story;
+  document.getElementById('ruinedText').textContent = ending;
+  const resultBox = document.getElementById('resultBox');
+  resultBox.classList.add('visible');
+  resultBox.style.display = 'block';
+  // Re-trigger animation
+  resultBox.style.animation = 'none';
+  resultBox.offsetHeight;
+  resultBox.style.animation = '';
+
+  document.getElementById('reruinBtn').style.display = '';
+  document.getElementById('speakBtn').style.display = '';
+  document.getElementById('shareBtn').style.display = '';
+  document.getElementById('ruinCount').textContent = `Stories ruined this session: ${ruinCount}`;
+
+  updateFrustrationMeter();
+}
+
+function speakResult() {
+  if (currentSpeech && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    document.getElementById('speakBtn').textContent = 'Read Aloud';
+    currentSpeech = null;
+    return;
+  }
+  const story = document.getElementById('originalText').textContent;
+  const ending = document.getElementById('ruinedText').textContent;
+  const fullText = story + ' ... ' + ending;
+
+  currentSpeech = new SpeechSynthesisUtterance(fullText);
+  currentSpeech.rate = 0.95;
+  currentSpeech.pitch = 0.8;
+  document.getElementById('speakBtn').textContent = 'Stop Reading';
+  currentSpeech.onend = () => {
+    document.getElementById('speakBtn').textContent = 'Read Aloud';
+    currentSpeech = null;
+  };
+  window.speechSynthesis.speak(currentSpeech);
+}
+
+function shareResult() {
+  const story = document.getElementById('originalText').textContent;
+  const ending = document.getElementById('ruinedText').textContent;
+  const shareText = story + '\n\n' + ending + '\n\n-- Ruined by Unsatisfy';
+
+  if (navigator.share) {
+    navigator.share({ title: 'Unsatisfy', text: shareText }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => showToast('Copied to clipboard!')).catch(() => showToast('Could not copy'));
+  } else {
+    showToast('Share not supported in this browser');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Fix the var() in JS
+document.getElementById('storyInput').addEventListener('focus', function() {
+  this.style.borderColor = '';
+});
+</script>
+</body>
+</html>

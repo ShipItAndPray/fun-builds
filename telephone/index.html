@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telephone Game - Message Distortion Chain</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-size: 2.4rem;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    margin-bottom: 6px;
+  }
+
+  header h1 span { font-size: 2.8rem; }
+
+  header p {
+    color: rgba(255,255,255,0.85);
+    font-size: 1.05rem;
+  }
+
+  .input-area {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    margin-bottom: 24px;
+  }
+
+  .input-area label {
+    display: block;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    color: #444;
+  }
+
+  .input-area textarea {
+    width: 100%;
+    min-height: 80px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+
+  .input-area textarea:focus {
+    outline: none;
+    border-color: #764ba2;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-send {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(245,87,108,0.4);
+  }
+
+  .btn-send:hover { box-shadow: 0 6px 20px rgba(245,87,108,0.5); }
+
+  .btn-reset {
+    background: #eee;
+    color: #666;
+    flex: 0.4;
+  }
+
+  .btn-reset:hover { background: #ddd; }
+
+  /* Chain */
+  .chain { display: none; }
+  .chain.visible { display: block; }
+
+  .step {
+    background: #fff;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideIn 0.4s ease forwards;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 5px;
+    height: 100%;
+  }
+
+  .step:nth-child(1)::before { background: #f093fb; }
+  .step:nth-child(2)::before { background: #f5576c; }
+  .step:nth-child(3)::before { background: #feca57; }
+  .step:nth-child(4)::before { background: #48dbfb; }
+  .step:nth-child(5)::before { background: #ff6b6b; }
+
+  @keyframes slideIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    flex-shrink: 0;
+  }
+
+  .step:nth-child(1) .avatar { background: #fce4fc; }
+  .step:nth-child(2) .avatar { background: #fde2e2; }
+  .step:nth-child(3) .avatar { background: #fef3cd; }
+  .step:nth-child(4) .avatar { background: #d1f2fb; }
+  .step:nth-child(5) .avatar { background: #fde2e2; }
+
+  .step-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .step-role {
+    font-size: 0.82rem;
+    color: #888;
+  }
+
+  .step-text {
+    font-size: 1rem;
+    line-height: 1.55;
+    color: #444;
+    padding: 12px 14px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 3px solid #ddd;
+  }
+
+  .step:nth-child(1) .step-text { border-left-color: #f093fb; }
+  .step:nth-child(2) .step-text { border-left-color: #f5576c; }
+  .step:nth-child(3) .step-text { border-left-color: #feca57; }
+  .step:nth-child(4) .step-text { border-left-color: #48dbfb; }
+  .step:nth-child(5) .step-text { border-left-color: #ff6b6b; }
+
+  .connector {
+    text-align: center;
+    margin: -6px 0;
+    font-size: 1.3rem;
+    color: rgba(255,255,255,0.7);
+    opacity: 0;
+    animation: slideIn 0.3s ease forwards;
+  }
+
+  /* Results */
+  .results {
+    display: none;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  .results.visible { display: block; opacity: 0; animation: slideIn 0.5s ease forwards; }
+
+  .results h2 {
+    font-size: 1.3rem;
+    margin-bottom: 16px;
+    color: #333;
+  }
+
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .compare-box {
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
+  .compare-box.original {
+    background: #e8f5e9;
+    border: 2px solid #a5d6a7;
+  }
+
+  .compare-box.final {
+    background: #fce4ec;
+    border: 2px solid #f48fb1;
+  }
+
+  .compare-box strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .score-ring {
+    width: 120px;
+    height: 120px;
+    margin: 10px auto 8px;
+    position: relative;
+  }
+
+  .score-ring svg { transform: rotate(-90deg); }
+
+  .score-ring .value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #764ba2;
+  }
+
+  .score-label {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 18px;
+  }
+
+  .btn-share {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+
+  .btn-share:active { transform: scale(0.97); }
+
+  .share-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #333;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 99;
+  }
+
+  .share-toast.show { transform: translateX(-50%) translateY(0); }
+
+  .examples {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .examples span {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    margin: 3px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .examples span:hover { background: rgba(255,255,255,0.35); }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.8rem; }
+    header h1 span { font-size: 2.1rem; }
+    .compare { grid-template-columns: 1fr; }
+    .container { padding: 12px 10px 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1><span>&#x1F4DE;</span> Telephone Game</h1>
+    <p>Watch your message get hilariously mangled by 5 people</p>
+  </header>
+
+  <div class="examples">
+    <span onclick="setExample(this)">I saw a dog at the park</span>
+    <span onclick="setExample(this)">My boss gave me a raise today</span>
+    <span onclick="setExample(this)">The weather will be nice tomorrow</span>
+    <span onclick="setExample(this)">I think my neighbor is building a shed</span>
+  </div>
+
+  <div class="input-area">
+    <label for="msg">Your Message</label>
+    <textarea id="msg" placeholder="Type something and watch it transform..."></textarea>
+    <div class="btn-row">
+      <button class="btn btn-send" onclick="sendIt()">Send It &#x1F4E8;</button>
+      <button class="btn btn-reset" onclick="resetAll()">Reset</button>
+    </div>
+  </div>
+
+  <div class="chain" id="chain"></div>
+  <div class="results" id="results"></div>
+</div>
+
+<div class="share-toast" id="toast">Copied to clipboard!</div>
+
+<script>
+const PEOPLE = [
+  { name: "Karen", role: "The Word Swapper", emoji: "\uD83D\uDE12", desc: "changes random words" },
+  { name: "Greg", role: "The Misinterpreter", emoji: "\uD83E\uDD14", desc: "misunderstands everything" },
+  { name: "Tiffany", role: "The Drama Queen", emoji: "\uD83D\uDE31", desc: "adds dramatic flair" },
+  { name: "Brad", role: "The Context Remover", emoji: "\uD83D\uDE11", desc: "strips all nuance" },
+  { name: "Cheryl", role: "The Total Rewriter", emoji: "\uD83E\uDD2A", desc: "completely rewrites it" }
+];
+
+// ========== PERSON 1: WORD SWAPPER (10 rules) ==========
+const wordSwaps = {
+  "dog": "wolf", "cat": "panther", "walk": "sprint", "run": "flee",
+  "house": "mansion", "car": "chariot", "food": "feast", "friend": "associate",
+  "phone": "device", "book": "manuscript", "money": "fortune", "job": "calling",
+  "happy": "euphoric", "sad": "devastated", "good": "superb", "bad": "catastrophic",
+  "small": "microscopic", "big": "colossal", "nice": "extraordinary", "old": "ancient",
+  "new": "revolutionary", "hot": "scorching", "cold": "arctic", "fast": "lightning-speed",
+  "slow": "glacial", "said": "declared", "went": "ventured", "saw": "witnessed",
+  "got": "acquired", "made": "crafted", "came": "arrived", "took": "seized",
+  "gave": "bestowed", "think": "suspect", "know": "am certain", "want": "desperately need",
+  "like": "adore", "love": "worship", "hate": "despise", "eat": "devour",
+  "park": "wilderness", "store": "emporium", "school": "academy", "work": "headquarters",
+  "rain": "downpour", "sun": "blazing sun", "morning": "crack of dawn", "night": "dead of night",
+  "today": "this very day", "tomorrow": "the morrow", "maybe": "almost certainly",
+  "some": "countless", "little": "minuscule", "pretty": "stunningly"
+};
+
+function person1(text) {
+  let words = text.split(/(\s+)/);
+  let changed = 0;
+  words = words.map(w => {
+    let clean = w.toLowerCase().replace(/[^a-z]/g, '');
+    if (wordSwaps[clean] && changed < 4) {
+      changed++;
+      let punct = w.match(/[^a-zA-Z]+$/) ? w.match(/[^a-zA-Z]+$/)[0] : '';
+      let pre = w.match(/^[^a-zA-Z]+/) ? w.match(/^[^a-zA-Z]+/)[0] : '';
+      return pre + wordSwaps[clean] + punct;
+    }
+    return w;
+  });
+  // Also randomly swap two adjacent words
+  let realWords = [];
+  words.forEach((w, i) => { if (w.trim()) realWords.push(i); });
+  if (realWords.length > 3) {
+    let idx = realWords[Math.floor(Math.random() * (realWords.length - 2)) + 1];
+    let next = realWords[realWords.indexOf(idx) + 1];
+    if (next !== undefined) {
+      [words[idx], words[next]] = [words[next], words[idx]];
+    }
+  }
+  return words.join('');
+}
+
+// ========== PERSON 2: MISINTERPRETER (10 rules) ==========
+const misinterpretations = [
+  [/\bi saw\b/i, "I was attacked by"],
+  [/\bi heard\b/i, "Someone screamed about"],
+  [/\bi think\b/i, "I'm absolutely certain"],
+  [/\bi went to\b/i, "I was dragged to"],
+  [/\bgave me\b/i, "threw at me"],
+  [/\btold me\b/i, "screamed at me about"],
+  [/\basked me\b/i, "interrogated me about"],
+  [/\bwill be\b/i, "has always been"],
+  [/\bmight\b/i, "will definitely"],
+  [/\bcould\b/i, "must"],
+  [/\bbuilding\b/i, "constructing a massive"],
+  [/\bgoing to\b/i, "obsessed with"],
+  [/\btrying to\b/i, "failing miserably at"],
+  [/\bwants to\b/i, "is plotting to"],
+  [/\bneeds to\b/i, "is desperate to"],
+  [/\bseems like\b/i, "is obviously"],
+  [/\bprobably\b/i, "without question"],
+  [/\bsort of\b/i, "extremely"],
+  [/\ba little\b/i, "overwhelmingly"],
+  [/\bnot sure\b/i, "100% positive"]
+];
+
+function person2(text) {
+  let result = text;
+  let applied = 0;
+  for (let [pattern, replacement] of misinterpretations) {
+    if (pattern.test(result) && applied < 5) {
+      result = result.replace(pattern, replacement);
+      applied++;
+    }
+  }
+  // Add confusion prefix sometimes
+  if (Math.random() > 0.4) {
+    const prefixes = [
+      "Wait, so apparently ", "OK so get this -- ", "You won't believe this but ",
+      "I'm pretty sure they said ", "From what I gathered, "
+    ];
+    result = prefixes[Math.floor(Math.random() * prefixes.length)] + result.charAt(0).toLowerCase() + result.slice(1);
+  }
+  return result;
+}
+
+// ========== PERSON 3: DRAMA QUEEN (10 rules) ==========
+const dramaticAdditions = [
+  [/\.$/, "... and honestly I'm still SHAKING."],
+  [/!$/, "!!! I literally CANNOT right now!!!"],
+  [/\?$/, "?! Like, is this even REAL LIFE?!"],
+  [/\bwolf\b/i, "LITERAL WOLF -- like fangs and everything --"],
+  [/\bfortune\b/i, "like a MILLION DOLLARS"],
+  [/\bdevastated\b/i, "ABSOLUTELY DESTROYED, like emotionally WRECKED"],
+  [/\bcolossal\b/i, "like BUILDING-SIZED, I'm not even exaggerating"],
+  [/\bscorching\b/i, "like SURFACE-OF-THE-SUN hot"],
+  [/\barctic\b/i, "BONE-CHILLING, hypothermia-level"],
+  [/\bsuperb\b/i, "LIFE-CHANGINGLY amazing"],
+  [/\bcatastrophic\b/i, "END-OF-THE-WORLD level bad"],
+  [/\bdespise\b/i, "LOATHE with every fiber of their being"],
+  [/\bworship\b/i, "are OBSESSED with, like unhealthily so"],
+  [/\bmansion\b/i, "PALACE (we're talking marble floors)"],
+  [/\bchariot\b/i, "like a GOLDEN CHARIOT from the movies"],
+  [/\bwilderness\b/i, "actual WILDERNESS with BEARS probably"]
+];
+
+const dramaInserts = [
+  " (I am NOT making this up) ",
+  " -- this is the important part -- ",
+  " (my jaw literally dropped) ",
+  " *dramatic pause* ",
+  " AND THEN ",
+  " (you need to sit down for this) "
+];
+
+function person3(text) {
+  let result = text;
+  let applied = 0;
+  for (let [pattern, replacement] of dramaticAdditions) {
+    if (pattern.test(result) && applied < 4) {
+      result = result.replace(pattern, replacement);
+      applied++;
+    }
+  }
+  // Insert dramatic interjection in the middle
+  let sentences = result.split(/([.!?]+\s*)/);
+  if (sentences.length > 2) {
+    let mid = Math.floor(sentences.length / 2);
+    sentences.splice(mid, 0, dramaInserts[Math.floor(Math.random() * dramaInserts.length)]);
+  }
+  result = sentences.join('');
+  // Add all-caps emphasis to random words
+  let words = result.split(' ');
+  let capsCount = 0;
+  words = words.map(w => {
+    if (w.length > 4 && Math.random() > 0.75 && capsCount < 3 && w === w.toLowerCase()) {
+      capsCount++;
+      return w.toUpperCase();
+    }
+    return w;
+  });
+  result = words.join(' ');
+  if (!result.match(/!$/)) result += "!!!";
+  return result;
+}
+
+// ========== PERSON 4: CONTEXT REMOVER (10 rules) ==========
+function person4(text) {
+  let result = text;
+  // Remove parenthetical asides
+  result = result.replace(/\([^)]*\)/g, '');
+  // Remove "like" comparisons
+  result = result.replace(/\blike\s+[^,!.?]+/gi, '');
+  // Remove dashes and their content
+  result = result.replace(/\s*--[^-]*--\s*/g, ' ');
+  // Remove hedging language
+  result = result.replace(/\b(apparently|basically|honestly|literally|actually|probably|maybe|perhaps|supposedly|allegedly)\b\s*/gi, '');
+  // Remove time references
+  result = result.replace(/\b(yesterday|today|tomorrow|this morning|last night|this evening|this very day|the morrow|crack of dawn|dead of night)\b/gi, '');
+  // Remove "I think" / "I believe" type qualifiers
+  result = result.replace(/\b(I think|I believe|I suspect|I'm pretty sure|from what I gathered|I heard that)\b\s*/gi, '');
+  // Remove adjective chains (keep only last)
+  result = result.replace(/(\b\w+ly\b\s+){2,}/gi, function(m) {
+    let parts = m.trim().split(/\s+/);
+    return parts[parts.length - 1] + ' ';
+  });
+  // Shorten sentences - remove everything after "and" in long clauses
+  if (result.length > 120) {
+    let andIdx = result.indexOf(' and ', 60);
+    if (andIdx > 0) result = result.substring(0, andIdx) + '.';
+  }
+  // Remove quotes
+  result = result.replace(/["']/g, '');
+  // Clean up multiple spaces and leading/trailing whitespace
+  result = result.replace(/\s{2,}/g, ' ').trim();
+  // Remove leading conjunctions
+  result = result.replace(/^(so|and|but|wait|ok|okay)\b\s*/i, '');
+  // If too short, that IS the joke
+  if (result.length < 10) result = "Something happened. Details unclear.";
+  return result;
+}
+
+// ========== PERSON 5: TOTAL REWRITER (10 rules) ==========
+const rewriteTemplates = [
+  "So basically, [SUBJECT] went absolutely FERAL and [ACTION]. Nobody saw it coming. The vibes were immaculate. Or terrible. Honestly it's hard to say.",
+  "BREAKING: [SUBJECT] was spotted [ACTION]. Witnesses are shook. Sources say this changes everything we thought we knew.",
+  "Not to be dramatic but [SUBJECT] just [ACTION] and the world will never be the same. I will be processing this for weeks.",
+  "Okay so I just found out that [SUBJECT] [ACTION] and I literally have no words. Actually I have many words. Here they are.",
+  "Rumor has it [SUBJECT] [ACTION]. Can neither confirm nor deny. But my source is very reliable (it was a friend of a friend).",
+  "Plot twist: [SUBJECT] [ACTION]. The foreshadowing was there all along. We just weren't paying attention.",
+  "In today's episode of 'you can't make this up': [SUBJECT] straight up [ACTION]. The audacity. The drama. The chaos.",
+  "ALERT: [SUBJECT] has reportedly [ACTION]. This is not a drill. Repeat: NOT a drill. Stay calm but also panic a little."
+];
+
+function person5(text) {
+  // Extract subject and action from the mangled text
+  let words = text.replace(/[!?.]+/g, '.').split(/\s+/).filter(w => w.length > 0);
+
+  // Try to find a subject (first noun-like cluster)
+  let subject = words.slice(0, Math.min(3, Math.ceil(words.length * 0.3))).join(' ');
+  // Action is the rest
+  let action = words.slice(Math.min(3, Math.ceil(words.length * 0.3))).join(' ');
+
+  if (!action || action.length < 5) {
+    action = "did something absolutely unhinged";
+  }
+  if (!subject || subject.length < 2) {
+    subject = "Someone";
+  }
+
+  // Clean up
+  subject = subject.replace(/[.!?,;:]+/g, '').trim();
+  action = action.replace(/^(was|is|has|had|went|did)\s+/i, '').trim();
+  if (action.length > 80) action = action.substring(0, 80).replace(/\s\w*$/, '') + '...';
+
+  let template = rewriteTemplates[Math.floor(Math.random() * rewriteTemplates.length)];
+  let result = template.replace('[SUBJECT]', subject).replace('[ACTION]', action);
+
+  // Add a random sign-off
+  const signoffs = [
+    " Anyway, don't tell anyone I told you.",
+    " And that's the tea.",
+    " I rest my case.",
+    " *mic drop*",
+    " Story developing.",
+    " Send thoughts and prayers.",
+    " This is why we can't have nice things.",
+    " Film at eleven."
+  ];
+  result += signoffs[Math.floor(Math.random() * signoffs.length)];
+
+  return result;
+}
+
+// ========== DISTORTION SCORE ==========
+function distortionScore(original, final) {
+  let origWords = new Set(original.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean));
+  let finalWords = new Set(final.toLowerCase().replace(/[^a-z\s]/g, '').split(/\s+/).filter(Boolean));
+
+  let shared = 0;
+  origWords.forEach(w => { if (finalWords.has(w)) shared++; });
+
+  let total = new Set([...origWords, ...finalWords]).size;
+  if (total === 0) return 100;
+
+  let similarity = shared / total;
+  let lengthRatio = Math.abs(final.length - original.length) / Math.max(original.length, 1);
+  let lengthPenalty = Math.min(lengthRatio * 15, 30);
+
+  let score = Math.round((1 - similarity) * 70 + lengthPenalty);
+  return Math.min(Math.max(score, 5), 99);
+}
+
+// ========== MAIN ==========
+let chainData = null;
+
+function setExample(el) {
+  document.getElementById('msg').value = el.textContent;
+}
+
+function sendIt() {
+  const original = document.getElementById('msg').value.trim();
+  if (!original) return;
+
+  const filters = [person1, person2, person3, person4, person5];
+  const steps = [];
+  let current = original;
+
+  for (let i = 0; i < 5; i++) {
+    current = filters[i](current);
+    steps.push(current);
+  }
+
+  chainData = { original, steps };
+  renderChain(original, steps);
+}
+
+function renderChain(original, steps) {
+  const chain = document.getElementById('chain');
+  const results = document.getElementById('results');
+  chain.innerHTML = '';
+  results.innerHTML = '';
+  chain.classList.add('visible');
+  results.classList.remove('visible');
+
+  steps.forEach((text, i) => {
+    let delay = i * 600;
+    setTimeout(() => {
+      if (i > 0) {
+        let conn = document.createElement('div');
+        conn.className = 'connector';
+        conn.textContent = '\u2B07\uFE0F';
+        conn.style.animationDelay = '0s';
+        chain.appendChild(conn);
+      }
+
+      let step = document.createElement('div');
+      step.className = 'step';
+      step.style.animationDelay = '0.1s';
+      step.innerHTML = `
+        <div class="step-header">
+          <div class="avatar">${PEOPLE[i].emoji}</div>
+          <div>
+            <div class="step-name">${PEOPLE[i].name}</div>
+            <div class="step-role">${PEOPLE[i].role} &mdash; ${PEOPLE[i].desc}</div>
+          </div>
+        </div>
+        <div class="step-text">${escapeHtml(text)}</div>
+      `;
+      chain.appendChild(step);
+
+      // After last step, show results
+      if (i === 4) {
+        setTimeout(() => showResults(original, text), 500);
+      }
+    }, delay);
+  });
+}
+
+function showResults(original, final) {
+  const score = distortionScore(original, final);
+  const results = document.getElementById('results');
+
+  const circumference = 2 * Math.PI * 48;
+  const offset = circumference - (score / 100) * circumference;
+
+  let color = score > 70 ? '#f5576c' : score > 40 ? '#feca57' : '#2ed573';
+
+  results.innerHTML = `
+    <h2>Damage Report</h2>
+    <div class="compare">
+      <div class="compare-box original">
+        <strong>Original</strong>
+        ${escapeHtml(original)}
+      </div>
+      <div class="compare-box final">
+        <strong>Final Version</strong>
+        ${escapeHtml(final)}
+      </div>
+    </div>
+    <div class="score-ring">
+      <svg width="120" height="120">
+        <circle cx="60" cy="60" r="48" fill="none" stroke="#eee" stroke-width="10"/>
+        <circle cx="60" cy="60" r="48" fill="none" stroke="${color}" stroke-width="10"
+          stroke-dasharray="${circumference}" stroke-dashoffset="${circumference}"
+          stroke-linecap="round" id="score-arc"/>
+      </svg>
+      <div class="value">${score}%</div>
+    </div>
+    <div class="score-label">Distortion Score</div>
+    <button class="btn-share" onclick="shareChain()">Share This Chain &#x1F517;</button>
+  `;
+  results.classList.add('visible');
+
+  // Animate the ring
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('score-arc').style.transition = 'stroke-dashoffset 1s ease';
+      document.getElementById('score-arc').style.strokeDashoffset = offset;
+    });
+  });
+}
+
+function shareChain() {
+  if (!chainData) return;
+  let text = `Telephone Game Results:\n\nOriginal: "${chainData.original}"\n`;
+  chainData.steps.forEach((s, i) => {
+    text += `\n${PEOPLE[i].emoji} ${PEOPLE[i].name} (${PEOPLE[i].role}):\n"${s}"\n`;
+  });
+  text += `\nDistortion: ${distortionScore(chainData.original, chainData.steps[4])}%`;
+  text += `\n\nPlay: ${location.href}`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }).catch(() => {
+    // Fallback
+    prompt('Copy this:', text);
+  });
+}
+
+function resetAll() {
+  document.getElementById('msg').value = '';
+  document.getElementById('chain').innerHTML = '';
+  document.getElementById('chain').classList.remove('visible');
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('results').classList.remove('visible');
+  chainData = null;
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

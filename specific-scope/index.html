@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Specific Scope - Eerily Specific Horoscopes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a1a;
+    color: #e0d8f0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield */
+  .starfield {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+  }
+
+  @keyframes twinkle {
+    0% { opacity: var(--o1); transform: scale(1); }
+    100% { opacity: var(--o2); transform: scale(1.3); }
+  }
+
+  /* Nebula blobs */
+  .nebula {
+    position: fixed; border-radius: 50%; filter: blur(100px);
+    z-index: 0; pointer-events: none; opacity: 0.15;
+  }
+  .nebula-1 { width: 500px; height: 500px; background: #6b21a8; top: -100px; right: -100px; }
+  .nebula-2 { width: 400px; height: 400px; background: #1e40af; bottom: -50px; left: -100px; }
+  .nebula-3 { width: 300px; height: 300px; background: #7c3aed; top: 40%; left: 30%; }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 700px; margin: 0 auto; padding: 20px;
+    min-height: 100vh;
+  }
+
+  header {
+    text-align: center; padding: 40px 0 20px;
+  }
+
+  .logo-icon {
+    font-size: 48px; margin-bottom: 8px;
+    animation: float 4s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #c084fc, #818cf8, #e0aaff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-size: 0.85rem; color: #8b82a8; margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* Mode selector */
+  .mode-selector {
+    display: flex; justify-content: center; gap: 8px;
+    margin: 24px 0 20px; flex-wrap: wrap;
+  }
+
+  .mode-btn {
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    color: #b8a5d4; padding: 8px 20px; border-radius: 24px;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .mode-btn:hover { background: rgba(124, 58, 237, 0.25); color: #d4bfff; }
+
+  .mode-btn.active {
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    border-color: #8b5cf6; color: white; font-weight: 600;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+  }
+
+  /* Zodiac grid */
+  .zodiac-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin: 20px 0;
+  }
+
+  @media (max-width: 500px) {
+    .zodiac-grid { grid-template-columns: repeat(3, 1fr); }
+    h1 { font-size: 1.7rem; }
+  }
+
+  .zodiac-btn {
+    background: rgba(15, 15, 35, 0.7);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 14px; padding: 16px 8px;
+    cursor: pointer; text-align: center;
+    transition: all 0.3s; color: #c4b5e0;
+  }
+
+  .zodiac-btn:hover {
+    background: rgba(124, 58, 237, 0.15);
+    border-color: rgba(139, 92, 246, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.15);
+  }
+
+  .zodiac-btn.selected {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(99, 102, 241, 0.3));
+    border-color: #8b5cf6;
+    box-shadow: 0 0 25px rgba(124, 58, 237, 0.2);
+  }
+
+  .zodiac-symbol { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+  .zodiac-name { font-size: 0.72rem; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; }
+
+  /* Generate button */
+  .generate-btn {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #7c3aed, #6366f1);
+    border: none; border-radius: 14px; color: white;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    font-family: 'Cinzel', serif; letter-spacing: 2px;
+    transition: all 0.3s; margin: 24px 0;
+    text-transform: uppercase;
+  }
+
+  .generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(124, 58, 237, 0.4);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+
+  .generate-btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none;
+    box-shadow: none;
+  }
+
+  /* Result card */
+  .result-card {
+    background: rgba(15, 15, 35, 0.8);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 20px; padding: 28px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.6s ease;
+    display: none;
+  }
+
+  .result-card.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15);
+  }
+
+  .result-sign-symbol { font-size: 2rem; }
+  .result-sign-name {
+    font-family: 'Cinzel', serif; font-size: 1.1rem;
+    font-weight: 700; color: #c084fc;
+  }
+  .result-mode-label {
+    font-size: 0.7rem; color: #7c6f9b; text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .horoscope-text {
+    font-size: 1.05rem; line-height: 1.75;
+    color: #d4cbea; margin-bottom: 20px;
+  }
+
+  /* Accuracy meter */
+  .accuracy-section {
+    background: rgba(124, 58, 237, 0.08);
+    border-radius: 12px; padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .accuracy-label {
+    font-size: 0.7rem; text-transform: uppercase;
+    letter-spacing: 2px; color: #8b82a8; margin-bottom: 8px;
+  }
+
+  .accuracy-bar-bg {
+    height: 8px; background: rgba(139, 92, 246, 0.15);
+    border-radius: 4px; overflow: hidden; margin-bottom: 6px;
+  }
+
+  .accuracy-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #a78bfa, #c084fc);
+    border-radius: 4px; width: 0;
+    transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .accuracy-value {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: #c084fc; text-align: right;
+  }
+
+  .accuracy-disclaimer {
+    font-size: 0.65rem; color: #5c5478; text-align: right;
+    font-style: italic;
+  }
+
+  /* Share button */
+  .share-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 12px;
+    background: rgba(124, 58, 237, 0.12);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: 12px; color: #b8a5d4;
+    cursor: pointer; font-size: 0.85rem;
+    transition: all 0.3s; font-family: 'Inter', sans-serif;
+  }
+
+  .share-btn:hover {
+    background: rgba(124, 58, 237, 0.25); color: #d4bfff;
+  }
+
+  .share-toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #7c3aed; color: white; padding: 12px 24px;
+    border-radius: 10px; font-size: 0.85rem;
+    opacity: 0; transition: opacity 0.3s;
+    z-index: 100;
+  }
+
+  .share-toast.show { opacity: 1; }
+
+  footer {
+    text-align: center; padding: 40px 0 20px;
+    font-size: 0.7rem; color: #4a4260;
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+<div class="nebula nebula-3"></div>
+
+<div class="container">
+  <header>
+    <div class="logo-icon">🔭</div>
+    <h1>Specific Scope</h1>
+    <p class="subtitle">Horoscopes so specific they're unsettling</p>
+  </header>
+
+  <div class="mode-selector">
+    <button class="mode-btn active" data-mode="daily" onclick="setMode('daily')">Daily</button>
+    <button class="mode-btn" data-mode="weekly" onclick="setMode('weekly')">Weekly</button>
+    <button class="mode-btn" data-mode="monthly" onclick="setMode('monthly')">Monthly</button>
+  </div>
+
+  <div class="zodiac-grid" id="zodiacGrid"></div>
+
+  <button class="generate-btn" id="generateBtn" disabled onclick="generateHoroscope()">
+    Consult the Stars
+  </button>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-header">
+      <span class="result-sign-symbol" id="resultSymbol"></span>
+      <div>
+        <div class="result-sign-name" id="resultName"></div>
+        <div class="result-mode-label" id="resultMode"></div>
+      </div>
+    </div>
+    <div class="horoscope-text" id="horoscopeText"></div>
+    <div class="accuracy-section">
+      <div class="accuracy-label">Cosmic Accuracy Score</div>
+      <div class="accuracy-bar-bg">
+        <div class="accuracy-bar-fill" id="accuracyBar"></div>
+      </div>
+      <div class="accuracy-value" id="accuracyValue"></div>
+      <div class="accuracy-disclaimer">* based on vibes and star math</div>
+    </div>
+    <button class="share-btn" onclick="shareHoroscope()">
+      <span>&#10697;</span> Share This Prophecy
+    </button>
+  </div>
+
+  <footer>
+    Specific Scope &mdash; The stars know what you did at 3:17am<br>
+    Not responsible for existential crises caused by accuracy
+  </footer>
+</div>
+
+<div class="share-toast" id="shareToast">Prophecy copied to clipboard</div>
+
+<script>
+const signs = [
+  { name: 'Aries', symbol: '\u2648', dates: 'Mar 21 - Apr 19' },
+  { name: 'Taurus', symbol: '\u2649', dates: 'Apr 20 - May 20' },
+  { name: 'Gemini', symbol: '\u264A', dates: 'May 21 - Jun 20' },
+  { name: 'Cancer', symbol: '\u264B', dates: 'Jun 21 - Jul 22' },
+  { name: 'Leo', symbol: '\u264C', dates: 'Jul 23 - Aug 22' },
+  { name: 'Virgo', symbol: '\u264D', dates: 'Aug 23 - Sep 22' },
+  { name: 'Libra', symbol: '\u264E', dates: 'Sep 23 - Oct 22' },
+  { name: 'Scorpio', symbol: '\u264F', dates: 'Oct 23 - Nov 21' },
+  { name: 'Sagittarius', symbol: '\u2650', dates: 'Nov 22 - Dec 21' },
+  { name: 'Capricorn', symbol: '\u2651', dates: 'Dec 22 - Jan 19' },
+  { name: 'Aquarius', symbol: '\u2652', dates: 'Jan 20 - Feb 18' },
+  { name: 'Pisces', symbol: '\u2653', dates: 'Feb 19 - Mar 20' }
+];
+
+let selectedSign = null;
+let currentMode = 'daily';
+
+// Build zodiac grid
+const grid = document.getElementById('zodiacGrid');
+signs.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'zodiac-btn';
+  btn.innerHTML = `<span class="zodiac-symbol">${s.symbol}</span><span class="zodiac-name">${s.name}</span>`;
+  btn.onclick = () => selectSign(i);
+  grid.appendChild(btn);
+});
+
+function selectSign(i) {
+  selectedSign = i;
+  document.querySelectorAll('.zodiac-btn').forEach((b, j) => b.classList.toggle('selected', j === i));
+  document.getElementById('generateBtn').disabled = false;
+}
+
+function setMode(m) {
+  currentMode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+}
+
+// --- Templates ---
+function rTime() {
+  const h = Math.floor(Math.random() * 12) + 1;
+  const m = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+  const ap = Math.random() > 0.5 ? 'pm' : 'am';
+  return `${h}:${m}${ap}`;
+}
+
+function rColor() {
+  return pick(['blue', 'red', 'green', 'gray', 'beige', 'maroon', 'olive', 'teal', 'mustard yellow', 'off-white', 'suspiciously orange']);
+}
+
+function rItem() {
+  return pick(['a pen', 'your phone', 'a fork', 'a receipt', 'your keys', 'a grape', 'a paperclip', 'a chip', 'your dignity', 'a crumb', 'a hair tie', 'a coin', 'a button']);
+}
+
+function rPerson() {
+  return pick(['a man', 'a woman', 'someone', 'a stranger', 'a child', 'an elderly person', 'a person in sunglasses', 'a delivery driver', 'a dog walker', 'a jogger']);
+}
+
+function rClothing() {
+  return pick(['a ' + rColor() + ' jacket', 'a ' + rColor() + ' hat', 'a ' + rColor() + ' scarf', 'cargo shorts', 'a denim vest', 'a windbreaker', 'crocs', 'a fanny pack']);
+}
+
+function rFood() {
+  return pick(['a sandwich', 'cereal', 'leftover pasta', 'toast', 'a banana', 'yogurt', 'crackers', 'cold pizza', 'a granola bar', 'cheese from the bag', 'soup from a mug']);
+}
+
+function rPlace() {
+  return pick(['the grocery store', 'a parking lot', 'the bathroom', 'an elevator', 'a crosswalk', 'a waiting room', 'the kitchen', 'a hallway', 'the checkout line']);
+}
+
+function rNumber() {
+  return Math.floor(Math.random() * 47) + 3;
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+const dailyTemplates = [
+  () => `Today at ${rTime()} you will drop ${rItem()} and debate whether to pick it up. You won't.`,
+  () => `${rPerson()} in ${rClothing()} will look at you. They're just looking at the door behind you.`,
+  () => `You will open the fridge ${rNumber()} times today. Nothing new will appear. You will check again anyway.`,
+  () => `At approximately ${rTime()}, you'll think of something embarrassing you said in ${2010 + Math.floor(Math.random() * 14)}. You will physically cringe.`,
+  () => `Someone will say "we need to talk" today. It's about who's buying lunch. But you'll still panic for ${rNumber()} seconds.`,
+  () => `You will make eye contact with ${rPerson()} in ${rPlace()}. Neither of you will acknowledge it. This is correct.`,
+  () => `Today you will eat ${rFood()} and wonder if you're thriving or falling apart. The stars say: both.`,
+  () => `At ${rTime()}, you'll reach for your phone to check the time. You will open Instagram instead. Four minutes will vanish.`,
+  () => `A notification will arrive at ${rTime()}. It's an app you forgot you installed asking you to come back. You won't.`,
+  () => `You will walk into a room and forget why. You'll stand there for exactly ${rNumber()} seconds before leaving.`,
+  () => `Today at ${rTime()}, you will yawn. ${rPerson()} nearby will yawn too. Neither of you will comment on this.`,
+  () => `You will hear a song today that you haven't heard since ${2005 + Math.floor(Math.random() * 15)}. You will feel an emotion you can't name.`,
+  () => `At ${rTime()}, you'll sneeze exactly twice. A third sneeze will threaten to arrive but won't. This will bother you.`,
+  () => `Someone will ask "how are you?" You will say "good" while actively being not good. The stars approve.`,
+  () => `Today you will sit in a chair and think "I should really stretch more." You will not stretch.`,
+  () => `You will hold a door open for ${rPerson()} who is just slightly too far away. Both of you will regret this.`,
+  () => `At ${rTime()}, you will Google something and immediately forget what the search results said.`,
+  () => `You will write a text, delete it, rewrite it, then send exactly what you originally wrote. Time elapsed: ${rNumber()} minutes.`,
+  () => `${rPerson()} will wave at someone behind you. You will wave back. The psychic damage will last ${rNumber()} minutes.`,
+  () => `Today at ${rTime()}, a small but important realization will hit you. By ${rTime()}, you will have completely forgotten it.`,
+  () => `You will try to parallel park today. It will take exactly ${Math.floor(Math.random() * 4) + 2} attempts. ${rPerson()} will watch.`,
+  () => `An alarm you forgot to disable will go off at ${rTime()}. You set it months ago. You'll have no memory of why.`,
+  () => `You will bite the inside of your cheek while eating ${rFood()}. You will bite the same spot again within ${rNumber()} minutes.`,
+  () => `At ${rTime()}, you'll look at a clock and think "it's only ${rTime()}?" Yes. It is only ${rTime()}.`,
+  () => `You will hear your own voice in a recording today and wonder if that's really what you sound like. It is.`,
+  () => `Today you'll say "let me know" at the end of an email. You do not actually want them to let you know.`,
+  () => `You will see ${rPerson()} wearing the exact same shirt as you. You will feel unreasonably competitive about this.`,
+  () => `At ${rTime()}, you'll realize you've been sitting on your leg wrong. The pins and needles will be character-building.`,
+  () => `Today you will think about calling someone. You will text them instead. Everyone prefers this arrangement.`,
+  () => `You will pour cereal and discover there's not enough milk. You will eat it anyway. This is fine.`,
+  () => `${rPerson()} will tell you a story you've already heard. You will listen to the entire thing again.`,
+  () => `At ${rTime()}, you will unlock your phone, stare at the home screen, and lock it again. Purpose: unknown.`,
+  () => `You will accidentally like a post from ${2019 + Math.floor(Math.random() * 5)} while scrolling. The unlike will be instant but the damage is done.`,
+  () => `Today at ${rTime()}, you'll step on something wet in socks. You will never determine what it was.`,
+  () => `You will type "haha" in response to something that made you exhale slightly through your nose. This is the social contract.`,
+  () => `At ${rTime()}, you'll hear ${rPerson()} laugh extremely loudly in ${rPlace()}. You will wonder what could possibly be that funny.`,
+  () => `Today you will read an email three times and still not fully understand what they're asking for.`,
+  () => `You will set ${rNumber()} alarms for tomorrow morning. You will snooze all of them.`,
+  () => `At ${rTime()}, you'll say "I should go to bed" and then stay up for another ${Math.floor(Math.random() * 3) + 1} hours and ${Math.floor(Math.random() * 59)} minutes.`,
+  () => `You will try to remember if you locked the door. You did. But you'll check anyway.`,
+  () => `Today someone will say your name from across the room. They were talking to a different person with your name. Or were they?`,
+  () => `You will watch exactly ${rNumber()} seconds of a video before skipping ahead. The part you skipped was the important part.`,
+  () => `At ${rTime()}, you'll open a bag of chips intending to have "just a few." The bag will be empty in ${rNumber()} minutes.`,
+  () => `You will make direct eye contact with a dog today. This will be the best interaction of your day.`,
+  () => `Today you'll realize you've been humming a song for ${rNumber()} minutes. You don't know where you heard it.`,
+  () => `At ${rTime()}, you'll put something down in a "safe place." You will spend ${rNumber()} minutes looking for it later today.`,
+  () => `Someone will send you a link today. You will say "thanks, I'll check it out." You will not check it out.`,
+  () => `You will start composing a grocery list and give up after ${Math.floor(Math.random() * 5) + 2} items. You'll forget the most important thing.`,
+  () => `${rPerson()} will sneeze near you at ${rTime()}. You'll say "bless you" slightly too quietly for them to hear.`,
+  () => `Today at ${rTime()}, you'll hear a sound that might be your phone vibrating. It was not your phone. It was never your phone.`,
+  () => `You will make a decision about dinner at ${rTime()}. You will change your mind ${Math.floor(Math.random() * 4) + 2} times. You'll end up eating ${rFood()}.`,
+  () => `At ${rTime()}, you will trip on absolutely nothing. You will look back at the ground as if something was there. Nothing was there.`,
+  () => `Today you'll misjudge how hot your coffee is. The roof of your mouth will remember this for ${rNumber()} hours.`,
+  () => `You will say "no worries" to something that was, in fact, mildly worrying to you.`,
+  () => `At ${rTime()}, you'll zone out during a conversation and miss exactly one critical sentence. You'll nod anyway.`,
+  () => `Today you will push a pull door. ${rPerson()} will see it happen. Neither of you will speak of this.`,
+  () => `You'll start a task at ${rTime()} and immediately think of ${rNumber()} other tasks you should be doing instead.`,
+  () => `At exactly ${rTime()}, you'll feel your phone vibrate in your pocket. Your phone is on the table. The phantom buzz returns.`,
+  () => `${rPerson()} will smile at you in ${rPlace()} today. You'll spend ${rNumber()} minutes wondering if you know them.`,
+  () => `Today you'll search your bag for ${rItem()} for ${rNumber()} seconds. It was in the first pocket you checked.`,
+  () => `You will catch yourself making a face at your phone while reading a text. ${rPerson()} saw you do it.`,
+  () => `At ${rTime()}, you will successfully avoid ${rPerson()} you vaguely know at ${rPlace()}. Congratulations. This took skill.`,
+  () => `Today at ${rTime()}, you'll hear an ambulance siren and briefly wonder where it's going. Then you'll continue eating ${rFood()}.`,
+  () => `You will crack your knuckles exactly ${Math.floor(Math.random() * 8) + 3} times today. At least one will not crack. You will try again.`,
+  () => `Someone will ask you what you did this weekend. You genuinely cannot remember. It was ${rNumber()} hours ago.`,
+  () => `At ${rTime()}, you'll realize you've been breathing manually. You're doing it right now, too. Sorry.`,
+  () => `You will calculate a tip today and second-guess the math even though you used your phone's calculator.`,
+  () => `Today you'll tell yourself "I'll remember this, I don't need to write it down." Narrator: you will not remember this.`,
+  () => `At ${rTime()}, a pigeon will make eye contact with you for an uncomfortably long time. It knows things.`,
+  () => `You will accidentally open the front camera. The angle will be devastating. You will recover eventually.`,
+  () => `Today you will rehearse a conversation in your head ${rNumber()} times. The actual conversation will go completely differently.`,
+  () => `At ${rTime()}, you'll put on a show to watch. You'll spend ${rNumber()} minutes on your phone instead of watching it.`,
+  () => `You will step into a crosswalk at the exact moment the light changes. A car will honk. You were technically legal.`,
+  () => `${rPerson()} will ask you to watch their bag in ${rPlace()}. You will guard it with your life for ${rNumber()} minutes despite having no idea what's in it.`,
+  () => `Today at ${rTime()}, you'll wonder if you've been drinking enough water. You haven't. You will drink one glass and feel virtuous.`,
+  () => `You'll see a missed call from an unknown number at ${rTime()}. They didn't leave a voicemail. You will think about this for ${rNumber()} minutes.`,
+  () => `At ${rTime()}, you'll walk past a mirror and do a subtle double-take at yourself. The stars do not judge you for this.`,
+  () => `Today you'll try to remember the name of an actor for ${rNumber()} minutes. It will come to you at ${rTime()}, unbidden, in ${rPlace()}.`,
+  () => `You will hear ${rPerson()} on a speakerphone call in ${rPlace()}. You will learn details about their life you did not want.`,
+  () => `At ${rTime()}, you'll close all your browser tabs in a moment of clarity. You will reopen most of them within ${rNumber()} minutes.`,
+  () => `Today you will contemplate a major life decision for ${rNumber()} minutes, then pivot to wondering what's for dinner.`,
+  () => `You will send a thumbs-up emoji and immediately worry it came across as passive-aggressive. It did not. Probably.`,
+  () => `At ${rTime()}, you'll notice a stain on your shirt that has been there all day. Nobody told you. Everyone saw it.`,
+  () => `Today you will laugh at a meme and consider sending it to someone. You'll decide they wouldn't get it. They wouldn't have.`,
+];
+
+const weeklyTemplates = [
+  () => `This week you will lose ${rItem()} on Monday and find it in an impossible location on Thursday. You will not question this.`,
+  () => `Between Tuesday and Friday, you will have the same conversation about the weather with ${rNumber()} different people. Each time you will act surprised.`,
+  () => `This week, you will eat ${rFood()} at least ${Math.floor(Math.random() * 4) + 3} times and tell yourself each time is the last time.`,
+  () => `On Wednesday at ${rTime()}, a small inconvenience will feel like a personal attack from the universe. By Thursday you'll have forgotten it entirely.`,
+  () => `This week you will start ${Math.floor(Math.random() * 4) + 2} new habits. By Sunday, ${Math.floor(Math.random() * 3) + 1} of them will already be abandoned.`,
+  () => `You will say "see you next week" to someone on Friday. You will both know this means "see you in 2-3 weeks, maybe."`,
+  () => `A package will arrive this week. You ordered it ${rNumber()} days ago and have completely forgotten what's inside. It's ${rItem()}.`,
+  () => `This week, you will hear your neighbor doing something at ${rTime()} on a weeknight. You will form opinions but say nothing.`,
+  () => `By Wednesday, you will have said "is it Friday yet?" exactly ${Math.floor(Math.random() * 5) + 2} times. Nobody will laugh. Everyone will agree.`,
+  () => `This week you will discover a bruise on your arm that you have no memory of getting. It will be ${rColor()}-ish.`,
+  () => `You will plan to meal prep on Sunday. By Monday at ${rTime()}, you will be eating ${rFood()} again as if nothing happened.`,
+  () => `Someone will cancel plans with you this week. You will pretend to be disappointed. You will be relieved. The stars see both truths.`,
+  () => `This week, you will have a dream so specific and weird that you'll try to explain it to someone. Their reaction will be polite confusion.`,
+  () => `On Thursday, you will nod along to a story in a meeting and realize ${rNumber()} minutes in that you have no idea what project they're discussing.`,
+  () => `You will spend ${rNumber()} cumulative minutes this week watching ${rPerson()} try to parallel park from a window. You will feel nothing but solidarity.`,
+];
+
+const monthlyTemplates = [
+  () => `This month, you will reorganize exactly one drawer and treat yourself as if you renovated the entire house.`,
+  () => `In the next 30 days, ${rPerson()} from your past will appear in your dreams exactly ${Math.floor(Math.random() * 4) + 2} times. You haven't thought about them in years. This means nothing. Probably.`,
+  () => `You will buy something this month that you were "definitely going to start using." It will sit untouched for ${rNumber()} days before you move it to a different spot and forget about it.`,
+  () => `This month, you will discover a new ${pick(['restaurant', 'coffee shop', 'shortcut', 'podcast', 'show'])} and become insufferable about recommending it for exactly ${rNumber()} days.`,
+  () => `At some point this month, you will open Notes on your phone and find something you wrote at ${rTime()} that makes absolutely no sense. You will never know what you meant.`,
+  () => `This month you will feel a burst of motivation on a random Tuesday at ${rTime()}. You will accomplish ${rNumber()} things in ${Math.floor(Math.random() * 3) + 2} hours. This energy will not return for the rest of the month.`,
+  () => `You will unsubscribe from exactly ${Math.floor(Math.random() * 8) + 3} email lists this month and still receive ${rNumber()} marketing emails per day.`,
+  () => `This month, you will spend ${rNumber()} minutes on a phone call that could have been a text. You will think about this at ${rTime()} on a Saturday.`,
+  () => `You will make a playlist this month. It will contain ${rNumber()} songs. You will listen to the first ${Math.floor(Math.random() * 5) + 3} on repeat and ignore the rest.`,
+  () => `By the end of this month, you will have ${Math.floor(Math.random() * 12) + 5} screenshots on your phone that you took for a reason you can no longer recall.`,
+  () => `This month, ${rPerson()} will give you advice you didn't ask for. It will be annoyingly correct. You will not follow it for ${rNumber()} days.`,
+  () => `You will look at your bank statement this month and see a charge of $${(Math.random() * 40 + 5).toFixed(2)} that you have absolutely no memory of making.`,
+  () => `Somewhere around the ${Math.floor(Math.random() * 20) + 5}th, you will feel an overwhelming urge to rearrange your furniture at ${rTime()}. You will move one thing and then stop.`,
+  () => `This month you will say "I need a vacation" at least ${rNumber()} times. You will not book a vacation.`,
+  () => `At some point this month, you will hold a fruit at the grocery store and put it back. This is a valid life choice and the stars support it.`,
+];
+
+function getTemplates() {
+  if (currentMode === 'weekly') return weeklyTemplates;
+  if (currentMode === 'monthly') return monthlyTemplates;
+  return dailyTemplates;
+}
+
+function generateHoroscope() {
+  if (selectedSign === null) return;
+  const sign = signs[selectedSign];
+  const templates = getTemplates();
+
+  // Pick 2-3 predictions and combine
+  const count = currentMode === 'daily' ? pick([2, 3]) : pick([2, 3]);
+  const shuffled = [...templates].sort(() => Math.random() - 0.5);
+  const predictions = shuffled.slice(0, count).map(fn => fn());
+  const horoscope = predictions.join('\n\n');
+
+  // Suspiciously high accuracy
+  const accuracy = (Math.random() * 4.5 + 94.5).toFixed(1);
+
+  // Render
+  document.getElementById('resultSymbol').textContent = sign.symbol;
+  document.getElementById('resultName').textContent = sign.name;
+  document.getElementById('resultMode').textContent = currentMode + ' reading';
+  document.getElementById('horoscopeText').innerHTML = horoscope.replace(/\n\n/g, '<br><br>');
+  document.getElementById('accuracyValue').textContent = accuracy + '%';
+
+  const card = document.getElementById('resultCard');
+  card.classList.remove('visible');
+  // Force reflow for animation
+  void card.offsetWidth;
+  card.classList.add('visible');
+
+  // Animate accuracy bar
+  const bar = document.getElementById('accuracyBar');
+  bar.style.width = '0%';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      bar.style.width = accuracy + '%';
+    });
+  });
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function shareHoroscope() {
+  const sign = signs[selectedSign];
+  const text = document.getElementById('horoscopeText').innerText;
+  const accuracy = document.getElementById('accuracyValue').textContent;
+  const shareText = `${sign.symbol} ${sign.name} ${currentMode} horoscope (${accuracy} accurate):\n\n${text}\n\n-- Specific Scope: horoscopes so specific they're unsettling`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Specific Scope', text: shareText }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(shareText).then(() => {
+      const toast = document.getElementById('shareToast');
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    });
+  }
+}
+
+// Generate stars
+(function generateStars() {
+  const field = document.getElementById('starfield');
+  const count = 120;
+  for (let i = 0; i < count; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.setProperty('--dur', (Math.random() * 3 + 2) + 's');
+    star.style.setProperty('--o1', (Math.random() * 0.4 + 0.1).toFixed(2));
+    star.style.setProperty('--o2', (Math.random() * 0.5 + 0.5).toFixed(2));
+    star.style.animationDelay = (Math.random() * 4) + 's';
+    field.appendChild(star);
+  }
+})();
+</script>
+
+</body>
+</html>

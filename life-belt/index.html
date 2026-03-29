@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Belt - Track Your Real-Life Skills</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Bebas+Neue&display=swap');
+
+  :root {
+    --bg-dark: #0a0a0f;
+    --bg-card: #13131a;
+    --bg-input: #1a1a25;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --text-dim: #888899;
+    --accent: #ff4444;
+    --accent-glow: rgba(255,68,68,0.3);
+    --gold: #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Dojo background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(circle at 20% 50%, rgba(255,68,68,0.03) 0%, transparent 50%),
+      radial-gradient(circle at 80% 50%, rgba(255,215,0,0.03) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.01) 60px, rgba(255,255,255,0.01) 61px),
+      repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.01) 60px, rgba(255,255,255,0.01) 61px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  .header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    letter-spacing: 6px;
+    color: var(--accent);
+    text-shadow: 0 0 40px var(--accent-glow);
+    margin-bottom: 4px;
+  }
+
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .kanji {
+    font-size: 1.2rem;
+    color: var(--accent);
+    opacity: 0.6;
+    margin-bottom: 8px;
+    letter-spacing: 12px;
+  }
+
+  /* Life Rank Card */
+  .rank-card {
+    background: linear-gradient(135deg, var(--bg-card), #1a1020);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 30px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rank-card::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(255,68,68,0.05), transparent, rgba(255,215,0,0.05), transparent);
+    animation: spin 20s linear infinite;
+    z-index: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .rank-card > * { position: relative; z-index: 1; }
+
+  .rank-label {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .rank-belt-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+
+  .rank-belt-visual {
+    width: 120px;
+    height: 28px;
+    border-radius: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rank-belt-visual::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.1);
+  }
+
+  .rank-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    letter-spacing: 3px;
+  }
+
+  .rank-score {
+    font-size: 3rem;
+    font-weight: 900;
+    margin: 4px 0;
+  }
+
+  .rank-score span {
+    font-size: 1.2rem;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* Sensei Says */
+  .sensei-box {
+    background: var(--bg-input);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin-top: 16px;
+    text-align: left;
+  }
+
+  .sensei-box .sensei-label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+
+  .sensei-box .sensei-wisdom {
+    font-size: 0.9rem;
+    color: var(--text);
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  /* Skills Grid */
+  .skills-section {
+    margin-bottom: 24px;
+  }
+
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .skill-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+  }
+
+  .skill-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    transform: translateY(-1px);
+  }
+
+  .skill-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .skill-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .skill-icon {
+    font-size: 1.4rem;
+    width: 36px;
+    text-align: center;
+  }
+
+  .skill-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .skill-belt-tag {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .skill-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .skill-controls button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+
+  .skill-controls button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .skill-level {
+    font-weight: 900;
+    font-size: 1.1rem;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  .skill-remove {
+    margin-left: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .skill-card:hover .skill-remove {
+    opacity: 1;
+  }
+
+  .skill-remove button {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 0.8rem !important;
+    border-color: transparent !important;
+    color: var(--text-dim) !important;
+  }
+
+  .skill-remove button:hover {
+    color: #ff4444 !important;
+    border-color: #ff4444 !important;
+  }
+
+  /* Progress bar */
+  .progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-input);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease, background 0.4s ease;
+  }
+
+  /* Belt mini display */
+  .belt-mini {
+    width: 40px;
+    height: 10px;
+    border-radius: 5px;
+    display: inline-block;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Add Skill */
+  .add-skill-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .add-skill-bar input {
+    flex: 1;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-skill-bar input:focus {
+    border-color: var(--accent);
+  }
+
+  .add-skill-bar input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .add-skill-bar select {
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    color: var(--text);
+    font-size: 1.1rem;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .add-skill-bar button {
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 20px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .add-skill-bar button:hover {
+    background: #ff5555;
+    transform: translateY(-1px);
+  }
+
+  /* Achievements */
+  .achievements {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .achievement {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s;
+  }
+
+  .achievement.unlocked {
+    border-color: rgba(255,215,0,0.3);
+    background: linear-gradient(135deg, var(--bg-card), rgba(255,215,0,0.03));
+  }
+
+  .achievement.locked {
+    opacity: 0.4;
+  }
+
+  .achievement-icon {
+    font-size: 1.6rem;
+    width: 36px;
+    text-align: center;
+  }
+
+  .achievement-info {
+    flex: 1;
+  }
+
+  .achievement-name {
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .achievement-desc {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  /* Share Card */
+  .share-section {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  .share-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 28px;
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+
+  .share-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Share Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .share-card-preview {
+    background: linear-gradient(135deg, #0f0f18, #1a1028);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+  }
+
+  .share-card-preview .close-modal {
+    position: absolute;
+    top: 12px; right: 16px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+
+  .share-card-preview h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--accent);
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+
+  .share-card-preview .share-rank {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .share-skills-list {
+    text-align: left;
+    margin: 16px 0;
+  }
+
+  .share-skill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.85rem;
+  }
+
+  .share-skill-row:last-child { border-bottom: none; }
+
+  .share-copy-btn {
+    margin-top: 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    color: #fff;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    z-index: 200;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Belt Colors */
+  .belt-white { background: #e8e8e8; color: #333; }
+  .belt-yellow { background: #ffd700; color: #333; }
+  .belt-green { background: #2ecc40; color: #fff; }
+  .belt-blue { background: #2196f3; color: #fff; }
+  .belt-brown { background: #8b5e3c; color: #fff; }
+  .belt-black { background: #1a1a1a; color: var(--gold); border: 1px solid var(--gold) !important; }
+
+  .progress-white { background: #e8e8e8; }
+  .progress-yellow { background: #ffd700; }
+  .progress-green { background: #2ecc40; }
+  .progress-blue { background: #2196f3; }
+  .progress-brown { background: #8b5e3c; }
+  .progress-black { background: linear-gradient(90deg, #1a1a1a, var(--gold)); }
+
+  .text-white-belt { color: #e8e8e8; }
+  .text-yellow-belt { color: #ffd700; }
+  .text-green-belt { color: #2ecc40; }
+  .text-blue-belt { color: #2196f3; }
+  .text-brown-belt { color: #8b5e3c; }
+  .text-black-belt { color: var(--gold); }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .container { padding: 12px; }
+    .header h1 { font-size: 2.5rem; }
+    .rank-score { font-size: 2.4rem; }
+    .add-skill-bar { flex-wrap: wrap; }
+    .add-skill-bar input { min-width: 100%; }
+    .achievements { grid-template-columns: 1fr; }
+    .skill-top { flex-wrap: wrap; gap: 8px; }
+  }
+
+  /* Level-up animation */
+  @keyframes levelUp {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .level-up-anim {
+    animation: levelUp 0.3s ease;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="kanji">道場 人生 帯</div>
+    <h1>LIFE BELT</h1>
+    <div class="subtitle">Track your real-life skills as karate belt ranks</div>
+  </div>
+
+  <!-- Life Rank Card -->
+  <div class="rank-card" id="rankCard">
+    <div class="rank-label">Your Life Rank</div>
+    <div class="rank-belt-display">
+      <div class="rank-belt-visual belt-white" id="rankBeltVisual"></div>
+      <div class="rank-name" id="rankName">White Belt</div>
+    </div>
+    <div class="rank-score" id="rankScore">0.0 <span>/ 10</span></div>
+    <div class="progress-bar-container" style="max-width:300px;margin:12px auto 0">
+      <div class="progress-bar-fill progress-white" id="rankProgress" style="width:0%"></div>
+    </div>
+    <div class="sensei-box">
+      <div class="sensei-label">Sensei Says</div>
+      <div class="sensei-wisdom" id="senseiWisdom">Add your first skill to begin your journey.</div>
+    </div>
+  </div>
+
+  <!-- Add Skill -->
+  <div class="add-skill-bar">
+    <input type="text" id="newSkillName" placeholder="Add a new skill..." maxlength="30">
+    <select id="newSkillIcon" title="Pick an icon">
+      <option value="&#x1F44A;">&#x1F44A;</option>
+      <option value="&#x1F373;">&#x1F373;</option>
+      <option value="&#x1F697;">&#x1F697;</option>
+      <option value="&#x1F4AC;">&#x1F4AC;</option>
+      <option value="&#x1F4B0;">&#x1F4B0;</option>
+      <option value="&#x1F3CB;">&#x1F3CB;</option>
+      <option value="&#x1F4DA;">&#x1F4DA;</option>
+      <option value="&#x1F3B5;">&#x1F3B5;</option>
+      <option value="&#x1F3A8;">&#x1F3A8;</option>
+      <option value="&#x1F4BB;">&#x1F4BB;</option>
+      <option value="&#x2764;">&#x2764;</option>
+      <option value="&#x1F9D8;">&#x1F9D8;</option>
+      <option value="&#x1F6E0;">&#x1F6E0;</option>
+      <option value="&#x1F30D;">&#x1F30D;</option>
+      <option value="&#x1F4F7;">&#x1F4F7;</option>
+      <option value="&#x2B50;">&#x2B50;</option>
+    </select>
+    <button onclick="addSkill()">Add</button>
+  </div>
+
+  <!-- Skills List -->
+  <div class="skills-section">
+    <div class="section-title">Your Skills</div>
+    <div id="skillsList"></div>
+    <div id="emptyState" style="text-align:center;color:var(--text-dim);padding:40px 0;font-size:0.9rem;">
+      No skills yet. Add skills above to begin training.
+    </div>
+  </div>
+
+  <!-- Achievements -->
+  <div class="skills-section">
+    <div class="section-title">Achievements</div>
+    <div class="achievements" id="achievementsList"></div>
+  </div>
+
+  <!-- Share -->
+  <div class="share-section">
+    <button class="share-btn" onclick="openShareCard()">Share Your Belt Card</button>
+  </div>
+
+  <div class="footer">LIFE BELT DOJO - Master the Art of Living</div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal-overlay" id="shareModal">
+  <div class="share-card-preview" id="shareCardContent">
+    <button class="close-modal" onclick="closeShareCard()">&times;</button>
+    <h2>LIFE BELT</h2>
+    <div class="share-rank" id="shareRank"></div>
+    <div id="shareBelt" style="margin:12px auto;width:160px;height:30px;border-radius:15px;border:2px solid rgba(255,255,255,0.15)"></div>
+    <div class="share-skills-list" id="shareSkillsList"></div>
+    <button class="share-copy-btn" onclick="copyShareText()">Copy as Text</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// === DATA ===
+const BELT_MAP = [
+  { min: 0, max: 2, name: 'White Belt', cls: 'white', jp: 'Shiro Obi' },
+  { min: 3, max: 4, name: 'Yellow Belt', cls: 'yellow', jp: 'Kiiro Obi' },
+  { min: 5, max: 6, name: 'Green Belt', cls: 'green', jp: 'Midori Obi' },
+  { min: 7, max: 8, name: 'Blue Belt', cls: 'blue', jp: 'Ao Obi' },
+  { min: 9, max: 9, name: 'Brown Belt', cls: 'brown', jp: 'Chairo Obi' },
+  { min: 10, max: 10, name: 'Black Belt', cls: 'black', jp: 'Kuro Obi' },
+];
+
+const SENSEI_WISDOM = {
+  white: [
+    "Every master was once a beginner. Your journey of a thousand miles begins with this single step.",
+    "The white belt knows nothing and is ready for everything. That openness is your greatest strength.",
+    "Do not be ashamed of your starting point. Be proud that you have chosen to start."
+  ],
+  yellow: [
+    "You have planted seeds. Now tend them with patience and they will grow beyond your imagination.",
+    "The sun rises slowly, but it lights the entire world. Your progress is the same.",
+    "Discipline is choosing between what you want now and what you want most."
+  ],
+  green: [
+    "Like bamboo, you bend but do not break. Your resilience is becoming your identity.",
+    "The middle path is the hardest to walk, but it reveals the deepest truths.",
+    "You are no longer a beginner. Own your progress. The plateau is where champions are forged."
+  ],
+  blue: [
+    "The ocean is deep and calm. So is the skill of one who has trained with purpose.",
+    "True mastery is not about perfection. It is about consistent excellence under pressure.",
+    "You teach others simply by being who you are becoming. Lead by example."
+  ],
+  brown: [
+    "The mountain peak is near. Do not look down. Do not look back. Only forward.",
+    "Almost-mastery is the most dangerous place. Stay humble. Stay hungry.",
+    "The brown belt carries the weight of knowledge and the lightness of wisdom."
+  ],
+  black: [
+    "The black belt is not an end. It is the beginning of true understanding.",
+    "Mastery is a journey without a destination. You have earned the right to keep searching.",
+    "A black belt is a white belt who never quit. Now help others find their way."
+  ]
+};
+
+const DEFAULT_SKILLS = [
+  { name: 'Cooking', icon: '\u{1F373}', level: 1 },
+  { name: 'Driving', icon: '\u{1F697}', level: 1 },
+  { name: 'Socializing', icon: '\u{1F4AC}', level: 1 },
+  { name: 'Budgeting', icon: '\u{1F4B0}', level: 1 },
+  { name: 'Fitness', icon: '\u{1F3CB}', level: 1 },
+  { name: 'Reading', icon: '\u{1F4DA}', level: 1 },
+  { name: 'Emotional Intelligence', icon: '\u{2764}', level: 1 },
+  { name: 'Home Repair', icon: '\u{1F6E0}', level: 1 },
+];
+
+const ACHIEVEMENTS = [
+  { id: 'first_skill', name: 'First Step', desc: 'Add your first skill', icon: '\u{1F44A}', check: s => s.length >= 1 },
+  { id: 'five_skills', name: 'Diverse Warrior', desc: 'Track 5+ skills', icon: '\u{1F91A}', check: s => s.length >= 5 },
+  { id: 'ten_skills', name: 'Renaissance Fighter', desc: 'Track 10+ skills', icon: '\u{1F3AF}', check: s => s.length >= 10 },
+  { id: 'first_yellow', name: 'Rising Sun', desc: 'Reach Yellow belt in any skill', icon: '\u{2600}', check: s => s.some(x => x.level >= 3) },
+  { id: 'first_green', name: 'Growing Strong', desc: 'Reach Green belt in any skill', icon: '\u{1F33F}', check: s => s.some(x => x.level >= 5) },
+  { id: 'first_blue', name: 'Deep Waters', desc: 'Reach Blue belt in any skill', icon: '\u{1F30A}', check: s => s.some(x => x.level >= 7) },
+  { id: 'first_brown', name: 'Almost There', desc: 'Reach Brown belt in any skill', icon: '\u{26F0}', check: s => s.some(x => x.level >= 9) },
+  { id: 'first_black', name: 'Grandmaster', desc: 'Reach Black belt in any skill', icon: '\u{1F947}', check: s => s.some(x => x.level >= 10) },
+  { id: 'avg_yellow', name: 'Yellow Life', desc: 'Overall Life Rank: Yellow', icon: '\u{1F31F}', check: s => avg(s) >= 3 },
+  { id: 'avg_green', name: 'Green Life', desc: 'Overall Life Rank: Green', icon: '\u{1F332}', check: s => avg(s) >= 5 },
+  { id: 'avg_blue', name: 'Blue Life', desc: 'Overall Life Rank: Blue', icon: '\u{1F48E}', check: s => avg(s) >= 7 },
+  { id: 'all_green', name: 'No Weakness', desc: 'All skills at Green+', icon: '\u{1F6E1}', check: s => s.length > 0 && s.every(x => x.level >= 5) },
+  { id: 'all_blue', name: 'Elite Warrior', desc: 'All skills at Blue+', icon: '\u{2694}', check: s => s.length > 0 && s.every(x => x.level >= 7) },
+  { id: 'black_belt_life', name: 'Life Master', desc: 'Overall Life Rank: Black Belt', icon: '\u{1F3C6}', check: s => avg(s) >= 10 },
+];
+
+// === STATE ===
+let skills = [];
+let unlockedAchievements = new Set();
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('lifebelt_skills');
+    if (saved) {
+      skills = JSON.parse(saved);
+    } else {
+      skills = JSON.parse(JSON.stringify(DEFAULT_SKILLS));
+    }
+    const ach = localStorage.getItem('lifebelt_achievements');
+    if (ach) unlockedAchievements = new Set(JSON.parse(ach));
+  } catch(e) {
+    skills = JSON.parse(JSON.stringify(DEFAULT_SKILLS));
+  }
+}
+
+function saveState() {
+  localStorage.setItem('lifebelt_skills', JSON.stringify(skills));
+  localStorage.setItem('lifebelt_achievements', JSON.stringify([...unlockedAchievements]));
+}
+
+// === HELPERS ===
+function avg(s) {
+  if (!s.length) return 0;
+  return s.reduce((a, b) => a + b.level, 0) / s.length;
+}
+
+function getBelt(level) {
+  const l = Math.round(level);
+  for (const b of BELT_MAP) {
+    if (l >= b.min && l <= b.max) return b;
+  }
+  return BELT_MAP[0];
+}
+
+function getWisdom(beltCls) {
+  const wisdoms = SENSEI_WISDOM[beltCls] || SENSEI_WISDOM.white;
+  return wisdoms[Math.floor(Math.random() * wisdoms.length)];
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// === RENDER ===
+function render() {
+  renderRankCard();
+  renderSkills();
+  renderAchievements();
+}
+
+function renderRankCard() {
+  const a = avg(skills);
+  const belt = getBelt(a);
+
+  document.getElementById('rankBeltVisual').className = `rank-belt-visual belt-${belt.cls}`;
+  document.getElementById('rankName').textContent = belt.name;
+  document.getElementById('rankName').className = `rank-name text-${belt.cls}-belt`;
+  document.getElementById('rankScore').innerHTML = `${a.toFixed(1)} <span>/ 10</span>`;
+  document.getElementById('rankProgress').style.width = `${(a / 10) * 100}%`;
+  document.getElementById('rankProgress').className = `progress-bar-fill progress-${belt.cls}`;
+
+  if (skills.length > 0) {
+    document.getElementById('senseiWisdom').textContent = getWisdom(belt.cls);
+  } else {
+    document.getElementById('senseiWisdom').textContent = 'Add your first skill to begin your journey.';
+  }
+}
+
+function renderSkills() {
+  const list = document.getElementById('skillsList');
+  const empty = document.getElementById('emptyState');
+
+  if (skills.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  list.innerHTML = skills.map((s, i) => {
+    const belt = getBelt(s.level);
+    return `
+      <div class="skill-card" id="skill-${i}">
+        <div class="skill-top">
+          <div class="skill-info">
+            <div class="skill-icon">${s.icon}</div>
+            <div>
+              <div class="skill-name">${escHtml(s.name)}</div>
+              <div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px">${belt.name} - ${belt.jp}</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="skill-belt-tag belt-${belt.cls}">${belt.name.split(' ')[0]}</span>
+            <div class="skill-controls">
+              <button onclick="changeLevel(${i},-1)" title="Decrease">-</button>
+              <div class="skill-level text-${belt.cls}-belt">${s.level}</div>
+              <button onclick="changeLevel(${i},1)" title="Increase">+</button>
+            </div>
+            <div class="skill-remove">
+              <button onclick="removeSkill(${i})" title="Remove">&times;</button>
+            </div>
+          </div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill progress-${belt.cls}" style="width:${(s.level / 10) * 100}%"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderAchievements() {
+  const el = document.getElementById('achievementsList');
+  el.innerHTML = ACHIEVEMENTS.map(a => {
+    const unlocked = unlockedAchievements.has(a.id);
+    return `
+      <div class="achievement ${unlocked ? 'unlocked' : 'locked'}">
+        <div class="achievement-icon">${a.icon}</div>
+        <div class="achievement-info">
+          <div class="achievement-name">${a.name}</div>
+          <div class="achievement-desc">${a.desc}</div>
+        </div>
+        ${unlocked ? '<span style="color:var(--gold);font-size:0.8rem">&#10003;</span>' : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+function checkAchievements() {
+  let newlyUnlocked = [];
+  for (const a of ACHIEVEMENTS) {
+    if (!unlockedAchievements.has(a.id) && a.check(skills)) {
+      unlockedAchievements.add(a.id);
+      newlyUnlocked.push(a);
+    }
+  }
+  if (newlyUnlocked.length > 0) {
+    showToast(`Achievement Unlocked: ${newlyUnlocked[0].name}!`);
+  }
+}
+
+// === ACTIONS ===
+function addSkill() {
+  const nameInput = document.getElementById('newSkillName');
+  const iconSelect = document.getElementById('newSkillIcon');
+  const name = nameInput.value.trim();
+  if (!name) { nameInput.focus(); return; }
+
+  if (skills.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+    showToast('Skill already exists!');
+    return;
+  }
+
+  skills.push({ name, icon: iconSelect.value, level: 1 });
+  nameInput.value = '';
+  saveState();
+  checkAchievements();
+  render();
+  showToast(`${name} added to your dojo!`);
+}
+
+function changeLevel(index, delta) {
+  const s = skills[index];
+  const oldLevel = s.level;
+  s.level = Math.max(1, Math.min(10, s.level + delta));
+  if (s.level === oldLevel) return;
+
+  const oldBelt = getBelt(oldLevel);
+  const newBelt = getBelt(s.level);
+
+  saveState();
+  checkAchievements();
+  render();
+
+  if (newBelt.cls !== oldBelt.cls && delta > 0) {
+    const el = document.getElementById(`skill-${index}`);
+    if (el) el.classList.add('level-up-anim');
+    showToast(`${s.name} promoted to ${newBelt.name}!`);
+  }
+}
+
+function removeSkill(index) {
+  const name = skills[index].name;
+  skills.splice(index, 1);
+  saveState();
+  render();
+  showToast(`${name} removed from dojo.`);
+}
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// === SHARE ===
+function openShareCard() {
+  if (skills.length === 0) {
+    showToast('Add skills first!');
+    return;
+  }
+  const a = avg(skills);
+  const belt = getBelt(a);
+  document.getElementById('shareRank').textContent = `${belt.name} - ${a.toFixed(1)}/10`;
+  document.getElementById('shareBelt').className = `belt-${belt.cls}`;
+  document.getElementById('shareBelt').style.cssText = `margin:12px auto;width:160px;height:30px;border-radius:15px;border:2px solid rgba(255,255,255,0.15)`;
+
+  const list = document.getElementById('shareSkillsList');
+  list.innerHTML = skills.map(s => {
+    const b = getBelt(s.level);
+    return `<div class="share-skill-row">
+      <span>${s.icon} ${escHtml(s.name)}</span>
+      <span class="text-${b.cls}-belt" style="font-weight:700">${b.name.split(' ')[0]} (${s.level})</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('shareModal').classList.add('active');
+}
+
+function closeShareCard() {
+  document.getElementById('shareModal').classList.remove('active');
+}
+
+function copyShareText() {
+  const a = avg(skills);
+  const belt = getBelt(a);
+  let text = `LIFE BELT - ${belt.name} (${a.toFixed(1)}/10)\n`;
+  text += `${'='.repeat(36)}\n`;
+  skills.forEach(s => {
+    const b = getBelt(s.level);
+    text += `${s.icon} ${s.name}: ${b.name} (${s.level}/10)\n`;
+  });
+  text += `${'='.repeat(36)}\n`;
+  text += `Achievements: ${unlockedAchievements.size}/${ACHIEVEMENTS.length}\n`;
+  text += `Track yours at Life Belt Dojo!`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Belt card copied to clipboard!');
+    closeShareCard();
+  }).catch(() => {
+    showToast('Could not copy. Try again.');
+  });
+}
+
+// Close modal on backdrop click
+document.getElementById('shareModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeShareCard();
+});
+
+// Enter key to add skill
+document.getElementById('newSkillName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addSkill();
+});
+
+// === INIT ===
+loadState();
+checkAchievements();
+saveState();
+render();
+</script>
+</body>
+</html>

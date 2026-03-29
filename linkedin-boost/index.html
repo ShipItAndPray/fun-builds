@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn Boost - Buzzword Overclocking Engine</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --li-blue: #0077B5;
+    --li-dark: #004182;
+    --li-light: #E8F4FD;
+    --li-hover: #006097;
+    --white: #ffffff;
+    --gray-100: #f3f2ef;
+    --gray-200: #e0dfdc;
+    --gray-600: #666666;
+    --gray-800: #333333;
+    --gold: #E7A33E;
+    --cringe-green: #44b556;
+    --cringe-yellow: #f5c518;
+    --cringe-orange: #ff8c00;
+    --cringe-red: #e74c3c;
+    --cringe-purple: #9b59b6;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--li-blue);
+    color: var(--white);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  .header-logo span {
+    background: var(--white);
+    color: var(--li-blue);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-right: 4px;
+  }
+
+  .header-sub {
+    font-size: 13px;
+    opacity: 0.85;
+    font-weight: 300;
+  }
+
+  .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid var(--gray-200);
+  }
+
+  .card h2 {
+    font-size: 18px;
+    color: var(--gray-800);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-area {
+    width: 100%;
+    min-height: 100px;
+    padding: 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+    line-height: 1.5;
+  }
+
+  .input-area:focus {
+    outline: none;
+    border-color: var(--li-blue);
+  }
+
+  .input-area::placeholder {
+    color: #aaa;
+  }
+
+  .boost-btn {
+    display: block;
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--li-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 28px;
+    font-size: 17px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .boost-btn:hover {
+    background: var(--li-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,119,181,0.3);
+  }
+
+  .boost-btn:active {
+    transform: translateY(0);
+  }
+
+  .output-area {
+    width: 100%;
+    min-height: 120px;
+    padding: 14px;
+    background: var(--li-light);
+    border: 2px solid var(--li-blue);
+    border-radius: 8px;
+    font-size: 15px;
+    font-family: inherit;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  .output-area:empty::before {
+    content: 'Your overclocked LinkedIn profile will appear here...';
+    color: #aaa;
+    font-style: italic;
+  }
+
+  /* Meters */
+  .meters-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .meter-box {
+    background: var(--gray-100);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .meter-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-600);
+    margin-bottom: 8px;
+  }
+
+  .meter-bar-wrap {
+    width: 100%;
+    height: 14px;
+    background: var(--gray-200);
+    border-radius: 7px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .meter-bar {
+    height: 100%;
+    border-radius: 7px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s;
+  }
+
+  .meter-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--li-blue);
+  }
+
+  .meter-desc {
+    font-size: 11px;
+    color: var(--gray-600);
+    margin-top: 2px;
+  }
+
+  /* Buzzword cloud */
+  .buzz-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .buzz-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--li-light);
+    color: var(--li-blue);
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 600;
+    animation: popIn 0.3s ease-out backwards;
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: 2px solid var(--li-blue);
+    background: var(--white);
+    color: var(--li-blue);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn:hover {
+    background: var(--li-blue);
+    color: var(--white);
+  }
+
+  .action-btn.speaking {
+    background: var(--cringe-orange);
+    border-color: var(--cringe-orange);
+    color: var(--white);
+    animation: pulse 1s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255,140,0,0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(255,140,0,0); }
+  }
+
+  /* Examples */
+  .examples {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .example-btn {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--gray-800);
+  }
+
+  .example-btn:hover {
+    background: var(--li-light);
+    border-color: var(--li-blue);
+  }
+
+  .example-btn strong {
+    color: var(--li-blue);
+  }
+
+  /* Share modal */
+  .share-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .share-overlay.active {
+    display: flex;
+  }
+
+  .share-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .share-card h3 {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: var(--li-blue);
+  }
+
+  .share-preview {
+    background: var(--gray-100);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 14px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .share-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .share-actions button {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .share-copy-btn {
+    background: var(--li-blue);
+    color: var(--white);
+  }
+
+  .share-close-btn {
+    background: var(--gray-200);
+    color: var(--gray-800);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--gray-800);
+    color: var(--white);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.3s ease;
+    z-index: 300;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Cringe level colors */
+  .cringe-1 { background: var(--cringe-green); }
+  .cringe-2 { background: var(--cringe-yellow); }
+  .cringe-3 { background: var(--cringe-orange); }
+  .cringe-4 { background: var(--cringe-red); }
+  .cringe-5 { background: linear-gradient(90deg, var(--cringe-red), var(--cringe-purple)); }
+
+  @media (max-width: 480px) {
+    .header { padding: 12px 14px; }
+    .header-logo { font-size: 22px; }
+    .container { padding: 12px 10px; }
+    .card { padding: 18px; }
+    .meters-row { grid-template-columns: 1fr; }
+    .actions { flex-direction: column; }
+    .action-btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo"><span>in</span> Boost</div>
+    <div class="header-sub">Buzzword Overclocking Engine</div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="card">
+    <h2>Your Boring Job Description</h2>
+    <textarea class="input-area" id="inputText" placeholder="e.g. I work at a store and help customers find things..."></textarea>
+    <button class="boost-btn" id="boostBtn" onclick="boostIt()">BOOST IT</button>
+  </div>
+
+  <div class="card" id="outputCard" style="display:none;">
+    <h2>Your Overclocked Profile</h2>
+    <div class="output-area" id="outputText"></div>
+
+    <div class="meters-row">
+      <div class="meter-box">
+        <div class="meter-label">Cringe Level</div>
+        <div class="meter-bar-wrap">
+          <div class="meter-bar" id="cringeBar"></div>
+        </div>
+        <div class="meter-value" id="cringeValue">0%</div>
+        <div class="meter-desc" id="cringeDesc">-</div>
+      </div>
+      <div class="meter-box">
+        <div class="meter-label">Thought Leader Score</div>
+        <div class="meter-bar-wrap">
+          <div class="meter-bar" id="leaderBar" style="background:var(--gold);"></div>
+        </div>
+        <div class="meter-value" id="leaderValue" style="color:var(--gold);">0</div>
+        <div class="meter-desc" id="leaderDesc">-</div>
+      </div>
+    </div>
+
+    <div id="buzzCloud" class="buzz-cloud"></div>
+
+    <div class="actions">
+      <button class="action-btn" id="speakBtn" onclick="speakIt()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        TED Talk Voice
+      </button>
+      <button class="action-btn" onclick="shareProfile()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Share Profile
+      </button>
+      <button class="action-btn" onclick="boostAgain()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Boost Harder
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Try These</h2>
+    <div class="examples">
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I work at a store."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I answer emails for a company."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I make spreadsheets."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I drive a truck."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I teach kids math."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I fix computers."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I clean offices."</strong></button>
+      <button class="example-btn" onclick="tryExample(this)"><strong>"I post on social media for a restaurant."</strong></button>
+    </div>
+  </div>
+</div>
+
+<!-- Share overlay -->
+<div class="share-overlay" id="shareOverlay" onclick="if(event.target===this)closeShare()">
+  <div class="share-card">
+    <h3>Share Your Overclocked Profile</h3>
+    <div class="share-preview" id="sharePreview"></div>
+    <div class="share-actions">
+      <button class="share-copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
+      <button class="share-close-btn" onclick="closeShare()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==========================================
+// 50+ TRANSFORMATION PATTERNS
+// ==========================================
+
+const jobTitleUpgrades = {
+  'cashier': 'Revenue Capture Specialist',
+  'clerk': 'Administrative Operations Architect',
+  'receptionist': 'First-Impression Experience Director',
+  'janitor': 'Facility Optimization & Hygiene Engineer',
+  'cleaner': 'Environmental Wellness Orchestrator',
+  'waiter': 'Hospitality Experience Curator',
+  'waitress': 'Hospitality Experience Curator',
+  'server': 'Guest Journey Optimization Specialist',
+  'bartender': 'Beverage Innovation & Social Experience Architect',
+  'cook': 'Culinary Innovation Engineer',
+  'chef': 'Chief Culinary Experience Officer',
+  'dishwasher': 'Post-Consumption Sanitation Technologist',
+  'driver': 'Logistics & Mobility Solutions Specialist',
+  'truck driver': 'Supply Chain Velocity Architect',
+  'delivery': 'Last-Mile Fulfillment Optimization Specialist',
+  'teacher': 'Knowledge Transfer & Human Capital Development Strategist',
+  'tutor': 'Personalized Learning Experience Architect',
+  'babysitter': 'Early-Stage Human Development Consultant',
+  'nanny': 'Residential Youth Experience Manager',
+  'nurse': 'Patient Outcome Optimization Specialist',
+  'doctor': 'Clinical Solution Architect & Wellness Strategist',
+  'intern': 'Emerging Talent Pipeline Participant & Cross-Functional Value Creator',
+  'secretary': 'C-Suite Operations Enablement Specialist',
+  'accountant': 'Financial Intelligence & Compliance Architect',
+  'salesperson': 'Revenue Growth Hacker & Client Acquisition Strategist',
+  'sales rep': 'Enterprise Relationship Architect',
+  'programmer': 'Digital Transformation Engineer',
+  'developer': 'Full-Stack Innovation Architect',
+  'designer': 'Human-Centered Experience Visionary',
+  'manager': 'Cross-Functional Leadership & Operational Excellence Orchestrator',
+  'assistant': 'Executive Enablement & Productivity Amplification Specialist',
+  'analyst': 'Data-Driven Insights & Strategic Intelligence Architect',
+  'consultant': 'Transformation Advisory & Value Creation Catalyst',
+  'freelancer': 'Independent Innovation Consultant & Agile Delivery Specialist',
+  'writer': 'Content Strategy & Narrative Architecture Specialist',
+  'editor': 'Editorial Excellence & Content Quality Assurance Director',
+  'photographer': 'Visual Storytelling & Brand Narrative Architect',
+  'plumber': 'Hydraulic Infrastructure Solutions Engineer',
+  'electrician': 'Power Systems & Smart Infrastructure Architect',
+  'mechanic': 'Automotive Systems Performance Optimization Engineer',
+  'gardener': 'Outdoor Ecosystem Design & Sustainability Specialist',
+  'security guard': 'Physical Security & Risk Mitigation Specialist',
+  'librarian': 'Knowledge Curation & Information Architecture Strategist',
+  'bus driver': 'Urban Mobility Solutions & Passenger Experience Specialist',
+  'pilot': 'Aerospace Operations & Safety Excellence Commander',
+  'farmer': 'Agricultural Innovation & Sustainable Yield Optimization Specialist',
+  'barista': 'Artisanal Beverage Experience Engineer',
+  'dog walker': 'Canine Wellness & Outdoor Enrichment Coordinator',
+  'lifeguard': 'Aquatic Risk Mitigation & Safety Compliance Specialist',
+};
+
+const verbUpgrades = {
+  'work': 'drive transformative impact',
+  'help': 'empower stakeholders through strategic enablement',
+  'do': 'execute high-impact deliverables',
+  'make': 'architect innovative solutions',
+  'sell': 'catalyze revenue acceleration',
+  'manage': 'orchestrate cross-functional synergies',
+  'fix': 'engineer resilient solutions',
+  'build': 'spearhead greenfield innovation',
+  'write': 'craft compelling narratives that drive engagement',
+  'answer': 'provide mission-critical stakeholder communications',
+  'talk': 'facilitate strategic dialogue across verticals',
+  'run': 'pilot high-velocity operational frameworks',
+  'teach': 'democratize knowledge through scalable pedagogy',
+  'clean': 'optimize environmental operational excellence',
+  'organize': 'implement systematic process architecture',
+  'plan': 'develop forward-looking strategic roadmaps',
+  'create': 'ideate and deliver disruptive innovation',
+  'send': 'deploy targeted stakeholder engagement communications',
+  'handle': 'navigate complex multi-stakeholder dynamics',
+  'use': 'leverage cutting-edge technological paradigms',
+  'move': 'orchestrate strategic asset reallocation',
+  'check': 'execute rigorous quality assurance protocols',
+  'find': 'surface actionable insights through systematic discovery',
+  'train': 'cultivate high-performance talent ecosystems',
+  'support': 'provide white-glove enablement services',
+  'deliver': 'ensure best-in-class fulfillment excellence',
+  'serve': 'curate bespoke stakeholder experiences',
+  'type': 'digitize mission-critical documentation workflows',
+  'file': 'architect information governance frameworks',
+  'update': 'iterate on continuous improvement initiatives',
+  'call': 'engage in proactive stakeholder relationship management',
+  'meet': 'align cross-functional leadership on strategic priorities',
+  'schedule': 'optimize temporal resource allocation',
+  'sort': 'implement data-driven categorization methodologies',
+  'count': 'execute precision quantitative analysis',
+  'order': 'manage upstream supply chain procurement workflows',
+  'stock': 'optimize inventory velocity and availability metrics',
+  'pack': 'engineer last-mile fulfillment solutions',
+  'drive': 'navigate mission-critical logistics corridors',
+  'cook': 'execute precision culinary engineering',
+  'watch': 'maintain situational awareness across operational vectors',
+  'post': 'deploy omnichannel content distribution strategies',
+  'edit': 'refine deliverables through iterative quality enhancement',
+  'test': 'validate hypotheses through rigorous experimentation',
+  'research': 'conduct deep-dive competitive intelligence analysis',
+  'design': 'envision human-centered solution architectures',
+  'code': 'engineer scalable digital transformation platforms',
+  'study': 'pursue continuous professional development at the bleeding edge',
+};
+
+const nounUpgrades = {
+  'store': 'high-velocity retail innovation hub',
+  'shop': 'boutique commerce experience center',
+  'office': 'collaborative innovation workspace',
+  'company': 'mission-driven organization',
+  'business': 'high-growth venture',
+  'restaurant': 'culinary experience destination',
+  'school': 'learning excellence institution',
+  'hospital': 'patient-centered care ecosystem',
+  'factory': 'advanced manufacturing innovation center',
+  'warehouse': 'fulfillment & logistics command center',
+  'bank': 'financial services innovation hub',
+  'hotel': 'hospitality experience ecosystem',
+  'gym': 'wellness & human performance center',
+  'salon': 'personal transformation studio',
+  'garage': 'automotive solutions center',
+  'farm': 'sustainable agricultural innovation platform',
+  'lab': 'cutting-edge research & development facility',
+  'studio': 'creative innovation lab',
+  'clinic': 'integrated wellness solutions center',
+  'bar': 'social experience & beverage innovation venue',
+  'cafe': 'artisanal experience destination',
+  'library': 'knowledge & information architecture center',
+  'phone': 'unified communications platform',
+  'computer': 'digital transformation enablement tool',
+  'email': 'asynchronous stakeholder engagement channel',
+  'emails': 'mission-critical stakeholder communications',
+  'spreadsheet': 'data visualization & analytics dashboard',
+  'spreadsheets': 'dynamic intelligence reporting frameworks',
+  'report': 'strategic insights deliverable',
+  'reports': 'executive-grade intelligence artifacts',
+  'meeting': 'strategic alignment session',
+  'meetings': 'cross-functional synergy summits',
+  'customer': 'valued stakeholder',
+  'customers': 'diverse stakeholder ecosystem',
+  'client': 'strategic partnership account',
+  'clients': 'portfolio of strategic partnerships',
+  'boss': 'executive leadership',
+  'team': 'high-performing cross-functional squad',
+  'people': 'key stakeholders across the value chain',
+  'money': 'revenue streams & financial value',
+  'stuff': 'mission-critical deliverables',
+  'things': 'strategic assets & capability sets',
+  'problem': 'opportunity for innovation',
+  'problems': 'whitespace opportunities',
+  'job': 'value-creation mandate',
+  'food': 'premium culinary offerings',
+  'car': 'automotive mobility platform',
+  'truck': 'heavy logistics asset',
+  'package': 'high-priority fulfillment unit',
+  'packages': 'time-sensitive fulfillment pipeline',
+  'data': 'actionable intelligence assets',
+  'website': 'digital experience platform',
+  'product': 'market-disrupting solution',
+  'products': 'innovative solution portfolio',
+  'paper': 'analog documentation medium',
+  'box': 'modular containment solution',
+  'boxes': 'scalable containment infrastructure',
+  'room': 'purpose-optimized operational space',
+  'building': 'physical infrastructure asset',
+  'kids': 'emerging future leaders',
+  'children': 'next-generation human capital',
+  'math': 'quantitative reasoning frameworks',
+  'social media': 'omnichannel digital engagement ecosystem',
+};
+
+const adjectiveUpgrades = {
+  'good': 'best-in-class',
+  'bad': 'suboptimal',
+  'big': 'enterprise-scale',
+  'small': 'boutique',
+  'new': 'greenfield',
+  'old': 'legacy',
+  'fast': 'high-velocity',
+  'slow': 'deliberately paced',
+  'hard': 'high-complexity',
+  'easy': 'streamlined',
+  'busy': 'high-throughput',
+  'simple': 'elegantly architected',
+  'important': 'mission-critical',
+  'different': 'differentiated',
+  'many': 'at scale',
+};
+
+const buzzPhrases = [
+  'driving synergistic value creation',
+  'across omnichannel touchpoints',
+  'leveraging data-driven methodologies',
+  'in a fast-paced, agile environment',
+  'with a growth mindset',
+  'delivering 10x impact',
+  'through servant leadership',
+  'at the intersection of innovation and execution',
+  'with a bias toward action',
+  'championing operational excellence',
+  'disrupting the status quo',
+  'building scalable frameworks',
+  'fostering a culture of continuous improvement',
+  'navigating ambiguity with confidence',
+  'thinking outside the box while staying inside the circle',
+  'moving the needle on key metrics',
+  'aligning stakeholders around a shared North Star',
+  'creating a flywheel of sustainable growth',
+  'unlocking hidden synergies',
+  'leaning into discomfort as a growth catalyst',
+  'wearing multiple hats across the value stream',
+  'bringing thought leadership to the table',
+  'with a relentless focus on execution',
+  'crushing it in the trenches',
+  'turning constraints into springboards',
+  'evangelizing best practices across the org',
+  'bridging the gap between strategy and execution',
+  'optimizing for both velocity and quality',
+  'building the plane while flying it',
+  'eating my own dog food',
+];
+
+const prefixPhrases = [
+  'Passionate about',
+  'Deeply committed to',
+  'On a mission to',
+  'Purpose-driven leader focused on',
+  'Relentlessly focused on',
+  'Dedicated to',
+  'Thrilled to be',
+  'Honored to be',
+  'Humbled and grateful to be',
+  'Living my purpose by',
+];
+
+const suffixPhrases = [
+  'Open to new opportunities. Let\'s connect!',
+  '#NeverStopLearning #GrowthMindset #ThoughtLeadership',
+  'Agree? Let me know in the comments below.',
+  'DMs are open for collaboration and synergy.',
+  'Building in public. Follow my journey.',
+  '#Leadership #Innovation #Disruption #Hustle',
+  'If this resonates, hit that bell icon.',
+  '10x mindset. Always.',
+  'The grind never stops. Neither do I.',
+  'Grateful for this incredible journey of growth.',
+];
+
+const thoughtLeaderisms = [
+  'I didn\'t just accept the status quo. I disrupted it.',
+  'Most people see a challenge. I see a pivot opportunity.',
+  'They said it couldn\'t be done. I made it a KPI.',
+  'It\'s not about working harder. It\'s about synergizing smarter.',
+  'Every setback is a setup for a comeback story worth sharing on LinkedIn.',
+  'I don\'t have a job title. I have an impact mandate.',
+  'Culture eats strategy for breakfast. I eat both for lunch.',
+  'Fail fast, learn faster, post about it even faster.',
+  'My superpower? Turning ambiguity into actionable roadmaps.',
+  'I\'m not networking. I\'m curating a professional ecosystem.',
+];
+
+// ==========================================
+// TRANSFORMATION ENGINE
+// ==========================================
+
+let boostLevel = 1;
+let currentOutput = '';
+let isSpeaking = false;
+
+function boostIt() {
+  const input = document.getElementById('inputText').value.trim();
+  if (!input) {
+    showToast('Please enter a job description first!');
+    return;
+  }
+
+  const boosted = transformText(input, boostLevel);
+  currentOutput = boosted.text;
+
+  // Show output
+  const card = document.getElementById('outputCard');
+  card.style.display = 'block';
+
+  const outputEl = document.getElementById('outputText');
+  outputEl.textContent = '';
+  typeWriter(outputEl, currentOutput, 0);
+
+  // Update cringe meter
+  const cringePercent = Math.min(100, boosted.cringeScore);
+  const cringeBar = document.getElementById('cringeBar');
+  const cringeLevel = cringePercent < 30 ? 1 : cringePercent < 50 ? 2 : cringePercent < 70 ? 3 : cringePercent < 90 ? 4 : 5;
+  cringeBar.className = 'meter-bar cringe-' + cringeLevel;
+  setTimeout(() => { cringeBar.style.width = cringePercent + '%'; }, 100);
+  document.getElementById('cringeValue').textContent = cringePercent + '%';
+  const cringeLabels = ['Barely Buzzworthy', 'Mildly Corporate', 'Peak LinkedIn', 'Cringe Overload', 'HR Called. They\'re Crying.'];
+  document.getElementById('cringeDesc').textContent = cringeLabels[cringeLevel - 1];
+
+  // Update thought leader score
+  const leaderScore = boosted.leaderScore;
+  const leaderBar = document.getElementById('leaderBar');
+  setTimeout(() => { leaderBar.style.width = Math.min(100, leaderScore) + '%'; }, 100);
+  document.getElementById('leaderValue').textContent = leaderScore + '/100';
+  const leaderLabels = ['Wallflower', 'Lurker', 'Commenter', 'Poster', 'Influencer', 'Thought Leader', 'LinkedIn Deity'];
+  const leaderIdx = Math.min(6, Math.floor(leaderScore / 15));
+  document.getElementById('leaderDesc').textContent = leaderLabels[leaderIdx];
+
+  // Show buzzwords used
+  const cloud = document.getElementById('buzzCloud');
+  cloud.innerHTML = '';
+  boosted.buzzwordsUsed.forEach((bw, i) => {
+    const tag = document.createElement('span');
+    tag.className = 'buzz-tag';
+    tag.textContent = bw;
+    tag.style.animationDelay = (i * 0.05) + 's';
+    cloud.appendChild(tag);
+  });
+
+  // Scroll to output
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function transformText(input, level) {
+  let text = input;
+  const buzzwordsUsed = [];
+  let cringeScore = 0;
+  let leaderScore = 0;
+
+  // Step 1: Replace nouns (do longer phrases first)
+  const sortedNouns = Object.entries(nounUpgrades).sort((a, b) => b[0].length - a[0].length);
+  for (const [plain, fancy] of sortedNouns) {
+    const regex = new RegExp('\\b' + escapeRegex(plain) + '\\b', 'gi');
+    if (regex.test(text)) {
+      text = text.replace(regex, fancy);
+      buzzwordsUsed.push(fancy.split(' ').slice(0, 2).join(' '));
+      cringeScore += 8;
+      leaderScore += 5;
+    }
+  }
+
+  // Step 2: Replace verbs
+  const sortedVerbs = Object.entries(verbUpgrades).sort((a, b) => b[0].length - a[0].length);
+  for (const [plain, fancy] of sortedVerbs) {
+    const forms = [plain, plain + 's', plain + 'ed', plain + 'ing'];
+    if (plain.endsWith('e')) {
+      forms.push(plain.slice(0, -1) + 'ing');
+    }
+    for (const form of forms) {
+      const regex = new RegExp('\\b' + escapeRegex(form) + '\\b', 'gi');
+      if (regex.test(text)) {
+        text = text.replace(regex, fancy);
+        buzzwordsUsed.push(fancy.split(' ').slice(0, 3).join(' '));
+        cringeScore += 10;
+        leaderScore += 6;
+        break;
+      }
+    }
+  }
+
+  // Step 3: Replace adjectives
+  for (const [plain, fancy] of Object.entries(adjectiveUpgrades)) {
+    const regex = new RegExp('\\b' + escapeRegex(plain) + '\\b', 'gi');
+    if (regex.test(text)) {
+      text = text.replace(regex, fancy);
+      buzzwordsUsed.push(fancy);
+      cringeScore += 5;
+      leaderScore += 3;
+    }
+  }
+
+  // Step 4: Check for job title matches
+  const lowerInput = input.toLowerCase();
+  for (const [plain, fancy] of Object.entries(jobTitleUpgrades)) {
+    if (lowerInput.includes(plain)) {
+      text = `As a ${fancy}, I ${text.charAt(0).toLowerCase() + text.slice(1)}`;
+      if (!text.endsWith('.')) text += '.';
+      buzzwordsUsed.unshift(fancy);
+      cringeScore += 15;
+      leaderScore += 10;
+      break;
+    }
+  }
+
+  // Step 5: Add buzz phrases based on boost level
+  const numPhrases = Math.min(level + 1, 4);
+  const shuffledBuzz = [...buzzPhrases].sort(() => Math.random() - 0.5);
+  for (let i = 0; i < numPhrases; i++) {
+    const phrase = shuffledBuzz[i];
+    if (text.endsWith('.')) {
+      text = text.slice(0, -1) + ', ' + phrase + '.';
+    } else {
+      text += ' ' + phrase + '.';
+    }
+    buzzwordsUsed.push(phrase.split(' ').slice(0, 3).join(' '));
+    cringeScore += 12;
+    leaderScore += 8;
+  }
+
+  // Step 6: Add prefix
+  if (level >= 1) {
+    const prefix = prefixPhrases[Math.floor(Math.random() * prefixPhrases.length)];
+    text = prefix + ' ' + text.charAt(0).toLowerCase() + text.slice(1);
+    cringeScore += 8;
+    leaderScore += 5;
+  }
+
+  // Step 7: Add thought leaderism (level 2+)
+  if (level >= 2) {
+    const tl = thoughtLeaderisms[Math.floor(Math.random() * thoughtLeaderisms.length)];
+    text += '\n\n' + tl;
+    buzzwordsUsed.push('Thought Leader Moment');
+    cringeScore += 15;
+    leaderScore += 12;
+  }
+
+  // Step 8: Add suffix (level 2+)
+  if (level >= 2) {
+    const suffix = suffixPhrases[Math.floor(Math.random() * suffixPhrases.length)];
+    text += '\n\n' + suffix;
+    cringeScore += 10;
+    leaderScore += 5;
+  }
+
+  // Step 9: Extra boost for level 3
+  if (level >= 3) {
+    text += '\n\nP.S. I\'m not a ' + randomFromInput(input) + '. I\'m a movement.';
+    const extra = thoughtLeaderisms[Math.floor(Math.random() * thoughtLeaderisms.length)];
+    text += '\n\nP.P.S. ' + extra;
+    cringeScore += 20;
+    leaderScore += 15;
+    buzzwordsUsed.push('Maximum Cringe');
+  }
+
+  return {
+    text,
+    cringeScore: Math.min(100, cringeScore),
+    leaderScore: Math.min(100, leaderScore),
+    buzzwordsUsed
+  };
+}
+
+function randomFromInput(input) {
+  const words = input.split(/\s+/).filter(w => w.length > 3);
+  return words.length > 0 ? words[Math.floor(Math.random() * words.length)] : 'person';
+}
+
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function typeWriter(el, text, i) {
+  if (i < text.length) {
+    el.textContent += text.charAt(i);
+    setTimeout(() => typeWriter(el, text, i + 1), 8);
+  }
+}
+
+// ==========================================
+// SPEECH SYNTHESIS (TED Talk Mode)
+// ==========================================
+
+function speakIt() {
+  if (!currentOutput) {
+    showToast('Boost something first!');
+    return;
+  }
+
+  const btn = document.getElementById('speakBtn');
+
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+    btn.classList.remove('speaking');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> TED Talk Voice';
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(currentOutput);
+
+  // TED Talk voice settings: confident, measured pace
+  utterance.rate = 0.88;
+  utterance.pitch = 0.95;
+  utterance.volume = 1;
+
+  // Try to find a good voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.name.includes('Daniel') ||
+    v.name.includes('Samantha') ||
+    v.name.includes('Google US English') ||
+    v.name.includes('Alex') ||
+    (v.lang.startsWith('en') && v.localService)
+  );
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onstart = () => {
+    isSpeaking = true;
+    btn.classList.add('speaking');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Speaking';
+  };
+
+  utterance.onend = () => {
+    isSpeaking = false;
+    btn.classList.remove('speaking');
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> TED Talk Voice';
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// Load voices
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+// ==========================================
+// SHARE & ACTIONS
+// ==========================================
+
+function shareProfile() {
+  if (!currentOutput) {
+    showToast('Boost something first!');
+    return;
+  }
+  document.getElementById('sharePreview').textContent = currentOutput;
+  document.getElementById('shareOverlay').classList.add('active');
+}
+
+function closeShare() {
+  document.getElementById('shareOverlay').classList.remove('active');
+}
+
+function copyToClipboard() {
+  navigator.clipboard.writeText(currentOutput).then(() => {
+    showToast('Copied to clipboard! Go paste it on LinkedIn.');
+    closeShare();
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = currentOutput;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('Copied to clipboard!');
+    closeShare();
+  });
+}
+
+function boostAgain() {
+  boostLevel = Math.min(3, boostLevel + 1);
+  showToast('Boost Level ' + boostLevel + '! Maximum cringe incoming...');
+  boostIt();
+}
+
+function tryExample(btn) {
+  const text = btn.textContent.replace(/^"|"$/g, '');
+  document.getElementById('inputText').value = text;
+  boostLevel = 1;
+  boostIt();
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
