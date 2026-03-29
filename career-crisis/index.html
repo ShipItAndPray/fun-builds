@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Crisis Calculator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#1a1a2e;--card:#16213e;--accent:#e94560;--accent2:#0f3460;
+    --text:#eee;--muted:#888;--green:#00b894;--yellow:#fdcb6e;--red:#d63031;
+    --gray:#2d3436;
+  }
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--bg);color:var(--text);min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+  }
+  .container{max-width:680px;width:100%;padding:20px}
+  header{text-align:center;padding:40px 20px 20px}
+  header h1{font-size:2.2em;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  header p{color:var(--muted);font-size:1.05em;max-width:500px;margin:0 auto}
+  .badge{display:inline-block;background:var(--accent2);color:var(--accent);font-size:.75em;padding:4px 12px;border-radius:20px;margin-bottom:12px;letter-spacing:1px;text-transform:uppercase}
+
+  /* Progress bar */
+  .progress-wrap{width:100%;background:var(--gray);border-radius:10px;height:8px;margin:20px 0 30px;overflow:hidden}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),#ff6b6b);border-radius:10px;transition:width .4s ease;width:0}
+  .progress-label{text-align:center;color:var(--muted);font-size:.85em;margin-bottom:6px}
+
+  /* Question card */
+  .question-card{
+    background:var(--card);border-radius:16px;padding:32px 28px;
+    box-shadow:0 8px 32px rgba(0,0,0,.3);
+    transition:opacity .3s,transform .3s;
+  }
+  .question-card.hidden{display:none}
+  .question-card h2{font-size:1.15em;margin-bottom:6px;color:var(--accent)}
+  .question-card .q-text{font-size:1.25em;margin-bottom:24px;line-height:1.4}
+  .question-card .q-sub{color:var(--muted);font-size:.85em;margin-top:-18px;margin-bottom:20px;font-style:italic}
+
+  .options{display:flex;flex-direction:column;gap:10px}
+  .opt-btn{
+    background:rgba(255,255,255,.05);border:2px solid rgba(255,255,255,.08);
+    color:var(--text);padding:14px 18px;border-radius:12px;font-size:1em;
+    cursor:pointer;text-align:left;transition:all .2s;
+  }
+  .opt-btn:hover{background:rgba(233,69,96,.15);border-color:var(--accent);transform:translateX(4px)}
+  .opt-btn:active{transform:scale(.98)}
+
+  /* Results */
+  #results{display:none}
+  .result-hero{text-align:center;padding:30px 0}
+  .pct-ring{position:relative;width:200px;height:200px;margin:0 auto 20px}
+  .pct-ring svg{transform:rotate(-90deg)}
+  .pct-ring circle{fill:none;stroke-width:12}
+  .pct-ring .bg-ring{stroke:var(--gray)}
+  .pct-ring .fg-ring{stroke:var(--accent);stroke-linecap:round;transition:stroke-dashoffset 1.5s ease}
+  .pct-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.8em;font-weight:800}
+  .pct-num small{font-size:.35em;color:var(--muted);display:block;font-weight:400}
+  .verdict{font-size:1.3em;margin:16px 0 8px;line-height:1.4;max-width:500px;margin-left:auto;margin-right:auto}
+  .verdict-sub{color:var(--muted);font-size:.95em;margin-bottom:30px}
+  .severity-tag{display:inline-block;padding:4px 14px;border-radius:20px;font-size:.8em;font-weight:700;margin-bottom:12px}
+  .sev-low{background:rgba(0,184,148,.2);color:var(--green)}
+  .sev-mid{background:rgba(253,203,110,.2);color:var(--yellow)}
+  .sev-high{background:rgba(214,48,49,.2);color:var(--red)}
+  .sev-critical{background:rgba(233,69,96,.3);color:#ff6b6b;animation:pulse 1.5s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+  /* Breakdown */
+  .breakdown{background:var(--card);border-radius:16px;padding:24px;margin:20px 0}
+  .breakdown h3{margin-bottom:16px;font-size:1.1em}
+  .factor{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .factor:last-child{border:none}
+  .factor-name{font-size:.95em;flex:1}
+  .factor-bar-wrap{width:120px;height:8px;background:var(--gray);border-radius:4px;margin:0 12px;overflow:hidden}
+  .factor-bar{height:100%;border-radius:4px;transition:width 1s ease}
+  .factor-score{font-size:.9em;font-weight:700;min-width:40px;text-align:right}
+
+  /* Buttons */
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:24px 0}
+  .btn{
+    padding:14px 24px;border-radius:12px;border:none;font-size:1em;
+    cursor:pointer;font-weight:600;transition:all .2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.3)}
+  .btn-resign{background:linear-gradient(135deg,var(--accent),#ff6b6b);color:#fff}
+  .btn-share{background:rgba(255,255,255,.1);color:var(--text);border:2px solid rgba(255,255,255,.15)}
+  .btn-retry{background:var(--accent2);color:var(--text)}
+
+  /* Resignation modal */
+  .modal-overlay{
+    display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.show{display:flex}
+  .modal{
+    background:var(--card);border-radius:16px;padding:32px;max-width:560px;width:100%;
+    max-height:80vh;overflow-y:auto;position:relative;
+    border:1px solid rgba(233,69,96,.3);
+  }
+  .modal h3{color:var(--accent);margin-bottom:16px;font-size:1.3em}
+  .modal pre{
+    background:rgba(0,0,0,.3);padding:20px;border-radius:10px;
+    white-space:pre-wrap;font-family:'Courier New',monospace;font-size:.85em;
+    line-height:1.6;color:#ccc;
+  }
+  .modal .close-btn{
+    position:absolute;top:12px;right:16px;background:none;border:none;
+    color:var(--muted);font-size:1.5em;cursor:pointer;
+  }
+  .modal .close-btn:hover{color:var(--text)}
+  .modal .disclaimer{color:var(--muted);font-size:.75em;margin-top:12px;text-align:center;font-style:italic}
+
+  /* Start screen */
+  #start-screen{text-align:center;padding:40px 0}
+  #start-screen .icon{font-size:4em;margin-bottom:16px}
+  .start-btn{
+    padding:18px 48px;border-radius:14px;border:none;font-size:1.15em;
+    cursor:pointer;font-weight:700;background:linear-gradient(135deg,var(--accent),#ff6b6b);
+    color:#fff;margin-top:24px;transition:all .2s;
+  }
+  .start-btn:hover{transform:scale(1.05);box-shadow:0 6px 24px rgba(233,69,96,.4)}
+  .features{display:flex;gap:16px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+  .feat{background:rgba(255,255,255,.05);padding:10px 16px;border-radius:10px;font-size:.85em;color:var(--muted)}
+
+  /* Footer */
+  footer{text-align:center;padding:30px;color:var(--muted);font-size:.8em}
+  footer a{color:var(--accent);text-decoration:none}
+
+  /* Animations */
+  @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .animate-in{animation:slideIn .4s ease}
+
+  /* Share toast */
+  .toast{
+    position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+    background:var(--green);color:#fff;padding:12px 24px;border-radius:10px;
+    font-weight:600;display:none;z-index:200;
+  }
+  .toast.show{display:block;animation:slideIn .3s ease}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="badge">Scientifically Unvalidated</div>
+    <h1>Career Crisis Calculator</h1>
+    <p>10 questions. Absurd precision. The truth about your employment situation you already know but refuse to admit.</p>
+  </header>
+
+  <!-- Start screen -->
+  <div id="start-screen">
+    <div class="icon">&#128188;</div>
+    <p style="color:var(--muted);max-width:420px;margin:0 auto">Based on zero peer-reviewed research and a sample size of vibes, this quiz calculates your exact probability of quitting your job.</p>
+    <button class="start-btn" onclick="startQuiz()">Begin Assessment</button>
+    <div class="features">
+      <div class="feat">10 Questions</div>
+      <div class="feat">Fake Precision</div>
+      <div class="feat">Real Feelings</div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="quiz-area" style="display:none">
+    <div class="progress-label">Question <span id="q-num">1</span> of 10</div>
+    <div class="progress-wrap"><div class="progress-bar" id="prog-bar"></div></div>
+    <div class="question-card" id="q-card"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="results">
+    <div class="result-hero animate-in">
+      <div class="pct-ring">
+        <svg width="200" height="200">
+          <circle class="bg-ring" cx="100" cy="100" r="88"/>
+          <circle class="fg-ring" id="ring" cx="100" cy="100" r="88" stroke-dasharray="553" stroke-dashoffset="553"/>
+        </svg>
+        <div class="pct-num"><span id="pct-val">0</span>%<small>chance of quitting<br>within 90 days</small></div>
+      </div>
+      <div id="sev-tag" class="severity-tag"></div>
+      <div class="verdict" id="verdict-text"></div>
+      <div class="verdict-sub" id="verdict-sub"></div>
+    </div>
+    <div class="breakdown" id="breakdown">
+      <h3>Factor Breakdown</h3>
+      <div id="factors"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-resign" onclick="showResignation()">Email My Resignation</button>
+      <button class="btn btn-share" onclick="shareResult()">Share Result</button>
+      <button class="btn btn-retry" onclick="location.reload()">Retake Quiz</button>
+    </div>
+  </div>
+</div>
+
+<!-- Resignation Modal -->
+<div class="modal-overlay" id="resign-modal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <h3>Your Resignation Letter</h3>
+    <pre id="resign-letter"></pre>
+    <div class="disclaimer">This button does not actually send anything. Your job is safe. For now.</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">Result copied to clipboard!</div>
+
+<footer>
+  Career Crisis Calculator &mdash; For entertainment purposes only.<br>
+  Not a substitute for therapy, career coaching, or a stiff drink.
+</footer>
+
+<script>
+const questions = [
+  {
+    category: "Daily Despair Index",
+    text: "How many times did you audibly sigh at work today?",
+    sub: "Deep, soul-leaving-body sighs only. Nose exhales don't count.",
+    options: [
+      { text: "Zero. I am a beacon of professional enthusiasm.", score: 0 },
+      { text: "1-3 times. Standard operating procedure.", score: 2 },
+      { text: "4-7 times. One per meeting, basically.", score: 5 },
+      { text: "I've lost count. My coworkers think I have a respiratory condition.", score: 9 },
+      { text: "I sigh so much my desk plant leans away from me.", score: 10 }
+    ]
+  },
+  {
+    category: "Escape Planning Score",
+    text: "Do you have a 'backup plan' Google Doc?",
+    sub: "We both know what's in the 'Misc Notes 2024' folder.",
+    options: [
+      { text: "No. I am fully committed to my current employer.", score: 0 },
+      { text: "I have a vague mental list. Nothing written down.", score: 3 },
+      { text: "There's a doc. It has headers and bullet points.", score: 6 },
+      { text: "It's a full spreadsheet with salary comparisons and pivot dates.", score: 8 },
+      { text: "I have a 47-slide deck titled 'Operation: Freedom' with a Gantt chart.", score: 10 }
+    ]
+  },
+  {
+    category: "Digital Identity Crisis",
+    text: "Have you updated your LinkedIn photo in the last month?",
+    sub: "The professional headshot industrial complex thrives on your discontent.",
+    options: [
+      { text: "My LinkedIn photo is from 2019 and I look happy in it.", score: 1 },
+      { text: "I updated it casually. Just felt like it. No reason.", score: 5 },
+      { text: "New photo, updated headline, rewrote the summary. Totally routine.", score: 7 },
+      { text: "I hired a photographer. My banner says 'Open to Opportunities'.", score: 9 },
+      { text: "I've been posting thought leadership content. About leaving corporate life.", score: 10 }
+    ]
+  },
+  {
+    category: "Meeting Tolerance Index",
+    text: "What do you do during meetings that could have been an email?",
+    sub: "There were 4 of those today. Minimum.",
+    options: [
+      { text: "I engage actively and take notes. Meetings are collaborative!", score: 0 },
+      { text: "I multi-task respectfully. One screen on the meeting, one on actual work.", score: 2 },
+      { text: "I online shop with my camera off.", score: 5 },
+      { text: "I browse job listings. During the meeting. About team engagement.", score: 8 },
+      { text: "I stare directly into the camera with dead eyes to assert dominance.", score: 10 }
+    ]
+  },
+  {
+    category: "Sunday Scaries Severity",
+    text: "What happens to your mood at 5 PM on Sunday?",
+    sub: "The dread is not imaginary. It has a schedule.",
+    options: [
+      { text: "I feel energized for the week ahead!", score: 0 },
+      { text: "A mild heaviness. Manageable with Netflix.", score: 3 },
+      { text: "Full existential crisis. I question every career decision since college.", score: 6 },
+      { text: "My body physically rejects the concept of Monday. Symptoms include nausea.", score: 8 },
+      { text: "Sunday Scaries? I have Thursday-through-Sunday Scaries now.", score: 10 }
+    ]
+  },
+  {
+    category: "Caffeine Dependency Factor",
+    text: "How much coffee do you need to pretend to care?",
+    sub: "This is a judgment-free zone. The mug knows.",
+    options: [
+      { text: "One cup. For enjoyment, not survival.", score: 0 },
+      { text: "Two cups. Industry standard for a functioning adult.", score: 2 },
+      { text: "Three cups and an energy drink. The baseline moves.", score: 5 },
+      { text: "I have a direct IV drip. HR thinks it's a medical device.", score: 8 },
+      { text: "No amount of caffeine can simulate the will to live through another standup.", score: 10 }
+    ]
+  },
+  {
+    category: "Fantasy Resignation Index",
+    text: "How often do you mentally rehearse quitting?",
+    sub: "The daydream where you flip a table and walk out in slow motion.",
+    options: [
+      { text: "Never. I'm grateful for this opportunity.", score: 0 },
+      { text: "Once a month. Fleeting thought. Gone immediately.", score: 2 },
+      { text: "Weekly. I have multiple versions. One involves confetti.", score: 6 },
+      { text: "Daily. I've scripted it. There's background music.", score: 8 },
+      { text: "I rehearse it so often I accidentally said 'I quit' on a Zoom call.", score: 10 }
+    ]
+  },
+  {
+    category: "Autopilot Engagement Level",
+    text: "How would you describe your effort level at work right now?",
+    sub: "Be honest. The performance review can't hear you.",
+    options: [
+      { text: "110%. I go above and beyond because I believe in the mission.", score: 0 },
+      { text: "Solid 80%. Enough to not get fired, enough to feel okay about it.", score: 3 },
+      { text: "I do the bare minimum with maximum efficiency. An art form, really.", score: 6 },
+      { text: "I've automated most of my job. Nobody has noticed.", score: 8 },
+      { text: "I am 'quiet quitting' so loudly that it's practically a resignation.", score: 10 }
+    ]
+  },
+  {
+    category: "Financial Escape Velocity",
+    text: "How's your 'walk away' money situation?",
+    sub: "The savings account that whispers 'you don't need this'.",
+    options: [
+      { text: "I live paycheck to paycheck. This job has me in a chokehold.", score: 1 },
+      { text: "I have a month or two of runway. Enough to panic slowly.", score: 4 },
+      { text: "3-6 months saved. The exit ramp is visible.", score: 6 },
+      { text: "A year of savings. I stay by choice. Barely.", score: 8 },
+      { text: "My investments could fund a small country. I work here for the parking.", score: 10 }
+    ]
+  },
+  {
+    category: "Corporate Allergic Reaction",
+    text: "What is your physical response to the phrase 'Let's circle back'?",
+    sub: "Other triggers include 'synergy', 'bandwidth', and 'per my last email'.",
+    options: [
+      { text: "Totally fine. It's just business communication.", score: 0 },
+      { text: "A slight eye twitch. Barely noticeable.", score: 3 },
+      { text: "Full body cringe. I need a moment.", score: 5 },
+      { text: "I involuntarily mouth 'I can't do this anymore' on camera.", score: 8 },
+      { text: "I've developed a Pavlovian gag reflex. My therapist calls it 'corporate PTSD'.", score: 10 }
+    ]
+  }
+];
+
+const verdicts = [
+  { min:0, max:15, sev:"low", sevLabel:"Stable Employee", color:"var(--green)",
+    texts:[
+      "You're disturbingly content. Your coworkers find this suspicious.",
+      "You actually like your job? In THIS economy? Teach us your ways.",
+      "Your serotonin levels at work are frankly unnatural. Have you considered that you might be the CEO?",
+      "You are the person who says 'Happy Monday!' unironically. We're concerned but impressed."
+    ],
+    subs:["Your resignation probability is lower than the chance of free pizza in the break room.","Honestly, are you okay? Enjoying work this much can't be normal."]
+  },
+  { min:15, max:35, sev:"low", sevLabel:"Minor Turbulence", color:"var(--green)",
+    texts:[
+      "You're fine. Mostly. The Sunday Scaries are a feature, not a bug.",
+      "You have the normal amount of career discontent. Welcome to adulthood.",
+      "Your job satisfaction is like a 3-star Yelp review: 'It's fine. The parking is decent.'",
+      "You're not quitting. You're just... keeping your options theoretically open."
+    ],
+    subs:["Nothing a raise or a really good vacation couldn't fix.","The backup plan doc can wait. Probably."]
+  },
+  { min:35, max:55, sev:"mid", sevLabel:"Yellow Alert", color:"var(--yellow)",
+    texts:[
+      "You're in the 'casually browsing Indeed during lunch' phase. It's not casual.",
+      "Your LinkedIn says 'Open to Opportunities' in a font only recruiters can see.",
+      "You've entered the negotiation stage of career grief. 'Maybe if I just switch teams...'",
+      "The backup plan Google Doc has been promoted to a Google Sheet. This is escalating."
+    ],
+    subs:["The exit door is visible. You're just pretending to look at the fire extinguisher next to it.","One bad all-hands meeting away from updating your resume."]
+  },
+  { min:55, max:75, sev:"high", sevLabel:"Orange Alert", color:"#e17055",
+    texts:[
+      "You're already mentally on a beach. Your body just hasn't caught up.",
+      "Your 'five-year plan' is actually a 'five-month escape plan' with milestones.",
+      "You've started referring to your job in the past tense during dinner conversations.",
+      "The resignation fantasy has evolved from daydream to detailed operational plan."
+    ],
+    subs:["Your mouse hovers over 'Submit Application' the way a skydiver's hand hovers over the ripcord.","The question isn't IF you'll quit. It's whether you'll give two weeks or two hours."]
+  },
+  { min:75, max:90, sev:"high", sevLabel:"Red Alert", color:"var(--red)",
+    texts:[
+      "You are one passive-aggressive Slack message away from a dramatic exit.",
+      "Your resignation letter has been through more drafts than your actual work deliverables.",
+      "You've already told your plant you're leaving. The plant understood.",
+      "Your autopilot is so engaged that if you actually quit, nobody would notice for three weeks.",
+      "The only thing keeping you here is that you haven't finished downloading your personal files from the shared drive."
+    ],
+    subs:["HR should be monitoring your badge swipes. They're getting lighter.","Every meeting is now a farewell tour you're the only one attending."]
+  },
+  { min:90, max:101, sev:"critical", sevLabel:"DEFCON 1", color:"var(--accent)",
+    texts:[
+      "You haven't quit yet? That's the most impressive thing on your resume.",
+      "Your body is at work but your soul submitted its two weeks three months ago.",
+      "You are a resignation letter in a trench coat pretending to be an employee.",
+      "At this point, staying is the bold career move. Quitting is just paperwork.",
+      "You don't have a job. You have a hostage situation with dental benefits.",
+      "The only synergy left in your career is between your mouse and the 'Apply Now' button."
+    ],
+    subs:["You're not an employee anymore. You're a ghost with a parking pass.","Your departure isn't a question. It's a countdown.","The two weeks notice is a formality. You emotionally quit during Q3."]
+  }
+];
+
+const resignationTemplates = [
+  (pct) => `Subject: My Resignation, Effective Immediately-ish
+
+Dear [Manager Who Will Pretend To Be Surprised],
+
+After ${pct > 90 ? 'years' : 'months'} of careful deliberation,
+${Math.floor(pct * 47.3)} sighs, and approximately ${Math.floor(pct * 12)}
+meetings that should have been emails, I am writing to inform
+you of my resignation.
+
+Effective [DATE], I will no longer be pretending to care about
+Q4 OKRs, synergy, or the open-plan office layout that has
+given me the spatial awareness of a submarine crew member.
+
+I want you to know this has nothing to do with the fact that
+the coffee machine has been "temporarily out of order" since
+February. That said, it didn't help.
+
+Please consider this my ${pct > 80 ? 'final' : 'penultimate'} act of
+corporate compliance.
+
+I wish the team nothing but the best, and by "the best" I
+mean a working printer.
+
+Warm regards (for the last time),
+[YOUR NAME]
+
+P.S. I took the good stapler. You know which one.`,
+
+  (pct) => `Subject: Re: Re: Re: Fwd: My Resignation
+
+Dear Leadership,
+
+Per my last email (and every email before it where I was
+clearly screaming into the void), I quit.
+
+My probability of departure, as calculated by a deeply
+scientific online quiz, is ${pct}%. The margin of error is
+"who cares."
+
+Key handoff items:
+- The project nobody understands: Still nobody understands it
+- My passwords: Written on a sticky note that I've already
+  thrown away
+- The thing I automated: Good luck finding out which thing
+- Team morale: Was it ever really my job?
+
+I'll be available for questions during my notice period,
+which I've generously set at "however long it takes me to
+clean out my desk drawer of shame."
+
+With a freedom I haven't felt since before my first
+performance review,
+
+[YOUR NAME]
+
+P.S. The "Reply All" incident of 2024 was me. I regret nothing.`,
+
+  (pct) => `Subject: Strategic Talent Reallocation (My Resignation)
+
+To Whom It May Concern (and at this point, nobody does),
+
+In alignment with my personal Q1 objectives and a holistic
+review of my career synergies, I am pivoting away from this
+role to pursue opportunities more aligned with my core
+competency of "not being here."
+
+This decision was data-driven. The data: ${pct}% quit
+probability, 0% enthusiasm remaining, and an infinite
+supply of job listings that don't mention "fast-paced
+environment" like it's a selling point.
+
+I want to thank everyone who made this possible:
+- The person who microwaves fish in the break room
+- The "quick 5-minute sync" that lasted 47 minutes
+- Whoever decided 8 AM Monday meetings should exist
+- The motivational poster that says "Teamwork Makes The
+  Dream Work" hanging above the broken Keurig
+
+My last day will be [DATE]. My last day of caring was
+considerably earlier.
+
+Best,
+[YOUR NAME]
+
+P.S. I finally figured out how to unsubscribe from the
+company newsletter. Took quitting, but I did it.`
+];
+
+let currentQ = 0;
+let answers = [];
+
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-area').style.display = 'block';
+  showQuestion(0);
+}
+
+function showQuestion(idx) {
+  const q = questions[idx];
+  const card = document.getElementById('q-card');
+  card.classList.remove('animate-in');
+  void card.offsetWidth;
+  card.classList.add('animate-in');
+
+  document.getElementById('q-num').textContent = idx + 1;
+  document.getElementById('prog-bar').style.width = ((idx) / questions.length * 100) + '%';
+
+  let html = `<h2>${q.category}</h2><div class="q-text">${q.text}</div>`;
+  if (q.sub) html += `<div class="q-sub">${q.sub}</div>`;
+  html += '<div class="options">';
+  q.options.forEach((opt, i) => {
+    html += `<button class="opt-btn" onclick="selectAnswer(${idx},${i},${opt.score})">${opt.text}</button>`;
+  });
+  html += '</div>';
+  card.innerHTML = html;
+}
+
+function selectAnswer(qIdx, optIdx, score) {
+  answers[qIdx] = { option: optIdx, score: score, category: questions[qIdx].category };
+  currentQ = qIdx + 1;
+  if (currentQ < questions.length) {
+    showQuestion(currentQ);
+  } else {
+    showResults();
+  }
+}
+
+function showResults() {
+  document.getElementById('quiz-area').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').classList.add('animate-in');
+
+  const totalScore = answers.reduce((s, a) => s + a.score, 0);
+  const maxScore = questions.length * 10;
+  const rawPct = (totalScore / maxScore) * 100;
+
+  // Add absurd precision
+  const decimal1 = Math.floor(Math.random() * 10);
+  const decimal2 = Math.floor(Math.random() * 10);
+  const pct = Math.min(99.9, Math.max(2.1, rawPct + (Math.random() * 6 - 3)));
+  const displayPct = pct.toFixed(1);
+
+  // Animate ring
+  const ring = document.getElementById('ring');
+  const circumference = 2 * Math.PI * 88;
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = circumference;
+  setTimeout(() => {
+    ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+  }, 100);
+
+  // Animate number
+  const pctEl = document.getElementById('pct-val');
+  let current = 0;
+  const target = parseFloat(displayPct);
+  const step = target / 60;
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) { current = target; clearInterval(timer); }
+    pctEl.textContent = current.toFixed(1);
+  }, 25);
+
+  // Find verdict
+  const v = verdicts.find(v => pct >= v.min && pct < v.max) || verdicts[verdicts.length - 1];
+  const sevTag = document.getElementById('sev-tag');
+  sevTag.textContent = v.sevLabel;
+  sevTag.className = 'severity-tag sev-' + v.sev;
+
+  document.getElementById('verdict-text').textContent = v.texts[Math.floor(Math.random() * v.texts.length)];
+  document.getElementById('verdict-sub').textContent = v.subs[Math.floor(Math.random() * v.subs.length)];
+
+  // Ring color
+  ring.style.stroke = v.color;
+
+  // Factor breakdown
+  const factorsEl = document.getElementById('factors');
+  factorsEl.innerHTML = '';
+  answers.forEach(a => {
+    const pctF = (a.score / 10) * 100;
+    const color = pctF < 30 ? 'var(--green)' : pctF < 60 ? 'var(--yellow)' : 'var(--red)';
+    factorsEl.innerHTML += `
+      <div class="factor">
+        <div class="factor-name">${a.category}</div>
+        <div class="factor-bar-wrap"><div class="factor-bar" style="width:0;background:${color}"></div></div>
+        <div class="factor-score" style="color:${color}">${a.score}/10</div>
+      </div>`;
+  });
+
+  // Animate factor bars
+  setTimeout(() => {
+    document.querySelectorAll('.factor-bar').forEach((bar, i) => {
+      bar.style.width = (answers[i].score / 10 * 100) + '%';
+    });
+  }, 300);
+
+  // Store for sharing
+  window._quizResult = { pct: displayPct, verdict: v.sevLabel };
+  window._displayPct = displayPct;
+}
+
+function showResignation() {
+  const template = resignationTemplates[Math.floor(Math.random() * resignationTemplates.length)];
+  document.getElementById('resign-letter').textContent = template(parseFloat(window._displayPct || '50'));
+  document.getElementById('resign-modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('resign-modal').classList.remove('show');
+}
+
+document.getElementById('resign-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function shareResult() {
+  const r = window._quizResult || { pct: '??', verdict: 'Unknown' };
+  const text = `My Career Crisis Calculator result: ${r.pct}% chance of quitting within 90 days. Status: ${r.verdict}. Take the quiz yourself!`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Result copied to clipboard!');
+    }).catch(() => {
+      fallbackShare(text);
+    });
+  } else {
+    fallbackShare(text);
+  }
+}
+
+function fallbackShare(text) {
+  if (navigator.share) {
+    navigator.share({ title: 'Career Crisis Calculator', text: text }).catch(() => {});
+  } else {
+    showToast('Couldn\'t copy. Try sharing manually!');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Keyboard nav
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('quiz-area').style.display === 'none') return;
+  const num = parseInt(e.key);
+  if (num >= 1 && num <= 5) {
+    const btns = document.querySelectorAll('.opt-btn');
+    if (btns[num - 1]) btns[num - 1].click();
+  }
+});
+</script>
+</body>
+</html>

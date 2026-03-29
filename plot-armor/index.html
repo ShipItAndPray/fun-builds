@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plot Armor Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .grain {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 720px; margin: 0 auto; padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center; padding: 40px 0 20px;
+  }
+
+  header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.8rem, 8vw, 4.5rem);
+    letter-spacing: 4px;
+    background: linear-gradient(135deg, #ff4444, #ff8800, #ffcc00);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+
+  header p {
+    color: #888; font-size: 0.95rem; margin-top: 8px;
+  }
+
+  .tagline {
+    text-align: center; color: #666; font-style: italic; margin-bottom: 32px; font-size: 0.85rem;
+  }
+
+  /* Character input */
+  .char-input {
+    background: #13131a; border: 1px solid #2a2a3a; border-radius: 12px;
+    padding: 20px; margin-bottom: 24px;
+  }
+
+  .char-input label {
+    display: block; font-weight: 600; margin-bottom: 8px; color: #ccc;
+  }
+
+  .char-input textarea {
+    width: 100%; background: #0d0d14; border: 1px solid #333; border-radius: 8px;
+    color: #e0e0e0; padding: 12px; font-family: inherit; font-size: 0.9rem;
+    resize: vertical; min-height: 60px;
+  }
+
+  .char-input textarea::placeholder { color: #555; }
+
+  /* Genre selector */
+  .genre-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 28px;
+  }
+
+  .genre-btn {
+    background: #1a1a25; border: 1px solid #333; border-radius: 20px;
+    padding: 8px 18px; color: #aaa; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .genre-btn:hover { border-color: #666; color: #ddd; }
+
+  .genre-btn.active {
+    border-color: #ff6600; color: #ff6600; background: #1f1510;
+  }
+
+  /* Trope sections */
+  .trope-section {
+    margin-bottom: 20px;
+  }
+
+  .trope-section h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem; letter-spacing: 2px; color: #888;
+    border-bottom: 1px solid #222; padding-bottom: 6px; margin-bottom: 12px;
+  }
+
+  .trope-grid {
+    display: grid; gap: 8px;
+  }
+
+  .trope-item {
+    display: flex; align-items: center; gap: 12px;
+    background: #111118; border: 1px solid #222; border-radius: 8px;
+    padding: 10px 14px; cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+
+  .trope-item:hover { border-color: #444; background: #16161f; }
+
+  .trope-item.checked { border-color: #ff660066; background: #1a1410; }
+  .trope-item.checked .trope-mod.pos { color: #44ff88; }
+  .trope-item.checked .trope-mod.neg { color: #ff4444; }
+
+  .trope-cb {
+    width: 20px; height: 20px; border: 2px solid #444; border-radius: 4px;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; font-size: 14px;
+  }
+
+  .trope-item.checked .trope-cb {
+    background: #ff6600; border-color: #ff6600; color: #000;
+  }
+
+  .trope-label { flex: 1; font-size: 0.88rem; line-height: 1.3; }
+
+  .trope-mod {
+    font-weight: 700; font-size: 0.82rem; flex-shrink: 0; min-width: 50px; text-align: right;
+  }
+
+  .trope-mod.pos { color: #337744; }
+  .trope-mod.neg { color: #774433; }
+
+  /* Calculate button */
+  .calc-btn {
+    display: block; width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #cc3300, #ff6600);
+    border: none; border-radius: 10px; color: #fff;
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem;
+    letter-spacing: 3px; cursor: pointer; margin: 32px 0;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+
+  .calc-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px #ff440033; }
+  .calc-btn:active { transform: scale(0.98); }
+
+  /* Results */
+  .results {
+    display: none; text-align: center; padding: 32px 20px;
+    background: #111118; border: 1px solid #2a2a3a; border-radius: 16px;
+    margin-bottom: 24px; position: relative; overflow: hidden;
+  }
+
+  .results.show { display: block; animation: fadeUp 0.5s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .score-ring {
+    width: 200px; height: 200px; margin: 0 auto 20px; position: relative;
+  }
+
+  .score-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+  .score-ring circle {
+    fill: none; stroke-width: 8;
+  }
+
+  .score-ring .bg { stroke: #222; }
+
+  .score-ring .fill {
+    stroke-dasharray: 565; stroke-dashoffset: 565;
+    stroke-linecap: round; transition: stroke-dashoffset 1.5s ease;
+  }
+
+  .score-number {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+
+  .score-number .val {
+    font-family: 'Bebas Neue', sans-serif; font-size: 3.5rem; line-height: 1;
+  }
+
+  .score-number .lbl { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; }
+
+  .verdict {
+    font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem;
+    letter-spacing: 1px; margin: 16px 0 8px; line-height: 1.3;
+  }
+
+  .verdict-sub {
+    color: #888; font-size: 0.85rem; font-style: italic; margin-bottom: 20px;
+  }
+
+  .breakdown {
+    text-align: left; margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid #222;
+  }
+
+  .breakdown h4 {
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px;
+    color: #666; margin-bottom: 10px;
+  }
+
+  .bd-item {
+    display: flex; justify-content: space-between; padding: 4px 0;
+    font-size: 0.82rem; color: #999;
+  }
+
+  .bd-item .bd-val.pos { color: #44ff88; }
+  .bd-item .bd-val.neg { color: #ff4444; }
+
+  /* Share */
+  .share-row {
+    display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap;
+  }
+
+  .share-btn {
+    background: #1a1a25; border: 1px solid #333; border-radius: 8px;
+    padding: 10px 16px; color: #ccc; cursor: pointer; font-size: 0.82rem;
+    transition: all 0.15s;
+  }
+
+  .share-btn:hover { border-color: #ff6600; color: #ff6600; }
+
+  .copied-toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: #22cc66; color: #000; padding: 10px 24px; border-radius: 8px;
+    font-weight: 600; font-size: 0.85rem; opacity: 0; transition: opacity 0.3s;
+    z-index: 100;
+  }
+
+  .copied-toast.show { opacity: 1; }
+
+  footer {
+    text-align: center; color: #444; font-size: 0.7rem; padding: 40px 0 20px;
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="container">
+  <header>
+    <h1>PLOT ARMOR CALCULATOR</h1>
+    <p>Will your character survive the movie?</p>
+  </header>
+  <p class="tagline">"In cinema, death is not random. It is earned through poor narrative decisions."</p>
+
+  <div class="char-input">
+    <label>Describe Your Character</label>
+    <textarea id="charDesc" placeholder="e.g. &quot;A grizzled detective, 2 days from retirement, who just showed his partner a photo of his family...&quot;"></textarea>
+  </div>
+
+  <div class="genre-bar" id="genreBar">
+    <button class="genre-btn active" data-genre="horror">Horror</button>
+    <button class="genre-btn" data-genre="action">Action</button>
+    <button class="genre-btn" data-genre="romance">Romance</button>
+    <button class="genre-btn" data-genre="comedy">Comedy</button>
+  </div>
+
+  <div id="tropeList"></div>
+
+  <button class="calc-btn" id="calcBtn">CALCULATE SURVIVAL ODDS</button>
+
+  <div class="results" id="results">
+    <div class="score-ring">
+      <svg viewBox="0 0 200 200">
+        <circle class="bg" cx="100" cy="100" r="90"/>
+        <circle class="fill" id="ringFill" cx="100" cy="100" r="90"/>
+      </svg>
+      <div class="score-number">
+        <span class="val" id="scoreVal">0%</span>
+        <span class="lbl">Survival</span>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="verdict-sub" id="verdictSub"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <div class="share-row">
+      <button class="share-btn" onclick="shareTwitter()">Share on X</button>
+      <button class="share-btn" onclick="copyResult()">Copy Result</button>
+    </div>
+  </div>
+</div>
+
+<div class="copied-toast" id="toast">Copied to clipboard!</div>
+
+<footer>No characters were harmed in the making of this calculator. Probably.</footer>
+
+<script>
+const TROPES = [
+  // ---- POSITIVE (survival boosters) ----
+  { text: "Has a tragic backstory", mod: 20, cat: "Identity" },
+  { text: "Has a dog (that is still alive)", mod: 30, cat: "Identity" },
+  { text: "Is the narrator of the story", mod: 40, cat: "Identity" },
+  { text: "Is a child under 12", mod: 35, cat: "Identity" },
+  { text: "Has a sarcastic sense of humor", mod: 15, cat: "Identity" },
+  { text: "Is played by Tom Hanks", mod: 45, cat: "Casting" },
+  { text: "Is played by Vin Diesel", mod: 30, cat: "Casting" },
+  { text: "Has an unresolved love interest", mod: 25, cat: "Relationships" },
+  { text: "Just made a promise they need to keep", mod: 20, cat: "Relationships" },
+  { text: "Knows a secret the audience doesn't", mod: 15, cat: "Plot" },
+  { text: "Is the only one who believes the truth", mod: 25, cat: "Plot" },
+  { text: "Has a skill that hasn't been used yet", mod: 20, cat: "Plot" },
+  { text: "Carries a locket / memento from a loved one", mod: 10, cat: "Props" },
+  { text: "Is the comic relief", mod: 25, cat: "Role" },
+  { text: "Is the main character's best friend (early in the film)", mod: 15, cat: "Role" },
+  { text: "Has sequel potential", mod: 35, cat: "Meta" },
+  { text: "The actor has a 3-film contract", mod: 50, cat: "Meta" },
+
+  // ---- NEGATIVE (death flags) ----
+  { text: "Says 'I'll be right back'", mod: -80, cat: "Famous Last Words" },
+  { text: "Is 2 days from retirement", mod: -90, cat: "Famous Last Words" },
+  { text: "Says 'What could possibly go wrong?'", mod: -70, cat: "Famous Last Words" },
+  { text: "Says 'We should split up'", mod: -60, cat: "Famous Last Words" },
+  { text: "Says 'It's probably nothing'", mod: -55, cat: "Famous Last Words" },
+  { text: "Says 'I have a bad feeling about this'", mod: -30, cat: "Famous Last Words" },
+  { text: "Just showed everyone a photo of their family", mod: -60, cat: "Death Flags" },
+  { text: "Explains their detailed plans for after this is over", mod: -75, cat: "Death Flags" },
+  { text: "Is played by Sean Bean", mod: -99, cat: "Casting" },
+  { text: "Has sex in the first act", mod: -50, cat: "Death Flags",
+    genre: { horror: -70, romance: 10, comedy: -10, action: -30 } },
+  { text: "Goes to investigate a strange noise alone", mod: -65, cat: "Death Flags" },
+  { text: "Is the mentor who just finished training the hero", mod: -70, cat: "Role" },
+  { text: "Is the villain's lieutenant who questions orders", mod: -80, cat: "Role" },
+  { text: "Coughs ominously in Act 1", mod: -85, cat: "Death Flags" },
+  { text: "Is wearing a red shirt", mod: -40, cat: "Props" },
+  { text: "Is a security guard at the facility", mod: -60, cat: "Role" },
+  { text: "Just said 'I love you' for the first time", mod: -45, cat: "Death Flags" },
+  { text: "Is the new guy who everyone likes immediately", mod: -55, cat: "Role" },
+  { text: "Has a redemption arc building up", mod: -35, cat: "Plot" },
+  { text: "Volunteers to stay behind and hold them off", mod: -95, cat: "Death Flags" },
+  { text: "Took off their helmet / armor for a dramatic moment", mod: -50, cat: "Death Flags" },
+  { text: "The dog died", mod: -40, cat: "Props" },
+  { text: "Is the rich jerk nobody likes", mod: -45, cat: "Identity" },
+  { text: "Just discovered who the real killer is (alone)", mod: -75, cat: "Plot" },
+  { text: "Is a scientist who says 'You don't understand what we've created'", mod: -60, cat: "Famous Last Words" },
+  { text: "Flashback to happier times just started playing", mod: -70, cat: "Death Flags" },
+  { text: "Has a countdown clock on screen", mod: -20, cat: "Meta" },
+  { text: "Their theme music turned somber", mod: -65, cat: "Meta" },
+  { text: "Is in the background of a poster but not the foreground", mod: -50, cat: "Meta" },
+  { text: "Hands someone a letter 'just in case'", mod: -85, cat: "Death Flags" },
+  { text: "Makes peace with their enemy right before the final battle", mod: -60, cat: "Death Flags" },
+  { text: "Answers 'Do you trust me?' with 'With my life'", mod: -55, cat: "Famous Last Words" },
+  { text: "Is the only Black character in a horror movie (pre-2017)", mod: -70, cat: "Meta" },
+];
+
+// Genre modifiers applied on top
+const GENRE_MODS = {
+  horror:  { base: -15, roleBoost: { "comic relief": -20 } },
+  action:  { base: 5, roleBoost: {} },
+  romance: { base: 20, roleBoost: {} },
+  comedy:  { base: 25, roleBoost: { "comic relief": 15 } },
+};
+
+let selectedGenre = "horror";
+let checkedTropes = new Set();
+
+// Group tropes by category
+function groupByCategory(tropes) {
+  const groups = {};
+  tropes.forEach((t, i) => {
+    if (!groups[t.cat]) groups[t.cat] = [];
+    groups[t.cat].push({ ...t, idx: i });
+  });
+  return groups;
+}
+
+function renderTropes() {
+  const container = document.getElementById("tropeList");
+  const groups = groupByCategory(TROPES);
+  const order = [
+    "Identity", "Casting", "Role", "Relationships", "Plot",
+    "Props", "Famous Last Words", "Death Flags", "Meta"
+  ];
+
+  container.innerHTML = order.map(cat => {
+    if (!groups[cat]) return "";
+    return `
+      <div class="trope-section">
+        <h3>${cat}</h3>
+        <div class="trope-grid">
+          ${groups[cat].map(t => {
+            const mod = getModForGenre(t);
+            const sign = mod >= 0 ? "+" : "";
+            const cls = mod >= 0 ? "pos" : "neg";
+            return `
+              <div class="trope-item" data-idx="${t.idx}" onclick="toggleTrope(this, ${t.idx})">
+                <div class="trope-cb"></div>
+                <span class="trope-label">${t.text}</span>
+                <span class="trope-mod ${cls}">${sign}${mod}%</span>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function getModForGenre(trope) {
+  if (trope.genre && trope.genre[selectedGenre] !== undefined) {
+    return trope.genre[selectedGenre];
+  }
+  return trope.mod;
+}
+
+function toggleTrope(el, idx) {
+  if (checkedTropes.has(idx)) {
+    checkedTropes.delete(idx);
+    el.classList.remove("checked");
+    el.querySelector(".trope-cb").textContent = "";
+  } else {
+    checkedTropes.add(idx);
+    el.classList.add("checked");
+    el.querySelector(".trope-cb").textContent = "\u2713";
+  }
+}
+
+// Genre buttons
+document.getElementById("genreBar").addEventListener("click", e => {
+  if (!e.target.classList.contains("genre-btn")) return;
+  document.querySelectorAll(".genre-btn").forEach(b => b.classList.remove("active"));
+  e.target.classList.add("active");
+  selectedGenre = e.target.dataset.genre;
+  renderTropes();
+  // Re-check previously checked
+  checkedTropes.forEach(idx => {
+    const el = document.querySelector(`.trope-item[data-idx="${idx}"]`);
+    if (el) { el.classList.add("checked"); el.querySelector(".trope-cb").textContent = "\u2713"; }
+  });
+});
+
+// Calculate
+document.getElementById("calcBtn").addEventListener("click", () => {
+  const baseScore = 50; // everyone starts at 50%
+  const genreBase = GENRE_MODS[selectedGenre].base;
+  let tropeTotal = 0;
+  const activeTropes = [];
+
+  checkedTropes.forEach(idx => {
+    const t = TROPES[idx];
+    const mod = getModForGenre(t);
+    tropeTotal += mod;
+    activeTropes.push({ text: t.text, mod });
+  });
+
+  let raw = baseScore + genreBase + tropeTotal;
+  let score = Math.max(0, Math.min(100, raw));
+
+  // Sean Bean override
+  if (checkedTropes.has(TROPES.findIndex(t => t.text.includes("Sean Bean")))) {
+    score = Math.min(score, 1);
+  }
+
+  showResults(score, activeTropes, genreBase);
+});
+
+function getVerdict(score, genre) {
+  if (score <= 5) return {
+    text: "DEAD ON ARRIVAL.",
+    sub: "The screenwriter killed this character before the ink dried.",
+    color: "#ff2222"
+  };
+  if (score <= 15) return {
+    text: "THIS CHARACTER WILL DEFINITELY DIE IN ACT 2.",
+    sub: "Their death scene is already in the trailer.",
+    color: "#ff3333"
+  };
+  if (score <= 25) return {
+    text: "WRITING THEIR OBITUARY AS WE SPEAK.",
+    sub: "The audience is already emotionally prepared.",
+    color: "#ff5544"
+  };
+  if (score <= 35) return {
+    text: "STATISTICALLY DOOMED.",
+    sub: "Insurance companies would not cover this character.",
+    color: "#ff7744"
+  };
+  if (score <= 50) return {
+    text: "COIN FLIP. BRING TISSUES JUST IN CASE.",
+    sub: "The writers' room is still debating.",
+    color: "#ffaa44"
+  };
+  if (score <= 65) return {
+    text: "DECENT ODDS. PROBABLY MAKES IT TO THE SEQUEL.",
+    sub: "They might lose a limb though.",
+    color: "#cccc44"
+  };
+  if (score <= 80) return {
+    text: "STRONG PLOT ARMOR. BULLETS WILL MISS.",
+    sub: genre === "action" ? "Explosions will always be behind them." : "The genre is on their side.",
+    color: "#88cc44"
+  };
+  if (score <= 95) return {
+    text: "BASICALLY INVINCIBLE.",
+    sub: "The studio needs them for the franchise.",
+    color: "#44dd66"
+  };
+  return {
+    text: "IMMORTAL. THEY COULD SURVIVE A NUKE.",
+    sub: "This character has a 3-picture deal and toy merchandise.",
+    color: "#44ffaa"
+  };
+}
+
+function showResults(score, activeTropes, genreBase) {
+  const res = document.getElementById("results");
+  res.classList.add("show");
+  res.scrollIntoView({ behavior: "smooth", block: "center" });
+
+  const v = getVerdict(score, selectedGenre);
+
+  // Animate ring
+  const ring = document.getElementById("ringFill");
+  ring.style.stroke = v.color;
+  const circumference = 2 * Math.PI * 90;
+  ring.style.strokeDasharray = circumference;
+  ring.style.strokeDashoffset = circumference;
+  requestAnimationFrame(() => {
+    ring.style.strokeDashoffset = circumference - (circumference * score / 100);
+  });
+
+  // Animate number
+  const valEl = document.getElementById("scoreVal");
+  let current = 0;
+  const step = Math.max(1, Math.floor(score / 40));
+  const interval = setInterval(() => {
+    current += step;
+    if (current >= score) { current = score; clearInterval(interval); }
+    valEl.textContent = current + "%";
+    valEl.style.color = v.color;
+  }, 30);
+
+  document.getElementById("verdict").textContent = v.text;
+  document.getElementById("verdict").style.color = v.color;
+  document.getElementById("verdictSub").textContent = v.sub;
+
+  // Breakdown
+  const bd = document.getElementById("breakdown");
+  const sorted = [...activeTropes].sort((a, b) => a.mod - b.mod);
+  bd.innerHTML = `
+    <h4>Breakdown</h4>
+    <div class="bd-item"><span>Base survival chance</span><span class="bd-val">50%</span></div>
+    <div class="bd-item"><span>Genre: ${selectedGenre}</span><span class="bd-val ${genreBase >= 0 ? 'pos' : 'neg'}">${genreBase >= 0 ? '+' : ''}${genreBase}%</span></div>
+    ${sorted.map(t => `
+      <div class="bd-item">
+        <span>${t.text}</span>
+        <span class="bd-val ${t.mod >= 0 ? 'pos' : 'neg'}">${t.mod >= 0 ? '+' : ''}${t.mod}%</span>
+      </div>
+    `).join("")}
+    <div class="bd-item" style="border-top:1px solid #333;padding-top:8px;margin-top:8px;color:#fff;font-weight:700">
+      <span>Final Score (clamped 0-100)</span>
+      <span style="color:${v.color}">${score}%</span>
+    </div>
+  `;
+}
+
+function getShareText() {
+  const score = document.getElementById("scoreVal").textContent;
+  const verdict = document.getElementById("verdict").textContent;
+  const desc = document.getElementById("charDesc").value.trim();
+  const charLine = desc ? `"${desc}"\n` : "";
+  return `${charLine}Plot Armor Score: ${score}\n${verdict}\n\nCalculate yours: `;
+}
+
+function shareTwitter() {
+  const text = encodeURIComponent(getShareText());
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, "_blank");
+}
+
+function copyResult() {
+  navigator.clipboard.writeText(getShareText()).then(() => {
+    const toast = document.getElementById("toast");
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 2000);
+  });
+}
+
+// Init
+renderTropes();
+</script>
+</body>
+</html>

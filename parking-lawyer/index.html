@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parking Lawyer 3000 - Absurd Legal Defenses</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Lora:ital,wght@0,400;0,700;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --parchment: #f5f0e8;
+    --ink: #1a1a1a;
+    --gold: #c4a052;
+    --red-seal: #8b1a1a;
+    --blue-legal: #1a3a5c;
+  }
+
+  body {
+    font-family: 'Lora', 'Georgia', 'Times New Roman', serif;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  .header {
+    background: var(--blue-legal);
+    color: #f5f0e8;
+    text-align: center;
+    padding: 2rem 1rem;
+    border-bottom: 4px double var(--gold);
+    position: relative;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .header .subtitle {
+    font-style: italic;
+    color: var(--gold);
+    margin-top: 0.5rem;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+  }
+
+  .header .gavel-icon {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .input-section {
+    background: white;
+    border: 2px solid var(--blue-legal);
+    border-radius: 4px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .input-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--blue-legal);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .violation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .violation-option {
+    position: relative;
+  }
+
+  .violation-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .violation-option label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    background: var(--parchment);
+  }
+
+  .violation-option label:hover {
+    border-color: var(--blue-legal);
+    background: #eee;
+  }
+
+  .violation-option input:checked + label {
+    border-color: var(--blue-legal);
+    background: var(--blue-legal);
+    color: white;
+    font-weight: 700;
+  }
+
+  .violation-option .v-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .defendant-name {
+    width: 100%;
+    padding: 0.75rem;
+    font-family: 'Lora', serif;
+    font-size: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    background: var(--parchment);
+  }
+
+  .defendant-name:focus {
+    outline: none;
+    border-color: var(--blue-legal);
+  }
+
+  .generate-btn {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: var(--red-seal);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .generate-btn:hover {
+    background: #a52020;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139,26,26,0.4);
+  }
+
+  .generate-btn:active {
+    transform: translateY(0);
+  }
+
+  .generate-btn.generating {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px) rotate(-1deg); }
+    40% { transform: translateX(5px) rotate(1deg); }
+    60% { transform: translateX(-3px) rotate(-0.5deg); }
+    80% { transform: translateX(3px) rotate(0.5deg); }
+  }
+
+  /* Defense Output */
+  .defense-output {
+    display: none;
+    margin-top: 2rem;
+  }
+
+  .defense-output.visible {
+    display: block;
+    animation: fadeUp 0.6s ease-out;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .legal-document {
+    background: white;
+    border: 3px double var(--ink);
+    padding: 2.5rem;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+
+  .legal-document::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 1px solid #ccc;
+    pointer-events: none;
+  }
+
+  .doc-header {
+    text-align: center;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .doc-header .court-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .doc-header .case-number {
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    color: #555;
+  }
+
+  .doc-header .case-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    margin-top: 1rem;
+    text-transform: uppercase;
+  }
+
+  .defense-strength {
+    text-align: center;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f4e8, #fff);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+  }
+
+  .defense-strength .label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #666;
+  }
+
+  .defense-strength .rating {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--red-seal);
+    margin-top: 0.3rem;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+  }
+
+  .defense-strength .shield {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+
+  .defense-body {
+    line-height: 1.8;
+    text-align: justify;
+    font-size: 1.05rem;
+  }
+
+  .defense-body p {
+    margin-bottom: 1rem;
+    text-indent: 2rem;
+  }
+
+  .defense-body p:first-child {
+    text-indent: 0;
+  }
+
+  .defense-body .emphasis {
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .defense-body .legal-cite {
+    font-style: italic;
+    color: var(--blue-legal);
+  }
+
+  .doc-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .signature-block {
+    font-style: italic;
+  }
+
+  .signature-block .sig-line {
+    width: 200px;
+    border-bottom: 1px solid var(--ink);
+    margin-bottom: 0.3rem;
+    height: 30px;
+  }
+
+  .seal {
+    width: 80px;
+    height: 80px;
+    border: 3px solid var(--red-seal);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    color: var(--red-seal);
+    text-align: center;
+    line-height: 1.2;
+    transform: rotate(-15deg);
+    flex-shrink: 0;
+  }
+
+  .print-btn {
+    display: block;
+    margin: 1.5rem auto 0;
+    padding: 0.75rem 2rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    background: var(--blue-legal);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .print-btn:hover {
+    background: #254a6f;
+  }
+
+  .disclaimer {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.75rem;
+    color: #999;
+    font-style: italic;
+  }
+
+  /* Print styles */
+  @media print {
+    body { background: white; }
+    .header, .input-section, .print-btn, .disclaimer, .generate-btn { display: none; }
+    .defense-output { display: block !important; }
+    .legal-document { border: 2px solid black; box-shadow: none; }
+    .container { max-width: 100%; padding: 0; }
+  }
+
+  @media (max-width: 500px) {
+    .violation-grid { grid-template-columns: 1fr; }
+    .legal-document { padding: 1.5rem; }
+    .doc-footer { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="gavel-icon">&#9878;</span>
+  <h1>Parking Lawyer 3000</h1>
+  <div class="subtitle">"No ticket is indefensible." &mdash; Definitely a real lawyer</div>
+</div>
+
+<div class="container">
+  <div class="input-section">
+    <h2>File Your Defense</h2>
+
+    <input type="text" class="defendant-name" id="defendantName" placeholder="Defendant Name (e.g., 'An Innocent Citizen')">
+
+    <div class="violation-grid">
+      <div class="violation-option">
+        <input type="radio" name="violation" id="v-meter" value="expired_meter" checked>
+        <label for="v-meter"><span class="v-icon">&#9201;</span> Expired Meter</label>
+      </div>
+      <div class="violation-option">
+        <input type="radio" name="violation" id="v-nopark" value="no_parking">
+        <label for="v-nopark"><span class="v-icon">&#9940;</span> No Parking Zone</label>
+      </div>
+      <div class="violation-option">
+        <input type="radio" name="violation" id="v-double" value="double_parked">
+        <label for="v-double"><span class="v-icon">&#128663;</span> Double Parked</label>
+      </div>
+      <div class="violation-option">
+        <input type="radio" name="violation" id="v-hydrant" value="fire_hydrant">
+        <label for="v-hydrant"><span class="v-icon">&#128293;</span> Fire Hydrant</label>
+      </div>
+      <div class="violation-option">
+        <input type="radio" name="violation" id="v-handicap" value="handicap">
+        <label for="v-handicap"><span class="v-icon">&#9855;</span> Handicap Zone</label>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateDefense()">&#9878; Generate Defense &#9878;</button>
+  </div>
+
+  <div class="defense-output" id="defenseOutput">
+    <div class="legal-document" id="legalDoc">
+      <div class="doc-header">
+        <div class="court-name">The Honorable Court of Parking Disputes</div>
+        <div class="court-name" style="font-size:0.9rem; margin-top:0.2rem;">Judicial District of Wherever You Got This Ticket</div>
+        <div class="case-number" id="caseNumber"></div>
+        <div class="case-title" id="caseTitle"></div>
+      </div>
+
+      <div class="defense-strength">
+        <span class="shield">&#128737;</span>
+        <div class="label">Defense Strength Rating</div>
+        <div class="rating">BULLETPROOF</div>
+      </div>
+
+      <div class="defense-body" id="defenseBody"></div>
+
+      <div class="doc-footer">
+        <div class="signature-block">
+          <div class="sig-line"></div>
+          <div id="lawyerName">Attorney at Parking Law</div>
+          <div style="font-size:0.8rem; color:#666;" id="barNumber"></div>
+        </div>
+        <div class="seal">
+          <div>Official<br>Seal of<br>Parking<br>Justice</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">&#128424; Print Defense Letter</button>
+    <div class="disclaimer">* This defense has a 0% success rate in actual courts. Please do not present this to a judge unless you want to make their day.</div>
+  </div>
+</div>
+
+<script>
+const gavelAudio = new AudioContext();
+
+function playGavel() {
+  const ctx = gavelAudio;
+  if (ctx.state === 'suspended') ctx.resume();
+
+  // Impact hit
+  const hit = ctx.createOscillator();
+  const hitGain = ctx.createGain();
+  hit.type = 'square';
+  hit.frequency.setValueAtTime(120, ctx.currentTime);
+  hit.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 0.15);
+  hitGain.gain.setValueAtTime(0.6, ctx.currentTime);
+  hitGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+  hit.connect(hitGain).connect(ctx.destination);
+  hit.start(ctx.currentTime);
+  hit.stop(ctx.currentTime + 0.2);
+
+  // Wood crack noise
+  const bufferSize = ctx.sampleRate * 0.1;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.4, ctx.currentTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+  const bandpass = ctx.createBiquadFilter();
+  bandpass.type = 'bandpass';
+  bandpass.frequency.value = 800;
+  bandpass.Q.value = 2;
+  noise.connect(bandpass).connect(noiseGain).connect(ctx.destination);
+  noise.start(ctx.currentTime);
+}
+
+function genCaseNumber() {
+  const prefix = ['PKG','TKT','VIO','MTR','CRB'][Math.floor(Math.random()*5)];
+  const year = new Date().getFullYear();
+  const num = String(Math.floor(Math.random()*999999)).padStart(6,'0');
+  return `Case No. ${prefix}-${year}-${num}`;
+}
+
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+const lawyerNames = [
+  'Esq. Barry M. Deep, J.D., Ph.D., DMV',
+  'Esq. Sue N. Meter, Parking Juris Doctor',
+  'Esq. Will U. Payless, Curbside Counsel',
+  'Esq. Parke R. Legally, Asphalt Attorney',
+  'Esq. Iona Spotwright, Meter Magistrate',
+  'Esq. Justin Parked, Esquire Extraordinaire',
+  'Esq. Paige Turner-Signal, Lot Litigator',
+  'Esq. Les Violations, Street-Side Solicitor',
+];
+
+const barNums = [
+  'Bar No. LOL-42069 (State Bar of Vibes)',
+  'Bar No. PARK-1337 (American Parking Bar Assoc.)',
+  'Bar No. METER-911 (International Court of Curbs)',
+  'Bar No. TOWED-404 (Bureau of Vehicular Justice)',
+];
+
+const templates = {
+  expired_meter: [
+    (n) => `<p>Your Honor, my client, <span class="emphasis">${n}</span>, stands before this court accused of the heinous crime of allowing a parking meter to expire by approximately <span class="emphasis">${pick(['47 seconds','2 minutes','an imperceptible quantum of time','less time than it takes to sneeze'])}</span>. We intend to prove, beyond a reasonable doubt, that this was an <span class="emphasis">act of God</span>.</p><p>The defense submits that the meter in question was, at the time of the alleged violation, operating in a <span class="emphasis">temporal anomaly</span>. Witness testimony confirms that the meter's LCD display flickered in a manner consistent with <span class="legal-cite">interdimensional time dilation</span>, a phenomenon well-documented in the landmark case of <span class="legal-cite">Johnson v. That One Meter on 5th Street (2019)</span>.</p><p>Furthermore, ${n} was engaged in a <span class="emphasis">time-sensitive humanitarian mission</span> (picking up tacos) and the meter expired during what can only be described as divine intervention (they forgot). To punish such selfless taco-retrieval would be a miscarriage of justice of <span class="emphasis">historic proportions</span>.</p><p>We motion to dismiss all charges and award ${n} a medal for bravery in the face of unreasonable parking infrastructure.</p>`,
+
+    (n) => `<p>May it please the court. The prosecution would have you believe that <span class="emphasis">${n}</span> willfully allowed a meter to expire. This is <span class="emphasis">categorically absurd</span>. The defense will demonstrate that the meter itself was the aggressor.</p><p>Exhibit A: The meter in question has a documented history of <span class="emphasis">running fast</span>. According to our expert witness, Dr. Parkington McTicketsworth of the <span class="legal-cite">Institute for Meter Fairness</span>, this particular meter loses approximately 4.7 seconds per minute, meaning it expired <span class="emphasis">23.5 minutes before reality caught up</span>.</p><p>Exhibit B: ${n} inserted <span class="emphasis">${pick(['$4.75','$6.50','$12.00 in nickels','their life savings'])}</span> into said meter, an amount sufficient to park a <span class="emphasis">Boeing 747</span> for the duration. The meter consumed this offering and provided nothing in return. This is not a parking violation. This is <span class="emphasis">theft by meter</span>.</p><p>We demand full restitution, a formal apology from the meter, and ${pick(['a parade','a key to the city','free parking for life','a commemorative plaque'])}.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> has been grievously wronged. On the date in question, my client parked legally, fed the meter generously, and proceeded to conduct business of <span class="emphasis">national importance</span> (returning a library book).</p><p>Upon returning <span class="emphasis">${pick(['90 seconds','3 minutes','a mere heartbeat'])}</span> after the meter expired, ${n} discovered a ticket affixed to their windshield with what can only be described as <span class="emphasis">malicious glee</span>. The ticket was warm to the touch, suggesting the enforcement officer had been <span class="emphasis">lying in wait like a parking predator</span>.</p><p>The defense invokes <span class="legal-cite">The Doctrine of Reasonable Snacking</span>, which holds that no citizen shall be penalized for a meter expiring while they are in line at <span class="emphasis">${pick(['Chipotle','the DMV','a gas station bathroom','a really good bakery'])}</span>. This doctrine has been upheld in <span class="legal-cite">${pick(['twelve','forty-seven','an uncountable number of'])} jurisdictions</span>.</p><p>We rest our case, and we rest it <span class="emphasis">emphatically</span>.</p>`,
+
+    (n) => `<p>Members of the jury, I ask you: what is time? Is it not merely a <span class="emphasis">social construct</span> invented by Big Parking to extract wealth from honest citizens like <span class="emphasis">${n}</span>?</p><p>The prosecution claims the meter "expired." But did it? According to <span class="legal-cite">Einstein's Theory of Special Parking Relativity</span>, time moves slower near large objects. ${n}'s vehicle, a <span class="emphasis">${pick(['majestic 2004 Honda Civic','noble Toyota Camry with character dents','Ford F-150 of considerable spiritual mass'])}</span>, has sufficient gravitational presence to cause <span class="emphasis">measurable time dilation</span> within a 3-foot radius of the meter.</p><p>In the meter's reference frame, time had expired. But in ${n}'s reference frame, there were still <span class="emphasis">${pick(['7 minutes','an eternity','vibes'])}</span> remaining. Physics does not take sides, Your Honor, and neither should this court.</p><p>We move for dismissal on <span class="emphasis">relativistic grounds</span>.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> pleads not guilty by reason of <span class="emphasis">meter betrayal</span>. The facts are simple: ${n} inserted exact change. The meter displayed the correct time. Then, in an act of <span class="emphasis">mechanical treachery</span>, the meter fast-forwarded through the remaining minutes like a teenager skipping through a boring movie.</p><p>We have retained the services of <span class="legal-cite">Dr. Quartersworth, the nation's foremost Meter Whisperer</span>, who will testify that the meter model in question (a ${pick(['ParkMaster 3000','CoinGobbler XL','TimeBandit Pro','Quarter Eater Deluxe'])}) has a known defect rate of <span class="emphasis">100%</span> when it's hot, cold, raining, sunny, or any day ending in "y."</p><p>The ticket must be dismissed, and the meter must be <span class="emphasis">tried for its crimes</span>.</p>`,
+
+    (n) => `<p>If it please the court. <span class="emphasis">${n}</span> stands accused of the most victimless crime since jaywalking on a deserted island. The meter expired. Nobody was harmed. No parking spots were denied to others &mdash; in fact, <span class="emphasis">the entire block was empty</span>.</p><p>The enforcement officer, whom we shall refer to as <span class="emphasis">"The Phantom Ticketer"</span>, appeared from seemingly nowhere at the <span class="emphasis">exact moment</span> the meter hit zero. The statistical probability of this coincidence is <span class="legal-cite">1 in 4.7 million</span>, suggesting either supernatural powers or a deeply concerning parking surveillance apparatus.</p><p>${n} was inside a nearby establishment performing <span class="emphasis">${pick(['emergency coffee acquisition','critical donut reconnaissance','an urgent consultation with a breakfast burrito','life-or-death grocery shopping'])}</span>. Under the <span class="legal-cite">Breakfast Immunity Doctrine of 1987</span>, no citizen may be ticketed while in active pursuit of morning sustenance.</p><p>Dismissal is the only just outcome. We also request a restraining order against the meter.</p>`,
+
+    (n) => `<p>Your Honor, the defense will prove that <span class="emphasis">${n}</span> did, in fact, have time remaining on the meter. The so-called "expiration" was a <span class="emphasis">hallucination</span> experienced by the parking enforcement device, a handheld unit running on <span class="emphasis">${pick(['Windows Vista','software from 2003','what appears to be an Etch-a-Sketch','pure spite'])}</span>.</p><p>We subpoenaed the device's firmware logs and discovered it had not been calibrated since <span class="emphasis">${pick(['the Clinton administration','the last lunar eclipse','before WiFi existed','1987'])}</span>. This device has the accuracy of <span class="emphasis">a sundial during a solar eclipse</span>.</p><p>Additionally, ${n}'s constitutional right to <span class="legal-cite">park in peace</span> was violated when the officer placed the ticket under the wiper blade with such force that it left a <span class="emphasis">micro-scratch on the windshield</span>, constituting property damage and, frankly, <span class="emphasis">an act of war</span>.</p><p>We seek dismissal, damages, and a formal inquiry into the parking enforcement officer's vendetta against windshield wipers.</p>`,
+
+    (n) => `<p>Ladies and gentlemen of the jury, <span class="emphasis">${n}</span> is a victim. Not of crime, but of a <span class="emphasis">predatory parking ecosystem</span> designed to extract maximum revenue from minimum infractions.</p><p>On the day in question, ${n} fed the meter with <span class="emphasis">${pick(['exact change down to the penny','more quarters than a laundromat','enough coins to fill a small aquarium'])}</span>. The meter accepted this tribute, displayed <span class="emphasis">45 minutes</span>, and then &mdash; <span class="emphasis">and this is the critical point</span> &mdash; the meter began counting in what our expert describes as <span class="legal-cite">"dog minutes,"</span> where each real minute counts as seven.</p><p>When ${n} returned ${pick(['6 minutes','4 minutes','barely 3 minutes'])} past the displayed time, the meter had already been expired for what it claimed was <span class="emphasis">42 minutes</span>. This is <span class="emphasis">meter fraud</span>, plain and simple.</p><p>We move to dismiss and further move to have this meter decommissioned, melted down, and <span class="emphasis">launched into the sun</span>.</p>`,
+  ],
+
+  no_parking: [
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> is accused of parking in a so-called "No Parking Zone." The defense will demonstrate that this designation is <span class="emphasis">legally meaningless</span> and, frankly, <span class="emphasis">unconstitutional</span>.</p><p>The sign in question was positioned at an angle of approximately <span class="emphasis">${pick(['47','62','38','71'])} degrees</span> from vertical, rendering it unreadable to any motorist traveling at the posted speed limit. Furthermore, the sign's font size of <span class="emphasis">approximately 2 inches</span> violates the <span class="legal-cite">Americans with Reasonable Eyesight Act</span>, which mandates that all parking signage be legible from a distance of at least <span class="emphasis">one city block while squinting</span>.</p><p>The defense also notes that the sign was partially obscured by <span class="emphasis">${pick(['a lovely oak tree','aggressive pigeons','someone\'s lost balloon','an unauthorized sticker for a DJ named \'Lil Parky\''])}</span>, creating a reasonable impression that the zone was, in fact, a <span class="emphasis">"Yes Parking Zone."</span></p><p>We demand immediate dismissal and a full audit of every sign within a <span class="emphasis">five-mile radius</span>.</p>`,
+
+    (n) => `<p>May it please the court. <span class="emphasis">${n}</span> categorically denies parking in a No Parking Zone for the simple reason that <span class="emphasis">they were not "parked."</span></p><p>As defined by <span class="legal-cite">Black's Law Dictionary, 47th Parking Edition</span>, "parking" requires the vehicle to be <span class="emphasis">unattended</span>. ${n} was inside the vehicle at all times, engaged in <span class="emphasis">${pick(['a very important phone call with their grandmother','an intense Spotify session','a philosophical contemplation about whether parking is real','eating a sandwich with great urgency'])}</span>. The vehicle was therefore in a state of <span class="emphasis">"active standby,"</span> which is legally distinct from parking.</p><p>Furthermore, the "No Parking" sign did not specify <span class="emphasis">which days, which hours, or which dimension</span> the restriction applied to. This ambiguity must be resolved in favor of the defendant under the <span class="legal-cite">Rule of Parking Lenity</span>.</p><p>The defense rests, preferably in a <span class="emphasis">comfortable parking spot</span>.</p>`,
+
+    (n) => `<p>Your Honor, I present to this court <span class="emphasis">Exhibit A</span>: a photograph of the alleged "No Parking" sign. I invite you to examine it closely. Notice anything? That's right &mdash; <span class="emphasis">it doesn't say "No Parking for ${n}."</span></p><p>The sign is a general prohibition. But <span class="emphasis">${n}</span> is not general. ${n} is <span class="emphasis">extraordinary</span>. ${n} was on a mission of <span class="emphasis">${pick(['delivering medicine to orphans (it was ibuprofen, but still)','rushing to prevent a fashion emergency','transporting an emotional support casserole','saving a relationship by picking up flowers'])}</span>.</p><p>Under the <span class="legal-cite">Doctrine of Extraordinary Circumstances and Also I Was Only Gone for a Second</span>, citizens engaged in acts of urgent personal importance are <span class="emphasis">exempt</span> from general parking restrictions. This is settled law in at least <span class="emphasis">${pick(['three','seven','an unknowable number of'])}</span> imaginary jurisdictions.</p><p>Dismiss this ticket or risk <span class="emphasis">setting a precedent against human decency itself</span>.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> respectfully submits that the "No Parking Zone" was established <span class="emphasis">without proper democratic process</span>. At no point was ${n} consulted, polled, surveyed, or even mildly asked about the designation of this zone.</p><p>The defense has obtained records showing this zone was designated by the city council during a <span class="emphasis">${pick(['3 AM emergency session','a meeting where pizza was served and nobody paid attention','a Zoom call where 4 of 7 members were on mute','an astoundingly boring Tuesday'])}</span>. The motion passed with <span class="emphasis">zero public comment</span>, violating ${n}'s right to <span class="legal-cite">parking self-determination</span>.</p><p>Additionally, we submit evidence that <span class="emphasis">${pick(['three other cars','a food truck','a mobility scooter','the parking enforcement vehicle itself'])}</span> were parked in the same zone at the time of ${n}'s citation, yet only ${n} was ticketed. This selective enforcement constitutes <span class="emphasis">vehicular discrimination</span>.</p><p>We move for dismissal and request the zone be redesignated as the <span class="emphasis">"${n} Memorial Parking Area."</span></p>`,
+
+    (n) => `<p>If the court will indulge me. <span class="emphasis">${n}</span> parked in this zone under the sincere and reasonable belief that the "No Parking" sign was <span class="emphasis">decorative</span>.</p><p>The sign was faded, tilted, and surrounded by <span class="emphasis">${pick(['three other cars parked happily','delivery trucks that clearly lived there','a sign for a psychic that said \\"FREE PARKING IN YOUR FUTURE\\"','what appeared to be a community garden growing around the post'])}</span>. Any reasonable person would conclude the sign was a <span class="emphasis">relic of a bygone era</span>, much like phone booths or reasonable rent.</p><p>${n} also notes that the curb was painted <span class="emphasis">${pick(['a cheerful shade of almost-yellow','a color that could be red or could be rust','a color that our expert witness, a Pantone-certified chromatic analyst, describes as \\"ambiguous\\"'])}</span>, further compounding the confusion.</p><p>We invoke the <span class="legal-cite">Reasonable Confusion Defense</span> and move for immediate dismissal, plus a court order requiring the city to <span class="emphasis">pick a curb color and stick with it</span>.</p>`,
+
+    (n) => `<p>Your Honor, the defense presents a novel but airtight argument: <span class="emphasis">${n}'s vehicle was not parked &mdash; it was resting.</span></p><p>Just as a human may sit on a bench in a "No Loitering" zone without violating the law (provided they appear purposeful), ${n}'s vehicle was merely <span class="emphasis">taking a brief mechanical respite</span> after a grueling <span class="emphasis">${pick(['45-minute commute through construction','spiritual journey through rush hour','harrowing encounter with a roundabout'])}</span>.</p><p>The vehicle's engine was warm. The radio was on. The turn signal was blinking. These are not the signs of a parked car. These are the signs of a <span class="emphasis">car in transition</span>, momentarily gathering its strength before continuing its noble journey.</p><p>To ticket a resting vehicle is to ticket <span class="emphasis">hope itself</span>. We move for dismissal.</p>`,
+  ],
+
+  double_parked: [
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> stands accused of "double parking." The defense will prove this is not a crime but an act of <span class="emphasis">geometric genius</span>.</p><p>On the date in question, ${n} arrived at their destination to find <span class="emphasis">zero available parking spots</span> within a <span class="emphasis">${pick(['seven-block','twelve-block','forty-mile'])}</span> radius. Faced with this urban crisis, ${n} made a <span class="emphasis">split-second engineering decision</span> to create a new parking space where none existed. This is not a violation &mdash; this is <span class="emphasis">innovation</span>.</p><p>The defense cites <span class="legal-cite">The Necessity Doctrine of Creative Parking (2014)</span>, which holds that when a city fails to provide adequate parking, citizens may <span class="emphasis">improvise with dignity</span>. ${n}'s vehicle was positioned with surgical precision, leaving <span class="emphasis">${pick(['almost enough','a theoretical amount of','what one might generously call'])}</span> room for other vehicles to pass.</p><p>We motion to dismiss and award ${n} a <span class="emphasis">civil engineering citation for resourcefulness</span>.</p>`,
+
+    (n) => `<p>May it please the court. <span class="emphasis">${n}</span> did not "double park." ${n} engaged in what the International Parking Council recognizes as <span class="emphasis">"parallel adjacent vehicular positioning,"</span> which is a completely different thing that I just made up but sounds very legal.</p><p>The defense presents testimony from ${n}'s passenger, who will confirm that ${n} activated their <span class="emphasis">hazard lights</span> &mdash; the universal signal for <span class="emphasis">"I know this is questionable but I'll be right back."</span> Under the <span class="legal-cite">Hazard Light Immunity Statute</span>, a vehicle with flashing hazards is <span class="emphasis">legally invisible</span> to parking enforcement for up to <span class="emphasis">${pick(['15 minutes','an hour','however long it takes to get bubble tea','eternity'])}</span>.</p><p>${n} was gone for <span class="emphasis">${pick(['45 seconds','barely a minute','the time it takes to blink'])}</span>. In that microscopic window, a parking enforcement officer materialized from <span class="emphasis">thin air</span> and issued a citation with the speed and enthusiasm of someone who truly loves their work.</p><p>We demand dismissal and hazard light rights for all.</p>`,
+
+    (n) => `<p>Your Honor, let us examine the term <span class="emphasis">"double parked."</span> To park "double" implies the existence of "single" parking. But can a vehicle truly be in two parking states simultaneously? This is <span class="emphasis">Schrodinger's Parking Spot</span>, and until observed by an enforcement officer, ${n}'s vehicle existed in a <span class="emphasis">quantum superposition</span> of both parked and not parked.</p><p>The act of the enforcement officer observing the vehicle <span class="emphasis">collapsed the wave function</span> into a "parked" state. Therefore, it was the <span class="emphasis">officer who caused the violation by looking at it</span>. Had the officer simply walked by, the violation would never have crystallized into reality.</p><p>The defense calls upon <span class="legal-cite">Heisenberg's Parking Uncertainty Principle</span>: you can know where a car is parked OR whether it is double parked, <span class="emphasis">but not both</span>.</p><p>We seek dismissal on <span class="emphasis">quantum mechanical grounds</span> and request a grant to study this phenomenon further.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> was not double parked. ${n} was providing <span class="emphasis">emotional support</span> to the car that WAS legally parked.</p><p>The legally parked vehicle &mdash; a ${pick(['lonely Prius','visibly distressed Subaru','anxious Volkswagen','trembling Kia'])} &mdash; had been sitting alone on that block for <span class="emphasis">over six hours</span>. Studies from the <span class="legal-cite">Institute of Vehicular Psychology</span> confirm that cars left alone for extended periods experience <span class="emphasis">"separation anxiety"</span> and elevated coolant temperatures.</p><p>${n}, recognizing the signs of automotive distress, pulled alongside to provide <span class="emphasis">companionship and shade</span>. This is not a violation &mdash; this is <span class="emphasis">vehicular compassion</span>.</p><p>To penalize ${n} for this act of kindness would send a chilling message: that in this city, <span class="emphasis">cars must suffer alone</span>. We refuse to live in that world. Dismissal, please.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> admits to positioning their vehicle adjacent to another vehicle. However, the defense will demonstrate that this was an <span class="emphasis">emergency medical situation</span>.</p><p>At approximately ${pick(['2:47 PM','11:15 AM','4:20 PM','high noon'])}, ${n} experienced a sudden and overwhelming <span class="emphasis">${pick(['craving for pad thai','need to use a restroom','realization they left the oven on at home','allergic reaction to bad vibes'])}</span>. Medical literature confirms this condition &mdash; known as <span class="legal-cite">Acute Parking Desperation Syndrome (APDS)</span> &mdash; impairs the sufferer's ability to locate proper parking.</p><p>${n} did what any reasonable person with APDS would do: they parked <span class="emphasis">as close to the cure as possible</span>. The alternative was to circle the block <span class="emphasis">${pick(['47','83','infinity'])}</span> more times, risking complete mental breakdown.</p><p>We present a doctor's note (written by us, just now) and move for compassionate dismissal.</p>`,
+
+    (n) => `<p>If it please the court. The defense respectfully argues that <span class="emphasis">${n}</span> was not double parked but rather <span class="emphasis">valet parked</span> &mdash; and the valet simply never showed up.</p><p>${n} pulled up, left the car running, and waited patiently for the valet who, according to a sign ${n} <span class="emphasis">may or may not have imagined</span>, was supposed to be right there. After ${pick(['3 minutes','10 minutes','what felt like an eternity'])}, ${n} concluded the valet was on break and stepped away briefly.</p><p>This is not a crime. This is <span class="emphasis">a service failure</span>. If anything, ${n} is the <span class="emphasis">victim</span> of a phantom valet operation, and we intend to pursue a class action against whoever was supposed to be there and <span class="emphasis">absolutely was not</span>.</p><p>Dismissal, damages for emotional distress, and a <span class="emphasis">complimentary valet pass</span> for ${n}'s trouble.</p>`,
+  ],
+
+  fire_hydrant: [
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> is charged with parking near a fire hydrant. The defense will demonstrate that ${n} was, in fact, <span class="emphasis">protecting the hydrant</span>.</p><p>On the date in question, ${n} observed the hydrant standing alone on a dark street, <span class="emphasis">vulnerable and unguarded</span>. Recent reports of hydrant vandalism in the area &mdash; including the infamous <span class="legal-cite">"Hydrant Hugger" of ${pick(['2019','2021','last Tuesday'])}</span> &mdash; compelled ${n} to position their vehicle as a <span class="emphasis">protective barrier</span>.</p><p>Far from obstructing emergency access, ${n}'s vehicle served as a <span class="emphasis">hydrant bodyguard</span>. In the event of a fire, ${n} had planned to <span class="emphasis">immediately move the vehicle</span> using a system of ${pick(['psychic alerts','a baby monitor pointed at the hydrant','pure instinct','a very long string tied to the steering wheel'])}.</p><p>We move for dismissal and a <span class="emphasis">Good Samaritan award</span> for hydrant protection above and beyond the call of duty.</p>`,
+
+    (n) => `<p>May it please the court. The prosecution alleges <span class="emphasis">${n}</span> parked within 15 feet of a fire hydrant. The defense will prove that the <span class="emphasis">hydrant parked within 15 feet of ${n}</span>.</p><p>Records obtained through a Freedom of Information request reveal that the hydrant in question was <span class="emphasis">installed in 1987</span>. ${n}'s parking spot, however, has existed since <span class="emphasis">the dawn of asphalt</span>. The hydrant is the newcomer here. The hydrant encroached on <span class="emphasis">established parking territory</span>.</p><p>Under the <span class="legal-cite">First Come, First Parked doctrine</span>, the entity that arrived second bears the burden of maintaining distance. ${n} was there first (spiritually speaking). The hydrant should have been installed <span class="emphasis">somewhere else</span>.</p><p>We move for dismissal and request the hydrant be relocated to a <span class="emphasis">more convenient location for everyone involved</span>.</p>`,
+
+    (n) => `<p>Your Honor, I ask you to consider: when was the last time that hydrant was actually <span class="emphasis">used</span>? The defense has researched this thoroughly and the answer is <span class="emphasis">${pick(['never','1994','before ${n} was born','the Truman administration'])}</span>.</p><p><span class="emphasis">${n}</span> parked near a hydrant that is, for all practical purposes, a <span class="emphasis">decorative street bollard</span>. It produces no water. It serves no function. It exists solely to generate <span class="emphasis">parking revenue</span> for a city that has forgotten its original purpose.</p><p>The defense presents photographs showing the hydrant is <span class="emphasis">${pick(['rusted shut','painted over so many times it\'s now 40% paint','being used as a dog bathroom','wearing a small knitted hat someone put on it'])}</span>. This is not critical infrastructure. This is <span class="emphasis">municipal theater</span>.</p><p>When a real fire happens, the firefighters will use the hydrant <span class="emphasis">two blocks over that actually works</span>. Everyone in the neighborhood knows this. The only people who don't are the parking enforcement officers who, we submit, <span class="emphasis">don't actually live here</span>.</p><p>Dismissal. Immediately. With <span class="emphasis">prejudice against the hydrant</span>.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> parked near this hydrant under the <span class="emphasis">sincere belief</span> that the 15-foot rule was measured in <span class="emphasis">metric feet</span>, an obscure unit of measurement used in ${pick(['three European countries','the parking codes of Luxembourg','a textbook ${n} definitely read once'])}.</p><p>In metric feet, ${n} was a full <span class="emphasis">22 feet</span> from the hydrant &mdash; well within legal limits. It is not ${n}'s fault that the United States has <span class="emphasis">stubbornly refused</span> to adopt the metric system, creating confusion for globally-minded parkers everywhere.</p><p>Additionally, ${n}'s vehicle is a <span class="emphasis">${pick(['compact car barely larger than a shopping cart','Smart Car that could fit inside the hydrant','vehicle so small it constitutes a rounding error'])}</span>, meaning it would obstruct approximately <span class="emphasis">zero percent</span> of a firefighter's access to the hydrant.</p><p>We move for dismissal on grounds of <span class="emphasis">international measurement confusion</span> and request the city add metric conversions to all parking signs.</p>`,
+
+    (n) => `<p>Your Honor, the defense will prove that <span class="emphasis">${n}</span> is, in fact, a <span class="emphasis">certified volunteer firefighter</span> (certification pending, application submitted ${pick(['yesterday','this morning','during this trial','just now on my phone'])}). As such, ${n} parked near the hydrant to ensure <span class="emphasis">rapid deployment</span> in case of emergency.</p><p>Under <span class="legal-cite">Municipal Code 7.4.2(b) (which we are fairly sure exists)</span>, emergency volunteers may park within the hydrant zone when <span class="emphasis">on standby</span>. ${n} was on standby. ${n} is <span class="emphasis">always on standby</span>. ${n} is a hero, Your Honor, and heroes don't circle the block looking for parking.</p><p>The prosecution would have you punish a citizen for being <span class="emphasis">too prepared</span> for emergencies. What message does that send? "Don't be ready to help"? This court cannot, in good conscience, endorse <span class="emphasis">anti-heroism</span>.</p><p>Dismissal, plus a commendation for ${n}'s <span class="emphasis">unwavering commitment to fire safety</span>.</p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> disputes the measurement. The officer's report states ${n} parked "within 15 feet" of the hydrant. But <span class="emphasis">how was this measured?</span></p><p>The defense has obtained body camera footage showing the officer <span class="emphasis">${pick(['pacing it off in boots of unknown size','eyeballing it while eating a sandwich','using a phone app that measures in cubits','gesturing vaguely and writing down a number'])}</span>. This is not measurement. This is <span class="emphasis">parking astrology</span>.</p><p>Our certified surveyor, armed with <span class="emphasis">a laser rangefinder, a transit level, and the righteous fury of justice</span>, measured the distance at precisely <span class="emphasis">15 feet and ${pick(['0.7 inches','1.2 inches','3 millimeters','one grain of sand'])}</span> &mdash; <span class="emphasis">outside the restricted zone</span>.</p><p>The difference between guilt and innocence here is <span class="emphasis">less than the width of a parking ticket</span>. We demand dismissal and an upgrade to the department's measurement equipment, which currently appears to be <span class="emphasis">a vibes-based system</span>.</p>`,
+  ],
+
+  handicap: [
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> is charged with unauthorized use of a handicap parking space. The defense will demonstrate that ${n} suffers from a <span class="emphasis">profound and debilitating condition</span> not yet recognized by modern medicine: <span class="legal-cite">Acute Parking Proximity Dependency (APPD)</span>.</p><p>APPD causes the sufferer to experience <span class="emphasis">severe anxiety, existential dread, and mild inconvenience</span> when forced to walk more than 30 feet from their vehicle to their destination. Symptoms include ${pick(['sighing heavily','checking the weather app obsessively','muttering about their knees','a general sense of being put-upon'])}.</p><p>While ${n}'s application for a handicap placard is <span class="emphasis">pending review</span> (submitted ${pick(['yesterday','moments ago','telepathically','via interpretive dance at the DMV'])}), the defense argues that denying ${n} accessible parking constitutes <span class="emphasis">discrimination against future placard holders</span>.</p><p>We move for dismissal and expedited review of ${n}'s very real and not at all made up condition.</p><p><em>NOTE: The defense acknowledges that handicap spaces serve a vital purpose for people with real disabilities, and this defense is presented purely for comedic purposes in this fictional court.</em></p>`,
+
+    (n) => `<p>May it please the court. <span class="emphasis">${n}</span> parked in the handicap space <span class="emphasis">by accident</span>. And before the court questions how one "accidentally" parks in a clearly marked space with a giant blue sign, please consider the following:</p><p>${n} was driving while wearing <span class="emphasis">${pick(['sunglasses so fashionable they impaired visibility','prescription glasses from 2014','a hat with a very wide brim','the emotional weight of a long day'])}</span>. The blue paint on the ground was <span class="emphasis">faded to a color indistinguishable from regular asphalt</span> to anyone not specifically looking for it. The sign was blocked by <span class="emphasis">${pick(['a very tall SUV','an overgrown bush','the sun being in an unhelpful position','pure bad luck'])}</span>.</p><p>${n} exited the vehicle, walked ${pick(['four','seven','twelve'])} steps, then noticed the markings and <span class="emphasis">immediately turned around</span> &mdash; only to find the ticket already on the windshield, placed there by an officer with the reflexes of a <span class="emphasis">parking cheetah</span>.</p><p>We request leniency for an honest mistake and recommend the city <span class="emphasis">repaint the space in a color visible from orbit</span>.</p><p><em>NOTE: Handicap parking abuse is a real problem that affects people with disabilities. This defense is entirely fictional humor.</em></p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> was transporting a passenger with a valid handicap placard. The passenger &mdash; ${n}'s <span class="emphasis">${pick(['grandmother','elderly neighbor','friend recovering from surgery','emotional support accountant'])}</span> &mdash; exited the vehicle with the placard and <span class="emphasis">took it inside the building</span>, believing it was a coupon.</p><p>By the time ${n} realized the placard was not displayed on the dashboard, the ticket had already been issued. The placard was recovered from the passenger, who was attempting to <span class="emphasis">${pick(['present it at the checkout counter','use it as a bookmark','show it to the receptionist as ID','fan themselves with it'])}</span>.</p><p>The defense presents the valid placard as <span class="emphasis">Exhibit A</span> and the confused passenger as <span class="emphasis">Exhibit B</span>. Authorization existed. Display did not. This is a <span class="emphasis">technicality</span>, not a violation.</p><p>We move for dismissal and recommend the city develop <span class="emphasis">placard-shaped lanyards</span> to prevent future incidents.</p><p><em>NOTE: This fictional defense respects that handicap placards serve essential accessibility needs.</em></p>`,
+
+    (n) => `<p>Your Honor, the defense presents a <span class="emphasis">jurisdictional challenge</span>. The handicap space in question is located in a private parking lot owned by <span class="emphasis">${pick(['MegaMart','a strip mall from 1987','a business that closed three years ago','a property currently in a zoning dispute'])}</span>.</p><p>Under <span class="legal-cite">Private Property Parking Doctrine</span>, enforcement of handicap spaces on private property requires <span class="emphasis">explicit authorization from the property owner</span>. The defense has conducted an exhaustive search and found that the property owner is <span class="emphasis">${pick(['an LLC registered in Delaware that hasn\\'t filed paperwork since 2018','a trust with no living trustees','unreachable by phone, email, carrier pigeon, or telepathy','currently on a yacht somewhere in international waters'])}</span>.</p><p>Without verified authorization, this ticket is <span class="emphasis">unenforceable</span>. It is the legal equivalent of <span class="emphasis">a strongly worded suggestion</span>.</p><p>We move for dismissal on jurisdictional grounds.</p><p><em>NOTE: Handicap parking enforcement exists to protect people with disabilities. This is a fictional humorous defense.</em></p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> was in the handicap space for <span class="emphasis">${pick(['47 seconds','under a minute','the time it takes to inhale and exhale twice','less time than this sentence takes to read'])}</span>. The vehicle was running. The hazards were on. ${n} was <span class="emphasis">dropping off a passenger at the door</span> and was in the process of driving away when the ticket appeared on the windshield as if by <span class="emphasis">dark magic</span>.</p><p>The defense questions: at what point does "stopping" become "parking"? According to <span class="legal-cite">The Stoplight Paradox (Jenkins v. That Impatient Cop, 2017)</span>, a vehicle is not "parked" if the driver maintains <span class="emphasis">continuous intent to depart</span>. ${n}'s intent was continuous. ${n}'s foot was <span class="emphasis">hovering over the accelerator</span> the entire time.</p><p>This was a <span class="emphasis">momentary pause</span>, not a parking event. Issuing a ticket for this is like giving someone a <span class="emphasis">speeding ticket for jogging</span>.</p><p>Dismissal. Emphatically.</p><p><em>NOTE: Even brief unauthorized use of handicap spaces can impact people who need them. This is fictional comedy.</em></p>`,
+
+    (n) => `<p>Your Honor, <span class="emphasis">${n}</span> would like the court to know that they parked in the handicap space while experiencing a <span class="emphasis">temporary disability</span>: their GPS told them to "arrive at destination" and their <span class="emphasis">brain simply stopped working</span>.</p><p>Medical science recognizes this as <span class="legal-cite">GPS-Induced Cognitive Surrender (GICS)</span>, a condition where the navigation system's confident declaration of arrival causes the driver to <span class="emphasis">immediately cease all decision-making</span>, including the decision of where to park.</p><p>${n}'s phone said "you have arrived." So ${n} arrived. In the first available spot. The phone did not say <span class="emphasis">"you have arrived, but maybe don't park there."</span> This is a <span class="emphasis">technology failure</span>, not a moral one.</p><p>We move for dismissal and a software update for every GPS system that adds <span class="emphasis">"...but check the signs first"</span> to all arrival announcements.</p><p><em>NOTE: This is a humorous fictional defense. Handicap spaces are essential for people with disabilities.</em></p>`,
+  ],
+};
+
+function generateDefense() {
+  const btn = document.getElementById('generateBtn');
+  btn.classList.add('generating');
+  setTimeout(() => btn.classList.remove('generating'), 500);
+
+  playGavel();
+
+  const violation = document.querySelector('input[name="violation"]:checked').value;
+  const nameInput = document.getElementById('defendantName').value.trim();
+  const name = nameInput || pick(['An Innocent Citizen','A Wrongly Accused Motorist','A Pillar of the Community','A Taxpaying Patriot','A Person of Impeccable Character']);
+
+  const violationLabels = {
+    expired_meter: 'Expired Meter',
+    no_parking: 'No Parking Zone Violation',
+    double_parked: 'Double Parking',
+    fire_hydrant: 'Fire Hydrant Proximity Violation',
+    handicap: 'Unauthorized Handicap Zone Usage',
+  };
+
+  // Case number
+  document.getElementById('caseNumber').textContent = genCaseNumber();
+  document.getElementById('caseTitle').innerHTML = `${name}<br><span style="font-size:0.9rem;font-weight:400;">v.</span><br>The City &amp; Its Unreasonable Parking Apparatus`;
+
+  // Pick template
+  const templateList = templates[violation];
+  const template = pick(templateList);
+  document.getElementById('defenseBody').innerHTML = template(name);
+
+  // Lawyer
+  const lawyer = pick(lawyerNames);
+  document.getElementById('lawyerName').textContent = lawyer;
+  document.getElementById('barNumber').textContent = pick(barNums);
+
+  // Show
+  const output = document.getElementById('defenseOutput');
+  output.classList.remove('visible');
+  void output.offsetWidth;
+  output.classList.add('visible');
+
+  // Scroll to defense
+  setTimeout(() => {
+    output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+</script>
+</body>
+</html>

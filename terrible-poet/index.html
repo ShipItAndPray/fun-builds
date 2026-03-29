@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Terrible Poet - Open Mic Night</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Caveat:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Special Elite', cursive;
+    background: #1a0f0a;
+    color: #e8d5b7;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Coffee stain texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(101,67,33,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(101,67,33,0.1) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.3) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header - Open Mic Night */
+  .header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4em;
+    color: #f4e4c1;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+  }
+
+  .header .subtitle {
+    font-family: 'Caveat', cursive;
+    font-size: 1.3em;
+    color: #c4956a;
+    margin-top: 5px;
+  }
+
+  .mic-icon {
+    font-size: 2em;
+    display: block;
+    margin: 10px auto;
+    filter: drop-shadow(0 0 10px rgba(244,228,193,0.3));
+  }
+
+  /* Poet Name */
+  .poet-name-section {
+    text-align: center;
+    margin: 15px 0 25px;
+    padding: 15px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 10px;
+    border: 1px solid rgba(196,149,106,0.2);
+  }
+
+  .poet-name {
+    font-family: 'Caveat', cursive;
+    font-size: 1.6em;
+    color: #dbc19e;
+    margin-bottom: 8px;
+  }
+
+  .poet-title {
+    font-size: 0.85em;
+    color: #8a7560;
+    font-style: italic;
+  }
+
+  .new-poet-btn {
+    margin-top: 10px;
+    background: none;
+    border: 1px dashed #6b5540;
+    color: #c4956a;
+    padding: 5px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.85em;
+    transition: all 0.3s;
+  }
+
+  .new-poet-btn:hover {
+    border-color: #c4956a;
+    background: rgba(196,149,106,0.1);
+  }
+
+  /* Input Area */
+  .input-area {
+    margin-bottom: 20px;
+  }
+
+  .input-area label {
+    display: block;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    color: #c4956a;
+  }
+
+  .topic-input {
+    width: 100%;
+    padding: 14px 18px;
+    font-family: 'Special Elite', cursive;
+    font-size: 1.1em;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(196,149,106,0.3);
+    border-radius: 8px;
+    color: #e8d5b7;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .topic-input:focus {
+    border-color: #c4956a;
+    box-shadow: 0 0 15px rgba(196,149,106,0.1);
+  }
+
+  .topic-input::placeholder {
+    color: #6b5540;
+  }
+
+  /* Style Selector */
+  .style-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 15px 0 20px;
+  }
+
+  .style-btn {
+    padding: 10px 5px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(196,149,106,0.2);
+    border-radius: 8px;
+    color: #a08868;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .style-btn:hover {
+    background: rgba(196,149,106,0.1);
+    border-color: #c4956a;
+  }
+
+  .style-btn.active {
+    background: rgba(196,149,106,0.15);
+    border-color: #c4956a;
+    color: #f4e4c1;
+    box-shadow: 0 0 10px rgba(196,149,106,0.1);
+  }
+
+  .style-btn .label { display: block; font-weight: bold; }
+  .style-btn .quality {
+    display: block;
+    font-size: 0.75em;
+    color: #8a6a4a;
+    margin-top: 3px;
+    font-family: 'Caveat', cursive;
+  }
+
+  /* Generate Button */
+  .generate-btn {
+    width: 100%;
+    padding: 16px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3em;
+    background: linear-gradient(135deg, #5c3d2e, #8b5e3c);
+    border: none;
+    border-radius: 10px;
+    color: #f4e4c1;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .generate-btn:hover {
+    background: linear-gradient(135deg, #6b4a38, #a06d45);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(139,94,60,0.3);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+
+  .generate-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.5s;
+  }
+
+  .generate-btn:hover::after { left: 100%; }
+
+  /* Poem Display */
+  .poem-stage {
+    margin: 25px 0;
+    padding: 30px 25px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    border: 1px solid rgba(196,149,106,0.15);
+    position: relative;
+    min-height: 100px;
+    display: none;
+  }
+
+  .poem-stage.visible { display: block; }
+
+  .poem-stage::before {
+    content: '\201C';
+    position: absolute;
+    top: 5px; left: 15px;
+    font-family: 'Playfair Display', serif;
+    font-size: 4em;
+    color: rgba(196,149,106,0.15);
+    line-height: 1;
+  }
+
+  .poem-style-label {
+    font-family: 'Caveat', cursive;
+    font-size: 1em;
+    color: #8a6a4a;
+    text-align: center;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .poem-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15em;
+    line-height: 1.8;
+    color: #e8d5b7;
+    white-space: pre-wrap;
+    text-align: center;
+    padding: 0 10px;
+  }
+
+  .poem-author {
+    text-align: right;
+    margin-top: 20px;
+    font-family: 'Caveat', cursive;
+    font-size: 1.1em;
+    color: #8a6a4a;
+  }
+
+  /* Action Buttons */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .action-btn {
+    padding: 10px 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(196,149,106,0.25);
+    border-radius: 25px;
+    color: #c4956a;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .action-btn:hover {
+    background: rgba(196,149,106,0.12);
+    border-color: #c4956a;
+    transform: translateY(-1px);
+  }
+
+  .snap-btn {
+    background: rgba(196,149,106,0.1);
+    border-color: #c4956a;
+    font-size: 1em;
+  }
+
+  .snap-btn:hover {
+    background: rgba(196,149,106,0.25);
+  }
+
+  .snap-btn.snapping {
+    animation: snapPulse 0.15s ease-in-out;
+  }
+
+  @keyframes snapPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  /* Snap counter */
+  .snap-counter {
+    text-align: center;
+    font-family: 'Caveat', cursive;
+    font-size: 1em;
+    color: #6b5540;
+    margin-top: 10px;
+    min-height: 1.3em;
+  }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #5c3d2e;
+    color: #f4e4c1;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-family: 'Special Elite', cursive;
+    font-size: 0.9em;
+    transition: transform 0.4s ease;
+    z-index: 100;
+    border: 1px solid rgba(196,149,106,0.3);
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Spotlight effect */
+  .spotlight {
+    position: fixed;
+    top: -50%;
+    left: 50%;
+    width: 300px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(255,240,200,0.03) 0%, transparent 70%);
+    transform: translateX(-50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 30px 0 20px;
+    color: #4a3828;
+    font-size: 0.8em;
+  }
+
+  .footer a { color: #6b5540; }
+
+  /* Coffee cup decoration */
+  .coffee-ring {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    border: 3px solid rgba(101,67,33,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  /* Writing animation */
+  .writing .poem-text {
+    animation: fadeInPoem 0.8s ease-out;
+  }
+
+  @keyframes fadeInPoem {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .header h1 { font-size: 1.8em; }
+    .style-selector { grid-template-columns: repeat(2, 1fr); }
+    .poem-text { font-size: 1em; }
+    .actions { flex-direction: column; align-items: stretch; }
+    .action-btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="spotlight"></div>
+<div class="coffee-ring"></div>
+
+<div class="container">
+  <header class="header">
+    <span class="mic-icon">&#127908;</span>
+    <h1>The Terrible Poet</h1>
+    <div class="subtitle">Open Mic Night ~ No Refunds</div>
+  </header>
+
+  <div class="poet-name-section">
+    <div class="poet-name" id="poetName">Barnaby Quillsworth III</div>
+    <div class="poet-title" id="poetTitle">Self-Published Author of "Whispers in the Void (Volume 12)"</div>
+    <button class="new-poet-btn" onclick="generatePoetName()">&#9998; New Stage Name</button>
+  </div>
+
+  <div class="input-area">
+    <label>Tonight's subject, if you dare:</label>
+    <input type="text" class="topic-input" id="topicInput" placeholder="my cat, Monday mornings, tacos, existential dread..." autofocus>
+  </div>
+
+  <div class="style-selector">
+    <button class="style-btn active" data-style="haiku" onclick="selectStyle(this)">
+      <span class="label">Haiku</span>
+      <span class="quality">(bad)</span>
+    </button>
+    <button class="style-btn" data-style="limerick" onclick="selectStyle(this)">
+      <span class="label">Limerick</span>
+      <span class="quality">(worse)</span>
+    </button>
+    <button class="style-btn" data-style="sonnet" onclick="selectStyle(this)">
+      <span class="label">Sonnet</span>
+      <span class="quality">(terrible)</span>
+    </button>
+    <button class="style-btn" data-style="free" onclick="selectStyle(this)">
+      <span class="label">Free Verse</span>
+      <span class="quality">(pretentious)</span>
+    </button>
+  </div>
+
+  <button class="generate-btn" onclick="generatePoem()">&#9997; Unleash the Poetry</button>
+
+  <div class="poem-stage" id="poemStage">
+    <div class="poem-style-label" id="poemStyleLabel"></div>
+    <div class="poem-text" id="poemText"></div>
+    <div class="poem-author" id="poemAuthor"></div>
+  </div>
+
+  <div class="actions" id="actions" style="display:none;">
+    <button class="action-btn snap-btn" id="snapBtn" onclick="doSnap()">&#128588; Snap!</button>
+    <button class="action-btn" onclick="generatePoem()">&#128260; Another One</button>
+    <button class="action-btn" onclick="sharePoem()">&#128203; Share</button>
+  </div>
+
+  <div class="snap-counter" id="snapCounter"></div>
+
+  <footer class="footer">
+    No poems were harmed in the making of this app.<br>
+    Audience snapping is encouraged. Heckling is also fine.
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Poet Name Generator ──
+const firstNames = [
+  'Barnaby','Gwendolyn','Percival','Celestine','Reginald','Magnolia','Bartholomew',
+  'Seraphina','Cornelius','Petunnia','Archibald','Lavinia','Thaddeus','Clementine',
+  'Ignatius','Evangeline','Montague','Cordelia','Hieronymus','Wilhelmina','Desmond',
+  'Persephone','Rutherford','Calliope','Nigel','Isadora','Crispin','Theodora',
+  'Algernon','Beatrix','Orson','Dahlia','Neville','Juniper','Quentin','Marigold'
+];
+const lastNames = [
+  'Quillsworth','Inkblot','Pensieve','Metaphoria','Versely','Stanzington',
+  'Von Couplet','McSonnet','Rhymenstein','Alliterato','Blankverse','De Prose',
+  'Hendecasyllable','Enjambment','Iambsworth','Trochee','Sestina-Smythe',
+  'Anaphora','Caesura','Dithyramb','Villanelle','Pantoum','Terza-Rima',
+  'Alexandrine','Spondee','Dactylington','Anapestovich','Petrarchson'
+];
+const suffixes = ['III','IV','Jr.','Esq.','PhD','MFA','','"The Pen"','(no relation)','the Brave','the Verbose'];
+const titles = [
+  'Self-Published Author of "Whispers in the Void (Volume 12)"',
+  'Winner of the 2019 Parking Lot Poetry Slam',
+  'Banned from 3 Open Mic Nights',
+  'Author of "Feelings and Also More Feelings"',
+  'Professional Rhymer, Amateur Speller',
+  'Poet Laureate of Apartment 4B',
+  'Creator of the 47-Stanza Grocery List',
+  'Featured in "Poetry Nobody Asked For Monthly"',
+  'Two-Time Runner-Up, Office Haiku Contest',
+  'Author of the Unpublished Epic "Ode to My Roomba"',
+  'Inventor of the Reverse Sonnet (it doesn\'t work)',
+  'Currently workshopping a 200-page poem about toast',
+  'Blocked by every literary magazine on Twitter',
+  'Holds the record for longest open mic set (4 hours)',
+  'Once made an audience member cry (from boredom)',
+  'Believes free verse means "free from quality"',
+  'Has rhymed "orange" with 14 different words (all wrong)',
+  'Rejected by Hallmark 37 times',
+  'MFA from the University of Nowhere',
+  'Published in their own zine, circulation: 3'
+];
+
+function generatePoetName() {
+  const first = firstNames[Math.floor(Math.random()*firstNames.length)];
+  const last = lastNames[Math.floor(Math.random()*lastNames.length)];
+  const suf = suffixes[Math.floor(Math.random()*suffixes.length)];
+  const title = titles[Math.floor(Math.random()*titles.length)];
+  document.getElementById('poetName').textContent = `${first} ${last}${suf ? ' '+suf : ''}`;
+  document.getElementById('poetTitle').textContent = title;
+}
+
+// ── Style Selection ──
+let currentStyle = 'haiku';
+
+function selectStyle(btn) {
+  document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentStyle = btn.dataset.style;
+}
+
+// ── Rhyme & Word Banks ──
+const rhymeMap = {
+  'cat': ['hat','bat','mat','sat','flat','rat','that','fat','chat','splat','brat','combat','acrobat'],
+  'dog': ['fog','log','bog','jog','frog','hog','cog','smog','blog','agog','catalog','dialogue'],
+  'love': ['above','dove','glove','shove','thereof','of'],
+  'heart': ['art','start','part','smart','cart','dart','tart','chart','depart','apart'],
+  'night': ['light','sight','might','right','bright','flight','tight','delight','fright','knight','plight','height'],
+  'day': ['way','say','play','stay','ray','bay','gray','may','sway','hooray','display','decay','array','bouquet'],
+  'moon': ['soon','tune','spoon','balloon','June','croon','swoon','boon','cartoon','lagoon','bassoon','platoon'],
+  'sun': ['fun','run','one','done','gun','won','bun','stun','begun','spun','ton','none','undone'],
+  'star': ['far','car','bar','jar','guitar','scar','cigar','bazaar','avatar','memoir','reservoir'],
+  'rain': ['pain','main','brain','train','plain','chain','gain','vain','lane','insane','domain','arcane','champagne'],
+  'time': ['rhyme','climb','mime','lime','dime','chime','crime','sublime','paradigm','pantomime','prime'],
+  'life': ['wife','knife','strife','rife','fife'],
+  'sea': ['free','tree','me','be','key','flee','three','agree','decree','debris','guarantee'],
+  'sky': ['high','fly','try','cry','why','buy','eye','sigh','die','nearby','supply','butterfly','lullaby'],
+  'fire': ['higher','desire','wire','tire','admire','inspire','conspire','choir','empire','liar','expire'],
+  'dream': ['stream','cream','beam','team','seem','gleam','scheme','supreme','extreme','redeem','esteem'],
+  'blue': ['true','you','new','through','grew','flew','knew','view','pursue','argue','debut','fondue'],
+  'red': ['bed','said','head','dead','bread','spread','thread','instead','ahead','dread','widespread'],
+  'food': ['mood','good','stood','would','could','should','understood','hood','wood','misunderstood'],
+  'taco': ['whacko','tobacco','Morocco','fiasco','Acapulco'],
+  'coffee': ['toffee','softly'],
+  'morning': ['warning','dawning','yawning','adorning','mourning','scorning','performing'],
+  'sleep': ['deep','keep','sheep','creep','leap','heap','weep','sweep','steep','cheap','peep'],
+  'work': ['lurk','perk','quirk','smirk','jerk','murk','clerk','berserk','network','homework','firework'],
+  'home': ['dome','roam','foam','chrome','poem','gnome','syndrome','genome','catacomb','metronome'],
+  'friend': ['end','bend','send','spend','blend','trend','mend','depend','offend','transcend','comprehend'],
+  'money': ['honey','funny','bunny','sunny','runny'],
+  'phone': ['alone','bone','tone','zone','stone','known','grown','throne','groan','cyclone','ozone'],
+  'cold': ['old','gold','told','bold','hold','fold','sold','mold','behold','controlled','untold'],
+  'hot': ['not','got','lot','spot','shot','dot','pot','knot','forgot','robot','mascot','apricot'],
+  'small': ['tall','all','call','fall','ball','wall','hall','mall','install','waterfall','overall'],
+  'big': ['dig','fig','wig','pig','jig','twig','gig'],
+  'fast': ['last','past','blast','cast','vast','mast','contrast','forecast','steadfast','outcast'],
+  'slow': ['know','grow','show','flow','glow','snow','below','follow','shadow','window','meadow'],
+  'happy': ['snappy','sappy','scrappy','yappy','nappy'],
+  'sad': ['bad','mad','glad','had','dad','lad','rad','clad','nomad'],
+  'dark': ['park','spark','mark','bark','shark','stark','embark','remark','patriarch','monarch'],
+  'bright': ['light','night','sight','might','right','flight','tight','delight','fright','knight'],
+  'tree': ['free','sea','me','be','key','flee','three','agree','decree'],
+  'flower': ['power','hour','tower','shower','devour','sour','cower','empower'],
+  'mountain': ['fountain','certain','curtain'],
+  'river': ['deliver','shiver','quiver','liver','giver','consider'],
+  'wind': ['find','mind','kind','behind','blind','grind','remind','designed','combined','undefined'],
+  'earth': ['birth','worth','mirth','hearth','rebirth','girth'],
+};
+
+const genericRhymes = [
+  ['delight','night','sight','might','bright','flight','fright','plight','knight'],
+  ['art','heart','start','part','smart','chart','apart'],
+  ['soul','whole','role','goal','bowl','stroll','control','patrol'],
+  ['song','long','strong','belong','along','wrong'],
+  ['desire','fire','higher','inspire','admire','wire','conspire'],
+  ['away','day','say','play','stay','ray','hooray','display'],
+  ['bliss','kiss','miss','this','abyss','reminisce','dismiss'],
+  ['deep','keep','sleep','creep','weep','sheep','leap'],
+  ['grace','face','place','space','embrace','trace','chase'],
+  ['found','sound','ground','round','bound','around','profound','astound'],
+  ['call','all','fall','tall','wall','small','enthrall'],
+  ['glow','flow','know','show','grow','below','bestow'],
+  ['true','you','through','new','view','pursue','blue','flew'],
+  ['sublime','time','rhyme','climb','chime','paradigm'],
+  ['gleam','dream','stream','beam','scheme','supreme'],
+];
+
+function findRhymes(word) {
+  const w = word.toLowerCase().trim();
+  if (rhymeMap[w]) return rhymeMap[w];
+  // Try to find a partial match
+  for (const [key, rhymes] of Object.entries(rhymeMap)) {
+    if (w.includes(key) || key.includes(w)) return rhymes;
+  }
+  // Check generic rhyme sets for ending match
+  for (const set of genericRhymes) {
+    for (const r of set) {
+      if (w.endsWith(r.slice(-3)) || r.endsWith(w.slice(-3))) return set.filter(x => x !== w);
+    }
+  }
+  return genericRhymes[Math.floor(Math.random()*genericRhymes.length)];
+}
+
+function pick(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+// ── Adjective/Noun Banks for Purple Prose ──
+const purpleAdj = [
+  'magnificent','resplendent','ineffable','luminous','transcendent','ethereal',
+  'phantasmagorical','incandescent','tumultuous','voluptuous','mellifluous',
+  'gossamer','diaphanous','languorous','susurrant','tremulous','vertiginous',
+  'coruscating','iridescent','effervescent','pulchritudinous','serendipitous',
+  'sumptuous','rapturous','delectable','exquisite','supernal','celestial',
+  'majestic','prodigious','wondrous','glorious','splendiferous','bodacious'
+];
+
+const purpleNoun = [
+  'essence','tapestry','symphony','cascade','tempest','labyrinth','cosmos',
+  'paradigm','chrysalis','nexus','zenith','abyss','panorama','kaleidoscope',
+  'cornucopia','phantasmagoria','epiphany','rhapsody','crescendo','aurora',
+  'magnificence','serenity','vastness','eternity','infinity','splendor'
+];
+
+const mixedMetaphors = [
+  'like a {adj} {noun} dancing on the wings of {noun2}',
+  'you are the {noun} of my {noun2}, the {adj} lighthouse in my storm of {noun3}',
+  'a {adj} river of {noun} flowing through the desert of my {noun2}',
+  'like a {noun} wearing a tiny hat made of {noun2}',
+  'burning bright like a {adj} {noun} in a sea of {noun2}',
+  'the {adj} {noun} of your being tickles the {noun2} of my existence',
+  'you hit different, like a {adj} {noun} wrapped in {noun2}',
+  'my heart is a {noun} and you are the {adj} {noun2} that stirs it',
+  'soaring like a {adj} {noun} through the {noun2} of forever',
+  'as {adj} as a {noun} dipped in liquid {noun2}',
+  'crashing through my soul like a {adj} {noun} on roller skates',
+  'you are simultaneously the {noun} and the {noun2}, which is very confusing',
+];
+
+const randomNouns = [
+  'dishwasher','Tuesday','elbow','caterpillar','algebra','toaster','squirrel',
+  'umbrella','accordion','porcupine','chandelier','submarine','trampoline',
+  'spatula','helicopter','xylophone','platypus','avalanche','cinnamon',
+  'thunderclap','butterfly','tambourine','marshmallow','kaleidoscope',
+  'waterfall','parachute','dinosaur','labyrinth','saxophone','wheelbarrow'
+];
+
+function mixMetaphor(topic) {
+  const template = pick(mixedMetaphors);
+  return template
+    .replace('{adj}', pick(purpleAdj))
+    .replace('{noun}', topic || pick(randomNouns))
+    .replace('{noun2}', pick(randomNouns))
+    .replace('{noun3}', pick(randomNouns));
+}
+
+// ── HAIKU TEMPLATES (bad) ──
+const haikuTemplates = [
+  (t,r) => `Oh ${pick(purpleAdj)} ${t}\nYou sit there, doing ${t} things\n${pick(['Refrigerator','I am so confused','Why did I write this','The end, I suppose','Microwave goes beep','That is what she said','My soul weeps for thee'])}`,
+  (t,r) => `${t} in the ${pick(['mist','rain','dark','void','fridge','mall'])}\n${pick(purpleAdj)} beyond all ${pick(['words','hope','reason','snacks','belief','repair'])}\n${pick(['I need a nap','Was that five syllables?','Please clap for me','I forgot the rest','Send help right now','My cat judged this'])}`,
+  (t,r) => `I contemplate ${t}\nWith ${pick(purpleAdj)} ${pick(['passion','fervor','anguish','vigor','gusto','malice','jazz hands'])}\nOops, wrong syllables`,
+  (t,r) => `${pick(['Behold','Observe','Witness','Regard','Gaze upon'])} the ${t}\nIt ${pick(['glistens','wobbles','looms','vibrates','exists','broods'])} ${pick(purpleAdj + ['ly'])}...\nI lost count. The end.`,
+  (t,r) => `The ${pick(purpleAdj)} ${t}\n${pick(['Dances','Weeps','Shimmers','Lurks','Vibrates','Sulks'])} beneath the ${pick(['moon','stars','fluorescent lights','ceiling fan','weight of existence'])}\nThis is deep. Trust me.`,
+  (t,r) => `${t}, oh sweet ${t}\nYou are ${pick(purpleAdj)} and also\n${pick(['quite damp','somewhat tall','rather round','very there','not a lamp','still loading'])}`,
+  (t,r) => `In the realm of ${t}\nAll is ${pick(purpleAdj)} and ${pick(purpleAdj)}\nI ran out of words`,
+  (t,r) => `${pick(['Ancient','Timeless','Soggy','Lukewarm','Eternal','Discount'])} ${t}\nWhispers ${pick(purpleAdj)} ${pick(['truths','secrets','receipts','passwords','nonsense','vibes'])}\nTo ${pick(['no one','my socks','the void','a fern','next Tuesday','Jeff'])}`,
+];
+
+// ── LIMERICK TEMPLATES (worse) ──
+const limerickTemplates = [
+  (t) => {
+    const r = findRhymes(t); const r2 = genericRhymes[Math.floor(Math.random()*genericRhymes.length)];
+    return `There once was a ${pick(purpleAdj)} ${t}\nWho sat on a ${pick(purpleAdj)} ${pick(r)}\nThey ${pick(['wiggled','jiggled','giggled','wriggled','squiggled'])} with ${pick(purpleNoun)}\nAnd ${pick(['sneezed','wheezed','squeezed','pleased','teased'])} with great ${pick(r2)}\nNow everyone's ${pick(['confused','amused','bemused','perplexed','concerned','impressed'])} by that ${t}`;
+  },
+  (t) => {
+    const r = findRhymes(t);
+    return `A ${t} of ${pick(purpleAdj)} ${pick(purpleNoun)}\nOnce ${pick(['waltzed','pranced','stumbled','crashed','moonwalked'])} through ${pick(['France','a dance','by chance','askance','romance'])}\nIt ${pick(['burped','slurped','twerked','lurked','smirked'])} at the ${pick(['queen','dean','machine','trampoline','tangerine'])}\nWhich was ${pick(['quite obscene','unforeseen','evergreen','in between','squeaky clean'])}\nAnd that ${t} was never the same since`;
+  },
+  (t) => {
+    return `I once wrote a poem about ${t}\nBut the rhymes went increasingly ${pick(['flat','splat','berserk','haywire','sideways'])}\nI ${pick(['mixed','botched','mangled','butchered','fumbled'])} every ${pick(['line','rhyme','verse','word','metaphor'])}\nWhich was ${pick(['arguably','undeniably','spectacularly','magnificently'])} ${pick(['fine','a crime','sublime','past its prime'])}\nNow ${t} has a restraining order on my art`;
+  },
+  (t) => {
+    return `${pick(['Behold','Observe','Attend'])} the great ${t}, so ${pick(purpleAdj)}\nIt ${pick(['gleamed','screamed','streamed','dreamed','teemed'])} like a ${pick(purpleAdj)} ${pick(randomNouns)}\n'Twas ${pick(['chunky','funky','clunky','spunky','monkey'])}\nAnd slightly ${pick(['wonky','donkey','honky-tonky'])}\nBut ${pick(purpleAdj)} as a ${pick(randomNouns)} ${pick(['on prom night','in moonlight','at first sight','despite the blight'])}`;
+  },
+  (t) => {
+    return `Said ${t} to the ${pick(randomNouns)} one ${pick(['Tuesday','Thursday','midnight','fortnight'])}\n"Your ${pick(purpleNoun)} gives me a ${pick(['fright','delight','slight','bite','plight'])}!"\nThe ${pick(randomNouns)} ${pick(['replied','denied','sighed','cried','lied'])}\n"Well at least I ${pick(['tried','haven\'t died','stayed inside','applied','complied'])}"\nAnd they both ${pick(['exploded','imploded','eloped','moped','groped in the night'])}`;
+  },
+];
+
+// ── SONNET TEMPLATES (terrible) ──
+function generateSonnet(topic) {
+  const r1 = findRhymes(topic);
+  const r2 = pick(genericRhymes);
+  const r3 = pick(genericRhymes);
+  const r4 = pick(genericRhymes);
+
+  const starters = [
+    `Shall I compare thee to a ${pick(purpleAdj)} ${topic}?`,
+    `When first I gazed upon the ${pick(purpleAdj)} ${topic},`,
+    `Oh ${topic}! Thou ${pick(purpleAdj)} ${pick(purpleNoun)} of my ${pick(['soul','heart','spleen','elbow','WiFi'])}!`,
+    `'Twas in the ${pick(['morn','eve','night','lunch hour','3 AM'])} I beheld ${topic},`,
+    `If ${topic} be the food of ${pick(purpleNoun)}, ${pick(['play on','eat up','turn it off','unsubscribe'])}!`,
+  ];
+
+  const middles = [
+    `Thy ${pick(purpleNoun)} doth ${pick(['shimmer','quiver','wobble','perspire','buffer'])} in the ${pick(r2)},\nLike ${mixMetaphor(topic)},\nAnd lo, mine ${pick(['heart','pancreas','browser tab','inner child'])} doth ${pick(r3)} with ${pick(r4)},\nWhilst ${pick(purpleAdj)} ${pick(randomNouns)} ${pick(['cascade','tumble','plummet','yeet'])} through the ${pick(r2)}.`,
+    `More ${pick(purpleAdj)} than a thousand ${pick(randomNouns)},\nThou ${pick(['wobblest','glistenest','vexeth','confuseth','buffering'])} beyond ${pick(purpleNoun)},\n${pick(['Methinks','Perchance','Forsooth','Verily','Lowkey'])} thy ${pick(purpleNoun)} ${pick(['transcends','offends','suspends','recommends'])} all ${pick(r1)},\nAs ${pick(randomNouns)} ${pick(['weep','leap','sleep','beep'])} in ${pick(purpleAdj)} ${pick(purpleNoun)}.`,
+    `The ${pick(randomNouns)} of ${pick(['fate','doom','Costco','Tuesday'])} hath ${pick(['decreed','agreed','stampeded','Googled'])}:\nThou art the ${pick(purpleAdj)} ${pick(purpleNoun)} ${pick(['of my days','of my ways','that never pays','in a craze'])},\nAnd though the ${pick(randomNouns)} ${pick(['protest','attest','detest','suggest'])}, I am ${pick(['not fazed','still amazed','deeply confused','in a daze'])},\nFor ${topic}, thou hast ${pick(['exceeded','proceeded to be','succeeded at being'])} ${pick(purpleAdj)}.`,
+  ];
+
+  const couplets = [
+    `So long as ${pick(['eyes can see','WiFi is free','I need to pee','we disagree'])}, this ${pick(['verse','curse','hearse','purse'])} shall ${pick(r3)},\nAnd ${topic} shall forever be... ${pick(['quite fine','benign','online','genuinely asinine'])}.`,
+    `In ${pick(['conclusion','confusion','delusion','profusion'])}, ${topic}, thou art ${pick(purpleAdj)},\nAnd this sonnet is ${pick(['done','overdone','undone','a hot mess, everyone'])}.`,
+    `Thus ${topic} endures, ${pick(purpleAdj)} and ${pick(purpleAdj)} still,\nI wrote fourteen lines. ${pick(['Send help.','You\'re welcome.','That\'s the deal.','Please don\'t bill.','I need a pill.'])}`,
+  ];
+
+  return `${pick(starters)}\n${pick(middles)}\n\n${pick(middles)}\n\n${pick(couplets)}`;
+}
+
+// ── FREE VERSE TEMPLATES (pretentious) ──
+function generateFreeVerse(topic) {
+  const pretentiousOpeners = [
+    `I.`,
+    `[a meditation]`,
+    `(after Rilke, but worse)`,
+    `~ an excavation ~`,
+    `// untitled fragment #${Math.floor(Math.random()*347)+1} //`,
+    `[content warning: poetry]`,
+    `{a performance in text}`,
+  ];
+
+  const lines = [
+    `${topic}.`,
+    `${topic}`,
+    `     ${topic}`,
+    `(${topic})`,
+    `the ${topic} of it all`,
+    `i am become ${topic}, destroyer of ${pick(randomNouns)}`,
+    `what even is ${topic}`,
+    `${topic}               ${topic}               ${topic}`,
+    `the ${pick(purpleAdj)} weight of ${topic}`,
+    `[pause for effect]`,
+    `[${pick(['snaps fingers','sips espresso','stares into middle distance','adjusts beret','lights clove cigarette','sighs performatively'])}]`,
+    `consider: ${topic}`,
+    `un-consider: ${topic}`,
+    `re-consider: the ${pick(purpleNoun)} of ${topic}`,
+    `i don't need ${topic} to define me\n     (i do)`,
+    `the ${pick(purpleNoun)} of ${topic}\n          is not unlike\n                    the ${pick(purpleNoun)} of ${pick(randomNouns)}`,
+    `we are all just ${topic}\n     pretending to be ${pick(randomNouns)}`,
+    `${topic} is a social construct\n     built on a foundation of ${pick(randomNouns)}`,
+    `my therapist says i use ${topic}\n     as a defense mechanism\n          they're not wrong`,
+    `${pick(purpleAdj)}\n     ${pick(purpleAdj)}\n          ${pick(purpleAdj)}\n               ${topic}.`,
+    `the ${pick(['capitalism','patriarchy','algorithm','simulation','barista'])} wants you to forget about ${topic}`,
+    `i wrote this on my phone\n     in a ${pick(['coffee shop','laundromat','Whole Foods','existential crisis','rideshare','DMV'])}`,
+    `${topic} tastes like ${pick(randomNouns)}\n     on a ${pick(['Tuesday','rainy day','bad day','good day','day that is neither good nor bad but simply... a day'])}`,
+    `and the ${pick(randomNouns)} whispered:\n     "${topic} was inside you all along"`,
+    `        space`,
+    `is just ${topic}\n     with extra steps`,
+    `[end]\n     [no wait]\n          [one more thing about ${topic}]`,
+  ];
+
+  // Pick 6-10 random lines
+  const count = 6 + Math.floor(Math.random()*5);
+  const selected = [];
+  const used = new Set();
+  while (selected.length < count) {
+    const idx = Math.floor(Math.random()*lines.length);
+    if (!used.has(idx)) {
+      used.add(idx);
+      selected.push(lines[idx]);
+    }
+  }
+
+  return `${pick(pretentiousOpeners)}\n\n${selected.join('\n\n')}\n\n${pick([
+    '[fin]','[the end, probably]','[this space intentionally left blank]',
+    '[tips beret, exits stage left]','[drops mic, picks it up because it was rented]',
+    '[end scene]','[that\'s all folks]','[my mother is very proud]',
+    '[please clap]','[snaps aggressively]','[this was 100% intentional]',
+    '[the author has left the building]','[fade to black, then back, then black again]'
+  ])}`;
+}
+
+// ── MAIN POEM GENERATOR ──
+const styleLabels = {
+  haiku: 'A Haiku (badly)',
+  limerick: 'A Limerick (even worse)',
+  sonnet: 'A Terrible Sonnet',
+  free: 'Free Verse (pretentiously)',
+};
+
+let currentPoem = '';
+let snapCount = 0;
+
+function generatePoem() {
+  let topic = document.getElementById('topicInput').value.trim();
+  if (!topic) {
+    const defaults = ['my cat','tacos','Monday mornings','existential dread','socks','WiFi','the void','my ex','parking tickets','avocado toast','being alive','the DMV','laundry'];
+    topic = pick(defaults);
+    document.getElementById('topicInput').value = topic;
+  }
+
+  let poem = '';
+  switch (currentStyle) {
+    case 'haiku':
+      poem = pick(haikuTemplates)(topic);
+      break;
+    case 'limerick':
+      poem = pick(limerickTemplates)(topic);
+      break;
+    case 'sonnet':
+      poem = generateSonnet(topic);
+      break;
+    case 'free':
+      poem = generateFreeVerse(topic);
+      break;
+  }
+
+  currentPoem = poem;
+  snapCount = 0;
+  document.getElementById('snapCounter').textContent = '';
+
+  const stage = document.getElementById('poemStage');
+  stage.classList.add('visible');
+  stage.classList.remove('writing');
+  void stage.offsetWidth; // force reflow
+  stage.classList.add('writing');
+
+  document.getElementById('poemStyleLabel').textContent = styleLabels[currentStyle];
+  document.getElementById('poemText').textContent = poem;
+  document.getElementById('poemAuthor').textContent = `-- ${document.getElementById('poetName').textContent}`;
+  document.getElementById('actions').style.display = 'flex';
+
+  stage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── SNAP (beatnik finger snaps via Web Audio) ──
+let audioCtx = null;
+
+function playSnap() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // White noise burst for snap
+  const bufferSize = audioCtx.sampleRate * 0.04; // 40ms
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i/bufferSize, 8);
+  }
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+
+  // Bandpass filter to sound more like a snap
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2500 + Math.random()*1000;
+  filter.Q.value = 1.5;
+
+  const gain = audioCtx.createGain();
+  gain.gain.value = 0.6;
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  source.start();
+}
+
+function doSnap() {
+  playSnap();
+  snapCount++;
+  const btn = document.getElementById('snapBtn');
+  btn.classList.remove('snapping');
+  void btn.offsetWidth;
+  btn.classList.add('snapping');
+
+  const messages = [
+    '', '', '',
+    '*scattered snapping*',
+    '*enthusiastic snapping*',
+    '*the crowd goes mild*',
+    '*a single tear rolls down someone\'s cheek*',
+    '*someone nods thoughtfully*',
+    '*beret falls off from vigorous snapping*',
+    '*the barista looks up briefly*',
+    '*snapping intensifies*',
+    '*someone writes this down (ironically)*',
+    '*standing ovation (they were leaving anyway)*',
+    '*you have achieved peak beatnik*',
+    '*the ghost of Allen Ginsberg files a complaint*',
+  ];
+
+  const idx = Math.min(snapCount, messages.length - 1);
+  document.getElementById('snapCounter').textContent = messages[idx] || `*${snapCount} snaps and counting*`;
+}
+
+// ── SHARE ──
+function sharePoem() {
+  const poetName = document.getElementById('poetName').textContent;
+  const text = `${currentPoem}\n\n-- ${poetName}\n\n(Generated by The Terrible Poet)`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'A Terrible Poem', text }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Poem copied! Share this masterpiece with the world.');
+  }).catch(() => {
+    showToast('Could not copy. The poem is too powerful.');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Enter key to generate ──
+document.getElementById('topicInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') generatePoem();
+});
+
+// ── Init ──
+generatePoetName();
+</script>
+</body>
+</html>

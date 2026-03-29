@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ego Deflator - Cosmic Perspective Generator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @keyframes twinkle{0%,100%{opacity:.3}50%{opacity:1}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes deflate{0%{transform:scale(1)}30%{transform:scale(1.1)}100%{transform:scale(0.05)}}
+  @keyframes meterDrain{from{width:var(--start-w)}to{width:var(--end-w)}}
+  @keyframes confettiFall{0%{transform:translateY(-10px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 20px rgba(138,43,226,.3)}50%{box-shadow:0 0 40px rgba(138,43,226,.6)}}
+  @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:#0a0a1a;
+    color:#e0e0ff;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  .stars{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  .star{position:absolute;background:#fff;border-radius:50%}
+
+  .container{
+    max-width:700px;
+    margin:0 auto;
+    padding:30px 20px;
+    position:relative;
+    z-index:1;
+  }
+
+  h1{
+    text-align:center;
+    font-size:2.4em;
+    background:linear-gradient(135deg,#ff6b6b,#a855f7,#6bc5ff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-bottom:8px;
+    animation:float 4s ease-in-out infinite;
+  }
+  .subtitle{text-align:center;color:#8888bb;font-size:1em;margin-bottom:35px}
+
+  .input-area{
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(138,43,226,.3);
+    border-radius:16px;
+    padding:25px;
+    margin-bottom:30px;
+    animation:pulseGlow 3s ease-in-out infinite;
+  }
+  .input-area label{display:block;font-size:1.1em;margin-bottom:12px;color:#c0c0ff}
+  .input-area input{
+    width:100%;padding:14px 18px;
+    background:rgba(0,0,0,.4);border:1px solid rgba(138,43,226,.4);
+    border-radius:10px;color:#fff;font-size:1.05em;
+    outline:none;transition:border-color .3s;
+  }
+  .input-area input:focus{border-color:#a855f7}
+  .input-area input::placeholder{color:#555}
+
+  .deflate-btn{
+    display:block;width:100%;margin-top:16px;padding:16px;
+    background:linear-gradient(135deg,#7c3aed,#a855f7);
+    border:none;border-radius:10px;color:#fff;
+    font-size:1.15em;font-weight:700;cursor:pointer;
+    transition:transform .2s,box-shadow .2s;
+  }
+  .deflate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(138,43,226,.4)}
+  .deflate-btn:active{transform:translateY(0)}
+
+  .ego-meter-wrap{
+    background:rgba(255,255,255,.05);border-radius:16px;
+    padding:20px 25px;margin-bottom:25px;display:none;
+  }
+  .ego-meter-wrap.show{display:block;animation:fadeInUp .5s ease}
+  .ego-meter-label{display:flex;justify-content:space-between;margin-bottom:10px;font-size:.95em}
+  .ego-meter-label span:first-child{color:#ff6b6b}
+  .ego-meter-label span:last-child{color:#6bc5ff;font-weight:700}
+  .ego-meter-track{
+    height:28px;background:rgba(0,0,0,.4);border-radius:14px;
+    overflow:hidden;position:relative;
+  }
+  .ego-meter-fill{
+    height:100%;border-radius:14px;
+    background:linear-gradient(90deg,#6bc5ff,#a855f7,#ff6b6b);
+    transition:width 2s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .ego-meter-fill::after{
+    content:'';position:absolute;right:0;top:0;bottom:0;width:6px;
+    background:#fff;border-radius:3px;opacity:.7;
+  }
+  .ego-pct{text-align:center;margin-top:8px;font-size:1.5em;font-weight:700;color:#a855f7}
+
+  .result-card{
+    background:rgba(255,255,255,.05);border:1px solid rgba(138,43,226,.2);
+    border-radius:16px;padding:25px;margin-bottom:20px;display:none;
+  }
+  .result-card.show{display:block;animation:fadeInUp .6s ease}
+
+  .humbling-response{font-size:1.15em;line-height:1.6;margin-bottom:20px;color:#d0d0ff}
+  .humbling-response .achievement{color:#a855f7;font-weight:600}
+
+  .scale-comparison{
+    background:rgba(0,0,0,.3);border-radius:12px;padding:18px;margin-bottom:18px;
+  }
+  .scale-comparison h3{color:#6bc5ff;font-size:.9em;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px}
+  .scale-item{
+    display:flex;align-items:center;gap:12px;padding:8px 0;
+    border-bottom:1px solid rgba(255,255,255,.05);
+    animation:slideIn .5s ease backwards;
+  }
+  .scale-item:last-child{border-bottom:none}
+  .scale-icon{font-size:1.4em;min-width:35px;text-align:center}
+  .scale-text{font-size:.92em;color:#b0b0dd;line-height:1.4}
+  .scale-text strong{color:#e0e0ff}
+
+  .balloon-container{text-align:center;margin:20px 0;font-size:4em;transition:transform 2s cubic-bezier(.4,0,.2,1)}
+  .balloon-container.deflated{animation:deflate 2s forwards}
+
+  .recovery-btn{
+    display:none;width:100%;padding:14px;margin-top:10px;
+    background:linear-gradient(135deg,#059669,#10b981);
+    border:none;border-radius:10px;color:#fff;
+    font-size:1.05em;font-weight:700;cursor:pointer;
+    transition:transform .2s;
+  }
+  .recovery-btn.show{display:block;animation:fadeInUp .5s ease}
+  .recovery-btn:hover{transform:translateY(-2px)}
+
+  .share-btn{
+    display:none;width:100%;padding:14px;margin-top:10px;
+    background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+    border:none;border-radius:10px;color:#fff;
+    font-size:1.05em;font-weight:700;cursor:pointer;
+    transition:transform .2s;
+  }
+  .share-btn.show{display:block;animation:fadeInUp .6s ease}
+  .share-btn:hover{transform:translateY(-2px)}
+
+  .confetti-piece{
+    position:fixed;width:10px;height:10px;z-index:999;
+    pointer-events:none;animation:confettiFall 3s linear forwards;
+  }
+
+  .history{margin-top:30px;display:none}
+  .history.show{display:block}
+  .history h3{color:#8888bb;font-size:.85em;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .history-item{
+    background:rgba(255,255,255,.03);border-radius:8px;padding:10px 14px;
+    margin-bottom:6px;font-size:.85em;color:#8080aa;cursor:pointer;
+    transition:background .2s;
+  }
+  .history-item:hover{background:rgba(255,255,255,.07)}
+
+  .fun-facts{
+    text-align:center;color:#666;font-size:.8em;margin-top:40px;
+    padding:15px;border-top:1px solid rgba(255,255,255,.05);
+  }
+
+  @media(max-width:600px){
+    h1{font-size:1.8em}
+    .container{padding:20px 15px}
+    .input-area,.result-card,.ego-meter-wrap{padding:18px}
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <h1>Ego Deflator</h1>
+  <p class="subtitle">Enter your achievement. Get cosmically humbled.</p>
+
+  <div class="input-area">
+    <label>What are you proud of today?</label>
+    <input type="text" id="achievement" placeholder="I got a promotion!" autofocus>
+    <button class="deflate-btn" id="deflateBtn">Deflate My Ego</button>
+  </div>
+
+  <div class="ego-meter-wrap" id="egoMeter">
+    <div class="ego-meter-label"><span>Cosmically Insignificant</span><span id="egoLevelText">EGO: 100%</span></div>
+    <div class="ego-meter-track"><div class="ego-meter-fill" id="egoFill" style="width:100%"></div></div>
+    <div class="ego-pct" id="egoPct"></div>
+  </div>
+
+  <div class="balloon-container" id="balloon">&#127880;</div>
+
+  <div class="result-card" id="resultCard">
+    <div class="humbling-response" id="humblingText"></div>
+    <div class="scale-comparison" id="scaleComparison"></div>
+  </div>
+
+  <button class="recovery-btn" id="recoveryBtn">Actually, I Feel Fine</button>
+  <button class="share-btn" id="shareBtn">Share My Humbling</button>
+
+  <div class="history" id="history">
+    <h3>Previous Deflations</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="fun-facts">
+    You are 1 of 8 billion humans on a pale blue dot orbiting an average star<br>
+    in a galaxy of 200 billion stars in an observable universe of 2 trillion galaxies.
+  </div>
+</div>
+
+<script>
+const humblingTemplates = [
+  (a) => `Congratulations on "${a}"! Meanwhile, the sun is burning 600 million tons of hydrogen per second and doesn't even have a LinkedIn.`,
+  (a) => `"${a}" - impressive! In the time it took you to type that, a neutron star completed about 716 rotations. It didn't post about any of them.`,
+  (a) => `Wow, "${a}"! Fun fact: an ant colony in Brazil covers 3,700 miles of underground tunnels. They organized that without a single Slack channel.`,
+  (a) => `"${a}"? Nice. The Voyager 1 spacecraft has been working its job for 49 years without a single promotion, raise, or thank-you email.`,
+  (a) => `Congrats on "${a}"! A tardigrade survived 10 days in the vacuum of space. Your commute must be rough though.`,
+  (a) => `"${a}" - achievement unlocked! Meanwhile, a single teaspoon of neutron star weighs 6 billion tons. It has never bragged about it.`,
+  (a) => `Love that you achieved "${a}"! The Great Barrier Reef has been quietly doing its thing for 20,000 years without a performance review.`,
+  (a) => `"${a}"! Fantastic. Somewhere right now, a deep-sea hydrothermal vent is sustaining an entire ecosystem in total darkness, with zero funding.`,
+  (a) => `So you did "${a}"? Cool. The entire recorded history of humanity is 0.000004% of Earth's existence. We are basically a rounding error.`,
+  (a) => `"${a}" - not bad! A single bolt of lightning contains enough energy to toast 100,000 slices of bread. Nature runs a very efficient kitchen.`,
+  (a) => `Proud of "${a}"? The Sahara Desert was green and lush just 6,000 years ago. The planet literally redecorated without consulting anyone.`,
+  (a) => `"${a}"! Nice work. Your body currently contains atoms that were once inside a star that exploded. You were literally forged in cosmic fire and your big news is "${a}".`,
+  (a) => `Congratulations on "${a}"! In the time you've been celebrating, the Milky Way and Andromeda have moved 1,200 km closer to their inevitable collision. Neither galaxy cares.`,
+  (a) => `"${a}"? Not bad! Meanwhile, a mantis shrimp can punch with the force of a .22 caliber bullet AND see 16 types of color. You can probably see... 3.`,
+  (a) => `So "${a}" happened! The oldest living organism, a bristlecone pine, has been alive for 5,000 years. It has never once updated its resume.`,
+  (a) => `"${a}" - well done! A blue whale's heart is the size of a golf cart. Your heart is the size of your fist. We don't make the rules.`,
+  (a) => `Exciting that you achieved "${a}"! The observable universe is 93 billion light-years across. Your achievement occupies precisely zero of those light-years.`,
+  (a) => `"${a}"! Wow. There are more trees on Earth (3 trillion) than stars in the Milky Way. Not a single tree has a Twitter account.`,
+  (a) => `So "${a}" is your big moment? Jupiter's Great Red Spot is a storm that's been raging for over 350 years. It doesn't even know you exist.`,
+  (a) => `Congrats on "${a}"! The longest living animal ever recorded is a 507-year-old clam named Ming. Ming was accidentally killed by the scientists who found it. Life is humbling.`,
+  (a) => `"${a}"? That's nice. Every 2 seconds, the sun produces more energy than all of humanity has used in its entire history. The sun doesn't have a newsletter about it.`,
+  (a) => `"${a}" is a fine accomplishment! A single fungal network under a forest can span 2,400 acres. It's been running the internet since before the internet.`,
+  (a) => `So you achieved "${a}"! There's a jellyfish (Turritopsis dohrnii) that is biologically immortal. Your achievement has an expiration date. The jellyfish doesn't.`,
+  (a) => `"${a}"! Cool. There are 10 quintillion insects alive right now. That's 10,000,000,000,000,000,000. They did not need your permission.`,
+  (a) => `Wonderful that you did "${a}"! The universe existed for 9.2 billion years before Earth even formed. The cosmos didn't rush.`,
+  (a) => `"${a}" is great! A single gram of DNA can store 215 petabytes of data. Your phone ran out of storage from selfies.`,
+  (a) => `Proud of "${a}"? Every day, about 100 tons of micrometeorites fall on Earth. The planet is literally being pelted by space debris and still showed up for work.`,
+  (a) => `"${a}"! Impressive. The Amazon Rainforest produces 20% of the world's oxygen and has never asked for credit.`,
+  (a) => `So "${a}" is the big news? Olympus Mons on Mars is 72,000 feet tall - nearly 3x Everest. Nobody has ever planted a flag on it for Instagram.`,
+  (a) => `Congrats on "${a}"! The Arctic Tern migrates 44,000 miles every year. That's the moon and halfway back. It does this with a brain the size of a walnut.`,
+  (a) => `"${a}"? Neat. Plate tectonics will eventually merge all continents again in about 250 million years. Your achievement will not delay this.`,
+  (a) => `"${a}" is worthy of celebration! Meanwhile, there's a cloud of alcohol in space (Sagittarius B2) that contains enough ethanol to fill 400 trillion trillion pints of beer. The universe parties harder than you.`,
+  (a) => `So you did "${a}"! Every atom in your body is billions of years old. You're ancient stardust briefly pretending to have a career.`,
+  (a) => `"${a}"! The Mariana Trench is 36,000 feet deep and contains life forms that have never seen sunlight, never heard of you, and are doing absolutely fine.`,
+  (a) => `Congrats on "${a}"! Light from the nearest star (Proxima Centauri) takes 4.24 years to reach us. News of "${a}" will never reach it.`,
+  (a) => `"${a}"? Nice. A octopus has three hearts, blue blood, and can change color and shape. You have one heart and you wore mismatched socks last Tuesday.`,
+  (a) => `"${a}" - well done! The cosmic microwave background radiation is the oldest light in the universe at 13.8 billion years old. It has been traveling since before atoms existed. Your achievement is younger than your lunch.`,
+  (a) => `So "${a}" happened? Honey bees collectively fly 55,000 miles and visit 2 million flowers to make one pound of honey. Your cereal didn't thank them either.`,
+  (a) => `Proud of "${a}"! There are more possible chess games than atoms in the observable universe. The universe is simpler than a board game.`,
+  (a) => `"${a}"! Wonderful. A single hurricane releases the energy of 10,000 nuclear bombs per day. It doesn't have a productivity coach.`,
+  (a) => `"${a}" is lovely! The human brain has 86 billion neurons, roughly the same number of stars in the Milky Way. You used some of them to type "${a}".`,
+  (a) => `Congratulations on "${a}"! Somewhere in the Pacific, a whale just sang a song that traveled 10,000 miles. Zero streams on Spotify.`,
+  (a) => `"${a}"? Cool. There are more bacteria in your mouth right now than there are people on Earth. You are outnumbered in your own body.`,
+  (a) => `So you did "${a}"! The Earth is spinning at 1,000 mph at the equator, orbiting the sun at 67,000 mph, while the solar system moves through the galaxy at 515,000 mph. You've been traveling 584,000 mph this whole time without a seatbelt.`,
+  (a) => `"${a}" - fantastic! If the history of Earth were compressed into 24 hours, humans would appear at 11:58:43 PM. Your achievement happened at 11:59:59.9999 PM.`,
+  (a) => `Congrats on "${a}"! A single lightning bolt is five times hotter than the surface of the sun. It lasts 0.0002 seconds and accomplishes more in that time than most meetings.`,
+];
+
+const scaleComparisons = [
+  { icon: "&#9200;", text: "If the universe's age were a <strong>24-hour clock</strong>, all of human civilization would fit in the last <strong>0.2 seconds</strong>." },
+  { icon: "&#127758;", text: "Earth has existed for <strong>4.5 billion years</strong>. Modern humans for ~300,000. That's like showing up to a party <strong>3 seconds before midnight</strong>." },
+  { icon: "&#128028;", text: "A leafcutter ant colony moves <strong>40 tons of soil per year</strong> and farms its own food. They invented agriculture <strong>50 million years before us</strong>." },
+  { icon: "&#127776;", text: "The sun converts <strong>4 million tons of matter into energy every second</strong>. It has been doing this for 4.6 billion years without a break." },
+  { icon: "&#128051;", text: "A blue whale's tongue weighs as much as an <strong>elephant</strong>. The whale considers this unremarkable." },
+  { icon: "&#9968;", text: "The Yellowstone supervolcano's magma chamber holds enough lava to fill the <strong>Grand Canyon 11 times</strong>. It is not in a hurry." },
+  { icon: "&#128171;", text: "Your body replaces <strong>330 billion cells per day</strong>. You're literally a different person than when you woke up. The achievement belongs to a stranger." },
+  { icon: "&#127756;", text: "There are <strong>2 trillion galaxies</strong> in the observable universe, each with billions of stars. Your galaxy is one. Your star is one. You are... well." },
+  { icon: "&#129704;", text: "A black hole at the center of galaxy Phoenix A has a mass of <strong>100 billion suns</strong>. It eats stars for breakfast. Literally." },
+  { icon: "&#127754;", text: "The Pacific Ocean contains <strong>187 quintillion gallons</strong> of water. It was not engineered. It just happened." },
+  { icon: "&#128040;", text: "A slime mold, with no brain, can solve mazes, design efficient networks, and <strong>replicate the Tokyo rail system</strong>. It does not list this on LinkedIn." },
+  { icon: "&#129415;", text: "A <strong>pistol shrimp</strong> snaps its claw so fast it creates a bubble hotter than the surface of the sun. It is 2 inches long." },
+  { icon: "&#127755;", text: "The <strong>Amazon River</strong> discharges 209,000 cubic meters of water per second into the ocean. That's enough to fill 83,600 Olympic swimming pools every day." },
+  { icon: "&#129440;", text: "A single <strong>mycorrhizal fungal network</strong> connects 90% of plant species on Earth. It's been running the original social network for 450 million years." },
+  { icon: "&#128302;", text: "If you uncoiled all the DNA in your body, it would stretch <strong>twice the diameter of the solar system</strong>. You contain multitudes. Literally." },
+];
+
+const egoDeflateAmounts = [
+  { pct: 3, label: "Cosmically Negligible" },
+  { pct: 7, label: "Subatomically Humble" },
+  { pct: 5, label: "Existentially Microscopic" },
+  { pct: 2, label: "Quantum Insignificant" },
+  { pct: 12, label: "Galactically Modest" },
+  { pct: 1, label: "Planck-Scale Important" },
+  { pct: 8, label: "Geologically Momentary" },
+  { pct: 4, label: "Bacterially Outnumbered" },
+];
+
+let audioCtx = null;
+let deflationHistory = [];
+
+function initStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;opacity:${Math.random()*.7+.3};animation:twinkle ${Math.random()*3+2}s ease-in-out ${Math.random()*3}s infinite`;
+    c.appendChild(s);
+  }
+}
+
+function playDeflateSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    // Balloon deflating: descending pitch with noise
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.exponentialRampToValueAtTime(80, now + 1.5);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, now);
+    filter.frequency.exponentialRampToValueAtTime(200, now + 1.5);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 2);
+
+    // Raspberry / flatulence undertone
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(120, now + 0.3);
+    osc2.frequency.exponentialRampToValueAtTime(40, now + 1.6);
+    gain2.gain.setValueAtTime(0.05, now + 0.3);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+    osc2.connect(gain2);
+    gain2.connect(audioCtx.destination);
+    osc2.start(now + 0.3);
+    osc2.stop(now + 1.8);
+  } catch(e) {}
+}
+
+function playConfettiSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    // Happy sparkle ascending
+    [0, 0.1, 0.2, 0.3, 0.4].forEach((t, i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(500 + i * 200, now + t);
+      g.gain.setValueAtTime(0.1, now + t);
+      g.gain.exponentialRampToValueAtTime(0.001, now + t + 0.3);
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start(now + t);
+      o.stop(now + t + 0.3);
+    });
+  } catch(e) {}
+}
+
+function launchConfetti() {
+  const colors = ['#ff6b6b','#a855f7','#6bc5ff','#10b981','#f59e0b','#ec4899','#fff'];
+  const shapes = ['square','circle'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    const shape = shapes[Math.floor(Math.random()*shapes.length)];
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    const size = Math.random() * 8 + 5;
+    el.style.cssText = `
+      left:${Math.random()*100}%;top:-10px;
+      width:${size}px;height:${size}px;
+      background:${color};
+      border-radius:${shape==='circle'?'50%':'2px'};
+      animation-duration:${Math.random()*2+2}s;
+      animation-delay:${Math.random()*0.5}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+function getRandomItems(arr, n) {
+  const shuffled = [...arr].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, n);
+}
+
+function deflate() {
+  const input = document.getElementById('achievement').value.trim();
+  if (!input) {
+    document.getElementById('achievement').style.borderColor = '#ff6b6b';
+    setTimeout(() => document.getElementById('achievement').style.borderColor = 'rgba(138,43,226,.4)', 1000);
+    return;
+  }
+
+  const template = humblingTemplates[Math.floor(Math.random() * humblingTemplates.length)];
+  const humbling = template(input);
+
+  // Show ego meter
+  const meterWrap = document.getElementById('egoMeter');
+  const fill = document.getElementById('egoFill');
+  const pctEl = document.getElementById('egoPct');
+  const levelText = document.getElementById('egoLevelText');
+  meterWrap.classList.add('show');
+
+  // Reset meter
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  fill.offsetHeight; // force reflow
+
+  const deflateInfo = egoDeflateAmounts[Math.floor(Math.random() * egoDeflateAmounts.length)];
+  const targetPct = deflateInfo.pct;
+
+  // Animate meter drain
+  fill.style.transition = 'width 2s cubic-bezier(.4,0,.2,1)';
+  requestAnimationFrame(() => {
+    fill.style.width = targetPct + '%';
+  });
+
+  // Animate percentage counter
+  let currentPct = 100;
+  const pctInterval = setInterval(() => {
+    currentPct -= 2;
+    if (currentPct <= targetPct) {
+      currentPct = targetPct;
+      clearInterval(pctInterval);
+    }
+    levelText.textContent = `EGO: ${currentPct}%`;
+    pctEl.textContent = currentPct <= targetPct ? deflateInfo.label : '';
+  }, 40);
+
+  // Balloon deflate
+  const balloon = document.getElementById('balloon');
+  balloon.classList.remove('deflated');
+  balloon.offsetHeight;
+  balloon.classList.add('deflated');
+
+  // Play sound
+  playDeflateSound();
+
+  // Show result
+  const resultCard = document.getElementById('resultCard');
+  const humblingText = document.getElementById('humblingText');
+  humblingText.innerHTML = humbling;
+  resultCard.classList.add('show');
+
+  // Scale comparisons
+  const scaleDiv = document.getElementById('scaleComparison');
+  const comparisons = getRandomItems(scaleComparisons, 3);
+  scaleDiv.innerHTML = '<h3>Scale Comparisons</h3>';
+  comparisons.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'scale-item';
+    item.style.animationDelay = `${0.3 + i * 0.2}s`;
+    item.innerHTML = `<span class="scale-icon">${c.icon}</span><span class="scale-text">${c.text}</span>`;
+    scaleDiv.appendChild(item);
+  });
+
+  // Show buttons
+  document.getElementById('recoveryBtn').classList.add('show');
+  document.getElementById('shareBtn').classList.add('show');
+
+  // Add to history
+  deflationHistory.unshift({ achievement: input, response: humbling, pct: targetPct, label: deflateInfo.label });
+  updateHistory();
+}
+
+function updateHistory() {
+  if (deflationHistory.length === 0) return;
+  const historyDiv = document.getElementById('history');
+  const list = document.getElementById('historyList');
+  historyDiv.classList.add('show');
+  list.innerHTML = '';
+  deflationHistory.slice(0, 5).forEach(h => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+    item.textContent = `"${h.achievement}" - Ego: ${h.pct}% (${h.label})`;
+    list.appendChild(item);
+  });
+}
+
+function recover() {
+  launchConfetti();
+  playConfettiSound();
+  const fill = document.getElementById('egoFill');
+  const levelText = document.getElementById('egoLevelText');
+  const pctEl = document.getElementById('egoPct');
+  fill.style.width = '100%';
+  levelText.textContent = 'EGO: 100%';
+  pctEl.textContent = 'Fully Restored. You matter!';
+  pctEl.style.color = '#10b981';
+  setTimeout(() => { pctEl.style.color = '#a855f7'; }, 3000);
+
+  const balloon = document.getElementById('balloon');
+  balloon.classList.remove('deflated');
+  balloon.style.transform = 'scale(1)';
+}
+
+function shareHumbling() {
+  const text = document.getElementById('humblingText').innerText;
+  const shareText = text + '\n\n-- Ego Deflator: Cosmic Perspective Generator';
+  if (navigator.share) {
+    navigator.share({ title: 'Ego Deflator', text: shareText }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      const btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied to clipboard!';
+      setTimeout(() => { btn.textContent = 'Share My Humbling'; }, 2000);
+    });
+  }
+}
+
+// Events
+document.getElementById('deflateBtn').addEventListener('click', deflate);
+document.getElementById('achievement').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') deflate();
+});
+document.getElementById('recoveryBtn').addEventListener('click', recover);
+document.getElementById('shareBtn').addEventListener('click', shareHumbling);
+
+// Init
+initStars();
+</script>
+
+</body>
+</html>

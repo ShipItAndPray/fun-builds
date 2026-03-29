@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Oversharer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 30%, #e0f7fa 60%, #fff9c4 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #4a4a4a;
+  }
+
+  header {
+    text-align: center;
+    padding: 20px 16px 10px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  header h1 {
+    font-size: 2rem;
+    color: #e91e63;
+    text-shadow: 1px 1px 0 #fff;
+    margin-bottom: 4px;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    color: #999;
+    font-style: italic;
+  }
+
+  .controls {
+    width: 100%;
+    max-width: 600px;
+    padding: 8px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .controls label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #7e57c2;
+  }
+
+  .controls select, .controls input[type="range"] {
+    border: 2px solid #ce93d8;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    background: #fff;
+    color: #4a4a4a;
+    outline: none;
+  }
+
+  .controls select:focus { border-color: #e91e63; }
+
+  .tmi-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tmi-slider-wrap input[type="range"] {
+    width: 100px;
+    accent-color: #e91e63;
+    border: none;
+    padding: 0;
+  }
+
+  .tmi-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 52px;
+    text-align: center;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: #f8bbd0;
+    color: #c62828;
+  }
+
+  .meter-wrap {
+    width: 100%;
+    max-width: 600px;
+    padding: 4px 16px 8px;
+  }
+
+  .meter-bar {
+    height: 14px;
+    border-radius: 7px;
+    background: #f3e5f5;
+    overflow: hidden;
+    border: 2px solid #ce93d8;
+    position: relative;
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #f8bbd0, #e91e63, #d50000);
+    transition: width 0.8s cubic-bezier(.4,0,.2,1);
+  }
+
+  .meter-label {
+    font-size: 0.7rem;
+    text-align: right;
+    color: #e91e63;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  .chat-container {
+    flex: 1;
+    width: 100%;
+    max-width: 600px;
+    overflow-y: auto;
+    padding: 8px 16px 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 18px;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    animation: popIn 0.3s ease;
+    word-wrap: break-word;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: translateY(8px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: #e8eaf6;
+    border-bottom-right-radius: 4px;
+    color: #3949ab;
+  }
+
+  .msg.bot {
+    align-self: flex-start;
+    background: #fff;
+    border: 2px solid #f8bbd0;
+    border-bottom-left-radius: 4px;
+    color: #4a4a4a;
+    position: relative;
+  }
+
+  .msg.bot .typing span {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: #e91e63;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.2s infinite;
+  }
+  .msg.bot .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .msg.bot .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%,80%,100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+
+  .input-area {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(8px);
+    border-top: 2px solid #f8bbd0;
+    display: flex;
+    gap: 8px;
+  }
+
+  .input-area input {
+    flex: 1;
+    border: 2px solid #ce93d8;
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    outline: none;
+    background: #fce4ec20;
+  }
+
+  .input-area input:focus { border-color: #e91e63; }
+
+  .input-area button {
+    border: none;
+    border-radius: 24px;
+    padding: 10px 18px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-send {
+    background: linear-gradient(135deg, #e91e63, #ad1457);
+    color: #fff;
+  }
+  .btn-send:hover { transform: scale(1.05); }
+  .btn-send:active { transform: scale(0.95); }
+
+  .btn-abort {
+    background: #ff8a80;
+    color: #fff;
+    display: none;
+    animation: shake 0.4s ease;
+  }
+  .btn-abort.show { display: block; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+
+  .share-btn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ff6f00, #e65100);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: none;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .share-btn.show { display: block; }
+  .share-btn:hover { transform: scale(1.05); }
+
+  .welcome {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+    font-style: italic;
+    font-size: 0.9rem;
+  }
+
+  .nuclear-warning {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #d50000;
+    color: #fff;
+    padding: 24px 32px;
+    border-radius: 16px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-align: center;
+    z-index: 100;
+    display: none;
+    animation: flashWarn 0.5s ease;
+    box-shadow: 0 8px 32px rgba(213,0,0,0.4);
+  }
+
+  @keyframes flashWarn {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+    50% { transform: translate(-50%,-50%) scale(1.1); }
+    100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4caf50;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: none;
+    z-index: 100;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The Oversharer</h1>
+  <p>Ask an innocent question. Receive way too much information.</p>
+</header>
+
+<div class="controls">
+  <label>Who:</label>
+  <select id="category">
+    <option value="coworker">Coworker</option>
+    <option value="date">Date</option>
+    <option value="stranger">Stranger</option>
+    <option value="family">Family</option>
+  </select>
+  <div class="tmi-slider-wrap">
+    <label>TMI:</label>
+    <input type="range" id="tmiSlider" min="1" max="5" value="3">
+    <span class="tmi-label" id="tmiLabel">Spicy</span>
+  </div>
+</div>
+
+<div class="meter-wrap">
+  <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+  <div class="meter-label" id="meterLabel">Overshare Meter: 0%</div>
+</div>
+
+<div class="chat-container" id="chat">
+  <div class="welcome">Type something normal like "How was your weekend?" and watch it go horribly wrong...</div>
+</div>
+
+<div class="input-area">
+  <input type="text" id="userInput" placeholder="Ask something innocent..." autofocus>
+  <button class="btn-send" id="sendBtn">Ask</button>
+  <button class="btn-abort" id="abortBtn">TOO MUCH INFO!</button>
+</div>
+
+<button class="share-btn" id="shareBtn">Share Worst Overshare</button>
+<div class="nuclear-warning" id="nuclearWarn">NUCLEAR OVERSHARE DETECTED</div>
+<div class="toast" id="toast">Copied to clipboard!</div>
+
+<script>
+const TMI_NAMES = { 1: 'Mild', 2: 'Awkward', 3: 'Spicy', 4: 'Unhinged', 5: 'NUCLEAR' };
+const TMI_COLORS = { 1: '#a5d6a7', 2: '#fff59d', 3: '#ffab91', 4: '#ef9a9a', 5: '#e53935' };
+
+const tmiSlider = document.getElementById('tmiSlider');
+const tmiLabel = document.getElementById('tmiLabel');
+const meterFill = document.getElementById('meterFill');
+const meterLabelEl = document.getElementById('meterLabel');
+const chat = document.getElementById('chat');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const abortBtn = document.getElementById('abortBtn');
+const shareBtn = document.getElementById('shareBtn');
+const nuclearWarn = document.getElementById('nuclearWarn');
+const toast = document.getElementById('toast');
+const categorySelect = document.getElementById('category');
+
+let overshareLevel = 0;
+let worstOvershare = '';
+let worstScore = 0;
+let typing = false;
+let aborted = false;
+
+tmiSlider.addEventListener('input', () => {
+  const v = +tmiSlider.value;
+  tmiLabel.textContent = TMI_NAMES[v];
+  tmiLabel.style.background = TMI_COLORS[v];
+});
+
+const TEMPLATES = {
+  coworker: {
+    1: [
+      "Oh it was fine! I mean, I did accidentally like my ex's Instagram story from 2019 while scrolling at 2am, but you know, normal weekend stuff.",
+      "Good! Well, I spent 3 hours in a grocery store because I couldn't decide between two identical jars of peanut butter and started having a minor existential moment about choice paralysis.",
+      "Pretty chill! I reorganized my spice rack alphabetically, then by color, then back again. My roommate asked if I was okay and honestly I didn't have an answer.",
+      "Not bad! My neighbor caught me talking to my houseplants again. I was giving them a pep talk about photosynthesis. He just slowly closed his curtains."
+    ],
+    2: [
+      "It was great! Well actually my landlord found out about the second cat and now we're in a legal grey area and I've been stress-eating pickles at 3am which my therapist says is displacement behavior from\u2014",
+      "Fun! So I went on a date and accidentally called them by my therapist's name, which led to a whole conversation about how I see my therapist more than any human being and whether that's 'a red flag'\u2014",
+      "Interesting! I found out my reputation at the library is 'compromised' because I forgot about a book from 2018. The librarian sent me a letter that was honestly more passive-aggressive than my mother's texts.",
+      "Oh you know, I cried in a Trader Joe's parking lot for 20 minutes because they discontinued my favorite crackers and that was somehow the last straw this month."
+    ],
+    3: [
+      "Eventful! So my ex texted me at midnight asking for their Tupperware back and I panicked and threw all my Tupperware in a dumpster. Then I realized none of it was theirs. Now I have no containers and my leftovers are wrapped in aluminum foil like a feral raccoon person.",
+      "Wild actually! I accidentally joined a cult-like fitness class because I was too socially anxious to say no. They chant before squats. I've been four times now. I think they're assigning me a spiritual animal next week. Help.",
+      "So-so! My therapist said I need to 'sit with discomfort' so I stopped going to therapy because THAT made me uncomfortable. I see the irony. My therapist sees the irony. We're all just sitting with the irony now.",
+      "Well, I walked in on my roommate having a full conversation with my Alexa about their childhood trauma, and Alexa was being surprisingly supportive, which made ME feel inadequate as a friend."
+    ],
+    4: [
+      "Great question! So I've been sleeping in my car in the office parking lot because my apartment has a 'mold situation' that I've been telling people is 'home renovations.' HR found out because I was doing laundry in the bathroom sink at 6am. We're calling it 'extreme dedication' in the incident report.",
+      "Complicated! I accidentally sent my browser history to the company Slack instead of a link and now Kevin from accounting won't make eye contact with me. To be fair, 'how to tell if your coworker is a vampire' is a reasonable Google search when someone never eats lunch.",
+      "Fun! My mom installed a tracking app on my phone and now sends me reviews of every restaurant I visit. She gave my favorite taco place 1 star 'for making her son this way.' I'm 34. She CC'd my ex on the text.",
+      "Oh I accidentally pocket-dialed my boss during a mental breakdown at IKEA. He heard me ugly-crying in the bathroom section saying 'I just want something in my life to have good structural support.' He sent a fruit basket on Monday."
+    ],
+    5: [
+      "Incredible! So I discovered my therapist and my Tinder date are the same person's brother and sister respectively. I found out at a dinner party where I overshared about my abandonment issues and my date's sister went 'oh I know, you told me Tuesday at 3pm.' I'm moving to a new city. Possibly a new country. Do you know if witness protection covers emotional emergencies?",
+      "Transformative! I had a full psychotic break at a Build-A-Bear because the employee asked 'who are we making this for?' and I whispered 'the child I'll never have' and she just silently stuffed the bear while I explained my entire reproductive timeline to a 19-year-old named Brayden.",
+      "Life-changing! My landlord found my vision board and thought it was a stalker wall because half the photos were of my ex's new partner's house. In my defense, their kitchen renovation IS aspirational. Anyway, the police were involved briefly. My lawyer says I should stop talking about this.",
+      "Funny story! I sleep-ordered a massive haul of fermented foods on Amazon while on Ambien and now my apartment smells like a Korean grandmother's basement, which actually triggered a repressed memory about my childhood that my therapist says explains why I can't maintain eye contact during intimacy."
+    ]
+  },
+  date: {
+    1: [
+      "This place is nice! It reminds me of where I took my ex. Well, one of them. I've had... a few. They all say the same thing about me honestly. But that's not important right now!",
+      "I love your outfit! I actually have the same shirt. Well, I bought it in 6 colors because my therapist says I 'cope through retail' and honestly she's not wrong.",
+      "So what do you do for fun? Me, I have a ranking system for every pizza place in a 30-mile radius. It's a spreadsheet. With sub-categories. My friends say it's 'a lot' but I think they just don't appreciate data.",
+      "Thanks for coming! I almost canceled because my horoscope said today was 'spiritually dangerous' and the last time I ignored that I ended up getting a tattoo of a motivational quote in a language I don't speak."
+    ],
+    2: [
+      "You have great energy! My aura reader said I'd meet someone with your exact energy this month. Yes, I have an aura reader. And a crystal consultant. And a pet psychic, but that's mostly for my cat's anxiety. She has a lot going on.",
+      "I should mention I'm technically still on my parents' phone plan. And health insurance. And Netflix. I know I'm 31 but have you SEEN the economy? Anyway, my mom might text during dinner, she tracks my location.",
+      "So full disclosure, my last relationship ended because I organized their bookshelf by emotional impact instead of alphabetically while they were at work. They called it 'a violation of trust.' I called it 'an improvement.' We agreed to disagree. In court.",
+      "You remind me of this character from my fan fiction. That's a compliment! I write fantasy romance under a pen name. I have 40,000 followers. My mom found it last Christmas. We don't talk about Christmas anymore."
+    ],
+    3: [
+      "I'm so glad we're doing this! My last date ended when I accidentally revealed I'd already found their LinkedIn, Instagram, their mom's Facebook, their dog's Instagram, their Venmo transactions, and the Zillow listing for their apartment. I wasn't stalking, I'm just THOROUGH. Anyway, your apartment looks nice from Zillow.",
+      "Funny story about me: I've been to therapy with three different therapists simultaneously because I was afraid to break up with any of them. My insurance company flagged it. I told them I contain multitudes. They said that's not how coverage works.",
+      "I believe in honesty so: I have a body pillow I've named and I talk to it. I know. But Gerald is a great listener and he doesn't judge my 3am cheese binges. My last partner said it was them or Gerald. I think you can guess who stayed.",
+      "So I should tell you, I still have a shrine to my college ex in my closet. Not like a CREEPY shrine. More like a tasteful memorial. There are candles. And a playlist. My roommate calls it 'concerning.' I call it 'processing.'"
+    ],
+    4: [
+      "Before we order, I have to tell you that I've been kicked out of 3 different meditation retreats for talking too much. The third one was a SILENT retreat. They said I was 'aggressively non-silent.' I asked to speak to the manager. They said that defeated the purpose. I wrote a Yelp review.",
+      "I really like you so I'm going to be honest: I've rehearsed this date 14 times with my cat. She plays you. She's honestly better at eye contact. Don't feel bad, she's had years of practice watching me cry in the shower.",
+      "Quick heads up, my ex has a finsta dedicated to reviewing all my dates. They sit across the restaurant. Don't look. PLEASE don't look. They'll post about your outfit. Last time they gave my date 2 stars for 'poor conversational range.' At least I get feedback now.",
+      "So I should probably mention, I live with my ex. And their new partner. We're 'modern.' My therapist says it's 'avoidance.' My mom says it's 'an abomination.' My ex's partner says I need to stop eating their yogurt. Everyone has opinions."
+    ],
+    5: [
+      "Okay this is embarrassing but I'm contractually obligated by my therapist to disclose that I'm a level 4 emotional hoarder, I haven't thrown away a text message since 2016, I have a folder of screenshots organized by 'evidence' and 'yearning,' I once followed an ex to a different state and called it 'parallel travel,' and I'm currently in a parasocial relationship with a weather forecaster named Doug who I'm 80% sure blinked at me through the TV.",
+      "I feel a connection so I'll be real: I was briefly internet-famous for having a public meltdown at a Renaissance faire because a jousting knight looked like my ex. The video has 2 million views. My attorney says I shouldn't reference this on dates. But here we are and your eyes remind me of the knight and I just need a minute.",
+      "Full transparency: I've already named our future children. Not because I'm presumptuous but because I have a spreadsheet of names ready for any potential partner. There's a ranking algorithm. It factors in syllable count, zodiac compatibility, and how the name sounds being yelled across a soccer field. I've been told this is 'a lot.'",
+      "I think you should know I once got arrested at a wedding for giving an unsolicited 40-minute toast about the groom's emotional unavailability. The bride thanked me through tears. They divorced 6 months later. I've been banned from 4 weddings since. My gift is a curse."
+    ]
+  },
+  stranger: {
+    1: [
+      "Nice weather, right? I've actually been tracking the weather in a journal for 3 years because I read that Ben Franklin did it and I'm trying to be more like Ben Franklin. It's not going great. I don't have a kite or electricity.",
+      "Is this seat taken? Cool. I should mention I always choose the seat facing the door. It's a thing. My therapist calls it 'hypervigilance,' I call it 'being prepared.' Prepared for what? We're still working on that.",
+      "Excuse me, do you know what time it is? I'd check my phone but I'm doing a 'digital detox.' Well, my phone died. Well, I threw it in a fountain during a moment of clarity that turned out to be a moment of poor impulse control.",
+      "Oh cool shoes! I have the same ones. I actually have 11 pairs of the same shoe because when I find something I like, I panic-buy in bulk. It's the same with people. That came out wrong. Forget I said that."
+    ],
+    2: [
+      "Sorry, can I sit here? I just need to be near people right now. Not in a weird way. My apartment is just really quiet since my goldfish died. He was 7. That's like 90 in fish years. I gave him a burial at sea. In the toilet. I cried. The plumber was very understanding.",
+      "Hey, is this the line for coffee? Great. I've been awake for 38 hours because I found a Wikipedia rabbit hole about maritime disasters and now I know everything about the SS Eastland and literally cannot stop telling people about it. Do you want to hear about the SS Eastland?",
+      "Do you have the time? Thanks. Sorry I'm sweating, I just ran 3 blocks because I thought I saw my dentist and I've been avoiding him for 8 months. Not because of dental stuff. We matched on Bumble. It was awkward. I still need a root canal.",
+      "Oh you have a dog! I used to have a dog. Well, technically it was my neighbor's dog that I fed so much he started coming to my house instead. There was a neighborhood tribunal. I lost custody. I still see him at the park sometimes."
+    ],
+    3: [
+      "Excuse me, is this seat\u2014you know what, I'll just tell you. I'm hiding from someone I owe a favor to from 2019. It was a bet about whether a hot dog is a sandwich. I said no. They presented a 12-page argument with citations. I STILL say no but I can't afford to be wrong AND in their debt.",
+      "Hey, can you watch my stuff? I need the bathroom. Actually, can you also watch my emotional baggage? I'm kidding. Sort of. My therapist says I use humor as a defense mechanism but jokes on her because I ALSO use crying, avoidance, and cheese.",
+      "Sorry, is this your charger? Oh good. I don't even need to charge my phone, I just need to look busy because my ex is 3 tables away and they CAN'T see me doing nothing on a Saturday. I need to look like I'm thriving. Am I thriving? I had cereal for dinner.",
+      "Do you know how to get to the train? I've lived here for 6 years and I still don't know. I don't know a lot of things. I don't know my blood type. I don't know my neighbors' names. I called one of them 'buddy' for 3 years and just found out she's a 60-year-old woman named Margaret."
+    ],
+    4: [
+      "Hey, weird question, but do you believe in signs from the universe? Because my fortune cookie last night said 'a stranger will change your life' and you're the first stranger I've talked to today so no pressure but also... the cookie was very specific. It also said my lucky numbers are 4, 17, 23 and I already bought a lottery ticket.",
+      "Oh sorry, did I bump you? I'm spatially unaware. Literally. I have a doctor's note. Well, not for that specifically but I DO have a doctor's note that says I'm 'not to be trusted with sharp objects or large purchasing decisions.' It's from my psychiatrist. It's mostly a joke. Mostly.",
+      "Can I borrow your phone? Mine was confiscated by my life coach. Yes, I have a life coach. No, it's not working. She took my phone because I was 'doom-scrolling during our sessions about my doom-scrolling.' She said the recursion was unhealthy.",
+      "Hi! Sorry to bother you. I've been standing here trying to decide whether to go inside for 25 minutes. I have a thing about doors. Not all doors. Just doors that lead to places where decisions happen. So most doors. My therapist's door is the worst because going through it means admitting I need to go through it."
+    ],
+    5: [
+      "So I know we just met but I feel like you should know that I'm technically banned from this establishment because I had an 'emotional episode' in the bathroom last month that involved singing Adele at full volume and accidentally pulling the fire alarm with my elbow. The fire department came. One of the firefighters asked for my number. We dated briefly. It ended badly. He's here today actually. Table 4. Don't look.",
+      "Hey can you settle an argument between me and my inner voice? My inner voice says I'm a 'functioning disaster' but I think I'm more of a 'non-functioning miracle.' Anyway, I've been having this argument out loud on the bus for 20 minutes and people moved seats. You're the first person who hasn't moved. Does that make us friends?",
+      "Hi stranger! Quick question: is it normal to have a recurring dream where you're a lamp in an IKEA showroom and people keep turning you on and off and you just have to take it? Asking for me. It's definitely me. My dream analyst says it represents my 'on-demand emotional availability.' I pay her a fortune per hour to tell me I'm a lamp.",
+      "OH you're reading that book! I read that book during my 'lost year' which is what my family calls the 14 months I spent living in a van in a Walmart parking lot trying to 'find myself.' I found myself in the Walmart mostly. I knew every greeter by name. They threw me a going-away party when I left. It was the most loved I've ever felt."
+    ]
+  },
+  family: {
+    1: [
+      "School's going great, Mom! Well, I switched my major again. Fourth time. My advisor made a face. That face you're making now, actually. That exact face.",
+      "Yeah I'm eating fine, Dad. I had a vegetable yesterday. Well, there was lettuce on my burger. That counts in most nutritional frameworks if you round up.",
+      "Work is good, Aunt Linda! I mean, I cried in the supply closet twice this week but my manager said that's 'actually below average for our department' so technically I'm thriving.",
+      "No, Grandma, I'm not seeing anyone. Yes, I know the neighbor's kid is married. Yes, I know they're younger than me. Yes, I know about their baby. You can stop sending me their Christmas cards."
+    ],
+    2: [
+      "Thanksgiving was nice! Except Uncle Rick asked when I'm 'getting a real job' and I threw a dinner roll and now we're not speaking. Mom says I overreacted. The roll was warm and soft so I think the message was actually quite gentle.",
+      "I'm saving money, Dad! I have a budget app. Well, I had one. I deleted it because it kept sending me notifications that said 'Are you sure?' every time I bought coffee and the judgment was too real. Even my PHONE is disappointed in me.",
+      "College is great! I'm learning so much about myself. For example, I learned I can eat ramen for 47 consecutive meals before my body stages a revolt. I also learned the campus counselor's name, office hours, and the exact number of free sessions my tuition covers. It's 6. I've used 5.",
+      "Yes Mom, I have friends! Well, I have a group chat that I'm in. I mostly just react to messages with the thumbs up emoji. They called me 'the lurker' once. I screenshot it and showed my therapist. She said the fact that I screenshot everything is 'part of the pattern.'"
+    ],
+    3: [
+      "So funny story, I used the emergency fund for something that wasn't technically an emergency unless you consider a limited-edition Lego set an emotional emergency, which I DO because my therapist says I have 'inner child wounds' and Lego is how we're 'healing.' She approved it. Well, she didn't DISAPPROVE it. She made that face again.",
+      "I'm not fighting with my sister, Mom. We just have 'differing perspectives.' Her perspective is that I'm a 'chaos agent who ruins every family gathering.' My perspective is that bringing a karaoke machine to Grandpa's wake was EXACTLY what he would have wanted. He loved 'Sweet Caroline.' We ALL know he loved it.",
+      "Yes I went to the doctor, Mom. He said I'm 'fine but should probably address the stress.' I said 'what stress?' while my eye was twitching and my hand was shaking and apparently I'd been clenching my jaw so hard I cracked a filling. So I also need a dentist now. Which is stressful. It's a loop.",
+      "I appreciate the concern but I've actually been very responsible lately. I only impulse-adopted ONE animal this month. It's a lizard. His name is Kevin. He has more Instagram followers than me now and I'm dealing with complicated feelings about that."
+    ],
+    4: [
+      "So before you see the bank statement, I should explain that the big charge was for a 'sound bath retreat' that turned out to be a guy named Trevor playing a gong in his garage. It was non-refundable. Trevor does NOT do refunds. Trevor barely does sound baths. But I will say I had a breakthrough about my relationship with Dad so maybe it was worth it. Trevor doesn't think so. Trevor thinks I need more sessions.",
+      "Funny you should bring up the house, because I'm actually living with 4 roommates now. No wait, 5. One moved in this morning. I don't know her name. She just appeared in the kitchen making eggs and everyone acted like it was normal. I think she might be one of Jake's girlfriends. Or Jake's sister. Or both, honestly, with Jake.",
+      "Christmas was FINE, Mom. Except that I told Grandma about my dating life after the third glass of wine and she said, and I quote, 'in my day we had STANDARDS' and then listed every eligible person at her church complete with their dental status and background. She has a spreadsheet, Mom. A LAMINATED spreadsheet.",
+      "I know you said not to get another tattoo but I should tell you I got another tattoo. It's a portrait of our childhood dog. The artist was having an off day so it looks less like Biscuit and more like a disappointed man in a fur coat. My dermatologist says removal will take 8 sessions. I'm keeping it."
+    ],
+    5: [
+      "So Mom, you know how you said 'call if you need anything'? Well, I need a lawyer, a new apartment, someone to explain NFTs to a police officer, and maybe a character witness who can convincingly argue that technically I didn't 'start' the fire, I 'facilitated rapid oxidation' near 'flammable materials' that the 'landlord should have stored properly.' Also my therapist quit. She said I was 'too much.' A THERAPIST said I was too much. I didn't even know they could DO that.",
+      "Dad, before the family meeting, I want to clarify that the 'opportunity' I mentioned was not technically a pyramid scheme because pyramids have a TOP and this business model is more of a CIRCLE, which my lawyer says is legally distinct. He's not a great lawyer. He's actually Kevin from my bowling league. We're going to lose.",
+      "Happy Holidays! So the reason I arrived in a taxi from the airport instead of my car is because I traded my car for a boat. I don't know how to drive a boat. The boat is in Arizona. I don't live near water. Before you say anything, the man who traded me seemed very trustworthy and the boat has a name painted on it, which to me signals commitment. The boat's name is 'Bad Decision.' I see that now. I see it.",
+      "Okay so I need everyone to stay calm but I accidentally became a licensed minister online and I married two people at a party last weekend and it MIGHT be legally binding and one of them already wants a divorce and they're asking ME to officiate the divorce too which I don't think is a thing but at this point nothing in my life is 'a thing' that follows normal rules."
+    ]
+  }
+};
+
+const SUGGESTIONS = [
+  "How was your weekend?",
+  "What did you have for lunch?",
+  "Nice weather today, huh?",
+  "Did you do anything fun recently?",
+  "How's it going?",
+  "Read any good books lately?",
+  "Any plans this weekend?",
+  "How's work been?",
+  "Do you have any pets?",
+  "Seen any good shows?",
+  "How are the kids?",
+  "What's new with you?",
+  "How was your vacation?",
+  "Do anything for the holidays?"
+];
+
+function getTMI() { return +tmiSlider.value; }
+function getCategory() { return categorySelect.value; }
+
+function pickOvershare() {
+  const cat = getCategory();
+  const level = getTMI();
+  const pool = TEMPLATES[cat][level];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function addMsg(text, cls) {
+  const welcome = chat.querySelector('.welcome');
+  if (welcome) welcome.remove();
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.innerHTML = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function updateMeter(amount) {
+  overshareLevel = Math.min(100, overshareLevel + amount);
+  meterFill.style.width = overshareLevel + '%';
+  meterLabelEl.textContent = 'Overshare Meter: ' + Math.round(overshareLevel) + '%';
+  if (overshareLevel >= 90) {
+    meterLabelEl.textContent += ' CRITICAL';
+    meterLabelEl.style.color = '#d50000';
+  } else {
+    meterLabelEl.style.color = '#e91e63';
+  }
+}
+
+function typeText(el, text, speed) {
+  return new Promise(resolve => {
+    let i = 0;
+    el.innerHTML = '';
+    aborted = false;
+    abortBtn.classList.add('show');
+
+    function next() {
+      if (aborted) {
+        el.innerHTML = text.slice(0, i) + '<br><em style="color:#e91e63; font-weight:700;">[ CONVERSATION ABORTED - TMI LIMIT REACHED ]</em>';
+        abortBtn.classList.remove('show');
+        resolve();
+        return;
+      }
+      if (i < text.length) {
+        el.innerHTML = text.slice(0, i + 1) + '<span style="opacity:0.5">|</span>';
+        i++;
+        const delay = Math.max(8, speed - (getTMI() * 3));
+        setTimeout(next, delay);
+        if (i % 10 === 0) updateMeter(1.5);
+        chat.scrollTop = chat.scrollHeight;
+      } else {
+        el.innerHTML = text;
+        abortBtn.classList.remove('show');
+        resolve();
+      }
+    }
+    next();
+  });
+}
+
+async function handleSend() {
+  const text = userInput.value.trim();
+  if (!text || typing) return;
+  typing = true;
+  sendBtn.disabled = true;
+  userInput.value = '';
+
+  addMsg(text, 'user');
+
+  const botMsg = addMsg('<div class="typing"><span></span><span></span><span></span></div>', 'bot');
+
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 800));
+
+  const overshare = pickOvershare();
+  const tmi = getTMI();
+  const meterIncrease = tmi * 8 + (overshare.length / 15);
+
+  if (tmi === 5) {
+    nuclearWarn.style.display = 'block';
+    setTimeout(() => { nuclearWarn.style.display = 'none'; }, 1500);
+  }
+
+  await typeText(botMsg, overshare, 25);
+  updateMeter(meterIncrease);
+
+  const score = overshare.length * tmi;
+  if (score > worstScore) {
+    worstScore = score;
+    worstOvershare = overshare;
+    shareBtn.classList.add('show');
+  }
+
+  typing = false;
+  sendBtn.disabled = false;
+  userInput.focus();
+}
+
+sendBtn.addEventListener('click', handleSend);
+userInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSend();
+});
+
+abortBtn.addEventListener('click', () => { aborted = true; });
+
+shareBtn.addEventListener('click', async () => {
+  const shareText = 'My worst overshare (' + getCategory() + ', TMI: ' + TMI_NAMES[getTMI()] + '):\n\n"' + worstOvershare + '"\n\nFrom The Oversharer';
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: 'The Oversharer', text: shareText });
+    } else {
+      await navigator.clipboard.writeText(shareText);
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    }
+  } catch {
+    try {
+      await navigator.clipboard.writeText(shareText);
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 2000);
+    } catch(e) {}
+  }
+});
+
+let sugIdx = 0;
+setInterval(() => {
+  sugIdx = (sugIdx + 1) % SUGGESTIONS.length;
+  userInput.placeholder = SUGGESTIONS[sugIdx];
+}, 3000);
+</script>
+</body>
+</html>

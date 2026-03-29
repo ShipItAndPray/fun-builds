@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corporate BS Decoder</title>
+<style>
+  :root {
+    --bg: #e8e8e8;
+    --panel: #f5f5f5;
+    --border: #c0c0c0;
+    --text: #333;
+    --accent: #5a5a5a;
+    --passive: #b35900;
+    --power: #8b0000;
+    --deflection: #4a6fa5;
+    --blame: #6b3a6b;
+    --highlight-passive: #fff3e0;
+    --highlight-power: #fde0e0;
+    --highlight-deflection: #e0ecf8;
+    --highlight-blame: #f0e0f0;
+    --tox-low: #4caf50;
+    --tox-med: #ff9800;
+    --tox-high: #f44336;
+    --tox-nuclear: #9c27b0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(90deg, transparent, transparent 199px, #ddd 199px, #ddd 200px),
+      repeating-linear-gradient(0deg, transparent, transparent 199px, #ddd 199px, #ddd 200px);
+    background-size: 200px 200px;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #6a6a6a, #4a4a4a);
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-bottom: 4px solid #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+  .header h1 {
+    font-size: 1.8rem;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .header .subtitle {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    font-style: italic;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .input-section {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+  }
+
+  .input-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--accent);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 100px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    padding: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    background: white;
+  }
+  textarea:focus { outline: none; border-color: #888; }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 18px;
+    border: 2px solid #555;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-decode {
+    background: #555;
+    color: white;
+    flex: 1;
+    min-width: 140px;
+  }
+  .btn-decode:hover { background: #444; }
+
+  .btn-speak {
+    background: var(--panel);
+    color: #555;
+    min-width: 100px;
+  }
+  .btn-compose {
+    background: var(--passive);
+    color: white;
+    border-color: var(--passive);
+    min-width: 140px;
+  }
+  .btn-compose:hover { background: #994d00; }
+  .btn-share {
+    background: var(--deflection);
+    color: white;
+    border-color: var(--deflection);
+  }
+  .btn-share:hover { background: #3a5f95; }
+  .btn-example {
+    background: transparent;
+    color: #777;
+    border: 1px dashed #aaa;
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  .results { display: none; }
+  .results.active { display: block; }
+
+  .tox-panel {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .tox-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .tox-bar-outer {
+    height: 24px;
+    background: #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .tox-bar-inner {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.6s ease, background 0.6s ease;
+    width: 0%;
+  }
+  .tox-score {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+  .tox-desc {
+    font-size: 0.85rem;
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  .category-tags {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .cat-tag {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.4;
+    transition: opacity 0.3s;
+  }
+  .cat-tag.active { opacity: 1; }
+  .cat-tag.passive-aggressive { background: var(--highlight-passive); color: var(--passive); border: 1px solid var(--passive); }
+  .cat-tag.power-move { background: var(--highlight-power); color: var(--power); border: 1px solid var(--power); }
+  .cat-tag.deflection { background: var(--highlight-deflection); color: var(--deflection); border: 1px solid var(--deflection); }
+  .cat-tag.blame-shifting { background: var(--highlight-blame); color: var(--blame); border: 1px solid var(--blame); }
+
+  .decoded-panel {
+    background: white;
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .decoded-panel h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+  .decoded-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+  .decoded-text .bw {
+    border-bottom: 2px solid;
+    padding-bottom: 1px;
+    cursor: help;
+    position: relative;
+    font-weight: 600;
+  }
+  .bw.passive-aggressive { color: var(--passive); border-color: var(--passive); }
+  .bw.power-move { color: var(--power); border-color: var(--power); }
+  .bw.deflection { color: var(--deflection); border-color: var(--deflection); }
+  .bw.blame-shifting { color: var(--blame); border-color: var(--blame); }
+
+  .bw .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    white-space: nowrap;
+    max-width: 280px;
+    white-space: normal;
+    z-index: 10;
+    line-height: 1.4;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .bw .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #333;
+  }
+  .bw:hover .tooltip { display: block; }
+
+  .plain-panel {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .plain-panel h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 12px;
+  }
+  .plain-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--power);
+    font-weight: 500;
+  }
+
+  .response-panel {
+    background: #fff8f0;
+    border: 2px solid var(--passive);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .response-panel.active { display: block; }
+  .response-panel h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--passive);
+    margin-bottom: 12px;
+  }
+  .response-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    font-style: italic;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding: 12px;
+    background: var(--panel);
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: #777;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 600px) {
+    .header h1 { font-size: 1.3rem; }
+    .container { padding: 12px; }
+    .btn-row { flex-direction: column; }
+    .btn { width: 100%; text-align: center; }
+    .bw .tooltip { left: 0; transform: none; max-width: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Corporate BS Decoder</h1>
+  <div class="subtitle">Translating passive-aggressive emails since 2024</div>
+</div>
+
+<div class="container">
+
+  <div class="input-section">
+    <label>Paste corporate speak below</label>
+    <textarea id="input" placeholder="e.g. &quot;Per my last email, I wanted to circle back on this. Let's take this offline and align on next steps going forward.&quot;"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-decode" onclick="decode()">Decode This BS</button>
+      <button class="btn btn-speak" onclick="speakDecoded()" title="Read the truth aloud">Speak Truth</button>
+      <button class="btn btn-compose" onclick="composeResponse()">Compose Response</button>
+      <button class="btn btn-share" onclick="shareDecoded()">Share</button>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button class="btn btn-example" onclick="loadExample(0)">Example: The Email</button>
+      <button class="btn btn-example" onclick="loadExample(1)">Example: The Meeting</button>
+      <button class="btn btn-example" onclick="loadExample(2)">Example: The Layoff</button>
+    </div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="tox-panel">
+      <div class="tox-label">Toxicity Score</div>
+      <div class="tox-bar-outer"><div class="tox-bar-inner" id="toxBar"></div></div>
+      <div class="tox-score" id="toxScore"></div>
+      <div class="tox-desc" id="toxDesc"></div>
+    </div>
+
+    <div class="category-tags" id="catTags">
+      <span class="cat-tag passive-aggressive">Passive-Aggressive</span>
+      <span class="cat-tag power-move">Power Move</span>
+      <span class="cat-tag deflection">Deflection</span>
+      <span class="cat-tag blame-shifting">Blame-Shifting</span>
+    </div>
+
+    <div class="decoded-panel">
+      <h3>Annotated Translation</h3>
+      <div class="decoded-text" id="decodedText"></div>
+    </div>
+
+    <div class="plain-panel">
+      <h3>What They Actually Mean</h3>
+      <div class="plain-text" id="plainText"></div>
+    </div>
+
+    <div class="response-panel" id="responsePanel">
+      <h3>Your Equally Passive-Aggressive Reply</h3>
+      <div class="response-text" id="responseText"></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--passive)"></div> Passive-Aggressive</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--power)"></div> Power Move</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--deflection)"></div> Deflection</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--blame)"></div> Blame-Shifting</div>
+  </div>
+
+  <div class="footer">
+    No actual managers were harmed in the making of this tool.<br>
+    (Their egos, however, remain untouched as always.)
+  </div>
+</div>
+
+<script>
+const PHRASES = [
+  // PASSIVE-AGGRESSIVE
+  { pattern: /per my last email/gi, meaning: "I already told you this and you ignored me", category: "passive-aggressive" },
+  { pattern: /as previously discussed/gi, meaning: "we talked about this and you forgot, as usual", category: "passive-aggressive" },
+  { pattern: /as I mentioned/gi, meaning: "I said this before but you clearly weren't listening", category: "passive-aggressive" },
+  { pattern: /just to clarify/gi, meaning: "you got it completely wrong", category: "passive-aggressive" },
+  { pattern: /going forward/gi, meaning: "stop doing it the way you've been doing it", category: "passive-aggressive" },
+  { pattern: /friendly reminder/gi, meaning: "this is your last warning", category: "passive-aggressive" },
+  { pattern: /gentle reminder/gi, meaning: "I am seething but smiling", category: "passive-aggressive" },
+  { pattern: /just a heads up/gi, meaning: "I'm about to throw you under the bus", category: "passive-aggressive" },
+  { pattern: /hope this helps/gi, meaning: "I've done your job for you, you're welcome", category: "passive-aggressive" },
+  { pattern: /thanks in advance/gi, meaning: "you don't have a choice", category: "passive-aggressive" },
+  { pattern: /please advise/gi, meaning: "fix this mess right now", category: "passive-aggressive" },
+  { pattern: /correct me if I'm wrong/gi, meaning: "I know I'm right and I dare you to disagree", category: "passive-aggressive" },
+  { pattern: /not sure if you saw my email/gi, meaning: "I know you saw it and you're avoiding me", category: "passive-aggressive" },
+  { pattern: /any update on this/gi, meaning: "why haven't you done this yet", category: "passive-aggressive" },
+  { pattern: /just checking in/gi, meaning: "do your job", category: "passive-aggressive" },
+  { pattern: /wanted to follow up/gi, meaning: "you've been ignoring me", category: "passive-aggressive" },
+  { pattern: /as per the attached/gi, meaning: "open the attachment I know you didn't read", category: "passive-aggressive" },
+  { pattern: /with all due respect/gi, meaning: "I have zero respect for what you're about to hear", category: "passive-aggressive" },
+  { pattern: /I was under the impression/gi, meaning: "you lied to me", category: "passive-aggressive" },
+  { pattern: /for your convenience/gi, meaning: "because you're apparently incapable of finding this yourself", category: "passive-aggressive" },
+  { pattern: /reattaching for visibility/gi, meaning: "since you clearly didn't open it the first time", category: "passive-aggressive" },
+
+  // POWER MOVES
+  { pattern: /let's align on this/gi, meaning: "agree with me", category: "power-move" },
+  { pattern: /align on/gi, meaning: "agree with me on", category: "power-move" },
+  { pattern: /I need you to/gi, meaning: "do what I say", category: "power-move" },
+  { pattern: /let's take this offline/gi, meaning: "I'm losing this argument publicly and need to yell at you in private", category: "power-move" },
+  { pattern: /take this offline/gi, meaning: "argue about this in private where no one can witness", category: "power-move" },
+  { pattern: /I'll loop in/gi, meaning: "I'm getting someone more powerful to intimidate you", category: "power-move" },
+  { pattern: /loop in/gi, meaning: "drag in someone more senior to back me up", category: "power-move" },
+  { pattern: /let me be clear/gi, meaning: "shut up and listen", category: "power-move" },
+  { pattern: /at the end of the day/gi, meaning: "my opinion is the only one that matters", category: "power-move" },
+  { pattern: /from a strategic perspective/gi, meaning: "from my ego's perspective", category: "power-move" },
+  { pattern: /this is a priority/gi, meaning: "drop whatever you're doing for MY thing", category: "power-move" },
+  { pattern: /I have concerns/gi, meaning: "I don't like it and I'll block it", category: "power-move" },
+  { pattern: /we need to have a conversation/gi, meaning: "you're in trouble", category: "power-move" },
+  { pattern: /I'd like to understand/gi, meaning: "explain yourself", category: "power-move" },
+  { pattern: /let's not lose sight of/gi, meaning: "do it my way", category: "power-move" },
+  { pattern: /the expectation is/gi, meaning: "I'm ordering you to", category: "power-move" },
+  { pattern: /non-negotiable/gi, meaning: "I don't care what you think", category: "power-move" },
+
+  // DEFLECTION
+  { pattern: /circle back/gi, meaning: "delay until everyone forgets", category: "deflection" },
+  { pattern: /let's table this/gi, meaning: "I don't want to deal with this ever", category: "deflection" },
+  { pattern: /we'll revisit/gi, meaning: "we will never speak of this again", category: "deflection" },
+  { pattern: /it's on my radar/gi, meaning: "I'll forget about this by tomorrow", category: "deflection" },
+  { pattern: /let's park this/gi, meaning: "I'm going to pretend you never said this", category: "deflection" },
+  { pattern: /that's a great question/gi, meaning: "I have absolutely no idea", category: "deflection" },
+  { pattern: /I'll take that under advisement/gi, meaning: "I'm going to ignore that completely", category: "deflection" },
+  { pattern: /more research is needed/gi, meaning: "I don't want to make a decision", category: "deflection" },
+  { pattern: /we need more data/gi, meaning: "I'm stalling", category: "deflection" },
+  { pattern: /let me get back to you/gi, meaning: "I hope you forget you asked", category: "deflection" },
+  { pattern: /next steps/gi, meaning: "vague promises to delay action", category: "deflection" },
+  { pattern: /deep dive/gi, meaning: "overanalyze this into oblivion so we never have to act", category: "deflection" },
+  { pattern: /bandwidth/gi, meaning: "I'm too busy (I'm not)", category: "deflection" },
+  { pattern: /synergies/gi, meaning: "buzzword with no actual meaning", category: "deflection" },
+  { pattern: /move the needle/gi, meaning: "do something that looks impressive in a slide deck", category: "deflection" },
+  { pattern: /low-hanging fruit/gi, meaning: "easy stuff so we can avoid hard problems", category: "deflection" },
+  { pattern: /pivot/gi, meaning: "our plan failed but we won't admit it", category: "deflection" },
+  { pattern: /unpack that/gi, meaning: "I didn't understand but won't say so", category: "deflection" },
+  { pattern: /flesh this out/gi, meaning: "your idea was half-baked, redo it", category: "deflection" },
+
+  // BLAME-SHIFTING
+  { pattern: /there was a miscommunication/gi, meaning: "I messed up but I'm blaming the process", category: "blame-shifting" },
+  { pattern: /lessons learned/gi, meaning: "someone screwed up and we all know who", category: "blame-shifting" },
+  { pattern: /there were some gaps/gi, meaning: "you failed spectacularly", category: "blame-shifting" },
+  { pattern: /it fell through the cracks/gi, meaning: "nobody wanted to do it so nobody did", category: "blame-shifting" },
+  { pattern: /we need to do better/gi, meaning: "YOU need to do better", category: "blame-shifting" },
+  { pattern: /in hindsight/gi, meaning: "I'm about to blame someone for a decision I also made", category: "blame-shifting" },
+  { pattern: /that's not my understanding/gi, meaning: "you're wrong and I have the receipts", category: "blame-shifting" },
+  { pattern: /ownership/gi, meaning: "whose fault is this going to be", category: "blame-shifting" },
+  { pattern: /accountab\w*/gi, meaning: "someone's head is going to roll", category: "blame-shifting" },
+  { pattern: /cross-functional alignment/gi, meaning: "nobody knows who was supposed to do this", category: "blame-shifting" },
+  { pattern: /action items/gi, meaning: "things that sound productive but nobody will do", category: "blame-shifting" },
+  { pattern: /stakeholders/gi, meaning: "the people who will blame us if this fails", category: "blame-shifting" },
+  { pattern: /visibility into/gi, meaning: "I want to know who to blame when it goes wrong", category: "blame-shifting" },
+  { pattern: /moving forward/gi, meaning: "let's pretend the disaster never happened", category: "blame-shifting" },
+  { pattern: /postmortem/gi, meaning: "a meeting to assign blame formally", category: "blame-shifting" },
+  { pattern: /learnings/gi, meaning: "the mistakes we'll document and repeat", category: "blame-shifting" },
+];
+
+const EXAMPLES = [
+  "Per my last email, I wanted to circle back on this. Let's take this offline and align on next steps going forward. Thanks in advance for your prompt attention to this matter.",
+  "That's a great question. We need more data before we can move the needle on this. Let me loop in the stakeholders and we'll do a deep dive. I'll take that under advisement and get back to you with action items.",
+  "In hindsight, there was a miscommunication around ownership. Going forward, we need to do better with cross-functional alignment. Let's schedule a postmortem to capture lessons learned and ensure accountability."
+];
+
+const RESPONSE_TEMPLATES = [
+  "Thanks so much for flagging this! I'll definitely circle back once I've had a chance to align with my stakeholders. Per our earlier conversation, I believe we're tracking well against the original scope, but I'm happy to take this offline if you'd like to unpack the nuances further.",
+  "Appreciate the transparency here. I was under the impression we were aligned on this, but clearly there were some gaps in communication. Let me revisit the action items and loop in the relevant cross-functional partners. Going forward, I'd love more visibility into the decision-making process.",
+  "That's a great point, and I want to make sure we give it the attention it deserves. It's definitely on my radar. Let me get back to you once I've had a chance to flesh this out with the broader team. In the meantime, I've reattached the original brief for your convenience.",
+  "With all due respect, I'd like to understand the strategic rationale behind this pivot. From my perspective, the original approach was tracking well. Let me take that under advisement and align with leadership before we move the needle in a new direction. Thanks in advance for your patience.",
+  "Just to clarify my understanding -- I believe we discussed this previously and the expectation was different. Happy to revisit, but I want to make sure all stakeholders have visibility before we change course. Please advise on preferred next steps.",
+  "Friendly reminder that I flagged this concern three sprints ago. I'm delighted we're now prioritizing it. Let me do a deep dive and circle back with a more comprehensive recommendation. As previously discussed, bandwidth has been the constraint here.",
+];
+
+function decode() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+
+  const results = document.getElementById('results');
+  results.classList.add('active');
+
+  let text = input;
+  let matches = [];
+  let categories = new Set();
+
+  // Find all matches
+  for (const phrase of PHRASES) {
+    const regex = new RegExp(phrase.pattern.source, phrase.pattern.flags);
+    let m;
+    while ((m = regex.exec(input)) !== null) {
+      matches.push({
+        start: m.index,
+        end: m.index + m[0].length,
+        original: m[0],
+        meaning: phrase.meaning,
+        category: phrase.category
+      });
+      categories.add(phrase.category);
+    }
+  }
+
+  // Sort by position (desc) to avoid index shifting, remove overlaps
+  matches.sort((a, b) => b.start - a.start);
+  const used = [];
+  const filtered = [];
+  for (const m of matches) {
+    let overlap = false;
+    for (const u of used) {
+      if (m.start < u.end && m.end > u.start) { overlap = true; break; }
+    }
+    if (!overlap) {
+      filtered.push(m);
+      used.push(m);
+    }
+  }
+
+  // Build annotated HTML
+  let annotated = input;
+  for (const m of filtered) {
+    const tooltip = `<span class="tooltip">${m.category.replace('-', ' ')}: "${m.meaning}"</span>`;
+    const replacement = `<span class="bw ${m.category}">${m.original}${tooltip}</span>`;
+    annotated = annotated.substring(0, m.start) + replacement + annotated.substring(m.end);
+  }
+  document.getElementById('decodedText').innerHTML = annotated;
+
+  // Build plain translation
+  let plain = input;
+  filtered.sort((a, b) => b.start - a.start);
+  for (const m of filtered) {
+    plain = plain.substring(0, m.start) + m.meaning + plain.substring(m.end);
+  }
+  document.getElementById('plainText').textContent = plain;
+
+  // Toxicity score
+  const matchCount = filtered.length;
+  const words = input.split(/\s+/).length;
+  const density = matchCount / Math.max(words, 1);
+  let toxScore = Math.min(100, Math.round(density * 300 + matchCount * 8));
+  if (categories.size >= 3) toxScore = Math.min(100, toxScore + 15);
+  if (categories.size >= 4) toxScore = Math.min(100, toxScore + 10);
+  toxScore = Math.max(0, Math.min(100, toxScore));
+
+  const bar = document.getElementById('toxBar');
+  bar.style.width = toxScore + '%';
+  if (toxScore < 25) { bar.style.background = 'var(--tox-low)'; }
+  else if (toxScore < 50) { bar.style.background = 'var(--tox-med)'; }
+  else if (toxScore < 75) { bar.style.background = 'var(--tox-high)'; }
+  else { bar.style.background = 'var(--tox-nuclear)'; }
+
+  document.getElementById('toxScore').textContent = toxScore + '% Toxic';
+  document.getElementById('toxScore').style.color = bar.style.background;
+
+  const descs = [
+    [0, "Surprisingly sincere. Check for traps."],
+    [25, "Light corporate seasoning. Still has a soul."],
+    [40, "Moderate BS levels. Middle management energy."],
+    [55, "Dense corporate fog. Trust nothing."],
+    [70, "Weapons-grade passive aggression detected."],
+    [85, "Full corporate sociopath. Call HR. Actually, HR wrote this."],
+  ];
+  let desc = descs[0][1];
+  for (const [threshold, text] of descs) {
+    if (toxScore >= threshold) desc = text;
+  }
+  document.getElementById('toxDesc').textContent = desc;
+
+  // Category tags
+  const tags = document.querySelectorAll('.cat-tag');
+  tags.forEach(tag => {
+    const cat = tag.className.replace('cat-tag ', '').replace(' active', '');
+    if (categories.has(cat)) tag.classList.add('active');
+    else tag.classList.remove('active');
+  });
+
+  // Hide response panel on new decode
+  document.getElementById('responsePanel').classList.remove('active');
+}
+
+function speakDecoded() {
+  const plainText = document.getElementById('plainText').textContent;
+  if (!plainText) return;
+  speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(plainText);
+  utterance.rate = 0.9;
+  utterance.pitch = 0.8;
+  speechSynthesis.speak(utterance);
+}
+
+function composeResponse() {
+  const input = document.getElementById('input').value.trim();
+  if (!input) return;
+  if (!document.getElementById('results').classList.contains('active')) decode();
+
+  const response = RESPONSE_TEMPLATES[Math.floor(Math.random() * RESPONSE_TEMPLATES.length)];
+  document.getElementById('responseText').textContent = response;
+  document.getElementById('responsePanel').classList.add('active');
+}
+
+function shareDecoded() {
+  const plain = document.getElementById('plainText').textContent;
+  if (!plain) return;
+  const original = document.getElementById('input').value.trim();
+  const text = `Corporate BS Decoded:\n\nOriginal: "${original}"\n\nTranslation: "${plain}"\n\n-- Decoded by Corporate BS Decoder`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Corporate BS Decoded', text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.btn-share');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+}
+
+function loadExample(i) {
+  document.getElementById('input').value = EXAMPLES[i];
+  decode();
+}
+</script>
+</body>
+</html>
