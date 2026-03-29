@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Panic Tracker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --primary: #3b5998;
+    --primary-dark: #2d4373;
+    --accent: #e74c3c;
+    --text: #2c3e50;
+    --text-light: #7f8c8d;
+    --border: #dde1e7;
+    --panic-low: #27ae60;
+    --panic-mid: #f39c12;
+    --panic-high: #e74c3c;
+    --panic-max: #8e44ad;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  header {
+    text-align: center;
+    padding: 24px 0 16px;
+  }
+
+  header h1 {
+    font-size: 1.8em;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  header p {
+    color: var(--text-light);
+    font-size: 0.95em;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card h2 {
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-light);
+    margin-bottom: 12px;
+  }
+
+  /* Start Screen */
+  #start-screen { text-align: center; padding: 40px 20px; }
+  #start-screen p { color: var(--text-light); margin-bottom: 24px; font-size: 1.05em; line-height: 1.5; }
+
+  .btn {
+    display: inline-block;
+    padding: 14px 36px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .btn-danger {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-danger:hover { background: #c0392b; }
+
+  .btn-success {
+    background: var(--panic-low);
+    color: #fff;
+  }
+  .btn-success:hover { background: #219a52; }
+
+  .btn-small {
+    padding: 8px 16px;
+    font-size: 0.9em;
+    border-radius: 6px;
+  }
+
+  #interview-screen { display: none; }
+  #end-screen { display: none; }
+
+  /* Timer */
+  .timer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #timer {
+    font-size: 2.2em;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary);
+  }
+
+  #end-btn {
+    padding: 8px 14px;
+    font-size: 0.85em;
+    background: var(--border);
+    color: var(--text);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  #end-btn:hover { background: #ccc; }
+
+  /* Panic Meter */
+  .panic-bar-bg {
+    width: 100%;
+    height: 28px;
+    background: #eee;
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panic-bar-fill {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 0.5s ease, background 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 10px;
+    min-width: 40px;
+  }
+
+  .panic-bar-fill span {
+    font-size: 0.75em;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  #panic-label {
+    text-align: center;
+    margin-top: 8px;
+    font-weight: 600;
+    font-size: 0.95em;
+  }
+
+  /* Question */
+  #question-box {
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  #question-text {
+    font-size: 1.15em;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text);
+    font-style: italic;
+  }
+
+  #next-question-btn {
+    display: block;
+    margin: 12px auto 0;
+  }
+
+  /* Um Counter */
+  .um-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  #um-count {
+    font-size: 2.5em;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  #um-btn {
+    flex-shrink: 0;
+  }
+
+  .um-commentary {
+    font-size: 0.85em;
+    color: var(--text-light);
+    margin-top: 6px;
+  }
+
+  /* Confidence Tips */
+  #tip-text {
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  #tip-text strong {
+    color: var(--primary);
+  }
+
+  /* Breathing Overlay */
+  #breathing-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(44, 62, 80, 0.92);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+  }
+
+  #breathing-overlay.active {
+    display: flex;
+  }
+
+  .breath-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    position: relative;
+  }
+
+  .breath-circle-inner {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.6);
+    transition: all 4s ease-in-out;
+  }
+
+  .breath-circle-inner.inhale {
+    width: 130px;
+    height: 130px;
+    background: rgba(39, 174, 96, 0.7);
+  }
+
+  .breath-circle-inner.exhale {
+    width: 40px;
+    height: 40px;
+    background: rgba(52, 152, 219, 0.5);
+  }
+
+  #breath-instruction {
+    font-size: 1.6em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  #breath-sub {
+    font-size: 1em;
+    opacity: 0.7;
+    margin-bottom: 24px;
+  }
+
+  #dismiss-breath {
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.4);
+    color: #fff;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  #dismiss-breath:hover { background: rgba(255,255,255,0.25); }
+
+  /* End Screen */
+  #end-screen { text-align: center; }
+
+  .result-emoji {
+    font-size: 4em;
+    margin-bottom: 8px;
+  }
+
+  .result-title {
+    font-size: 1.8em;
+    font-weight: 800;
+    margin-bottom: 16px;
+  }
+
+  .result-title.nailed { color: var(--panic-low); }
+  .result-title.bombed { color: var(--accent); }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .stat-box {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 14px;
+  }
+
+  .stat-box .label {
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+  }
+
+  .stat-box .value {
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 2px;
+  }
+
+  .end-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  #share-btn {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  #restart-btn {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  #share-toast {
+    display: none;
+    background: var(--primary);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.9em;
+    margin-top: 8px;
+  }
+
+  /* Screen shake when panic is high */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-3px); }
+    40% { transform: translateX(3px); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(2px); }
+  }
+
+  .shaking { animation: shake 0.4s ease-in-out; }
+
+  /* Sweat drops */
+  .sweat {
+    position: fixed;
+    font-size: 1.2em;
+    pointer-events: none;
+    z-index: 999;
+    animation: drip 2s ease-in forwards;
+  }
+
+  @keyframes drip {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(100vh); }
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 10px; }
+    header h1 { font-size: 1.4em; }
+    #timer { font-size: 1.8em; }
+    #question-text { font-size: 1em; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Interview <span>Panic</span> Tracker</h1>
+    <p>Because job interviews are just performances with higher stakes</p>
+  </header>
+
+  <!-- Start Screen -->
+  <div id="start-screen" class="card">
+    <p>Track your rising panic, dodge curveball questions, count your "ums," and try not to spiral. Breathing coach included (you'll need it).</p>
+    <button class="btn btn-primary" onclick="startInterview()">Start Interview</button>
+  </div>
+
+  <!-- Interview Screen -->
+  <div id="interview-screen">
+    <div class="card">
+      <h2>Interview Timer</h2>
+      <div class="timer-row">
+        <div id="timer">00:00</div>
+        <button id="end-btn" onclick="showEndChoice()">End Interview</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Panic Level</h2>
+      <div class="panic-bar-bg">
+        <div class="panic-bar-fill" id="panic-fill" style="width:5%;background:var(--panic-low)">
+          <span id="panic-pct">5%</span>
+        </div>
+      </div>
+      <div id="panic-label" style="color:var(--panic-low)">Calm... for now</div>
+    </div>
+
+    <div class="card">
+      <h2>Current Question</h2>
+      <div id="question-box">
+        <div id="question-text">Waiting for first question...</div>
+      </div>
+      <button class="btn btn-small btn-primary" id="next-question-btn" onclick="nextQuestion()">Next Question</button>
+    </div>
+
+    <div class="card">
+      <h2>You Said "Um"</h2>
+      <div class="um-row">
+        <div>
+          <div id="um-count">0</div>
+          <div class="um-commentary" id="um-comment">Flawless so far</div>
+        </div>
+        <button class="btn btn-small btn-danger" id="um-btn" onclick="addUm()">+ Um</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Confidence Tip</h2>
+      <div id="tip-text">Take a deep breath. You prepared for this.</div>
+    </div>
+
+    <!-- End choice overlay -->
+    <div id="end-choice" style="display:none">
+      <div class="card" style="text-align:center">
+        <h2>How'd It Go?</h2>
+        <p style="margin-bottom:16px;color:var(--text-light)">Be honest with yourself.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="endInterview('nailed')">NAILED IT</button>
+          <button class="btn btn-danger" onclick="endInterview('bombed')">BOMBED IT</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Screen -->
+  <div id="end-screen">
+    <div class="card">
+      <div class="result-emoji" id="result-emoji"></div>
+      <div class="result-title" id="result-title"></div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="label">Duration</div>
+          <div class="value" id="stat-duration">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Peak Panic</div>
+          <div class="value" id="stat-peak-panic">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">"Um" Count</div>
+          <div class="value" id="stat-ums">--</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Questions Faced</div>
+          <div class="value" id="stat-questions">--</div>
+        </div>
+      </div>
+      <div id="result-commentary" style="margin-bottom:20px;color:var(--text-light);font-size:0.95em;line-height:1.5"></div>
+      <div class="end-buttons">
+        <button class="btn btn-small" id="share-btn" onclick="shareResults()">Share Results</button>
+        <button class="btn btn-small" id="restart-btn" onclick="restart()">Try Again</button>
+      </div>
+      <div id="share-toast">Copied to clipboard!</div>
+    </div>
+  </div>
+</div>
+
+<!-- Breathing Overlay -->
+<div id="breathing-overlay">
+  <div class="breath-circle">
+    <div class="breath-circle-inner" id="breath-ball"></div>
+  </div>
+  <div id="breath-instruction">Breathe In</div>
+  <div id="breath-sub">4 seconds in... hold... 4 seconds out</div>
+  <button id="dismiss-breath" onclick="dismissBreathing()">I'm OK, Resume Interview</button>
+</div>
+
+<script>
+const QUESTIONS = [
+  "Where do you see yourself in 5 years?",
+  "Tell me about a time you failed.",
+  "What's your biggest weakness?",
+  "Why should we hire you over the other candidates?",
+  "Tell me about yourself.",
+  "Why are you leaving your current job?",
+  "What's your expected salary?",
+  "Describe a conflict with a coworker and how you resolved it.",
+  "Why do you want to work here?",
+  "What would your last boss say about you?",
+  "How do you handle pressure?",
+  "Give an example of a goal you didn't meet and how you handled it.",
+  "What makes you unique?",
+  "Where else are you interviewing?",
+  "What do you know about our company?",
+  "How do you prioritize your work?",
+  "Tell me about a time you went above and beyond.",
+  "What are you passionate about?",
+  "How would your friends describe you?",
+  "What's a project you're most proud of?",
+  "Do you prefer working alone or in a team?",
+  "What would you do in your first 90 days?",
+  "Tell me about a time you had to learn something quickly.",
+  "What motivates you?",
+  "How do you handle criticism?",
+  "Describe your ideal work environment.",
+  "What's the hardest decision you've ever made at work?",
+  "If you could have any superpower for work, what would it be?",
+  "What questions do you have for us?",
+  "Tell me about a gap in your resume.",
+  "Why did you choose this career path?",
+  "How do you stay organized?",
+  "What do you do outside of work?",
+  "Explain a complex concept to me like I'm five.",
+  "If we called your references right now, what would they say?",
+  "What's the biggest risk you've ever taken?",
+  "How do you deal with ambiguity?",
+  "What would you do if you disagreed with your manager?",
+  "Sell me this pen.",
+  "What's one thing you'd change about your last job?"
+];
+
+const TIPS = [
+  "<strong>Power pose</strong> for 2 minutes before. It actually works (maybe).",
+  "<strong>Pause before answering.</strong> Silence feels longer to you than to them.",
+  "<strong>STAR method:</strong> Situation, Task, Action, Result. Structure saves lives.",
+  "They're nervous too. Interviewers hate interviewing. <strong>You're both suffering.</strong>",
+  "<strong>Mirror their energy.</strong> If they're chill, be chill. If formal, match it.",
+  "Replace 'um' with a <strong>confident pause.</strong> Just stop talking for a beat.",
+  "<strong>Ask them questions back.</strong> It shifts the power dynamic.",
+  "Remember: they already liked your resume enough to bring you in. <strong>You're pre-approved.</strong>",
+  "<strong>Drink water.</strong> It buys you thinking time and keeps your voice steady.",
+  "If you blank, say <strong>'That's a great question, let me think about that.'</strong>",
+  "<strong>End answers with results.</strong> Numbers, outcomes, impact. Not vibes.",
+  "Your <strong>body language</strong> is 55% of communication. Sit up. Uncross arms.",
+  "<strong>Breathe from your diaphragm.</strong> Shallow breathing = shaky voice.",
+  "It's a conversation, not an interrogation. <strong>You're also interviewing them.</strong>",
+  "Prepare 3 stories that cover <strong>leadership, failure, and collaboration.</strong>",
+  "<strong>Don't badmouth</strong> your previous employer. Ever. Even if they deserve it.",
+  "If you don't know, say <strong>'I don't know, but here's how I'd find out.'</strong>",
+  "<strong>Smile.</strong> Not maniacally. But enough to seem like a human being.",
+];
+
+const UM_COMMENTS = [
+  { max: 0, text: "Flawless so far" },
+  { max: 2, text: "Barely noticeable" },
+  { max: 5, text: "Getting a bit filler-heavy..." },
+  { max: 10, text: "They're definitely counting" },
+  { max: 20, text: "It's basically every other word" },
+  { max: Infinity, text: "You are an um machine" },
+];
+
+const PANIC_LABELS = [
+  { max: 15, label: "Calm... for now", color: "var(--panic-low)" },
+  { max: 30, label: "Slight unease", color: "var(--panic-low)" },
+  { max: 45, label: "Palms getting sweaty", color: "var(--panic-mid)" },
+  { max: 60, label: "Heart rate climbing", color: "var(--panic-mid)" },
+  { max: 75, label: "Voice cracking territory", color: "var(--panic-high)" },
+  { max: 85, label: "Full fight-or-flight", color: "var(--panic-high)" },
+  { max: 95, label: "EXISTENTIAL DREAD", color: "var(--panic-max)" },
+  { max: 100, label: "OUT OF BODY EXPERIENCE", color: "var(--panic-max)" },
+];
+
+let state = {
+  running: false,
+  seconds: 0,
+  panic: 5,
+  peakPanic: 5,
+  ums: 0,
+  questionsAsked: 0,
+  questionHistory: [],
+  timerInterval: null,
+  panicInterval: null,
+  questionInterval: null,
+  tipInterval: null,
+  breathingActive: false,
+  breathingShown: false,
+  sweatInterval: null,
+};
+
+function startInterview() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('interview-screen').style.display = 'block';
+  state.running = true;
+
+  // Timer
+  state.timerInterval = setInterval(() => {
+    state.seconds++;
+    const m = String(Math.floor(state.seconds / 60)).padStart(2, '0');
+    const s = String(state.seconds % 60).padStart(2, '0');
+    document.getElementById('timer').textContent = `${m}:${s}`;
+  }, 1000);
+
+  // Panic rises over time
+  state.panicInterval = setInterval(() => {
+    if (!state.breathingActive) {
+      const rise = 0.5 + Math.random() * 1.5;
+      state.panic = Math.min(100, state.panic + rise);
+      state.peakPanic = Math.max(state.peakPanic, state.panic);
+      updatePanic();
+    }
+  }, 2000);
+
+  // Auto questions
+  nextQuestion();
+  state.questionInterval = setInterval(() => {
+    nextQuestion();
+    // Questions spike panic
+    state.panic = Math.min(100, state.panic + 5 + Math.random() * 5);
+    state.peakPanic = Math.max(state.peakPanic, state.panic);
+    updatePanic();
+    shakeScreen();
+  }, 15000 + Math.random() * 10000);
+
+  // Tips rotation
+  updateTip();
+  state.tipInterval = setInterval(updateTip, 12000);
+
+  // Sweat drops at high panic
+  state.sweatInterval = setInterval(() => {
+    if (state.panic > 60 && state.running) {
+      spawnSweat();
+    }
+  }, 800);
+}
+
+function updatePanic() {
+  const fill = document.getElementById('panic-fill');
+  const pct = document.getElementById('panic-pct');
+  const label = document.getElementById('panic-label');
+
+  fill.style.width = state.panic + '%';
+  pct.textContent = Math.round(state.panic) + '%';
+
+  const level = PANIC_LABELS.find(l => state.panic <= l.max);
+  label.textContent = level.label;
+  label.style.color = level.color;
+  fill.style.background = level.color;
+
+  // Trigger breathing at high panic (once per session or if it climbs back)
+  if (state.panic >= 80 && !state.breathingActive && !state.breathingShown) {
+    showBreathing();
+  }
+}
+
+function nextQuestion() {
+  const available = QUESTIONS.filter(q => !state.questionHistory.includes(q));
+  const pool = available.length > 0 ? available : QUESTIONS;
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  state.questionHistory.push(q);
+  state.questionsAsked++;
+
+  const el = document.getElementById('question-text');
+  el.style.opacity = 0;
+  setTimeout(() => {
+    el.textContent = `"${q}"`;
+    el.style.opacity = 1;
+  }, 200);
+  el.style.transition = 'opacity 0.3s';
+}
+
+function addUm() {
+  state.ums++;
+  document.getElementById('um-count').textContent = state.ums;
+
+  // Each um raises panic a bit
+  state.panic = Math.min(100, state.panic + 2);
+  state.peakPanic = Math.max(state.peakPanic, state.panic);
+  updatePanic();
+
+  const comment = UM_COMMENTS.find(c => state.ums <= c.max);
+  document.getElementById('um-comment').textContent = comment.text;
+
+  // Shake the um button
+  const btn = document.getElementById('um-btn');
+  btn.classList.add('shaking');
+  setTimeout(() => btn.classList.remove('shaking'), 400);
+}
+
+function updateTip() {
+  const tip = TIPS[Math.floor(Math.random() * TIPS.length)];
+  document.getElementById('tip-text').innerHTML = tip;
+}
+
+function showBreathing() {
+  state.breathingActive = true;
+  state.breathingShown = true;
+  const overlay = document.getElementById('breathing-overlay');
+  overlay.classList.add('active');
+  runBreathCycle();
+}
+
+let breathTimeout = null;
+function runBreathCycle() {
+  if (!state.breathingActive) return;
+  const ball = document.getElementById('breath-ball');
+  const inst = document.getElementById('breath-instruction');
+
+  // Inhale
+  ball.className = 'breath-circle-inner inhale';
+  inst.textContent = 'Breathe In...';
+  breathTimeout = setTimeout(() => {
+    if (!state.breathingActive) return;
+    inst.textContent = 'Hold...';
+    breathTimeout = setTimeout(() => {
+      if (!state.breathingActive) return;
+      ball.className = 'breath-circle-inner exhale';
+      inst.textContent = 'Breathe Out...';
+      breathTimeout = setTimeout(() => {
+        if (!state.breathingActive) return;
+        // Lower panic during breathing
+        state.panic = Math.max(20, state.panic - 15);
+        updatePanic();
+        runBreathCycle();
+      }, 4000);
+    }, 2000);
+  }, 4000);
+}
+
+function dismissBreathing() {
+  state.breathingActive = false;
+  if (breathTimeout) clearTimeout(breathTimeout);
+  document.getElementById('breathing-overlay').classList.remove('active');
+  document.getElementById('breath-ball').className = 'breath-circle-inner';
+  // Allow breathing to trigger again if panic rises back
+  setTimeout(() => { state.breathingShown = false; }, 30000);
+}
+
+function shakeScreen() {
+  document.body.classList.add('shaking');
+  setTimeout(() => document.body.classList.remove('shaking'), 400);
+}
+
+function spawnSweat() {
+  const drop = document.createElement('div');
+  drop.className = 'sweat';
+  drop.textContent = '💧';
+  drop.style.left = (Math.random() * 90 + 5) + '%';
+  drop.style.top = '-20px';
+  document.body.appendChild(drop);
+  setTimeout(() => drop.remove(), 2200);
+}
+
+function showEndChoice() {
+  document.getElementById('end-choice').style.display = 'block';
+  document.getElementById('end-choice').scrollIntoView({ behavior: 'smooth' });
+}
+
+function endInterview(result) {
+  state.running = false;
+  clearInterval(state.timerInterval);
+  clearInterval(state.panicInterval);
+  clearInterval(state.questionInterval);
+  clearInterval(state.tipInterval);
+  clearInterval(state.sweatInterval);
+  if (breathTimeout) clearTimeout(breathTimeout);
+  document.getElementById('breathing-overlay').classList.remove('active');
+
+  document.getElementById('interview-screen').style.display = 'none';
+  document.getElementById('end-screen').style.display = 'block';
+
+  const m = String(Math.floor(state.seconds / 60)).padStart(2, '0');
+  const s = String(state.seconds % 60).padStart(2, '0');
+
+  document.getElementById('stat-duration').textContent = `${m}:${s}`;
+  document.getElementById('stat-peak-panic').textContent = Math.round(state.peakPanic) + '%';
+  document.getElementById('stat-ums').textContent = state.ums;
+  document.getElementById('stat-questions').textContent = state.questionsAsked;
+
+  const titleEl = document.getElementById('result-title');
+  const emojiEl = document.getElementById('result-emoji');
+  const commentEl = document.getElementById('result-commentary');
+
+  if (result === 'nailed') {
+    emojiEl.textContent = '🎯';
+    titleEl.textContent = 'NAILED IT!';
+    titleEl.className = 'result-title nailed';
+    const messages = [
+      `${state.questionsAsked} questions, ${state.ums} ums, and you lived to tell the tale.`,
+      `Peak panic hit ${Math.round(state.peakPanic)}% but you held it together. Legend.`,
+      "You're either genuinely confident or an incredible actor. Either way, hired.",
+    ];
+    commentEl.textContent = messages[Math.floor(Math.random() * messages.length)];
+  } else {
+    emojiEl.textContent = '💀';
+    titleEl.textContent = 'BOMBED IT';
+    titleEl.className = 'result-title bombed';
+    const messages = [
+      `${state.ums} ums. ${Math.round(state.peakPanic)}% peak panic. It happens to the best of us.`,
+      "At least you showed up. That's more than most people can say.",
+      "Every disaster interview is a learning experience. This was a masterclass.",
+    ];
+    commentEl.textContent = messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  state.result = result;
+}
+
+function shareResults() {
+  const m = String(Math.floor(state.seconds / 60)).padStart(2, '0');
+  const s = String(state.seconds % 60).padStart(2, '0');
+  const emoji = state.result === 'nailed' ? '🎯' : '💀';
+  const verdict = state.result === 'nailed' ? 'NAILED IT' : 'BOMBED IT';
+
+  const text = `${emoji} Interview Panic Tracker ${emoji}
+Verdict: ${verdict}
+Duration: ${m}:${s}
+Peak Panic: ${Math.round(state.peakPanic)}%
+"Um" Count: ${state.ums}
+Questions Faced: ${state.questionsAsked}
+Try it: Interview Panic Tracker`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Interview Panic Tracker', text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('share-toast');
+      toast.style.display = 'inline-block';
+      setTimeout(() => toast.style.display = 'none', 2000);
+    });
+  }
+}
+
+function restart() {
+  state = {
+    running: false,
+    seconds: 0,
+    panic: 5,
+    peakPanic: 5,
+    ums: 0,
+    questionsAsked: 0,
+    questionHistory: [],
+    timerInterval: null,
+    panicInterval: null,
+    questionInterval: null,
+    tipInterval: null,
+    breathingActive: false,
+    breathingShown: false,
+    sweatInterval: null,
+  };
+
+  document.getElementById('end-screen').style.display = 'none';
+  document.getElementById('end-choice').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'block';
+  document.getElementById('interview-screen').style.display = 'none';
+  document.getElementById('timer').textContent = '00:00';
+  document.getElementById('um-count').textContent = '0';
+  document.getElementById('um-comment').textContent = 'Flawless so far';
+  document.getElementById('panic-fill').style.width = '5%';
+  document.getElementById('panic-pct').textContent = '5%';
+  document.getElementById('panic-label').textContent = 'Calm... for now';
+  document.getElementById('question-text').textContent = 'Waiting for first question...';
+}
+</script>
+</body>
+</html>

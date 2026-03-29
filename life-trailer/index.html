@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Trailer - Your Day, Hollywood Style</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Oswald:wght@300;400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-particles {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(30,30,60,0.4) 0%, transparent 70%);
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #fff 0%, #b8860b 50%, #8b6914 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 8px;
+  }
+
+  header p {
+    font-size: 0.95rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #777;
+  }
+
+  .input-section {
+    background: rgba(20,20,30,0.8);
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .input-section label {
+    display: block;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 16px;
+  }
+
+  .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .event-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .event-num {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    color: #b8860b;
+    font-size: 1.1rem;
+    min-width: 28px;
+    text-align: center;
+  }
+
+  .event-row input {
+    flex: 1;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: #e0e0e0;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+  }
+
+  .event-row input:focus {
+    outline: none;
+    border-color: #b8860b;
+  }
+
+  .event-row input::placeholder {
+    color: #555;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .genre-select {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: #e0e0e0;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    min-width: 140px;
+  }
+
+  .genre-select:focus { outline: none; border-color: #b8860b; }
+
+  .btn-generate {
+    flex: 1;
+    min-width: 180px;
+    padding: 14px 28px;
+    background: linear-gradient(135deg, #b8860b, #daa520);
+    border: none;
+    border-radius: 6px;
+    color: #0a0a0a;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-generate:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 30px rgba(184,134,11,0.4);
+  }
+
+  .btn-generate:active { transform: scale(0.98); }
+
+  /* Trailer Output */
+  .trailer-output {
+    display: none;
+    margin-top: 10px;
+  }
+
+  .trailer-output.visible { display: block; }
+
+  .trailer-card {
+    background: rgba(10,10,18,0.95);
+    border: 1px solid #2a2a3a;
+    border-radius: 12px;
+    overflow: hidden;
+    animation: cardReveal 0.8s ease-out;
+  }
+
+  @keyframes cardReveal {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .trailer-genre-bar {
+    padding: 10px 24px;
+    font-size: 0.75rem;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .genre-action .trailer-genre-bar { background: linear-gradient(90deg, #8b0000, #cc3300); color: #fff; }
+  .genre-romance .trailer-genre-bar { background: linear-gradient(90deg, #8b1a5c, #c2185b); color: #fff; }
+  .genre-horror .trailer-genre-bar { background: linear-gradient(90deg, #1a1a2e, #4a0e4e); color: #aaa; }
+  .genre-comedy .trailer-genre-bar { background: linear-gradient(90deg, #b8860b, #daa520); color: #0a0a0a; }
+
+  .trailer-body {
+    padding: 32px 28px;
+  }
+
+  .trailer-title {
+    font-family: 'Cinzel', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 28px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    line-height: 1.3;
+  }
+
+  .genre-action .trailer-title { color: #ff4444; }
+  .genre-romance .trailer-title { color: #ff69b4; }
+  .genre-horror .trailer-title { color: #9370db; }
+  .genre-comedy .trailer-title { color: #ffd700; }
+
+  .trailer-line {
+    margin-bottom: 20px;
+    opacity: 0;
+    animation: lineReveal 0.6s ease-out forwards;
+  }
+
+  .trailer-line .narrator {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #ccc;
+    font-weight: 300;
+  }
+
+  .trailer-line .stage-direction {
+    font-size: 0.8rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+
+  .trailer-line .event-highlight {
+    color: #fff;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  @keyframes lineReveal {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .trailer-tagline {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 24px;
+    border-top: 1px solid #222;
+  }
+
+  .trailer-tagline p {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #b8860b;
+  }
+
+  .trailer-tagline .date {
+    font-size: 0.75rem;
+    color: #555;
+    margin-top: 8px;
+    letter-spacing: 3px;
+  }
+
+  .trailer-actions {
+    display: flex;
+    gap: 10px;
+    padding: 20px 28px;
+    border-top: 1px solid #1a1a2a;
+    flex-wrap: wrap;
+  }
+
+  .btn-action {
+    flex: 1;
+    min-width: 100px;
+    padding: 12px 16px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: transparent;
+    color: #999;
+    font-family: 'Oswald', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-action:hover {
+    border-color: #b8860b;
+    color: #b8860b;
+  }
+
+  .btn-action.playing {
+    border-color: #ff4444;
+    color: #ff4444;
+  }
+
+  /* Flash overlay for boom */
+  .flash-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: opacity 0.05s;
+  }
+
+  .flash-overlay.flash {
+    opacity: 0.7;
+    transition: opacity 0.05s;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #222;
+    border: 1px solid #b8860b;
+    color: #daa520;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 2px;
+    font-size: 0.85rem;
+    z-index: 10000;
+    transition: transform 0.4s ease;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 2rem; letter-spacing: 3px; }
+    .input-section { padding: 20px; }
+    .trailer-body { padding: 24px 20px; }
+    .trailer-title { font-size: 1.4rem; }
+    .controls { flex-direction: column; }
+    .btn-generate, .genre-select { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-particles"></div>
+<div class="flash-overlay" id="flashOverlay"></div>
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <header>
+    <h1>Life Trailer</h1>
+    <p>Your day. Hollywood style.</p>
+  </header>
+
+  <div class="input-section">
+    <label>What happened today?</label>
+    <div class="events-list" id="eventsList">
+      <div class="event-row"><span class="event-num">1</span><input type="text" placeholder="made coffee" maxlength="80"></div>
+      <div class="event-row"><span class="event-num">2</span><input type="text" placeholder="had a meeting" maxlength="80"></div>
+      <div class="event-row"><span class="event-num">3</span><input type="text" placeholder="ate lunch" maxlength="80"></div>
+      <div class="event-row"><span class="event-num">4</span><input type="text" placeholder="debugged code" maxlength="80"></div>
+      <div class="event-row"><span class="event-num">5</span><input type="text" placeholder="went for a walk" maxlength="80"></div>
+    </div>
+    <div class="controls">
+      <select class="genre-select" id="genreSelect">
+        <option value="action">Action</option>
+        <option value="romance">Romance</option>
+        <option value="horror">Horror</option>
+        <option value="comedy">Comedy</option>
+      </select>
+      <button class="btn-generate" id="btnGenerate">Generate Trailer</button>
+    </div>
+  </div>
+
+  <div class="trailer-output" id="trailerOutput"></div>
+</div>
+
+<script>
+const TEMPLATES = {
+  action: {
+    openers: [
+      "In a world where productivity is the only currency...",
+      "They said it couldn't be done. They were wrong.",
+      "One ordinary day. One extraordinary mission.",
+      "When the stakes are everything... and the clock is ticking...",
+      "From the producers of Monday and the directors of Friday...",
+      "No one expected the chaos. No one was prepared.",
+      "The system was broken. One person stood up.",
+      "They trained for this moment their entire life.",
+      "Every second counts. Every choice matters.",
+      "The world pushed back. They pushed harder.",
+      "Duty called. And they answered.",
+      "Behind enemy lines of daily routine..."
+    ],
+    eventFrames: [
+      "They didn't just {EVENT}... they made it an act of war.",
+      "{EVENT}. Not because it was easy. Because it was necessary.",
+      "While others hesitated, they chose to {EVENT} with lethal precision.",
+      "The mission was clear: {EVENT}. Failure was not an option.",
+      "{EVENT}... and nothing would ever be the same again.",
+      "Against all odds, they managed to {EVENT}.",
+      "Nobody saw it coming when they decided to {EVENT}.",
+      "The clock struck zero. They had no choice but to {EVENT}.",
+      "Armed with nothing but determination, they set out to {EVENT}.",
+      "{EVENT}. The kind of move that separates legends from amateurs."
+    ],
+    transitions: [
+      "[Explosion. Silence. Then a heartbeat.]",
+      "[Quick cuts. Drums intensify.]",
+      "[Glass shatters. Bass drops.]",
+      "[Slow motion. The camera spins.]",
+      "[Black screen. Single gunshot echo.]",
+      "[Thunder rolls. Lightning cracks.]",
+      "[Metal scraping. Sparks fly.]",
+      "[Helicopter blades. Wind howling.]"
+    ],
+    closers: [
+      "This isn't just a day. This is a legacy.",
+      "Some days you survive. This day... you conquer.",
+      "No retreat. No surrender. Just results.",
+      "When the dust settles, only the productive remain.",
+      "They didn't just live today. They dominated it."
+    ],
+    taglines: [
+      "No Days Off",
+      "Maximum Effort",
+      "Built Different",
+      "Zero Dark Thirty... A.M.",
+      "The Daily Grind: Declassified",
+      "Operation: Get It Done"
+    ],
+    titlePrefixes: ["Operation", "Mission", "Project", "Protocol"],
+    titleSuffixes: ["Domination", "Thunder", "Vengeance", "Uprising", "Overdrive"]
+  },
+
+  romance: {
+    openers: [
+      "In the quiet moments between heartbeats...",
+      "They always said love finds you when you least expect it...",
+      "Some days are ordinary. And then... there's this one.",
+      "It started like any other morning. But nothing about today was ordinary.",
+      "Between the sunrise and the sunset, everything changed.",
+      "The universe had a plan. They just didn't know it yet.",
+      "Every love story has a beginning. This one started at dawn.",
+      "In a city of millions, one day would change everything.",
+      "They weren't looking for magic. Magic found them.",
+      "Fate doesn't knock. It whispers."
+    ],
+    eventFrames: [
+      "And when they {EVENT}... time stood perfectly still.",
+      "They {EVENT}, and in that moment, the world was enough.",
+      "A simple act of {EVENT}... became the most beautiful thing.",
+      "They didn't just {EVENT}. They found meaning in every second of it.",
+      "{EVENT}... and suddenly, everything made sense.",
+      "The way they {EVENT} could make angels weep.",
+      "In the gentle art of {EVENT}, they discovered something profound.",
+      "{EVENT}. And the universe held its breath.",
+      "They {EVENT} as if it were a love letter to the day itself.",
+      "Some people {EVENT}. They made it poetry."
+    ],
+    transitions: [
+      "[Soft piano. Rain on glass.]",
+      "[A breath. A glance. Everything unspoken.]",
+      "[Strings swell. Golden hour light.]",
+      "[Petals falling. Time slowing.]",
+      "[A single tear. A knowing smile.]",
+      "[Wind through curtains. Warm light.]"
+    ],
+    closers: [
+      "Not every day is a love story. But this one... this one was.",
+      "And in the end, the ordinary became extraordinary.",
+      "Some days you remember forever. This was one of them.",
+      "Love isn't always grand gestures. Sometimes it's just... today.",
+      "The most beautiful stories are the ones we live."
+    ],
+    taglines: [
+      "A Day Worth Remembering",
+      "Written in the Stars",
+      "The Art of Being Alive",
+      "Today Was Enough",
+      "Beautiful Ordinary",
+      "Every Moment Counts"
+    ],
+    titlePrefixes: ["The Art of", "A Day Called", "Letters From", "The Beauty of"],
+    titleSuffixes: ["Forever", "Sunrise", "Tenderness", "Grace", "Light"]
+  },
+
+  horror: {
+    openers: [
+      "It started like any other day. That was the first mistake.",
+      "They thought they were safe. They thought wrong.",
+      "The alarm went off at 7 AM. It should never have gone off at all.",
+      "Some days you wake up. Some days... something wakes up with you.",
+      "The morning was quiet. Too quiet.",
+      "Nobody heard the warnings. Nobody ever does.",
+      "In the cold light of morning, something was different.",
+      "They should have stayed in bed.",
+      "Day 1. That's what the survivors called it.",
+      "What happened next... cannot be explained.",
+      "Every normal thing they did... was being watched."
+    ],
+    eventFrames: [
+      "They tried to {EVENT}. That's when it began.",
+      "The moment they {EVENT}... the lights flickered.",
+      "{EVENT}. A perfectly normal thing. Or so they thought.",
+      "Something was watching when they {EVENT}. Something hungry.",
+      "They {EVENT}. And from the shadows, something stirred.",
+      "The act of {EVENT} triggered what came next.",
+      "{EVENT}. The last normal thing they would ever do.",
+      "Nobody warned them that {EVENT} would open the door.",
+      "First they {EVENT}. Then the whispers started.",
+      "{EVENT}. If only they knew what lurked beneath."
+    ],
+    transitions: [
+      "[Static. A child's laughter in an empty room.]",
+      "[Door creaking. Footsteps above. No one is upstairs.]",
+      "[Screen goes black. A single breath. Not yours.]",
+      "[Heartbeat. Faster. Faster. Stop.]",
+      "[Something scrapes behind you. Don't turn around.]",
+      "[The phone rings. The caller is inside.]",
+      "[A whisper: 'I see you.']"
+    ],
+    closers: [
+      "By sunset, nothing would ever be the same.",
+      "They survived the day. But the day never ended.",
+      "Some routines should never be broken. Some doors should never be opened.",
+      "Tomorrow never came.",
+      "And in the silence... it waited."
+    ],
+    taglines: [
+      "Don't Close Your Eyes",
+      "The Day That Never Ended",
+      "Routine Is a Lie",
+      "What Watches You",
+      "No Exit",
+      "It Knows Your Schedule"
+    ],
+    titlePrefixes: ["The Last", "The Haunting of", "Don't", "What Follows"],
+    titleSuffixes: ["Day", "Routine", "Morning", "Silence", "Dark"]
+  },
+
+  comedy: {
+    openers: [
+      "In a world where adulting is the real villain...",
+      "They said it would be a normal day. Spoiler: it was not.",
+      "One person. Five tasks. Zero coordination.",
+      "From the studio that brought you 'Why Is This Happening'...",
+      "Meet the hero nobody asked for. Doing things nobody needed.",
+      "Some people change the world. This person... tried to get through Tuesday.",
+      "It was supposed to be simple. It was never simple.",
+      "Award-winning procrastinator. Full-time disaster. Part-time genius.",
+      "In a stunning display of mediocrity...",
+      "The legend no one will remember. The day no one will forget.",
+      "Hold my coffee. Actually, don't. I need it.",
+      "Buckle up. This gets dumb fast."
+    ],
+    eventFrames: [
+      "They {EVENT}. Like a champion. A very confused champion.",
+      "Against the advice of literally everyone, they decided to {EVENT}.",
+      "{EVENT}. Was it necessary? No. Was it done? Absolutely.",
+      "They {EVENT} with the confidence of someone who had no idea what they were doing.",
+      "Plot twist: they actually managed to {EVENT}. Nobody saw that coming.",
+      "The attempt to {EVENT} was... technically successful.",
+      "{EVENT}. It was both heroic and deeply unnecessary.",
+      "They {EVENT}. The crowd went mild.",
+      "In what experts are calling 'a thing that happened,' they {EVENT}.",
+      "Witnesses confirm: they did in fact {EVENT}. Witnesses are still recovering."
+    ],
+    transitions: [
+      "[Record scratch. Freeze frame.]",
+      "[Sad trombone. Cut to confused face.]",
+      "[Laugh track. Nobody's laughing.]",
+      "[Dramatic zoom. On a sandwich.]",
+      "[Inspirational music... that's actually a ringtone.]",
+      "[Slow clap from absolutely no one.]",
+      "[Montage of questionable decisions.]"
+    ],
+    closers: [
+      "Was it a good day? Debatable. Was it a day? Confirmed.",
+      "And somehow, against all odds, they made it to bedtime.",
+      "Not all heroes wear capes. Some just wear yesterday's clothes.",
+      "Another day survived. Tomorrow's problem is tomorrow's.",
+      "Achievement unlocked: Existed Successfully."
+    ],
+    taglines: [
+      "Rated PG for Pretty Generic",
+      "Based on a True Nap",
+      "Certified Fresh-ish",
+      "Oscar-Worthy... For Trying",
+      "Coming Soon to a Couch Near You",
+      "The Struggle Is Real"
+    ],
+    titlePrefixes: ["The Incredible", "The Unnecessarily Epic", "A Very Normal", "The Somewhat True Story of"],
+    titleSuffixes: ["Situation", "Tuesday", "Incident", "Adventure", "Fiasco"]
+  }
+};
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function generateTrailerTitle(genre) {
+  const t = TEMPLATES[genre];
+  return pick(t.titlePrefixes) + " " + pick(t.titleSuffixes);
+}
+
+function generateTrailer(events, genre) {
+  const t = TEMPLATES[genre];
+  const title = generateTrailerTitle(genre);
+  const opener = pick(t.openers);
+
+  const lines = [];
+  lines.push({ type: 'narrator', text: opener });
+  lines.push({ type: 'direction', text: pick(t.transitions) });
+
+  events.forEach((ev, i) => {
+    const frame = pick(t.eventFrames).replace('{EVENT}', ev.toLowerCase());
+    lines.push({ type: 'narrator', text: frame, highlight: ev });
+    if (i < events.length - 1) {
+      lines.push({ type: 'direction', text: pick(t.transitions) });
+    }
+  });
+
+  lines.push({ type: 'direction', text: pick(t.transitions) });
+  lines.push({ type: 'narrator', text: pick(t.closers) });
+
+  const tagline = pick(t.taglines);
+  return { title, lines, tagline };
+}
+
+function renderTrailer(trailer, genre) {
+  const output = document.getElementById('trailerOutput');
+  const linesHtml = trailer.lines.map((line, i) => {
+    const delay = (i + 1) * 0.3;
+    if (line.type === 'direction') {
+      return `<div class="trailer-line" style="animation-delay:${delay}s"><p class="stage-direction">${line.text}</p></div>`;
+    }
+    return `<div class="trailer-line" style="animation-delay:${delay}s"><p class="narrator">${line.text}</p></div>`;
+  }).join('');
+
+  output.innerHTML = `
+    <div class="trailer-card genre-${genre}">
+      <div class="trailer-genre-bar">${genre} Trailer</div>
+      <div class="trailer-body">
+        <h2 class="trailer-title">${trailer.title}</h2>
+        ${linesHtml}
+        <div class="trailer-tagline">
+          <p>${trailer.tagline}</p>
+          <p class="date">Coming ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+        </div>
+      </div>
+      <div class="trailer-actions">
+        <button class="btn-action" id="btnBoom" onclick="playBoom()">Dramatic Boom</button>
+        <button class="btn-action" id="btnNarrate" onclick="narrateTrailer()">Narrate</button>
+        <button class="btn-action" id="btnShare" onclick="shareTrailer()">Share</button>
+      </div>
+    </div>
+  `;
+  output.classList.add('visible');
+  output.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// --- Audio: Dramatic Boom via Web Audio API ---
+function playBoom() {
+  const flash = document.getElementById('flashOverlay');
+  flash.classList.add('flash');
+  setTimeout(() => flash.classList.remove('flash'), 120);
+
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // Sub bass hit
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'sine';
+  osc1.frequency.setValueAtTime(60, ctx.currentTime);
+  osc1.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 1.5);
+  gain1.gain.setValueAtTime(0.8, ctx.currentTime);
+  gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2);
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start(ctx.currentTime);
+  osc1.stop(ctx.currentTime + 2);
+
+  // Noise burst for impact
+  const bufferSize = ctx.sampleRate * 0.5;
+  const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const noiseData = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    noiseData[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.08));
+  }
+  const noiseSrc = ctx.createBufferSource();
+  noiseSrc.buffer = noiseBuffer;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.6, ctx.currentTime);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+  const noiseFilter = ctx.createBiquadFilter();
+  noiseFilter.type = 'lowpass';
+  noiseFilter.frequency.setValueAtTime(800, ctx.currentTime);
+  noiseFilter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
+  noiseSrc.connect(noiseFilter);
+  noiseFilter.connect(noiseGain);
+  noiseGain.connect(ctx.destination);
+  noiseSrc.start(ctx.currentTime);
+
+  // Second hit slightly delayed
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(45, ctx.currentTime + 0.15);
+  osc2.frequency.exponentialRampToValueAtTime(15, ctx.currentTime + 2);
+  gain2.gain.setValueAtTime(0, ctx.currentTime);
+  gain2.gain.setValueAtTime(0.5, ctx.currentTime + 0.15);
+  gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 2.5);
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.start(ctx.currentTime);
+  osc2.stop(ctx.currentTime + 2.5);
+}
+
+// --- SpeechSynthesis: Movie Trailer Voice ---
+let currentUtterance = null;
+let isNarrating = false;
+
+function narrateTrailer() {
+  const btn = document.getElementById('btnNarrate');
+  if (isNarrating) {
+    window.speechSynthesis.cancel();
+    isNarrating = false;
+    btn.classList.remove('playing');
+    btn.textContent = 'Narrate';
+    return;
+  }
+
+  const lines = document.querySelectorAll('.trailer-line .narrator');
+  const title = document.querySelector('.trailer-title');
+  const tagline = document.querySelector('.trailer-tagline p');
+  if (!lines.length) return;
+
+  isNarrating = true;
+  btn.classList.add('playing');
+  btn.textContent = 'Stop';
+
+  // Gather all text to speak
+  const textParts = [];
+  if (title) textParts.push(title.textContent);
+  textParts.push('...');
+  lines.forEach(line => textParts.push(line.textContent));
+  if (tagline) textParts.push('... ' + tagline.textContent);
+
+  const fullText = textParts.join('. ');
+  const utterance = new SpeechSynthesisUtterance(fullText);
+  utterance.rate = 0.7;
+  utterance.pitch = 0.4;
+  utterance.volume = 1;
+
+  // Try to pick a deep male voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.name.includes('Daniel') || v.name.includes('Alex') ||
+    v.name.includes('Male') || v.name.includes('Google UK English Male')
+  );
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onend = () => {
+    isNarrating = false;
+    btn.classList.remove('playing');
+    btn.textContent = 'Narrate';
+  };
+
+  utterance.onerror = () => {
+    isNarrating = false;
+    btn.classList.remove('playing');
+    btn.textContent = 'Narrate';
+  };
+
+  currentUtterance = utterance;
+
+  // Play boom first, then narrate
+  playBoom();
+  setTimeout(() => {
+    window.speechSynthesis.speak(utterance);
+  }, 600);
+}
+
+// --- Share ---
+function shareTrailer() {
+  const title = document.querySelector('.trailer-title');
+  const lines = document.querySelectorAll('.trailer-line');
+  const tagline = document.querySelector('.trailer-tagline p');
+
+  let text = '';
+  if (title) text += title.textContent + '\n\n';
+  lines.forEach(l => {
+    const narr = l.querySelector('.narrator');
+    const dir = l.querySelector('.stage-direction');
+    if (narr) text += narr.textContent + '\n';
+    if (dir) text += dir.textContent + '\n';
+    text += '\n';
+  });
+  if (tagline) text += tagline.textContent + '\n';
+  text += '\n-- Made with Life Trailer --';
+
+  if (navigator.share) {
+    navigator.share({ title: 'My Life Trailer', text: text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Trailer copied to clipboard');
+    }).catch(() => {
+      showToast('Could not copy');
+    });
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// --- Main ---
+document.getElementById('btnGenerate').addEventListener('click', () => {
+  const inputs = document.querySelectorAll('.event-row input');
+  const events = [];
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if (v) events.push(v);
+  });
+
+  if (events.length < 1) {
+    showToast('Enter at least one event');
+    return;
+  }
+
+  const genre = document.getElementById('genreSelect').value;
+  playBoom();
+  setTimeout(() => {
+    const trailer = generateTrailer(events, genre);
+    renderTrailer(trailer, genre);
+  }, 300);
+});
+
+// Load voices
+window.speechSynthesis.onvoiceschanged = () => {
+  window.speechSynthesis.getVoices();
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STAT PADDER | Your Life. ESPN'd.</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto+Condensed:wght@400;700&family=Bebas+Neue&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --espn-red: #c00;
+    --espn-dark: #111;
+    --espn-darker: #0a0a0a;
+    --espn-gray: #1a1a1a;
+    --espn-light: #f0f0f0;
+    --espn-yellow: #ffcc00;
+    --espn-blue: #006bb6;
+    --espn-green: #00c853;
+    --ticker-speed: 30s;
+  }
+
+  body {
+    background: var(--espn-darker);
+    color: var(--espn-light);
+    font-family: 'Roboto Condensed', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    background: var(--espn-red);
+    padding: 6px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+  }
+  .top-bar .logo span { color: var(--espn-yellow); }
+  .top-bar .tagline {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.9;
+  }
+
+  /* ── TICKER TAPE ── */
+  .ticker-wrap {
+    background: var(--espn-dark);
+    border-bottom: 2px solid var(--espn-red);
+    overflow: hidden;
+    height: 36px;
+    position: relative;
+  }
+  .ticker-label {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: var(--espn-red);
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .ticker-label::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 0;
+    border-left: 12px solid var(--espn-red);
+    border-top: 18px solid transparent;
+    border-bottom: 18px solid transparent;
+  }
+  .ticker {
+    display: flex;
+    animation: ticker-scroll var(--ticker-speed) linear infinite;
+    padding-left: 130px;
+    height: 100%;
+    align-items: center;
+  }
+  .ticker-item {
+    white-space: nowrap;
+    padding: 0 40px;
+    font-size: 13px;
+    font-family: 'Roboto Condensed', sans-serif;
+    color: #ccc;
+  }
+  .ticker-item .name { color: white; font-weight: 700; }
+  .ticker-item .stat { color: var(--espn-yellow); font-weight: 700; }
+  .ticker-item .trend-up { color: var(--espn-green); }
+  .ticker-item .trend-down { color: var(--espn-red); }
+  @keyframes ticker-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── MAIN ── */
+  .main-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px 16px;
+  }
+
+  /* ── INPUT AREA ── */
+  .input-section {
+    background: var(--espn-gray);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  .input-section::before {
+    content: 'PLAY-BY-PLAY';
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: var(--espn-red);
+    color: white;
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 14px;
+    letter-spacing: 2px;
+    border-radius: 8px 0 8px 0;
+  }
+  .input-section label {
+    display: block;
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    margin-top: 20px;
+    color: #aaa;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  #activity-input {
+    flex: 1;
+    background: #222;
+    border: 2px solid #444;
+    border-radius: 6px;
+    color: white;
+    font-size: 18px;
+    padding: 14px 16px;
+    font-family: 'Roboto Condensed', sans-serif;
+    transition: border-color 0.2s;
+  }
+  #activity-input:focus {
+    outline: none;
+    border-color: var(--espn-red);
+  }
+  #activity-input::placeholder { color: #555; }
+  .analyze-btn {
+    background: var(--espn-red);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 14px 28px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .analyze-btn:hover { background: #e00; transform: scale(1.02); }
+  .analyze-btn:active { transform: scale(0.98); }
+
+  .examples {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .example-chip {
+    background: #222;
+    border: 1px solid #444;
+    color: #aaa;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .example-chip:hover { background: #333; color: white; border-color: var(--espn-red); }
+
+  /* ── STAT CARD ── */
+  .stat-card {
+    display: none;
+    background: var(--espn-gray);
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    animation: card-in 0.5s ease-out;
+  }
+  .stat-card.visible { display: block; }
+  @keyframes card-in {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card-header {
+    background: linear-gradient(135deg, var(--espn-red), #900);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+  }
+  .card-header .breaking {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: var(--espn-yellow);
+    color: black;
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    letter-spacing: 2px;
+    animation: flash 1.5s infinite;
+  }
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .card-header h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1.1;
+  }
+  .card-header .category {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.8;
+    background: rgba(0,0,0,0.3);
+    padding: 3px 10px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .stat-hero {
+    display: flex;
+    align-items: center;
+    padding: 24px 20px;
+    gap: 24px;
+    border-bottom: 1px solid #333;
+  }
+  .hero-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px;
+    line-height: 1;
+    color: var(--espn-yellow);
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+    min-width: 100px;
+    text-align: center;
+  }
+  .hero-details {
+    flex: 1;
+  }
+  .hero-details .unit {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: white;
+  }
+  .hero-details .context {
+    color: #888;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #333;
+  }
+  .stat-box {
+    background: var(--espn-gray);
+    padding: 16px;
+    text-align: center;
+  }
+  .stat-box .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #888;
+    font-family: 'Oswald', sans-serif;
+    margin-bottom: 6px;
+  }
+  .stat-box .value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    color: white;
+  }
+  .stat-box .value.green { color: var(--espn-green); }
+  .stat-box .value.yellow { color: var(--espn-yellow); }
+  .stat-box .value.red { color: var(--espn-red); }
+
+  .stat-bar-section {
+    padding: 16px 20px;
+    border-top: 1px solid #333;
+  }
+  .stat-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .stat-bar-label .pct { color: var(--espn-yellow); }
+  .stat-bar-track {
+    background: #333;
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .stat-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--espn-red), var(--espn-yellow));
+    border-radius: 4px;
+    width: 0;
+    transition: width 1s ease-out;
+  }
+
+  .commentary {
+    padding: 16px 20px;
+    border-top: 1px solid #333;
+    font-style: italic;
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .commentary .analyst {
+    color: var(--espn-yellow);
+    font-weight: 700;
+    font-style: normal;
+    font-family: 'Oswald', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-top: 1px solid #333;
+    background: #151515;
+  }
+  .card-footer .timestamp {
+    font-size: 11px;
+    color: #555;
+    text-transform: uppercase;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 1px;
+  }
+  .share-btns {
+    display: flex;
+    gap: 8px;
+  }
+  .share-btn {
+    background: #333;
+    border: none;
+    color: #aaa;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Roboto Condensed', sans-serif;
+    transition: all 0.2s;
+  }
+  .share-btn:hover { background: var(--espn-red); color: white; }
+
+  /* ── HISTORY ── */
+  .history-section {
+    margin-top: 30px;
+  }
+  .history-header {
+    font-family: 'Oswald', sans-serif;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #666;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .history-header::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #333;
+  }
+  .history-item {
+    background: var(--espn-gray);
+    border: 1px solid #282828;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .history-item:hover { border-color: var(--espn-red); }
+  .history-item .h-activity {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .history-item .h-stat {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: var(--espn-yellow);
+  }
+
+  /* ── SOUND TOGGLE ── */
+  .sound-toggle {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    background: var(--espn-gray);
+    border: 1px solid #333;
+    color: #aaa;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    transition: all 0.2s;
+  }
+  .sound-toggle:hover { background: var(--espn-red); color: white; }
+  .sound-toggle.muted { opacity: 0.4; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 70px;
+    right: 16px;
+    background: var(--espn-green);
+    color: black;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 13px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .top-bar .tagline { display: none; }
+    .input-row { flex-direction: column; }
+    .analyze-btn { width: 100%; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .hero-number { font-size: 56px; min-width: 70px; }
+    .card-header h2 { font-size: 20px; }
+    .stat-hero { padding: 16px; gap: 16px; }
+    .card-footer { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div class="logo">STAT<span>PADDER</span></div>
+  <div class="tagline">The Worldwide Leader in You</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">Trending</div>
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<!-- MAIN -->
+<div class="main-content">
+
+  <!-- INPUT -->
+  <div class="input-section">
+    <label>What did you do today?</label>
+    <div class="input-row">
+      <input type="text" id="activity-input" placeholder="I ate 3 tacos..." autofocus>
+      <button class="analyze-btn" id="analyze-btn">Analyze</button>
+    </div>
+    <div class="examples" id="examples"></div>
+  </div>
+
+  <!-- STAT CARD -->
+  <div class="stat-card" id="stat-card"></div>
+
+  <!-- HISTORY -->
+  <div class="history-section">
+    <div class="history-header">Game Log</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<!-- SOUND TOGGLE -->
+<button class="sound-toggle" id="sound-toggle" title="Toggle sound">&#x1f50a;</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ACTIVITY TEMPLATES (40+) ──
+const TEMPLATES = [
+  // FOOD & DRINK
+  { patterns: [/ate?\s+(\d+)\s*taco/i], activity: 'Taco Consumption', unit: 'TACOS', category: 'FOOD & BEVERAGE',
+    seasonAvg: [1.8, 2.4], leagueRank: [8, 22], careerHigh: [6, 12], careerHighEvent: ['Super Bowl Sunday 2024', 'Taco Tuesday Marathon', 'Cinco de Mayo 2023'],
+    commentary: ['Efficient plate management. No toppings wasted.', 'That\'s elite-level bite cadence.', 'Strong through contact with the hot sauce.'] },
+  { patterns: [/drank?\s+(\d+)\s*coffee/i, /had\s+(\d+)\s*coffee/i, /(\d+)\s*cups?\s*(?:of\s*)?coffee/i], activity: 'Coffee Intake', unit: 'CUPS', category: 'FUEL ANALYTICS',
+    seasonAvg: [2.1, 3.8], leagueRank: [5, 30], careerHigh: [5, 9], careerHighEvent: ['All-Nighter vs. Deadline (2023)', 'Monday Morning Classic'],
+    commentary: ['Caffeine efficiency rating through the roof.', 'That\'s a sustainable pace for a playoff run.', 'Brewing under pressure. Love to see it.'] },
+  { patterns: [/ate?\s+(\d+)\s*pizza/i, /had\s+(\d+)\s*slice/i, /(\d+)\s*slices?\s*(?:of\s*)?pizza/i], activity: 'Pizza Demolition', unit: 'SLICES', category: 'FOOD & BEVERAGE',
+    seasonAvg: [2.0, 3.5], leagueRank: [10, 25], careerHigh: [6, 12], careerHighEvent: ['Friday Night Lights 2024', 'Post-Breakup Recovery Game'],
+    commentary: ['Crust-to-cheese ratio was textbook.', 'Dominated the box. Left nothing on the table.', 'That fold technique? Hall of Fame caliber.'] },
+  { patterns: [/drank?\s+(\d+)\s*beer/i, /had\s+(\d+)\s*beer/i, /(\d+)\s*beers?/i], activity: 'Beer League Performance', unit: 'COLD ONES', category: 'BEVERAGE ANALYTICS',
+    seasonAvg: [1.5, 3.2], leagueRank: [15, 40], careerHigh: [6, 14], careerHighEvent: ['4th of July Classic 2023', 'Fantasy Draft Night', 'Friendsgiving Invitational'],
+    commentary: ['Smooth pace. No penalties.', 'Maintained composure deep into the session.', 'Hydration game was questionable but the vibes were elite.'] },
+  { patterns: [/ate?\s+(\d+)\s*cookie/i, /had\s+(\d+)\s*cookie/i, /(\d+)\s*cookies?/i], activity: 'Cookie Destruction', unit: 'COOKIES', category: 'SNACK METRICS',
+    seasonAvg: [1.5, 3.0], leagueRank: [10, 30], careerHigh: [8, 15], careerHighEvent: ['Holiday Bake-Off 2023', 'Grandma\'s House Invitational'],
+    commentary: ['Crumb management was exceptional.', 'Zero milk turnovers. That\'s discipline.', 'Showed no signs of slowing down.'] },
+  { patterns: [/drank?\s+(\d+)\s*water/i, /(\d+)\s*glasses?\s*(?:of\s*)?water/i], activity: 'Hydration Index', unit: 'GLASSES', category: 'WELLNESS ANALYTICS',
+    seasonAvg: [4.0, 7.0], leagueRank: [5, 20], careerHigh: [10, 16], careerHighEvent: ['Heat Wave Championship 2024', 'Post-Workout Recovery Classic'],
+    commentary: ['Elite-level hydration awareness.', 'That\'s a sustainable pace toward the daily goal.', 'Kidney function metrics are off the charts.'] },
+
+  // PRODUCTIVITY
+  { patterns: [/sent\s+(\d+)\s*email/i, /(\d+)\s*emails?\s*sent/i, /wrote\s+(\d+)\s*email/i], activity: 'Email Volume', unit: 'EMAILS SENT', category: 'PRODUCTIVITY',
+    seasonAvg: [8, 22], leagueRank: [10, 35], careerHigh: [30, 75], careerHighEvent: ['Q4 Sprint Finals 2023', 'Inbox Zero Championship'],
+    commentary: ['Subject line game was elite today.', 'Reply-all discipline held strong.', 'Maintained tone under heavy cc pressure.'] },
+  { patterns: [/(\d+)\s*meeting/i, /had\s+(\d+)\s*meeting/i, /attended\s+(\d+)\s*meeting/i], activity: 'Meeting Endurance', unit: 'MEETINGS SURVIVED', category: 'CORPORATE ATHLETICS',
+    seasonAvg: [3, 6], leagueRank: [10, 30], careerHigh: [8, 14], careerHighEvent: ['Q1 Planning Week 2024', 'All-Hands Marathon'],
+    commentary: ['Camera-on percentage was dominant.', 'Nodding game was convincing throughout.', 'Survived a double-overtime standup. That\'s grit.'] },
+  { patterns: [/fixed\s+(\d+)\s*bug/i, /(\d+)\s*bugs?\s*fixed/i, /squashed\s+(\d+)\s*bug/i], activity: 'Bug Squash Rate', unit: 'BUGS ELIMINATED', category: 'ENGINEERING STATS',
+    seasonAvg: [1.5, 4.0], leagueRank: [5, 20], careerHigh: [7, 15], careerHighEvent: ['Hotfix Friday 2024', 'Production Fire Drill'],
+    commentary: ['Stack trace reading was at an MVP level.', 'Found the root cause on the first dive. Elite.', 'Zero regressions introduced. That\'s the difference-maker.'] },
+  { patterns: [/wrote\s+(\d+)\s*(?:lines?\s*(?:of\s*)?)?code/i, /(\d+)\s*lines?\s*(?:of\s*)?code/i, /coded\s+(\d+)\s*lines?/i], activity: 'Code Output', unit: 'LINES OF CODE', category: 'ENGINEERING STATS',
+    seasonAvg: [50, 200], leagueRank: [10, 30], careerHigh: [400, 1200], careerHighEvent: ['Hackathon Finals 2024', 'Sprint Demo Eve'],
+    commentary: ['Syntax error rate was historically low.', 'The variable naming? Chef\'s kiss.', 'Compiled on the first try. That\'s a statement.'] },
+  { patterns: [/completed?\s+(\d+)\s*task/i, /finished\s+(\d+)\s*task/i, /(\d+)\s*tasks?\s*(?:done|completed?|finished)/i], activity: 'Task Completion Rate', unit: 'TASKS CRUSHED', category: 'PRODUCTIVITY',
+    seasonAvg: [3, 7], leagueRank: [8, 25], careerHigh: [10, 20], careerHighEvent: ['End of Sprint 2024', 'Crunch Week Classic'],
+    commentary: ['Prioritization was surgical.', 'Zero scope creep. That\'s rare discipline.', 'Cleared the backlog like a veteran.'] },
+
+  // EXERCISE & HEALTH
+  { patterns: [/walked\s+(\d+)\s*(?:k\s*)?step/i, /(\d+)\s*(?:k\s*)?steps?\s*(?:walked|today)?/i, /took\s+(\d+)\s*(?:k\s*)?step/i], activity: 'Step Count', unit: 'STEPS', category: 'FITNESS ANALYTICS',
+    seasonAvg: [5000, 9000], leagueRank: [10, 30], careerHigh: [15000, 30000], careerHighEvent: ['Airport Layover Classic 2024', 'Disney World Marathon'],
+    commentary: ['Ground coverage metrics were elite.', 'Maintained pace through the afternoon lull. Veteran move.', 'Shoe wear pattern suggests optimal gait.'] },
+  { patterns: [/ran\s+(\d+)\s*mile/i, /(\d+)\s*miles?\s*(?:ran|run|jogged)/i, /jogged\s+(\d+)\s*mile/i], activity: 'Mileage', unit: 'MILES', category: 'CARDIO DIVISION',
+    seasonAvg: [2, 5], leagueRank: [10, 25], careerHigh: [8, 16], careerHighEvent: ['New Year Resolution Classic 2024', 'Pre-Wedding Shred'],
+    commentary: ['Splits were consistent. That\'s coaching.', 'Negative split in the back half? Championship mentality.', 'The stride looked effortless today.'] },
+  { patterns: [/did\s+(\d+)\s*pushup/i, /(\d+)\s*push[\s-]?ups?/i], activity: 'Push-Up Production', unit: 'PUSH-UPS', category: 'STRENGTH METRICS',
+    seasonAvg: [15, 35], leagueRank: [10, 30], careerHigh: [50, 120], careerHighEvent: ['Gym Bro Invitational 2024', 'New Year, New Me Classic'],
+    commentary: ['Form was textbook. Full extension.', 'That chest-to-floor depth? Referees would approve.', 'Core engagement was on another level.'] },
+  { patterns: [/slept\s+(\d+)\s*hour/i, /(\d+)\s*hours?\s*(?:of\s*)?sleep/i, /got\s+(\d+)\s*hours?\s*sleep/i], activity: 'Sleep Performance', unit: 'HOURS', category: 'RECOVERY METRICS',
+    seasonAvg: [5.5, 7.5], leagueRank: [10, 35], careerHigh: [10, 14], careerHighEvent: ['Rainy Sunday Invitational', 'Post-Thanksgiving Coma 2023'],
+    commentary: ['REM cycle efficiency was elite.', 'Pillow positioning showed veteran IQ.', 'Zero alarm snoozes. That\'s discipline.'] },
+  { patterns: [/did\s+(\d+)\s*squat/i, /(\d+)\s*squats?/i], activity: 'Squat Volume', unit: 'SQUATS', category: 'LEG DAY ANALYTICS',
+    seasonAvg: [15, 40], leagueRank: [10, 25], careerHigh: [60, 150], careerHighEvent: ['Leg Day Championship 2024', 'Staircase Training Camp'],
+    commentary: ['Depth was consistent. ATG verified.', 'Glute activation was off the charts.', 'Knees tracked perfectly over toes. That\'s elite mechanics.'] },
+  { patterns: [/did\s+(\d+)\s*sit[\s-]?up/i, /(\d+)\s*sit[\s-]?ups?/i, /(\d+)\s*crunches?/i], activity: 'Core Work Output', unit: 'REPS', category: 'CORE METRICS',
+    seasonAvg: [20, 50], leagueRank: [10, 30], careerHigh: [80, 200], careerHighEvent: ['Beach Season Prep 2024', 'Ab Challenge Finals'],
+    commentary: ['Spinal flexion was controlled throughout.', 'No momentum cheating detected. Pure core.', 'The burn tolerance was championship caliber.'] },
+
+  // SOCIAL & ENTERTAINMENT
+  { patterns: [/watched\s+(\d+)\s*episode/i, /(\d+)\s*episodes?\s*(?:watched|binged)/i, /binged\s+(\d+)/i], activity: 'Binge Efficiency', unit: 'EPISODES', category: 'STREAMING ANALYTICS',
+    seasonAvg: [2, 4], leagueRank: [10, 30], careerHigh: [8, 16], careerHighEvent: ['Sick Day Spectacular 2024', 'Holiday Break Invitational'],
+    commentary: ['Skip intro reflexes were sub-100ms.', 'Maintained attention through three consecutive recaps.', 'Bathroom break timing was impeccable.'] },
+  { patterns: [/read\s+(\d+)\s*page/i, /(\d+)\s*pages?\s*read/i], activity: 'Reading Yardage', unit: 'PAGES', category: 'INTELLECTUAL ATHLETICS',
+    seasonAvg: [15, 40], leagueRank: [5, 20], careerHigh: [80, 200], careerHighEvent: ['Beach Vacation Combine 2024', 'Insomnia Invitational'],
+    commentary: ['Comprehension rate was elite.', 'Zero re-reads required. That\'s focus.', 'Page turn cadence was historically smooth.'] },
+  { patterns: [/texted\s+(\d+)\s*(?:time|people|friend|message)/i, /sent\s+(\d+)\s*text/i, /(\d+)\s*texts?\s*sent/i], activity: 'Text Output', unit: 'MESSAGES', category: 'COMMUNICATION STATS',
+    seasonAvg: [15, 45], leagueRank: [15, 35], careerHigh: [80, 200], careerHighEvent: ['Group Chat Finals 2024', 'Birthday Notification Blitz'],
+    commentary: ['Emoji-to-word ratio was optimized.', 'Response time was sub-30 seconds. Elite.', 'Zero double texts. That\'s composure under pressure.'] },
+  { patterns: [/took\s+(\d+)\s*selfie/i, /(\d+)\s*selfies?/i, /(\d+)\s*photos?\s*(?:taken|took)/i], activity: 'Selfie Production', unit: 'SHOTS TAKEN', category: 'CONTENT CREATION',
+    seasonAvg: [2, 8], leagueRank: [15, 40], careerHigh: [15, 50], careerHighEvent: ['Golden Hour Classic 2024', 'Concert Invitational'],
+    commentary: ['Angle selection was decisive.', 'Filter usage showed veteran restraint.', 'Lighting adjustment IQ was off the charts.'] },
+  { patterns: [/scrolled\s+(?:for\s+)?(\d+)\s*(?:min|hour)/i, /(\d+)\s*(?:min(?:ute)?s?|hours?)\s*(?:of\s*)?(?:scrolling|on\s*(?:my\s*)?phone)/i], activity: 'Doom Scroll Index', unit: 'MINUTES', category: 'SCREEN TIME',
+    seasonAvg: [25, 60], leagueRank: [20, 45], careerHigh: [90, 240], careerHighEvent: ['Sunday Scaries Classic 2024', 'Insomnia Invitational'],
+    commentary: ['Thumb endurance was at an all-time high.', 'Algorithm resistance was low today.', 'Feed completion rate was historically dominant.'] },
+
+  // HOUSEHOLD
+  { patterns: [/did\s+(\d+)\s*load/i, /(\d+)\s*loads?\s*(?:of\s*)?laundry/i, /washed\s+(\d+)\s*load/i], activity: 'Laundry Throughput', unit: 'LOADS', category: 'DOMESTIC ANALYTICS',
+    seasonAvg: [1.5, 3.0], leagueRank: [10, 30], careerHigh: [4, 8], careerHighEvent: ['Move-In Day Classic 2024', 'Vacation Aftermath'],
+    commentary: ['Folding efficiency was in the 99th percentile.', 'Sort discipline was textbook.', 'Zero sock casualties. That is elite pair management.'] },
+  { patterns: [/washed\s+(\d+)\s*dish/i, /(\d+)\s*dishes?\s*(?:washed|cleaned)/i, /cleaned\s+(\d+)\s*dish/i], activity: 'Dish Clearing Rate', unit: 'DISHES', category: 'KITCHEN OPS',
+    seasonAvg: [5, 15], leagueRank: [10, 30], careerHigh: [25, 50], careerHighEvent: ['Thanksgiving Aftermath 2023', 'Dinner Party Overtime'],
+    commentary: ['Scrub technique was methodical.', 'Drying rack Tetris skills were elite.', 'Zero breakage. That\'s hands of a surgeon.'] },
+  { patterns: [/cleaned\s+(\d+)\s*room/i, /(\d+)\s*rooms?\s*cleaned/i], activity: 'Room Clear Rate', unit: 'ROOMS', category: 'DOMESTIC OPS',
+    seasonAvg: [1, 3], leagueRank: [5, 25], careerHigh: [5, 10], careerHighEvent: ['Parents Visiting Panic 2024', 'Spring Cleaning Invitational'],
+    commentary: ['Vacuum line precision was museum quality.', 'Surface coverage was complete. No corner left behind.', 'Showed up in a must-clean situation. That\'s character.'] },
+  { patterns: [/cooked\s+(\d+)\s*meal/i, /made\s+(\d+)\s*meal/i, /(\d+)\s*meals?\s*(?:cooked|prepared|made)/i], activity: 'Meal Prep Output', unit: 'MEALS', category: 'CULINARY STATS',
+    seasonAvg: [1, 2.5], leagueRank: [10, 30], careerHigh: [4, 8], careerHighEvent: ['Holiday Cooking Marathon 2023', 'Meal Prep Sunday Invitational'],
+    commentary: ['Flavor profile was aggressive yet balanced.', 'Mise en place was championship-level organized.', 'Pan management under heat was elite.'] },
+  { patterns: [/watered\s+(\d+)\s*plant/i, /(\d+)\s*plants?\s*watered/i], activity: 'Plant Care Index', unit: 'PLANTS', category: 'BOTANICAL OPS',
+    seasonAvg: [2, 6], leagueRank: [10, 25], careerHigh: [8, 20], careerHighEvent: ['Summer Drought Protocol 2024', 'Plant Parent Combine'],
+    commentary: ['Moisture distribution was uniform. Elite.', 'Leaf inspection showed veteran awareness.', 'Zero overwatering incidents. Root rot prevention at its finest.'] },
+
+  // SHOPPING & SPENDING
+  { patterns: [/spent\s+\$?(\d+)/i, /\$(\d+)\s*spent/i, /bought.*\$(\d+)/i], activity: 'Spending Burst', unit: 'DOLLARS', category: 'FINANCIAL ATHLETICS',
+    seasonAvg: [30, 80], leagueRank: [20, 45], careerHigh: [200, 800], careerHighEvent: ['Black Friday Championship 2023', 'Prime Day Invitational'],
+    commentary: ['Cart-to-checkout speed was record-setting.', 'Impulse control metrics were... not great.', 'Budget defense was porous today. Need more discipline.'] },
+  { patterns: [/bought\s+(\d+)\s*(?:thing|item)/i, /(\d+)\s*items?\s*(?:bought|purchased)/i, /purchased\s+(\d+)/i], activity: 'Purchase Volume', unit: 'ITEMS', category: 'RETAIL ANALYTICS',
+    seasonAvg: [2, 5], leagueRank: [15, 35], careerHigh: [10, 25], careerHighEvent: ['Amazon Cart Blowout 2024', 'Target Dollar Spot Invitational'],
+    commentary: ['Add-to-cart accuracy was surgical.', 'Showed patience in the checkout lane. Veteran move.', 'Coupon deployment was tactically flawless.'] },
+
+  // MISC LIFESTYLE
+  { patterns: [/told\s+(\d+)\s*(?:joke|pun)/i, /(\d+)\s*jokes?\s*told/i, /said\s+(\d+)\s*joke/i, /made\s+(\d+)\s*joke/i], activity: 'Comedy Output', unit: 'JOKES LANDED', category: 'HUMOR ANALYTICS',
+    seasonAvg: [2, 6], leagueRank: [15, 40], careerHigh: [8, 20], careerHighEvent: ['Office Party Invitational 2024', 'Family Dinner Showcase'],
+    commentary: ['Delivery timing was elite. Perfect pause.', 'Landing rate was above league average.', 'The callback in the third act? Hall of Fame setup.'] },
+  { patterns: [/pet(?:ted)?\s+(?:my\s+)?(?:dog|cat)\s+(\d+)\s*time/i, /(\d+)\s*(?:head\s*)?(?:pat|pet|scratch)(?:s|es)?/i, /gave\s+(\d+)\s*(?:pet|pat|belly\s*rub)/i], activity: 'Pet Affection Index', unit: 'PETS/PATS', category: 'COMPANIONSHIP STATS',
+    seasonAvg: [10, 30], leagueRank: [5, 15], careerHigh: [50, 100], careerHighEvent: ['Rainy Day Cuddle Classic', 'Welcome Home Championship'],
+    commentary: ['Scratch location accuracy was pinpoint.', 'Belly rub technique drew an audible response.', 'The good-boy/girl ratio was perfectly balanced.'] },
+  { patterns: [/said\s+(\d+)\s*(?:bad|swear|curse)\s*word/i, /(\d+)\s*(?:swear|curse)\s*words?/i, /swore\s+(\d+)\s*time/i], activity: 'Profanity Index', unit: 'EXPLETIVES', category: 'LANGUAGE ANALYTICS',
+    seasonAvg: [5, 15], leagueRank: [20, 50], careerHigh: [20, 60], careerHighEvent: ['Flat Tire Incident 2024', 'IKEA Assembly Classic'],
+    commentary: ['Vocabulary diversity was impressive.', 'Context-appropriate deployment showed maturity.', 'Volume control in public settings was questionable.'] },
+  { patterns: [/took\s+(\d+)\s*nap/i, /napped\s+(\d+)\s*time/i, /(\d+)\s*naps?/i], activity: 'Nap Efficiency', unit: 'NAPS', category: 'RECOVERY DIVISION',
+    seasonAvg: [0.5, 1.5], leagueRank: [10, 30], careerHigh: [3, 5], careerHighEvent: ['Lazy Sunday Championship', 'Post-Thanksgiving Classic 2023'],
+    commentary: ['Sleep onset speed was sub-5 minutes. Elite.', 'Woke up without alarm. Natural recovery instincts.', 'Couch utilization was optimal.'] },
+  { patterns: [/yawned\s+(\d+)\s*time/i, /(\d+)\s*yawns?/i], activity: 'Yawn Frequency', unit: 'YAWNS', category: 'FATIGUE METRICS',
+    seasonAvg: [5, 12], leagueRank: [15, 40], careerHigh: [15, 30], careerHighEvent: ['Monday 8AM Meeting', 'Afternoon Slump Championship'],
+    commentary: ['Jaw extension was maximal.', 'Triggered two sympathetic yawns. Contagion rate is elite.', 'Tried to hide it in the meeting. Failed. Relatable.'] },
+  { patterns: [/parked\s+(\d+)\s*time/i, /parallel\s*parked\s+(\d+)/i, /(\d+)\s*(?:parking|park)\s*(?:attempt|job)/i], activity: 'Parking Precision', unit: 'PARK JOBS', category: 'DRIVING ANALYTICS',
+    seasonAvg: [1, 3], leagueRank: [10, 25], careerHigh: [5, 10], careerHighEvent: ['Downtown Gauntlet 2024', 'Holiday Mall Classic'],
+    commentary: ['Curb distance was within regulation. Clean.', 'One-attempt success rate is hall-of-fame caliber.', 'Backup camera reliance was minimal. Old school.'] },
+  { patterns: [/drank?\s+(\d+)\s*smoothie/i, /(\d+)\s*smoothies?/i, /had\s+(\d+)\s*smoothie/i], activity: 'Smoothie Consumption', unit: 'SMOOTHIES', category: 'NUTRITION STATS',
+    seasonAvg: [0.5, 1.5], leagueRank: [5, 20], careerHigh: [3, 5], careerHighEvent: ['Post-Gym Recovery Classic', 'Detox Week Championship'],
+    commentary: ['Blend ratio was scientifically optimized.', 'Protein-to-fruit balance showed nutritional IQ.', 'No brain freeze incidents. Temperature management was elite.'] },
+  { patterns: [/ignored\s+(\d+)\s*(?:call|notification|alarm)/i, /(\d+)\s*(?:calls?|notifications?|alarms?)\s*ignored/i], activity: 'Ignore Rate', unit: 'IGNORED', category: 'AVOIDANCE ANALYTICS',
+    seasonAvg: [3, 8], leagueRank: [20, 50], careerHigh: [15, 30], careerHighEvent: ['Monday Morning Gauntlet', 'Ex Calling Marathon 2024'],
+    commentary: ['Notification dismissal speed was sub-200ms.', 'The discipline to not check? That\'s mental toughness.', 'Screen-down technique was executed flawlessly.'] },
+  { patterns: [/tripped\s+(\d+)\s*time/i, /(\d+)\s*(?:trip|stumble|fall)s?/i, /fell\s+(\d+)\s*time/i], activity: 'Trip/Stumble Count', unit: 'INCIDENTS', category: 'MOBILITY ANALYTICS',
+    seasonAvg: [0.3, 1.2], leagueRank: [30, 60], careerHigh: [3, 6], careerHighEvent: ['Icy Sidewalk Classic 2024', 'Dance Floor Disaster'],
+    commentary: ['Recovery balance was quick. Barely noticeable.', 'Played it off smooth. Elite composure.', 'Surface awareness needs work in the offseason.'] },
+  { patterns: [/(\d+)\s*(?:snooze|snoozed)/i, /snoozed\s+(\d+)\s*time/i, /hit\s*snooze\s+(\d+)/i], activity: 'Snooze Button Abuse', unit: 'SNOOZES', category: 'MORNING ANALYTICS',
+    seasonAvg: [1.5, 3.5], leagueRank: [25, 50], careerHigh: [6, 12], careerHighEvent: ['Winter Morning Classic', 'Post-Weekend Recovery'],
+    commentary: ['Arm reach accuracy to the nightstand was elite.', 'Eyes-closed navigation to snooze? That\'s muscle memory.', 'Alarm clock is demoralized. Might request a trade.'] },
+  { patterns: [/(\d+)\s*(?:high[\s-]?five|fist[\s-]?bump)/i, /high[\s-]?fived\s+(\d+)/i, /gave\s+(\d+)\s*high[\s-]?five/i], activity: 'High-Five Volume', unit: 'HIGH FIVES', category: 'CELEBRATION METRICS',
+    seasonAvg: [1, 4], leagueRank: [10, 30], careerHigh: [8, 20], careerHighEvent: ['Office Win Celebration 2024', 'Game Day Watch Party'],
+    commentary: ['Palm contact was crisp. Full sound.', 'Zero misses. Hand-eye coordination is elite.', 'The follow-through was textbook. Coaches dream of this.'] },
+  { patterns: [/(\d+)\s*(?:compliment|kind\s*word)/i, /gave\s+(\d+)\s*compliment/i, /complimented\s+(\d+)\s*(?:people|time)/i], activity: 'Compliment Distribution', unit: 'COMPLIMENTS', category: 'SOCIAL IMPACT',
+    seasonAvg: [1, 4], leagueRank: [5, 15], careerHigh: [6, 15], careerHighEvent: ['Team Building Retreat 2024', 'Wedding Season Classic'],
+    commentary: ['Sincerity metrics were off the charts.', 'Delivery was natural. Not forced. That\'s authentic.', 'Made someone\'s day. The advanced stat that matters.'] },
+  { patterns: [/(\d+)\s*(?:YouTube|video|tiktok)s?\s*(?:watched)?/i, /watched\s+(\d+)\s*(?:video|YouTube|tiktok)/i], activity: 'Video Consumption', unit: 'VIDEOS', category: 'CONTENT CONSUMPTION',
+    seasonAvg: [5, 15], leagueRank: [15, 40], careerHigh: [25, 60], careerHighEvent: ['Algorithm Rabbit Hole 2024', 'Recommended Feed Marathon'],
+    commentary: ['Skip ad reflexes were sub-human speed.', 'Maintained focus past the 3-second hook. Disciplined viewing.', 'Watch time contributed to a creator\'s monetization. Teamwork.'] },
+];
+
+// ── GENERIC FALLBACK ──
+const GENERIC = {
+  activity: 'Activity Output', unit: 'UNITS', category: 'GENERAL ANALYTICS',
+  seasonAvg: [1, 5], leagueRank: [15, 40], careerHigh: [5, 20], careerHighEvent: ['Random Tuesday 2024', 'Weekend Championship'],
+  commentary: ['Solid performance across the board.', 'Consistency is the hallmark of greatness.', 'Put the work in. Results will follow.']
+};
+
+const ANALYSTS = ['Stephen A.', 'Skip', 'Shannon', 'Pat McAfee', 'J.J. Redick', 'Doris Burke', 'Kirk Herbstreit', 'Tony Romo', 'Charles Barkley', 'Shaq'];
+
+// ── EXAMPLE PROMPTS ──
+const EXAMPLE_PROMPTS = [
+  'I ate 3 tacos',
+  'I drank 4 coffees',
+  'Had 5 meetings today',
+  'Walked 8000 steps',
+  'Watched 6 episodes',
+  'Did 30 push-ups',
+  'Sent 42 emails',
+  'Slept 9 hours',
+  'Read 50 pages',
+  'Told 3 jokes'
+];
+
+// ── STATE ──
+let history = JSON.parse(localStorage.getItem('statpadder_history') || '[]');
+let soundEnabled = true;
+let audioCtx = null;
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderExamples();
+  renderTicker();
+  renderHistory();
+
+  document.getElementById('analyze-btn').addEventListener('click', analyze);
+  document.getElementById('activity-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') analyze();
+  });
+  document.getElementById('sound-toggle').addEventListener('click', toggleSound);
+});
+
+function renderExamples() {
+  const el = document.getElementById('examples');
+  const shuffled = EXAMPLE_PROMPTS.sort(() => Math.random() - 0.5).slice(0, 6);
+  el.innerHTML = shuffled.map(ex =>
+    `<div class="example-chip" onclick="document.getElementById('activity-input').value='${ex}';analyze()">${ex}</div>`
+  ).join('');
+}
+
+function renderTicker() {
+  const items = [
+    '<span class="name">SARAH M.</span> Taco consumption up <span class="stat trend-up">+23%</span> this quarter',
+    '<span class="name">BREAKING:</span> Local man hits <span class="stat">7 snoozes</span> — sets new personal record',
+    '<span class="name">MIKE R.</span> Coffee intake <span class="stat">4 cups</span> — on pace for season high',
+    '<span class="name">JAMAL T.</span> Meeting survival streak hits <span class="stat trend-up">12 consecutive</span>',
+    '<span class="name">ALERT:</span> Nationwide nap frequency <span class="stat trend-up">up 15%</span> since daylight saving',
+    '<span class="name">LISA K.</span> Email volume <span class="stat trend-down">down 30%</span> — sources say inbox zero achieved',
+    '<span class="name">TRADE RUMOR:</span> Dog demands <span class="stat">more belly rubs</span> or threatens couch destruction',
+    '<span class="name">DAVE P.</span> Parallel parking <span class="stat trend-up">first attempt</span> — witnesses stunned',
+    '<span class="name">INJURY REPORT:</span> Right thumb questionable after <span class="stat">3hr doom scroll</span>',
+    '<span class="name">RECORD:</span> <span class="stat">47 episodes</span> binged in single weekend — league investigating',
+  ];
+  const doubled = items.concat(items);
+  document.getElementById('ticker').innerHTML = doubled.map(i => `<div class="ticker-item">${i}</div>`).join('');
+}
+
+// ── PARSE & MATCH ──
+function parseInput(text) {
+  for (const tpl of TEMPLATES) {
+    for (const pat of tpl.patterns) {
+      const m = text.match(pat);
+      if (m) {
+        const num = parseInt(m[1]);
+        if (!isNaN(num) && num > 0) return { template: tpl, count: num, raw: text };
+      }
+    }
+  }
+  // try to find any number
+  const numMatch = text.match(/(\d+)/);
+  if (numMatch) {
+    const num = parseInt(numMatch[1]);
+    if (num > 0) {
+      // try to extract activity name
+      const cleaned = text.replace(/\d+/g, '').replace(/\b(i|my|the|a|an|some|did|had|was|got|took|made|went)\b/gi, '').trim();
+      const actName = cleaned.length > 2 ? cleaned.toUpperCase().replace(/\s+/g, ' ').substring(0, 30) : 'ACTIVITY';
+      const gen = { ...GENERIC, activity: actName, unit: actName };
+      return { template: gen, count: num, raw: text };
+    }
+  }
+  return null;
+}
+
+function randBetween(a, b) { return +(a + Math.random() * (b - a)).toFixed(1); }
+function randInt(a, b) { return Math.floor(a + Math.random() * (b - a + 1)); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generateStats(parsed) {
+  const t = parsed.template;
+  const count = parsed.count;
+  const seasonAvg = randBetween(t.seasonAvg[0], t.seasonAvg[1]);
+  const leagueRank = randInt(t.leagueRank[0], t.leagueRank[1]);
+  const careerHigh = randInt(t.careerHigh[0], t.careerHigh[1]);
+  const careerHighEvent = pick(t.careerHighEvent);
+
+  // derived stats
+  const vsAvg = ((count / seasonAvg - 1) * 100).toFixed(0);
+  const streak = randInt(1, 8);
+  const percentile = Math.max(1, Math.min(99, 100 - leagueRank));
+
+  return {
+    activity: t.activity,
+    unit: t.unit,
+    category: t.category,
+    count,
+    seasonAvg,
+    leagueRank,
+    careerHigh,
+    careerHighEvent,
+    vsAvg,
+    streak,
+    percentile,
+    commentary: pick(t.commentary),
+    analyst: pick(ANALYSTS),
+    isCareerHigh: count >= careerHigh,
+    barPct: Math.min(100, Math.round((count / careerHigh) * 100))
+  };
+}
+
+// ── RENDER CARD ──
+function renderCard(stats) {
+  const card = document.getElementById('stat-card');
+  const vsClass = stats.vsAvg > 0 ? 'green' : stats.vsAvg < 0 ? 'red' : 'yellow';
+  const vsSign = stats.vsAvg > 0 ? '+' : '';
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  card.innerHTML = `
+    <div class="card-header">
+      <h2>${stats.activity}</h2>
+      <div class="category">${stats.category}</div>
+      ${stats.isCareerHigh ? '<div class="breaking">NEW CAREER HIGH</div>' : ''}
+    </div>
+    <div class="stat-hero">
+      <div class="hero-number">${stats.count}</div>
+      <div class="hero-details">
+        <div class="unit">${stats.unit}</div>
+        <div class="context">${stats.isCareerHigh ? 'CAREER HIGH! Previous: ' + (stats.careerHigh - randInt(1,3)) + ' (' + stats.careerHighEvent + ')' : 'Career High: ' + stats.careerHigh + ' (' + stats.careerHighEvent + ')'}</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="label">Season Avg</div>
+        <div class="value">${stats.seasonAvg}</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">vs Average</div>
+        <div class="value ${vsClass}">${vsSign}${stats.vsAvg}%</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">League Rank</div>
+        <div class="value yellow">Top ${stats.leagueRank}%</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Streak</div>
+        <div class="value">${stats.streak} days</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Percentile</div>
+        <div class="value green">${stats.percentile}th</div>
+      </div>
+      <div class="stat-box">
+        <div class="label">Career High</div>
+        <div class="value">${stats.careerHigh}</div>
+      </div>
+    </div>
+    <div class="stat-bar-section">
+      <div class="stat-bar-label">
+        <span>vs Career High</span>
+        <span class="pct">${stats.barPct}%</span>
+      </div>
+      <div class="stat-bar-track">
+        <div class="stat-bar-fill" id="stat-bar-fill"></div>
+      </div>
+    </div>
+    <div class="commentary">
+      <span class="analyst">${stats.analyst}:</span> "${stats.commentary}"
+    </div>
+    <div class="card-footer">
+      <div class="timestamp">${dateStr} | ${timeStr} ET</div>
+      <div class="share-btns">
+        <button class="share-btn" onclick="copyStats()">Copy</button>
+        <button class="share-btn" onclick="shareStats()">Share</button>
+        <button class="share-btn" onclick="tweetStats()">Post</button>
+      </div>
+    </div>
+  `;
+
+  card.classList.add('visible');
+  // animate bar
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.getElementById('stat-bar-fill').style.width = stats.barPct + '%';
+    });
+  });
+}
+
+// ── SHARE FUNCTIONS ──
+let lastStats = null;
+
+function getShareText() {
+  if (!lastStats) return '';
+  return `${lastStats.activity}: ${lastStats.count} ${lastStats.unit}\nSeason Avg: ${lastStats.seasonAvg} | League Rank: Top ${lastStats.leagueRank}% | Career High: ${lastStats.careerHigh}\n"${lastStats.commentary}" - ${lastStats.analyst}\n\nvia STATPADDER`;
+}
+
+function copyStats() {
+  navigator.clipboard.writeText(getShareText()).then(() => showToast('Copied to clipboard!'));
+}
+
+function shareStats() {
+  if (navigator.share) {
+    navigator.share({ title: 'STATPADDER', text: getShareText() }).catch(() => {});
+  } else {
+    copyStats();
+  }
+}
+
+function tweetStats() {
+  const text = encodeURIComponent(getShareText());
+  window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── SOUND ──
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('sound-toggle');
+  btn.innerHTML = soundEnabled ? '&#x1f50a;' : '&#x1f507;';
+  btn.classList.toggle('muted', !soundEnabled);
+}
+
+function playHighlightSound() {
+  if (!soundEnabled) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // ESPN-style dramatic stinger
+    const now = audioCtx.currentTime;
+    // bass hit
+    const osc1 = audioCtx.createOscillator();
+    const gain1 = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(80, now);
+    osc1.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    gain1.gain.setValueAtTime(0.6, now);
+    gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    osc1.connect(gain1).connect(audioCtx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.4);
+
+    // rising synth
+    const osc2 = audioCtx.createOscillator();
+    const gain2 = audioCtx.createGain();
+    osc2.type = 'sawtooth';
+    osc2.frequency.setValueAtTime(200, now + 0.05);
+    osc2.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+    gain2.gain.setValueAtTime(0.15, now + 0.05);
+    gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+    osc2.connect(gain2).connect(audioCtx.destination);
+    osc2.start(now + 0.05);
+    osc2.stop(now + 0.35);
+
+    // high chime
+    const osc3 = audioCtx.createOscillator();
+    const gain3 = audioCtx.createGain();
+    osc3.type = 'triangle';
+    osc3.frequency.setValueAtTime(880, now + 0.15);
+    gain3.gain.setValueAtTime(0.2, now + 0.15);
+    gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+    osc3.connect(gain3).connect(audioCtx.destination);
+    osc3.start(now + 0.15);
+    osc3.stop(now + 0.6);
+
+    // second chime (higher)
+    const osc4 = audioCtx.createOscillator();
+    const gain4 = audioCtx.createGain();
+    osc4.type = 'triangle';
+    osc4.frequency.setValueAtTime(1100, now + 0.3);
+    gain4.gain.setValueAtTime(0.15, now + 0.3);
+    gain4.gain.exponentialRampToValueAtTime(0.01, now + 0.7);
+    osc4.connect(gain4).connect(audioCtx.destination);
+    osc4.start(now + 0.3);
+    osc4.stop(now + 0.7);
+
+  } catch(e) {}
+}
+
+// ── ANALYZE ──
+function analyze() {
+  const input = document.getElementById('activity-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const parsed = parseInput(text);
+  if (!parsed) {
+    showToast('No stat detected. Try: "I ate 3 tacos"');
+    return;
+  }
+
+  const stats = generateStats(parsed);
+  lastStats = stats;
+  renderCard(stats);
+  playHighlightSound();
+
+  // save to history
+  history.unshift({ text, stats, timestamp: Date.now() });
+  if (history.length > 20) history = history.slice(0, 20);
+  localStorage.setItem('statpadder_history', JSON.stringify(history));
+  renderHistory();
+
+  input.value = '';
+  input.focus();
+
+  // scroll to card on mobile
+  if (window.innerWidth < 600) {
+    document.getElementById('stat-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (history.length === 0) {
+    el.innerHTML = '<div style="color:#444;text-align:center;padding:20px;font-style:italic;">No stats recorded yet. Start padding.</div>';
+    return;
+  }
+  el.innerHTML = history.map((h, i) => {
+    const ago = timeAgo(h.timestamp);
+    return `<div class="history-item" onclick="replayHistory(${i})">
+      <div class="h-activity">${h.stats.activity}</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="color:#555;font-size:11px;">${ago}</span>
+        <div class="h-stat">${h.stats.count}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function replayHistory(idx) {
+  const h = history[idx];
+  lastStats = h.stats;
+  renderCard(h.stats);
+  playHighlightSound();
+  document.getElementById('stat-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  return days + 'd ago';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProcrastiBake - Why Baking Is More Important Than Work</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Nunito:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --warm-cream: #FFF8F0;
+    --bread-crust: #8B5E3C;
+    --golden-brown: #C4883A;
+    --butter-yellow: #F5D78E;
+    --flour-white: #FDF6EC;
+    --oven-red: #D4543A;
+    --chocolate: #3E2723;
+    --dough: #E8D5B7;
+    --shadow: rgba(139, 94, 60, 0.15);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--warm-cream);
+    color: var(--chocolate);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Floating bakery particles */
+  .particle {
+    position: fixed;
+    pointer-events: none;
+    opacity: 0.12;
+    font-size: 2rem;
+    animation: floatUp 12s linear infinite;
+    z-index: 0;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.12; }
+    90% { opacity: 0.12; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 6vw, 4rem);
+    font-weight: 900;
+    color: var(--bread-crust);
+    text-shadow: 2px 2px 0 var(--butter-yellow);
+    margin-bottom: 0.3rem;
+  }
+  header p {
+    font-size: 1.1rem;
+    color: var(--golden-brown);
+    font-weight: 600;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Main button */
+  .bake-btn {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    margin: 1.5rem auto;
+    padding: 1.2rem 2rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--flour-white);
+    background: linear-gradient(135deg, var(--oven-red), var(--bread-crust));
+    border: none;
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 24px var(--shadow), 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .bake-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15));
+    pointer-events: none;
+  }
+  .bake-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 32px var(--shadow); }
+  .bake-btn:active { transform: translateY(1px); }
+
+  /* Justification card */
+  .card {
+    background: var(--flour-white);
+    border-radius: 20px;
+    padding: 2rem;
+    margin: 1.5rem auto;
+    max-width: 560px;
+    box-shadow: 0 4px 20px var(--shadow);
+    border: 2px solid var(--dough);
+    display: none;
+    animation: popIn 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes popIn {
+    0% { transform: scale(0.8) rotate(-2deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+  }
+  .card.visible { display: block; }
+  .card .icon { font-size: 3rem; text-align: center; margin-bottom: 0.8rem; }
+  .card .justification {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    text-align: center;
+    font-weight: 600;
+    color: var(--bread-crust);
+  }
+  .card .category {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.3rem 1rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .cat-health { background: #E8F5E9; color: #2E7D32; }
+  .cat-science { background: #E3F2FD; color: #1565C0; }
+  .cat-emergency { background: #FBE9E7; color: #C62828; }
+  .cat-philosophy { background: #F3E5F5; color: #6A1B9A; }
+  .cat-economic { background: #FFF8E1; color: #F57F17; }
+  .cat-social { background: #FCE4EC; color: #AD1457; }
+  .cat-spiritual { background: #EFEBE9; color: #4E342E; }
+
+  /* Score section */
+  .score-section {
+    text-align: center;
+    margin: 2rem auto;
+    max-width: 480px;
+  }
+  .score-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--golden-brown);
+    margin-bottom: 0.5rem;
+  }
+  .score-bar-bg {
+    height: 28px;
+    background: var(--dough);
+    border-radius: 14px;
+    overflow: hidden;
+    position: relative;
+  }
+  .score-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--butter-yellow), var(--golden-brown), var(--oven-red));
+    border-radius: 14px;
+    transition: width 0.6s cubic-bezier(.34,1.56,.64,1);
+    min-width: 0;
+  }
+  .score-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--bread-crust);
+    margin-top: 0.5rem;
+  }
+  .score-verdict {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-top: 0.3rem;
+  }
+
+  /* Recipe suggestion */
+  .recipe-section {
+    background: linear-gradient(135deg, var(--butter-yellow), var(--dough));
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    margin: 2rem auto;
+    max-width: 560px;
+    text-align: center;
+    box-shadow: 0 4px 16px var(--shadow);
+  }
+  .recipe-section h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--bread-crust);
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+  }
+  .recipe-name {
+    font-size: 1.5rem;
+    font-weight: 900;
+    font-family: 'Playfair Display', serif;
+    color: var(--oven-red);
+    margin: 0.5rem 0;
+  }
+  .recipe-time {
+    font-size: 0.9rem;
+    color: var(--bread-crust);
+    opacity: 0.8;
+  }
+  .recipe-reason {
+    font-size: 0.95rem;
+    color: var(--chocolate);
+    margin-top: 0.5rem;
+    font-style: italic;
+  }
+  .recipe-btn {
+    margin-top: 1rem;
+    padding: 0.7rem 1.5rem;
+    background: var(--bread-crust);
+    color: var(--flour-white);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .recipe-btn:hover { background: var(--oven-red); transform: scale(1.05); }
+
+  /* Timer */
+  .timer-section {
+    background: var(--flour-white);
+    border: 2px dashed var(--golden-brown);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    margin: 2rem auto;
+    max-width: 560px;
+    text-align: center;
+  }
+  .timer-section h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--bread-crust);
+    margin-bottom: 0.3rem;
+  }
+  .timer-subtitle {
+    font-size: 0.85rem;
+    color: var(--golden-brown);
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+  .timer-display {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--oven-red);
+    margin: 0.5rem 0;
+    letter-spacing: 2px;
+  }
+  .timer-extensions {
+    font-size: 0.85rem;
+    color: var(--golden-brown);
+    margin-bottom: 1rem;
+  }
+  .timer-btns { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  .timer-btns button {
+    padding: 0.6rem 1.3rem;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .timer-btns button:hover { transform: scale(1.05); }
+  .btn-start { background: var(--golden-brown); color: white; }
+  .btn-extend { background: var(--butter-yellow); color: var(--bread-crust); }
+  .btn-stop { background: var(--oven-red); color: white; }
+  .timer-excuse {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--bread-crust);
+    font-style: italic;
+    min-height: 1.4em;
+  }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin: 2rem auto;
+    max-width: 560px;
+  }
+  .stat-box {
+    background: var(--flour-white);
+    border-radius: 14px;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--oven-red);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    color: var(--golden-brown);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 0.85rem;
+    color: var(--golden-brown);
+    opacity: 0.7;
+  }
+
+  @media (max-width: 500px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .card { padding: 1.5rem 1.2rem; }
+    .timer-display { font-size: 2.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<header>
+  <h1>ProcrastiBake</h1>
+  <p>Scientifically-backed reasons to bake instead of working</p>
+</header>
+
+<div class="container">
+
+  <button class="bake-btn" id="mainBtn" onclick="generateJustification()">
+    Why I Should Bake Instead
+  </button>
+
+  <div class="card" id="card">
+    <div class="icon" id="cardIcon"></div>
+    <div class="justification" id="cardText"></div>
+    <div style="text-align:center">
+      <span class="category" id="cardCat"></span>
+    </div>
+  </div>
+
+  <div class="score-section">
+    <div class="score-label">Procrastibaking Score</div>
+    <div class="score-bar-bg"><div class="score-bar" id="scoreBar" style="width:0%"></div></div>
+    <div class="score-text" id="scoreText">0%</div>
+    <div class="score-verdict" id="scoreVerdict">You're still pretending to work</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-num" id="statReasons">0</div>
+      <div class="stat-label">Reasons Found</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statMinutes">0</div>
+      <div class="stat-label">Min Avoided Work</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" id="statLoaves">0</div>
+      <div class="stat-label">Imaginary Loaves</div>
+    </div>
+  </div>
+
+  <div class="recipe-section">
+    <h3>You Should Definitely Make...</h3>
+    <div class="recipe-name" id="recipeName">Press the button first!</div>
+    <div class="recipe-time" id="recipeTime"></div>
+    <div class="recipe-reason" id="recipeReason"></div>
+    <button class="recipe-btn" onclick="newRecipe()">Another Recipe (for research)</button>
+  </div>
+
+  <div class="timer-section">
+    <h3>"Just 5 More Minutes"</h3>
+    <div class="timer-subtitle">A timer that understands you need more time</div>
+    <div class="timer-display" id="timerDisplay">5:00</div>
+    <div class="timer-extensions" id="timerExtensions"></div>
+    <div class="timer-btns">
+      <button class="btn-start" id="btnStart" onclick="startTimer()">Start</button>
+      <button class="btn-extend" onclick="extendTimer()">Just 5 More Minutes</button>
+      <button class="btn-stop" onclick="stopTimer()">Back to Work (lol)</button>
+    </div>
+    <div class="timer-excuse" id="timerExcuse"></div>
+  </div>
+
+</div>
+
+<footer>
+  ProcrastiBake &mdash; Because that deadline can wait, but the dough can't.
+</footer>
+
+<script>
+const justifications = [
+  { text: "Studies show that kneading dough reduces cortisol by 47% (source: my vibes)", icon: "🧘", cat: "science", catLabel: "Science*" },
+  { text: "The sourdough starter will DIE if I don't feed it. This is a MEDICAL EMERGENCY.", icon: "🚨", cat: "emergency", catLabel: "Emergency" },
+  { text: "Baking is basically chemistry. I'm doing STEM right now.", icon: "🔬", cat: "science", catLabel: "Science*" },
+  { text: "Marie Curie definitely took pastry breaks. You can't prove she didn't.", icon: "👩‍🔬", cat: "science", catLabel: "Science*" },
+  { text: "My coworkers will respect me more if I bring homemade cookies to the next meeting. This is a CAREER MOVE.", icon: "📈", cat: "economic", catLabel: "Career Strategy" },
+  { text: "The oven needs to preheat for 15 minutes. That's dead time I can't work during. Might as well start now.", icon: "⏰", cat: "philosophy", catLabel: "Logic" },
+  { text: "I read that the smell of fresh bread increases home value by 3%. I'm basically INVESTING.", icon: "🏠", cat: "economic", catLabel: "Investment" },
+  { text: "If I don't use this flour by next month it expires. I'm PREVENTING WASTE. This is an environmental act.", icon: "🌍", cat: "philosophy", catLabel: "Environmental" },
+  { text: "Psychologists say creative breaks improve productivity by 200%. Baking IS the productivity hack.", icon: "🧠", cat: "science", catLabel: "Neuroscience*" },
+  { text: "My grandmother's spirit is literally guiding me to the kitchen right now. You want me to IGNORE my grandmother?", icon: "👵", cat: "spiritual", catLabel: "Ancestral" },
+  { text: "The butter is already at room temperature. Do you know how long that took? I can't waste softened butter. That's a WAR CRIME.", icon: "🧈", cat: "emergency", catLabel: "Urgent" },
+  { text: "I need to practice for the Great British Bake Off. What if they call me TOMORROW?", icon: "📺", cat: "economic", catLabel: "Career Prep" },
+  { text: "Banana bread prevents banana waste. I'm doing God's work.", icon: "🍌", cat: "spiritual", catLabel: "Divine Mission" },
+  { text: "My blood sugar is low. I need to bake something for my HEALTH. This is self-care, not procrastination.", icon: "❤️", cat: "health", catLabel: "Medical" },
+  { text: "Ancient Romans built an empire on bread. I'm just following historical best practices.", icon: "🏛️", cat: "philosophy", catLabel: "Historical" },
+  { text: "If the power goes out, only people who know how to bake will survive. This is DISASTER PREPAREDNESS.", icon: "⚡", cat: "emergency", catLabel: "Survival" },
+  { text: "You can't send an email that smells like cinnamon rolls. Baking > email. Case closed.", icon: "📧", cat: "philosophy", catLabel: "Logic" },
+  { text: "Kneading dough is basically a forearm workout. I'm going to the GYM right now.", icon: "💪", cat: "health", catLabel: "Fitness" },
+  { text: "The eggs are at peak freshness TODAY. Tomorrow they'll be slightly less peak. I refuse to bake with sub-peak eggs.", icon: "🥚", cat: "emergency", catLabel: "Time-Sensitive" },
+  { text: "Albert Einstein played violin to think better. I bake. We are literally the same.", icon: "🎻", cat: "science", catLabel: "Genius Protocol" },
+  { text: "Technically, if I bake enough cookies to sell, this IS my job. I'm PIVOTING.", icon: "💼", cat: "economic", catLabel: "Entrepreneurship" },
+  { text: "The kitchen is the only room in the house that truly understands me right now.", icon: "🏠", cat: "philosophy", catLabel: "Emotional" },
+  { text: "My therapist said I need to 'engage in mindful activities.' She basically PRESCRIBED baking.", icon: "🛋️", cat: "health", catLabel: "Therapy" },
+  { text: "I'll be MORE productive after I bake. This isn't procrastination. It's STRATEGIC DELAY.", icon: "♟️", cat: "economic", catLabel: "Strategy" },
+  { text: "The yeast is alive. It has feelings. It wants to become bread. Who am I to deny a living organism its DESTINY?", icon: "🦠", cat: "spiritual", catLabel: "Moral Duty" },
+  { text: "My Slack status says 'Deep Work.' Elbow-deep in dough IS deep work.", icon: "💻", cat: "philosophy", catLabel: "Reframing" },
+  { text: "A study from the University of Absolutely Real found that people who bake live 7 years longer.", icon: "📊", cat: "science", catLabel: "Longevity Research*" },
+  { text: "I'm stress-testing my oven's reliability. This is QUALITY ASSURANCE. I should put this on my resume.", icon: "🔧", cat: "economic", catLabel: "QA Testing" },
+  { text: "What if there's a surprise bake sale at school tomorrow? I need to be PREPARED. Think of the children.", icon: "🧒", cat: "social", catLabel: "Parenting" },
+  { text: "This isn't procrastination. This is a SENSORY RESET. My neurons need vanilla extract.", icon: "🧪", cat: "science", catLabel: "Neurochemistry*" },
+  { text: "If I time it right, the cookies will be done exactly when my focus returns. It's called SYNCHRONIZATION.", icon: "⏱️", cat: "philosophy", catLabel: "Time Management" },
+  { text: "The baking subreddit just posted a challenge. My internet reputation is at STAKE.", icon: "🏆", cat: "social", catLabel: "Social Standing" },
+  { text: "Flour has no screen. Butter has no notifications. The kitchen is the last screen-free sanctuary.", icon: "📵", cat: "health", catLabel: "Digital Detox" },
+  { text: "The dopamine from checking email: 0.3 units. The dopamine from pulling bread from the oven: 847 units. I'm OPTIMIZING.", icon: "📈", cat: "science", catLabel: "Dopamine Science*" },
+  { text: "I physically cannot concentrate knowing there are chocolate chips in the pantry that aren't in cookie form.", icon: "🍫", cat: "health", catLabel: "Mental Health" },
+  { text: "My sourdough starter has been alive longer than most of my houseplants. It's basically family. Family comes FIRST.", icon: "👨‍👩‍👧", cat: "social", catLabel: "Family Values" },
+  { text: "Leonardo da Vinci was a procrastinator and he turned out FINE. I'm in excellent historical company.", icon: "🎨", cat: "philosophy", catLabel: "Art History" },
+  { text: "According to my calculations, the cost of buying bread vs. baking it saves $0.37 per loaf. That's $19.24 a year. I'm being FINANCIALLY RESPONSIBLE.", icon: "💰", cat: "economic", catLabel: "Personal Finance" },
+  { text: "I just remembered that the Maillard reaction is the most beautiful chemical process known to humanity. I need to witness it. FOR SCIENCE.", icon: "🔥", cat: "science", catLabel: "Chemistry" },
+  { text: "Fresh-baked bread is technically a love language. I'm COMMUNICATING.", icon: "💕", cat: "social", catLabel: "Relationships" },
+  { text: "My work laptop is at 12% battery. While it charges, I might as well bake. It's called EFFICIENCY.", icon: "🔋", cat: "philosophy", catLabel: "Efficiency" },
+  { text: "The humidity is PERFECT for bread today. This atmospheric window won't last. It's now or never.", icon: "🌤️", cat: "emergency", catLabel: "Weather Alert" },
+  { text: "I need to practice measuring in grams because I might move to Europe someday. This is CULTURAL PREPARATION.", icon: "⚖️", cat: "philosophy", catLabel: "Global Readiness" },
+  { text: "Baking involves fractions. This is basically homeschool math. I'm LEARNING.", icon: "📐", cat: "science", catLabel: "Education" },
+  { text: "If I bring brownies to the office, nobody will notice I didn't finish the report. This is TACTICAL.", icon: "🥷", cat: "economic", catLabel: "Office Warfare" },
+  { text: "The dishwasher is running and the kitchen is already messy. Marginal mess cost is ZERO. The economics demand I bake.", icon: "🍽️", cat: "economic", catLabel: "Marginal Economics" },
+  { text: "What would Julia Child do? She would BAKE. And she would NOT feel guilty about it.", icon: "👩‍🍳", cat: "spiritual", catLabel: "WWJCD" },
+  { text: "The smell of baking has been proven to make people more agreeable. I'm baking before my performance review. This is STRATEGY.", icon: "🤝", cat: "economic", catLabel: "Negotiation Prep" },
+  { text: "I can't let Big Bread win. Every homemade loaf is a REVOLUTIONARY ACT against corporate bakeries.", icon: "✊", cat: "philosophy", catLabel: "Anti-Capitalist" },
+  { text: "My hands are cold. Kneading dough will warm them up. This is THERMOREGULATION, not procrastination.", icon: "🧤", cat: "health", catLabel: "Body Temperature" },
+  { text: "I just realized I've never made a croissant from scratch. This is a GAP IN MY RESUME and frankly embarrassing.", icon: "🥐", cat: "economic", catLabel: "Skill Development" },
+  { text: "Baking requires patience and discipline. By baking, I am building CHARACTER. My boss should be THANKING me.", icon: "🎖️", cat: "philosophy", catLabel: "Personal Growth" },
+  { text: "The butter is about to expire in 3 weeks. That's practically TOMORROW in butter years.", icon: "📅", cat: "emergency", catLabel: "Expiration Crisis" },
+  { text: "I need to test if my smoke detector works. Baking is the safest way to do this. SAFETY FIRST.", icon: "🚒", cat: "emergency", catLabel: "Safety Audit" },
+  { text: "Neuroscience shows that the prefrontal cortex recovers during tactile activities. I'm REBOOTING MY BRAIN with pie crust.", icon: "🧠", cat: "science", catLabel: "Cognitive Reset*" },
+  { text: "My neighbor brought me tomatoes. Social contract DEMANDS I return baked goods. This is DIPLOMACY.", icon: "🏘️", cat: "social", catLabel: "Neighbor Relations" },
+  { text: "You can't eat a spreadsheet. You CAN eat a scone. Scone > spreadsheet. Q.E.D.", icon: "📊", cat: "philosophy", catLabel: "Mathematical Proof" },
+  { text: "Every great civilization was built on grain. By baking bread, I am UPHOLDING CIVILIZATION ITSELF.", icon: "🌾", cat: "spiritual", catLabel: "Civilizational" },
+  { text: "If I bake now, future me will have snacks and won't need to stop working later. I'm doing future me a FAVOR.", icon: "🔮", cat: "philosophy", catLabel: "Time Travel Logic" },
+  { text: "A clean kitchen inspires baking. A messy kitchen requires cleaning before work. Either way: BAKING.", icon: "🧹", cat: "philosophy", catLabel: "Inevitable" },
+  { text: "I subscribe to 14 baking YouTube channels. I need to APPLY what I've learned. Otherwise, what was the point?", icon: "📺", cat: "philosophy", catLabel: "ROI on Learning" },
+  { text: "If I don't bake these cookies, I'll order cookies online. That costs $15 + shipping. Baking SAVES MONEY. This is fiscal duty.", icon: "💵", cat: "economic", catLabel: "Fiscal Responsibility" },
+  { text: "My kitchen scale's battery is at 50%. If I don't use it NOW, it might die before I can bake. EMERGENCY.", icon: "🪫", cat: "emergency", catLabel: "Equipment Failure Risk" },
+  { text: "Harvard Business Review says CEOs who cook are 23% more empathetic leaders. I'm developing EXECUTIVE SKILLS.", icon: "🎓", cat: "economic", catLabel: "Leadership Training" }
+];
+
+const recipes = [
+  { name: "Emotional Support Banana Bread", time: "1 hour", reason: "Those bananas are literally rotting. This is a RESCUE MISSION." },
+  { name: "Anxiety-Reducing Chocolate Chip Cookies", time: "30 min", reason: "Prescribed by Dr. Me, the foremost authority on your feelings." },
+  { name: "Procrastination Focaccia", time: "3 hours (the dough needs REST and so do you)", reason: "Nothing says 'I'm busy' like waiting for dough to rise." },
+  { name: "Deadline-Dodging Cinnamon Rolls", time: "2.5 hours", reason: "The spiral shape represents the cycle of procrastination. It's ART." },
+  { name: "Strategic Delay Sourdough", time: "24 hours", reason: "Now you're committed. Can't work AND abandon a sourdough." },
+  { name: "Crisis Management Brownies", time: "40 min", reason: "The only crisis here is that these don't exist yet." },
+  { name: "Productivity Theater Scones", time: "25 min", reason: "Fast enough that you can pretend you baked during a break." },
+  { name: "Executive Decision Croissants", time: "12 hours", reason: "This is the kind of bold, time-consuming decision that leaders make." },
+  { name: "Burnout Prevention Blueberry Muffins", time: "35 min", reason: "Fruit = healthy. Healthy = self-care. Self-care = mandatory." },
+  { name: "Meeting-Avoidance Macarons", time: "4 hours", reason: "Sorry, can't attend. Macarons need my undivided attention." },
+  { name: "Email-Ignoring Eclairs", time: "2 hours", reason: "Choux pastry doesn't care about your inbox. Be more like choux pastry." },
+  { name: "Quarter-Life Crisis Quiche", time: "1 hour", reason: "It's savory, so technically it's LUNCH PREP, not baking." },
+  { name: "Imposter Syndrome Pumpkin Pie", time: "1.5 hours", reason: "At least you won't feel like an imposter baker after making this." },
+  { name: "Tax-Avoiding Tiramisu", time: "4 hours (plus overnight)", reason: "Too complex to think about anything else, including responsibilities." },
+  { name: "Rage-Kneading Pretzel Bites", time: "2 hours", reason: "Channel your frustration into gluten development. Therapists HATE this trick." },
+  { name: "Just-One-More-Episode Lemon Bars", time: "45 min", reason: "The zesting alone is a full meditation session." },
+  { name: "Sunday Scaries Challah", time: "4 hours", reason: "Braiding bread is the only thing keeping society together right now." },
+  { name: "Passive-Aggressive Pavlova", time: "3 hours", reason: "I'm not upset about the meeting. I'm making MERINGUE." },
+  { name: "Existential Dread Danish", time: "6 hours", reason: "Life is short. Laminated dough is long. Find meaning in the layers." },
+  { name: "ADHD Hyperfocus Artisan Bread", time: "18 hours", reason: "You finally found the thing that holds your attention. Don't fight it." }
+];
+
+const timerExcuses = [
+  "The cookies aren't GOLDEN enough yet. 5 more minutes.",
+  "I need to check if the internal temperature hit 200F. 5 more minutes.",
+  "The crust needs to set. Rushing this would be IRRESPONSIBLE.",
+  "I smell... almost done. Almost. 5 more minutes to be sure.",
+  "The recipe says 'until golden brown' not 'until sort of brown.'",
+  "I should make a second batch while the oven is hot. EFFICIENCY.",
+  "The cooling rack isn't ready. I need 5 minutes to... find it.",
+  "What if I under-baked it? Food safety is NO JOKE.",
+  "I need to taste-test. For QUALITY ASSURANCE. That takes time.",
+  "The frosting needs to cool before I can ice these. PHYSICS demands 5 more minutes.",
+  "I just realized I should make the cream cheese frosting from scratch too.",
+  "My kitchen timer is in Celsius. I need 5 more minutes to convert.",
+  "The steam hasn't fully escaped. Cutting now would RUIN the crumb structure.",
+  "I need to photograph these for Instagram. CONTENT CREATION is work.",
+  "One more minute per cookie. There are 24 cookies. So... 5 more minutes.",
+];
+
+const verdicts = [
+  { max: 10, text: "You're still pretending to work", color: "#666" },
+  { max: 25, text: "The kitchen is calling...", color: "#8B5E3C" },
+  { max: 40, text: "You've made a compelling case", color: "#C4883A" },
+  { max: 55, text: "Honestly, you should be baking", color: "#D4883A" },
+  { max: 70, text: "WORK CAN WAIT. PREHEAT THE OVEN.", color: "#D4643A" },
+  { max: 85, text: "You are MORALLY OBLIGATED to bake", color: "#D4543A" },
+  { max: 95, text: "NOT baking at this point is NEGLIGENCE", color: "#C62828" },
+  { max: 101, text: "YOU ARE A BAKER NOW. ACCEPT YOUR DESTINY.", color: "#B71C1C" },
+];
+
+let score = 0;
+let reasonCount = 0;
+let minutesAvoided = 0;
+let loaves = 0;
+let usedIndices = [];
+
+let timerInterval = null;
+let timerSeconds = 300;
+let extensions = 0;
+
+// Particles
+function createParticles() {
+  const icons = ['🍞','🥐','🧁','🍰','🥖','🍪','🎂','🥧','🍩','🧈','🥚','🌾'];
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.textContent = icons[Math.floor(Math.random() * icons.length)];
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDelay = Math.random() * 12 + 's';
+    p.style.animationDuration = (10 + Math.random() * 8) + 's';
+    p.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+    container.appendChild(p);
+  }
+}
+createParticles();
+
+function generateJustification() {
+  if (usedIndices.length >= justifications.length) usedIndices = [];
+  let idx;
+  do { idx = Math.floor(Math.random() * justifications.length); }
+  while (usedIndices.includes(idx));
+  usedIndices.push(idx);
+
+  const j = justifications[idx];
+  const card = document.getElementById('card');
+  document.getElementById('cardIcon').textContent = j.icon;
+  document.getElementById('cardText').textContent = j.text;
+  const catEl = document.getElementById('cardCat');
+  catEl.textContent = j.catLabel;
+  catEl.className = 'category cat-' + j.cat;
+  card.classList.remove('visible');
+  void card.offsetWidth;
+  card.classList.add('visible');
+
+  reasonCount++;
+  minutesAvoided += Math.floor(3 + Math.random() * 12);
+  loaves += Math.random() < 0.4 ? 1 : 0;
+  score = Math.min(100, score + 4 + Math.floor(Math.random() * 8));
+
+  updateStats();
+  if (reasonCount === 1) newRecipe();
+}
+
+function updateStats() {
+  document.getElementById('statReasons').textContent = reasonCount;
+  document.getElementById('statMinutes').textContent = minutesAvoided;
+  document.getElementById('statLoaves').textContent = loaves;
+
+  document.getElementById('scoreBar').style.width = score + '%';
+  document.getElementById('scoreText').textContent = score + '%';
+
+  const v = verdicts.find(v => score < v.max) || verdicts[verdicts.length - 1];
+  const el = document.getElementById('scoreVerdict');
+  el.textContent = v.text;
+  el.style.color = v.color;
+}
+
+function newRecipe() {
+  const r = recipes[Math.floor(Math.random() * recipes.length)];
+  document.getElementById('recipeName').textContent = r.name;
+  document.getElementById('recipeTime').textContent = 'Time: ' + r.time;
+  document.getElementById('recipeReason').textContent = '"' + r.reason + '"';
+}
+
+// Timer
+function formatTime(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function startTimer() {
+  if (timerInterval) return;
+  document.getElementById('btnStart').textContent = 'Running...';
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      timerSeconds = 300;
+      extensions = 0;
+      document.getElementById('timerDisplay').textContent = "Time's up! (lol sure)";
+      document.getElementById('btnStart').textContent = 'Start';
+      document.getElementById('timerExtensions').textContent = '';
+      document.getElementById('timerExcuse').textContent = 'Back to work? ...Right? ...Hello?';
+    }
+  }, 1000);
+}
+
+function extendTimer() {
+  timerSeconds += 300;
+  extensions++;
+  document.getElementById('timerDisplay').textContent = formatTime(timerSeconds);
+  const total = extensions * 5;
+  document.getElementById('timerExtensions').textContent =
+    'Extended ' + extensions + ' time' + (extensions > 1 ? 's' : '') + ' (+' + total + ' min total). You were supposed to work ' + total + ' minutes ago.';
+  const excuse = timerExcuses[Math.floor(Math.random() * timerExcuses.length)];
+  document.getElementById('timerExcuse').textContent = excuse;
+  minutesAvoided += 5;
+  score = Math.min(100, score + 3);
+  updateStats();
+  if (!timerInterval) startTimer();
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timerInterval = null;
+  timerSeconds = 300;
+  extensions = 0;
+  document.getElementById('timerDisplay').textContent = '5:00';
+  document.getElementById('btnStart').textContent = 'Start';
+  document.getElementById('timerExtensions').textContent = '';
+  document.getElementById('timerExcuse').textContent = "Fine. But the oven misses you already.";
+}
+</script>
+</body>
+</html>

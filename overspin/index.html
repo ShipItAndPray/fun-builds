@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OverSpin - Corporate Spin Doctor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --corp-dark: #0a1628;
+    --corp-blue: #1a3a5c;
+    --corp-mid: #2563eb;
+    --corp-light: #3b82f6;
+    --corp-accent: #60a5fa;
+    --corp-glow: #93c5fd;
+    --surface: #0f2035;
+    --surface2: #162d4a;
+    --text: #e2e8f0;
+    --text-muted: #94a3b8;
+    --gold: #f59e0b;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--corp-dark);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(37,99,235,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37,99,235,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 32px 0 24px;
+  }
+
+  header h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--corp-glow), var(--corp-mid));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+  }
+
+  header .tagline {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 6px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid rgba(37,99,235,0.2);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--corp-accent);
+    margin-bottom: 8px;
+  }
+
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid rgba(37,99,235,0.3);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+    padding: 14px;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--corp-light);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+
+  .controls-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .control-group {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid rgba(37,99,235,0.3);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    font-family: inherit;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2360a5fa'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  select:focus { outline: none; border-color: var(--corp-light); }
+
+  .slider-wrap {
+    position: relative;
+  }
+
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--corp-blue), var(--gold));
+    outline: none;
+    margin-top: 8px;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--corp-glow);
+    cursor: pointer;
+    border: 2px solid var(--corp-dark);
+    box-shadow: 0 0 8px rgba(147,197,253,0.5);
+  }
+
+  .spin-level-display {
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-top: 6px;
+    color: var(--gold);
+  }
+
+  .btn-spin {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--corp-mid), var(--corp-light));
+    color: white;
+    letter-spacing: 0.5px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 16px;
+  }
+
+  .btn-spin:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(37,99,235,0.4);
+  }
+
+  .btn-spin:active { transform: translateY(0); }
+
+  .output-card {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid rgba(37,99,235,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .output-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--corp-mid), var(--gold), var(--corp-mid));
+  }
+
+  .output-badge {
+    display: inline-block;
+    background: rgba(37,99,235,0.2);
+    border: 1px solid rgba(37,99,235,0.3);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--corp-accent);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  #output {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    min-height: 60px;
+    color: var(--text);
+  }
+
+  .output-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-action {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(37,99,235,0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    background: var(--surface2);
+    color: var(--corp-accent);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-action:hover {
+    background: rgba(37,99,235,0.15);
+    border-color: var(--corp-light);
+  }
+
+  .btn-action.speaking {
+    background: rgba(245,158,11,0.15);
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .hidden { display: none; }
+
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .example-chip {
+    background: var(--surface2);
+    border: 1px solid rgba(37,99,235,0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .example-chip:hover {
+    background: rgba(37,99,235,0.15);
+    color: var(--text);
+    border-color: var(--corp-light);
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--corp-mid);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: transform 0.3s ease;
+    z-index: 100;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .spinning #output { animation: pulse 1s ease-in-out; }
+
+  footer {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+  }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="container">
+  <header>
+    <h1>OverSpin</h1>
+    <p class="tagline">Corporate Spin Doctor -- Turn Any Mundane Event Into a Strategic Triumph</p>
+  </header>
+
+  <div class="card">
+    <label for="input">What Actually Happened</label>
+    <textarea id="input" placeholder="I was late to work..."></textarea>
+    <div class="examples">
+      <span class="example-chip" data-text="I was late to work">Late to work</span>
+      <span class="example-chip" data-text="I forgot my anniversary">Forgot anniversary</span>
+      <span class="example-chip" data-text="I fell asleep in a meeting">Slept in meeting</span>
+      <span class="example-chip" data-text="I burned dinner">Burned dinner</span>
+      <span class="example-chip" data-text="I got rejected from a job">Job rejection</span>
+      <span class="example-chip" data-text="I tripped in public">Tripped in public</span>
+      <span class="example-chip" data-text="I gained 10 pounds">Gained weight</span>
+      <span class="example-chip" data-text="I binge watched TV all weekend">Binge watched TV</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="controls-row">
+      <div class="control-group">
+        <label for="category">Category</label>
+        <select id="category">
+          <option value="auto">Auto-Detect</option>
+          <option value="work">Work</option>
+          <option value="dating">Dating</option>
+          <option value="social">Social</option>
+          <option value="fitness">Fitness</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label for="spinLevel">Spin Level</label>
+        <div class="slider-wrap">
+          <input type="range" id="spinLevel" min="1" max="5" value="3">
+          <div class="slider-labels">
+            <span>Mild</span>
+            <span>Delusional</span>
+          </div>
+          <div class="spin-level-display" id="spinLevelText">Corporate (3/5)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-spin" id="spinBtn">SPIN IT</button>
+
+  <div class="card output-card hidden" id="outputCard">
+    <div class="output-badge" id="outputBadge">Official Statement</div>
+    <div id="output"></div>
+    <div class="output-actions">
+      <button class="btn-action" id="copyBtn">Copy</button>
+      <button class="btn-action" id="speakBtn">Read Aloud</button>
+      <button class="btn-action" id="shareBtn">Share</button>
+      <button class="btn-action" id="reshuffleBtn">Reshuffle</button>
+    </div>
+  </div>
+
+  <footer>OVERSPIN COMMUNICATIONS -- All statements are forward-looking and should not be taken as fact.</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SPIN_LABELS = {
+  1: 'Mild (1/5)',
+  2: 'Polished (2/5)',
+  3: 'Corporate (3/5)',
+  4: 'Unhinged (4/5)',
+  5: 'Delusional (5/5)'
+};
+
+const BADGE_LABELS = {
+  1: 'Slight Adjustment',
+  2: 'Official Reframe',
+  3: 'Corporate Statement',
+  4: 'PR Crisis Response',
+  5: 'Alternate Reality Dispatch'
+};
+
+// 50+ spin templates organized by category and level
+const TEMPLATES = {
+  work: {
+    late: [
+      // level 1-5
+      [
+        "I arrived slightly after the scheduled time due to a brief personal matter.",
+        "I strategically timed my arrival to avoid peak elevator congestion, optimizing my morning throughput by an estimated 8%.",
+        "I strategically delayed my arrival to conduct an impromptu competitive analysis of morning traffic patterns, resulting in a 12% improvement in my commute efficiency framework.",
+        "After an extensive pre-dawn strategy session with my advisory board (my cat), I made the executive decision to reallocate my morning bandwidth toward high-value personal alignment activities before gracing the office with my presence.",
+        "Following a multi-phase morning optimization protocol approved by the World Economic Forum, I conducted a real-time audit of metropolitan transit infrastructure, personally stress-tested three alternative routes, and arrived at the precise moment calculated by my proprietary Arrival Impact Maximization algorithm to ensure peak visibility among C-suite stakeholders."
+      ]
+    ],
+    meeting_sleep: [
+      [
+        "I briefly rested my eyes while processing information from the presentation.",
+        "I employed a micro-meditation technique to better absorb the meeting's key takeaways.",
+        "I entered a state of deep cognitive processing -- a technique pioneered by elite executives at McKinsey -- to synthesize the information being presented at a subconscious level.",
+        "What appeared to be sleep was actually a proprietary Neural Download Protocol I developed after studying Japanese inemuri culture, allowing me to absorb 340% more meeting content than traditionally attentive colleagues.",
+        "I was beta-testing my patent-pending Subconscious Strategic Absorption Framework, which processes information at 47x the rate of conscious attention. My closed eyes represented a $2.3M competitive advantage that I will be presenting to the board next quarter."
+      ]
+    ],
+    fired: [
+      [
+        "I've decided to pursue new opportunities more aligned with my career goals.",
+        "I've strategically transitioned out of my role to capitalize on emerging market opportunities in the talent landscape.",
+        "After a comprehensive portfolio review of my career assets, I have elected to divest from my current position to pursue a higher-yield opportunity in the open talent market.",
+        "I was headhunted by the universe itself. When an organization can no longer contain the gravitational pull of your talent, separation becomes an act of corporate mercy on my part.",
+        "My departure triggered a 15% decline in institutional knowledge reserves, and three departments have since formed a task force dedicated to replicating my output. I have retained legal counsel to explore whether my absence constitutes a force majeure event for the company."
+      ]
+    ],
+    generic: [
+      [
+        "There were some minor adjustments to my usual workflow today.",
+        "I implemented an agile pivot in my daily operations to explore alternative productivity vectors.",
+        "Following an impromptu operational review, I executed a strategic recalibration of my workflow deliverables to maximize downstream stakeholder value creation.",
+        "What appeared to be a routine workplace incident was actually a masterclass in adaptive leadership. I have already drafted a LinkedIn thought piece about the experience titled 'Failing Forward: A CEO Mindset.'",
+        "This event has been classified as a Tier-1 Innovation Catalyst in my personal performance matrix. I've engaged Deloitte to conduct a retrospective analysis and expect the resulting case study to be featured in Harvard Business Review by Q3."
+      ]
+    ]
+  },
+  dating: {
+    rejected: [
+      [
+        "We decided we weren't quite the right fit for each other.",
+        "I completed a compatibility assessment and strategically reallocated my romantic portfolio toward higher-potential prospects.",
+        "After an extensive due diligence period, both parties concluded that a merger would not maximize long-term emotional shareholder value, and I am now actively fielding interest from several pre-qualified candidates.",
+        "They failed my proprietary 147-point Romantic Viability Assessment. Honestly, very few people score above the threshold. I'm essentially the Berkshire Hathaway of the dating market -- extremely selective, always compounding value.",
+        "My rejection was actually a controlled demolition of a suboptimal romantic asset. I've retained a team of emotional actuaries to quantify the avoided downside risk, and preliminary models suggest I saved myself $4.7M in lifetime opportunity costs. I am now accepting applications through my dating SPV."
+      ]
+    ],
+    ghosted: [
+      [
+        "They seem to have gotten busy -- I'm sure they'll get back to me.",
+        "I'm currently in a cooling-off period with a prospective romantic interest while they process the magnitude of our connection.",
+        "My date has entered what relationship experts call an 'emotional processing sabbatical' -- a well-documented response when encountering someone who exceeds all psychological readiness thresholds.",
+        "They clearly experienced what psychologists call 'Romantic Overload Syndrome' upon realizing they'd matched with someone operating three standard deviations above the dating market mean. Their silence is, frankly, medically understandable.",
+        "I've engaged a crisis communications firm to manage what I'm calling 'The Silence.' Intelligence suggests the other party has assembled a team of friends, a therapist, and possibly a life coach to determine whether they are emotionally equipped to handle a relationship of this caliber. I have placed myself on the Fortune 500 of eligible singles in the meantime."
+      ]
+    ],
+    generic: [
+      [
+        "My dating life has had a few minor hiccups recently.",
+        "I'm currently in a strategic repositioning phase within the romantic marketplace.",
+        "I've initiated a comprehensive review of my interpersonal portfolio and am actively optimizing my dating pipeline for maximum emotional ROI.",
+        "What some might call 'being single' I call 'operating as a pre-IPO romantic entity with unlimited growth potential and zero legacy relationship debt.'",
+        "I have retained Goldman Sachs to value my romantic portfolio ahead of a potential emotional IPO. Early indications suggest my love life is trading at a significant discount to intrinsic value, making this the buying opportunity of a generation."
+      ]
+    ]
+  },
+  social: {
+    embarrassed: [
+      [
+        "I had a slightly awkward moment in public, but it happens to everyone.",
+        "I created an unscripted social moment that humanized my personal brand and increased my relatability index.",
+        "I executed a masterful demonstration of vulnerability-based social leadership, a technique championed by Bren Brown, resulting in a measurable uptick in peer engagement and parasocial bonding.",
+        "My public stumble was a carefully choreographed authenticity activation designed to disrupt the social monotony of the room. Three people laughed, which by my calculations represents a 600% engagement rate versus the average social interaction.",
+        "What witnesses perceived as 'embarrassment' was actually a live demonstration of my Radical Authenticity Framework, which I am currently licensing to Fortune 500 companies for their corporate culture programs. The incident has already been optioned for a TED Talk and a limited-run Netflix documentary."
+      ]
+    ],
+    forgot_event: [
+      [
+        "I accidentally double-booked myself and couldn't make it.",
+        "I conducted a real-time priority triage and determined that my bandwidth was better allocated to high-impact personal recovery activities.",
+        "Following a comprehensive calendar audit, I executed a strategic no-show to preserve my social capital reserves for higher-leverage networking opportunities later in the quarter.",
+        "My absence was a calculated move in my Social Game Theory playbook. By not attending, I increased my perceived scarcity value by an estimated 35%, ensuring that my next appearance will generate maximum social anticipation and FOMO-driven engagement.",
+        "I deployed a proprietary Social Absence Optimization algorithm that determined my non-attendance would generate 4.2x more conversational mentions than my physical presence. Post-event intelligence confirms I was discussed more than the actual host. This is what I call 'shadow networking.'"
+      ]
+    ],
+    generic: [
+      [
+        "There was a minor social miscalculation on my part.",
+        "I experienced a brief calibration error in my social engagement protocols that has since been patched.",
+        "I conducted an unplanned field test of social resilience that yielded valuable data for my ongoing interpersonal optimization initiative.",
+        "What appeared to be a social faux pas was actually a live A/B test of crowd reaction dynamics. The data collected will inform my Q3 Social Strategy Memo, which I am circulating among a select group of advisors.",
+        "This incident has been reclassified as a Breakthrough Social Innovation Event in my personal development ledger. I have filed for a provisional patent on the technique and am in talks with three universities about establishing a research fellowship in my name."
+      ]
+    ]
+  },
+  fitness: {
+    gained_weight: [
+      [
+        "I've put on a few pounds, but I'm working on getting back on track.",
+        "I've entered a strategic mass acquisition phase to build a foundation for my upcoming cutting cycle.",
+        "I am currently executing a deliberate caloric surplus protocol as part of a periodized body recomposition strategy endorsed by elite strength coaches across the G7 nations.",
+        "My weight gain represents a bold investment in my biological infrastructure. Much like Amazon operated at a loss for decades before achieving market dominance, my body is currently in a high-growth, reinvestment phase that will yield exponential returns in physical performance by Q4.",
+        "I have engaged a team of sports scientists, a nutritional endocrinologist, and a former Olympic coach to oversee what we are calling 'Operation Mass Ascension.' My current body composition represents Phase 2 of a 7-phase transformation protocol that will culminate in a physique so optimized it will require its own insurance policy. The Pentagon has expressed preliminary interest."
+      ]
+    ],
+    skipped_gym: [
+      [
+        "I took a rest day -- recovery is important.",
+        "I implemented a strategic deload day to optimize muscular supercompensation and prevent overtraining syndrome.",
+        "I executed a precision recovery protocol informed by NASA's astronaut reconditioning research, ensuring my neuromuscular system achieves peak readiness for my next training phase.",
+        "My rest day was prescribed by my proprietary Recovery Optimization AI, which analyzed 47 biometric data points and determined that training today would have reduced my lifetime athletic output by 0.3%. That's millions of calories I just saved for future deployment.",
+        "I am currently in a Phase 3 Active Non-Training State, a concept I pioneered after studying the training logs of every Olympic gold medalist since 1896. My couch-based recovery posture has been biomechanically optimized by a team from MIT, and the Netflix algorithm I engaged with during this period was specifically selected to activate parasympathetic nervous system responses. My resting heart rate has never been more strategic."
+      ]
+    ],
+    generic: [
+      [
+        "My fitness journey hit a small bump today.",
+        "I encountered a planned deviation in my wellness trajectory that falls within acceptable parameters.",
+        "I implemented an adaptive fitness recalibration to stress-test my body's response to non-standard stimuli, yielding critical performance data.",
+        "What appeared to be a fitness setback was actually a controlled variable in my ongoing longitudinal body optimization study. The results have been submitted to the Journal of Applied Procrastination for peer review.",
+        "My fitness deviation has been reclassified as a Disruptive Wellness Innovation by my advisory board. I am currently in talks with Peloton to develop a masterclass on 'Strategic Non-Exercise' and have trademarked the phrase 'Rest is the new PR.' Goop has reached out."
+      ]
+    ]
+  }
+};
+
+// Keyword detection for subcategories
+const KEYWORDS = {
+  work: {
+    late: ['late', 'arrived late', 'overslept', 'missed the bus', 'alarm', 'showed up late', 'tardy'],
+    meeting_sleep: ['fell asleep', 'slept in', 'meeting', 'dozed', 'nodded off', 'napped'],
+    fired: ['fired', 'let go', 'laid off', 'terminated', 'lost my job', 'downsized']
+  },
+  dating: {
+    rejected: ['rejected', 'turned down', 'said no', 'dumped', 'broke up', 'breakup', 'left me'],
+    ghosted: ['ghosted', 'stopped replying', 'no response', 'left on read', 'ignored my text']
+  },
+  social: {
+    embarrassed: ['tripped', 'fell', 'spilled', 'embarrassed', 'awkward', 'stumbled', 'farted', 'burped', 'wrong name'],
+    forgot_event: ['forgot', 'missed the party', 'forgot birthday', 'forgot anniversary', 'no-show', 'didn\'t show up', 'forgot the date']
+  },
+  fitness: {
+    gained_weight: ['gained weight', 'put on weight', 'gained.*pounds', 'gained.*kg', 'fat', 'heavier', 'weight gain', 'gained 10'],
+    skipped_gym: ['skipped gym', 'skipped workout', 'didn\'t exercise', 'didn\'t go to the gym', 'missed workout', 'couch', 'lazy']
+  }
+};
+
+// Category detection keywords
+const CATEGORY_KEYWORDS = {
+  work: ['work', 'job', 'office', 'meeting', 'boss', 'coworker', 'colleague', 'deadline', 'project', 'email', 'presentation', 'fired', 'promoted', 'salary', 'late to work', 'commute'],
+  dating: ['date', 'dating', 'girlfriend', 'boyfriend', 'tinder', 'match', 'relationship', 'crush', 'ghosted', 'dumped', 'ex', 'love', 'romantic', 'rejected', 'anniversary'],
+  social: ['party', 'friends', 'social', 'embarrass', 'public', 'tripped', 'fell', 'awkward', 'forgot birthday', 'karaoke', 'drunk', 'gathering', 'event'],
+  fitness: ['gym', 'workout', 'exercise', 'weight', 'pounds', 'kg', 'diet', 'run', 'fitness', 'muscle', 'fat', 'jog', 'yoga', 'bench press', 'squat']
+};
+
+function detectCategory(text) {
+  const lower = text.toLowerCase();
+  let best = 'work';
+  let bestScore = 0;
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    let score = 0;
+    for (const kw of keywords) {
+      if (lower.includes(kw)) score++;
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      best = cat;
+    }
+  }
+  return best;
+}
+
+function detectSubcategory(text, category) {
+  const lower = text.toLowerCase();
+  const subs = KEYWORDS[category] || {};
+  for (const [sub, keywords] of Object.entries(subs)) {
+    for (const kw of keywords) {
+      if (lower.match(new RegExp(kw, 'i'))) return sub;
+    }
+  }
+  return 'generic';
+}
+
+function getSpin(text, category, level) {
+  if (category === 'auto') category = detectCategory(text);
+  const sub = detectSubcategory(text, category);
+  const catTemplates = TEMPLATES[category];
+  const subTemplates = catTemplates[sub] || catTemplates['generic'];
+  const levelSet = subTemplates[0];
+  return { text: levelSet[level - 1], category, sub };
+}
+
+// DOM
+const inputEl = document.getElementById('input');
+const categoryEl = document.getElementById('category');
+const spinLevelEl = document.getElementById('spinLevel');
+const spinLevelText = document.getElementById('spinLevelText');
+const spinBtn = document.getElementById('spinBtn');
+const outputCard = document.getElementById('outputCard');
+const outputEl = document.getElementById('output');
+const outputBadge = document.getElementById('outputBadge');
+const copyBtn = document.getElementById('copyBtn');
+const speakBtn = document.getElementById('speakBtn');
+const shareBtn = document.getElementById('shareBtn');
+const reshuffleBtn = document.getElementById('reshuffleBtn');
+const toastEl = document.getElementById('toast');
+
+let currentSpin = '';
+let isSpeaking = false;
+
+spinLevelEl.addEventListener('input', () => {
+  spinLevelText.textContent = SPIN_LABELS[spinLevelEl.value];
+});
+
+document.querySelectorAll('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    inputEl.value = chip.dataset.text;
+    inputEl.focus();
+  });
+});
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2000);
+}
+
+function typeWriter(el, text, speed = 12) {
+  return new Promise(resolve => {
+    el.textContent = '';
+    let i = 0;
+    const timer = setInterval(() => {
+      el.textContent += text[i];
+      i++;
+      if (i >= text.length) {
+        clearInterval(timer);
+        resolve();
+      }
+    }, speed);
+  });
+}
+
+spinBtn.addEventListener('click', async () => {
+  const text = inputEl.value.trim();
+  if (!text) {
+    showToast('Enter something that happened first!');
+    return;
+  }
+
+  const level = parseInt(spinLevelEl.value);
+  const result = getSpin(text, categoryEl.value, level);
+  currentSpin = result.text;
+
+  outputCard.classList.remove('hidden');
+  outputBadge.textContent = BADGE_LABELS[level];
+  outputCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  await typeWriter(outputEl, currentSpin);
+});
+
+reshuffleBtn.addEventListener('click', async () => {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  // Cycle to next level or wrap
+  let level = parseInt(spinLevelEl.value);
+  level = level >= 5 ? 1 : level + 1;
+  spinLevelEl.value = level;
+  spinLevelText.textContent = SPIN_LABELS[level];
+
+  const result = getSpin(text, categoryEl.value, level);
+  currentSpin = result.text;
+  outputBadge.textContent = BADGE_LABELS[level];
+  await typeWriter(outputEl, currentSpin);
+});
+
+copyBtn.addEventListener('click', () => {
+  if (!currentSpin) return;
+  navigator.clipboard.writeText(currentSpin).then(() => showToast('Copied to clipboard!'));
+});
+
+speakBtn.addEventListener('click', () => {
+  if (!currentSpin) return;
+
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    speakBtn.classList.remove('speaking');
+    speakBtn.textContent = 'Read Aloud';
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(currentSpin);
+  // Try to find a professional-sounding voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v =>
+    v.name.includes('Daniel') || v.name.includes('Alex') || v.name.includes('Samantha') ||
+    v.name.includes('Google UK English Male') || v.name.includes('Microsoft Mark')
+  );
+  if (preferred) utterance.voice = preferred;
+
+  utterance.rate = 0.85;
+  utterance.pitch = 0.9;
+
+  utterance.onstart = () => {
+    isSpeaking = true;
+    speakBtn.classList.add('speaking');
+    speakBtn.textContent = 'Stop';
+  };
+  utterance.onend = () => {
+    isSpeaking = false;
+    speakBtn.classList.remove('speaking');
+    speakBtn.textContent = 'Read Aloud';
+  };
+
+  speechSynthesis.speak(utterance);
+});
+
+shareBtn.addEventListener('click', () => {
+  if (!currentSpin) return;
+  if (navigator.share) {
+    navigator.share({ title: 'OverSpin', text: currentSpin });
+  } else {
+    navigator.clipboard.writeText(currentSpin).then(() => showToast('Copied for sharing!'));
+  }
+});
+
+// Preload voices
+speechSynthesis.getVoices();
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// Enter to spin
+inputEl.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    spinBtn.click();
+  }
+});
+</script>
+</body>
+</html>

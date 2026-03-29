@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impression Grade - Celebrity Voice Challenge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#ffd700;--red:#ff4444;--green:#44ff88;--purple:#a855f7;
+  --bg:#0a0a1a;--card:#141428;--glow:rgba(168,85,247,.3);
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:#fff;min-height:100vh;overflow-x:hidden}
+.stage-lights{position:fixed;top:0;left:0;right:0;height:100%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 20% 0%,rgba(255,0,100,.08) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 0%,rgba(100,0,255,.08) 0%,transparent 50%),
+  radial-gradient(ellipse at 50% 100%,rgba(255,200,0,.05) 0%,transparent 40%);
+}
+.container{max-width:540px;margin:0 auto;padding:16px;position:relative;z-index:1}
+h1{text-align:center;font-size:2.2em;margin:12px 0 4px;
+  background:linear-gradient(135deg,var(--gold),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  text-shadow:none;letter-spacing:-1px}
+.subtitle{text-align:center;color:#888;font-size:.9em;margin-bottom:20px}
+
+/* Celebrity Grid */
+.section-label{font-size:.75em;text-transform:uppercase;letter-spacing:2px;color:var(--purple);margin:16px 0 8px;font-weight:700}
+.celeb-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.celeb-btn{
+  background:var(--card);border:2px solid #222;border-radius:12px;padding:10px 4px;cursor:pointer;
+  text-align:center;transition:all .2s;font-size:.72em;color:#ccc;line-height:1.2;
+}
+.celeb-btn:hover{border-color:var(--purple);transform:translateY(-2px);box-shadow:0 4px 20px var(--glow)}
+.celeb-btn.selected{border-color:var(--gold);background:#1a1a3a;color:#fff;box-shadow:0 0 20px rgba(255,215,0,.2)}
+.celeb-btn .emoji{font-size:1.8em;display:block;margin-bottom:4px}
+
+/* Record Button */
+.record-area{text-align:center;margin:20px 0}
+.rec-btn{
+  width:100px;height:100px;border-radius:50%;border:4px solid var(--red);background:rgba(255,68,68,.15);
+  cursor:pointer;position:relative;transition:all .3s;display:inline-flex;align-items:center;justify-content:center;
+}
+.rec-btn:hover{background:rgba(255,68,68,.25);transform:scale(1.05)}
+.rec-btn.recording{animation:pulse-rec 1s infinite;background:rgba(255,68,68,.4);border-color:#ff0000}
+.rec-btn .mic{font-size:2.4em}
+@keyframes pulse-rec{0%,100%{box-shadow:0 0 0 0 rgba(255,0,0,.4)}50%{box-shadow:0 0 0 20px rgba(255,0,0,0)}}
+.rec-label{color:#888;font-size:.8em;margin-top:8px}
+.timer{font-size:1.4em;font-family:monospace;color:var(--red);margin-top:4px;min-height:1.4em}
+.waveform{height:40px;display:flex;align-items:center;justify-content:center;gap:3px;margin-top:8px}
+.waveform .bar{width:4px;background:var(--purple);border-radius:2px;transition:height .1s}
+
+/* Analysis Animation */
+.analysis-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:100;
+  flex-direction:column;align-items:center;justify-content:center;
+}
+.analysis-overlay.active{display:flex}
+.analysis-text{font-size:1em;color:var(--purple);margin-bottom:16px;text-align:center;min-height:3em;padding:0 20px}
+.analysis-spinner{width:80px;height:80px;border:4px solid #222;border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.analysis-bars{display:flex;gap:6px;margin-top:20px}
+.analysis-bars .ab{width:6px;height:30px;background:var(--purple);border-radius:3px;animation:eq .6s ease-in-out infinite alternate}
+.analysis-bars .ab:nth-child(2){animation-delay:.1s}.analysis-bars .ab:nth-child(3){animation-delay:.2s}
+.analysis-bars .ab:nth-child(4){animation-delay:.3s}.analysis-bars .ab:nth-child(5){animation-delay:.15s}
+@keyframes eq{from{height:10px;opacity:.5}to{height:40px;opacity:1}}
+
+/* Results */
+.result-card{
+  display:none;background:var(--card);border-radius:20px;padding:24px;margin:20px 0;
+  border:2px solid #222;text-align:center;
+}
+.result-card.show{display:block;animation:pop-in .5s cubic-bezier(.17,.67,.35,1.2)}
+@keyframes pop-in{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.score-ring{
+  width:140px;height:140px;border-radius:50%;margin:0 auto 16px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.score-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.score-ring circle{fill:none;stroke-width:8}
+.score-ring .bg{stroke:#222}.score-ring .fg{stroke:var(--purple);stroke-linecap:round;transition:stroke-dashoffset 1.5s ease}
+.score-num{font-size:3em;font-weight:800;z-index:1}
+.score-label{font-size:.7em;color:#888;text-transform:uppercase;letter-spacing:2px}
+.verdict{font-size:1.1em;margin:16px 0;line-height:1.5;color:#ddd;min-height:3em}
+.celeb-name-result{font-size:.85em;color:var(--purple);margin-bottom:8px}
+
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.btn{
+  padding:10px 20px;border-radius:30px;border:none;cursor:pointer;font-size:.85em;font-weight:600;transition:all .2s;
+}
+.btn-primary{background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 15px var(--glow)}
+.btn-secondary{background:#222;color:#ccc;border:1px solid #333}
+.btn-secondary:hover{background:#333}
+.btn-share{background:linear-gradient(135deg,#1da1f2,#0d8ecf);color:#fff}
+
+/* Leaderboard */
+.leaderboard{background:var(--card);border-radius:16px;padding:16px;margin:20px 0;border:1px solid #222}
+.lb-title{font-size:1em;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.lb-entry{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #1a1a2e;gap:10px;font-size:.85em}
+.lb-entry:last-child{border:none}
+.lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.75em;flex-shrink:0}
+.lb-rank.gold{background:linear-gradient(135deg,#ffd700,#ffaa00);color:#000}
+.lb-rank.silver{background:linear-gradient(135deg,#c0c0c0,#999);color:#000}
+.lb-rank.bronze{background:linear-gradient(135deg,#cd7f32,#a0522d);color:#fff}
+.lb-rank.normal{background:#222;color:#888}
+.lb-info{flex:1;min-width:0}
+.lb-celeb{font-weight:600;font-size:.85em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-weight:800;color:var(--gold);font-size:1.1em;flex-shrink:0}
+.lb-empty{color:#555;text-align:center;padding:20px;font-size:.85em}
+
+.hidden{display:none}
+.flash-green{animation:flash-g .5s}
+.flash-red{animation:flash-r .5s}
+@keyframes flash-g{50%{background:rgba(68,255,136,.2)}}
+@keyframes flash-r{50%{background:rgba(255,68,68,.2)}}
+
+/* Sound indicator */
+.sound-toggle{position:fixed;top:12px;right:12px;z-index:50;background:#222;border:1px solid #333;
+  border-radius:20px;padding:6px 12px;cursor:pointer;font-size:.8em;color:#ccc}
+
+@media(max-width:400px){
+  .celeb-grid{grid-template-columns:repeat(3,1fr)}
+  h1{font-size:1.6em}
+  .celeb-btn{padding:8px 2px;font-size:.65em}
+}
+</style>
+</head>
+<body>
+<div class="stage-lights"></div>
+<button class="sound-toggle" id="soundToggle">Sound: ON</button>
+<div class="container">
+  <h1>Impression Grade</h1>
+  <p class="subtitle">Pick a celebrity. Do your best impression. Get judged.</p>
+
+  <div class="section-label">Choose Your Target</div>
+  <div class="celeb-grid" id="celebGrid"></div>
+
+  <div class="record-area" id="recordArea">
+    <button class="rec-btn" id="recBtn" disabled>
+      <span class="mic">&#127908;</span>
+    </button>
+    <div class="rec-label" id="recLabel">Select a celebrity first</div>
+    <div class="timer" id="timer"></div>
+    <div class="waveform" id="waveform"></div>
+  </div>
+
+  <div class="analysis-overlay" id="analysisOverlay">
+    <div class="analysis-spinner"></div>
+    <div class="analysis-text" id="analysisText">Initializing voice analysis...</div>
+    <div class="analysis-bars">
+      <div class="ab"></div><div class="ab"></div><div class="ab"></div><div class="ab"></div><div class="ab"></div>
+    </div>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="celeb-name-result" id="celebResult"></div>
+    <div class="score-ring">
+      <svg width="140" height="140"><circle class="bg" cx="70" cy="70" r="62"/><circle class="fg" id="scoreArc" cx="70" cy="70" r="62"/></svg>
+      <div>
+        <div class="score-num" id="scoreNum">0</div>
+        <div class="score-label">/ 100</div>
+      </div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="tryAgain()">Try Again</button>
+      <button class="btn btn-secondary" onclick="speakVerdict()">Hear Verdict</button>
+      <button class="btn btn-share" onclick="shareScore()">Share</button>
+    </div>
+  </div>
+
+  <div class="leaderboard" id="leaderboard">
+    <div class="lb-title">&#127942; Hall of Fame</div>
+    <div id="lbList"><div class="lb-empty">No attempts yet. Be the first!</div></div>
+  </div>
+</div>
+
+<script>
+const CELEBRITIES = [
+  {name:"Morgan Freeman",emoji:"\u{1F3A5}",cat:"Actor"},
+  {name:"Arnold Schwarzenegger",emoji:"\u{1F4AA}",cat:"Actor"},
+  {name:"Christopher Walken",emoji:"\u{1F57A}",cat:"Actor"},
+  {name:"Al Pacino",emoji:"\u{1F3AC}",cat:"Actor"},
+  {name:"Nicolas Cage",emoji:"\u{1F525}",cat:"Actor"},
+  {name:"Matthew McConaughey",emoji:"\u{1F60E}",cat:"Actor"},
+  {name:"Jack Nicholson",emoji:"\u{1F608}",cat:"Actor"},
+  {name:"Samuel L. Jackson",emoji:"\u{1F4A2}",cat:"Actor"},
+  {name:"Yoda",emoji:"\u{1F9D9}",cat:"Character"},
+  {name:"Gollum",emoji:"\u{1F48D}",cat:"Character"},
+  {name:"Darth Vader",emoji:"\u2694\uFE0F",cat:"Character"},
+  {name:"Batman",emoji:"\u{1F987}",cat:"Character"},
+  {name:"Donald Trump",emoji:"\u{1F451}",cat:"Politics"},
+  {name:"Obama",emoji:"\u{1F3A4}",cat:"Politics"},
+  {name:"Joe Biden",emoji:"\u{1F576}\uFE0F",cat:"Politics"},
+  {name:"Oprah",emoji:"\u2B50",cat:"TV"},
+  {name:"Gordon Ramsay",emoji:"\u{1F468}\u200D\u{1F373}",cat:"TV"},
+  {name:"Snoop Dogg",emoji:"\u{1F33F}",cat:"Music"},
+  {name:"Elvis Presley",emoji:"\u{1F3B8}",cat:"Music"},
+  {name:"Shakira",emoji:"\u{1F483}",cat:"Music"},
+  {name:"Bob Ross",emoji:"\u{1F3A8}",cat:"TV"},
+  {name:"Mike Tyson",emoji:"\u{1F94A}",cat:"Sports"},
+  {name:"Borat",emoji:"\u{1F1F0}\u{1F1FF}",cat:"Character"},
+  {name:"Shrek",emoji:"\u{1F7E2}",cat:"Character"},
+];
+
+const VERDICTS = [
+  (c,s)=>`You sound exactly like ${c}... 's disappointed mother.`,
+  (c,s)=>`The real ${c} just filed a restraining order against your vocal cords.`,
+  (c,s)=>`Somewhere, ${c} felt a disturbance in the force. That was you.`,
+  (c,s)=>`If ${c} and a confused parrot had a baby, it would still do better than this.`,
+  (c,s)=>`You nailed ${c}! ...if ${c} had just been to the dentist.`,
+  (c,s)=>`${c}'s lawyers are on line 1. They want to sue for emotional damages.`,
+  (c,s)=>`That was either ${c} or someone stepping on a cat. Our AI is still deciding.`,
+  (c,s)=>`Hollywood called. They don't want you. But a local circus does.`,
+  (c,s)=>`Your ${c} impression made our AI question its own existence.`,
+  (c,s)=>`${c} would be proud. Proud enough to change their name.`,
+  (c,s)=>`We played this for ${c}'s dog. The dog howled. In pain.`,
+  (c,s)=>`This impression is so bad it looped back around to being... still bad.`,
+  (c,s)=>`Our voice analysis detected zero ${c} and 100% audacity.`,
+  (c,s)=>`${c}'s ghost writer called. Even THEY can't spin this positively.`,
+  (c,s)=>`Congratulations! You've invented a brand new celebrity: Confused ${c}.`,
+  (c,s)=>`If impressions were currency, you'd owe us money.`,
+  (c,s)=>`Our AI gave you ${s} out of pity. The real score was classified.`,
+  (c,s)=>`That was the most ${c} thing we've heard. And by that we mean nothing like ${c}.`,
+  (c,s)=>`You're the reason ${c} considers retirement.`,
+  (c,s)=>`Breaking: ${c} seen crying after hearing this. Unrelated? Our lawyers say yes.`,
+  (c,s)=>`We've heard better ${c} impressions from a broken GPS.`,
+  (c,s)=>`Your vocal range spans from "not ${c}" to "definitely not ${c}."`,
+  (c,s)=>`Plot twist: you actually sound like ${CELEBRITIES[Math.floor(Math.random()*CELEBRITIES.length)].name} having a bad day.`,
+  (c,s)=>`${c} called. They hung up. Then blocked your number.`,
+  (c,s)=>`The judges give you a ${s}. The audience gives you a tomato.`,
+  (c,s)=>`Your impression made our servers temporarily lose the will to compute.`,
+  (c,s)=>`That was ${c} if ${c} were underwater and also on fire.`,
+  (c,s)=>`Fun fact: ${c} once did an impression of YOU. It was better.`,
+  (c,s)=>`Score of ${s}! That's almost as many brain cells as this took.`,
+  (c,s)=>`Our neural network classified this as: "cry for help."`,
+  (c,s)=>`You captured the essence of ${c}... then immediately let it escape.`,
+  (c,s)=>`${c} wants you to know: it's okay. Not everyone has talent.`,
+  (c,s)=>`If this impression were a movie, it'd go straight to a dumpster.`,
+  (c,s)=>`We ran this through 47 AI models. They all said "no."`,
+  (c,s)=>`Your ${c} sounds like ${c} ordering food in a language they don't speak.`,
+];
+
+const ANALYSIS_STEPS = [
+  "Calibrating voice frequency analyzer...",
+  "Scanning vocal signature patterns...",
+  "Cross-referencing with celebrity voice database...",
+  "Analyzing pitch, tone, and cadence...",
+  "Running deep neural voice matching...",
+  "Comparing harmonic resonance profiles...",
+  "Evaluating dramatic timing coefficients...",
+  "Processing accent authenticity markers...",
+  "Consulting the impression gods...",
+  "Computing final similarity score...",
+  "Double-checking... yep, that's our answer.",
+];
+
+let selectedCeleb = null;
+let mediaRecorder = null;
+let audioStream = null;
+let recording = false;
+let recordTimer = null;
+let recordSeconds = 0;
+let analyserNode = null;
+let animFrame = null;
+let soundOn = true;
+let audioCtx = null;
+let leaderboard = JSON.parse(localStorage.getItem('ig-leaderboard')||'[]');
+
+// Build celebrity grid
+const grid = document.getElementById('celebGrid');
+CELEBRITIES.forEach((c,i)=>{
+  const btn = document.createElement('button');
+  btn.className='celeb-btn';
+  btn.innerHTML=`<span class="emoji">${c.emoji}</span>${c.name}`;
+  btn.onclick=()=>selectCeleb(i,btn);
+  grid.appendChild(btn);
+});
+
+function selectCeleb(i,btn){
+  document.querySelectorAll('.celeb-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedCeleb=CELEBRITIES[i];
+  document.getElementById('recBtn').disabled=false;
+  document.getElementById('recLabel').textContent=`Tap to impersonate ${selectedCeleb.name}`;
+  document.getElementById('resultCard').classList.remove('show');
+}
+
+// Audio context for sounds
+function getAudioCtx(){
+  if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playDing(){
+  if(!soundOn) return;
+  const ctx=getAudioCtx();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.frequency.setValueAtTime(880,ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(1760,ctx.currentTime+.1);
+  gain.gain.setValueAtTime(.3,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);
+  osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.6);
+}
+
+function playBuzzer(){
+  if(!soundOn) return;
+  const ctx=getAudioCtx();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  osc.type='sawtooth';
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.frequency.setValueAtTime(150,ctx.currentTime);
+  gain.gain.setValueAtTime(.2,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.5);
+  osc.start(ctx.currentTime);osc.stop(ctx.currentTime+.5);
+}
+
+function playFanfare(){
+  if(!soundOn) return;
+  const ctx=getAudioCtx();
+  const notes=[523,659,784,1047];
+  notes.forEach((f,i)=>{
+    const osc=ctx.createOscillator();const gain=ctx.createGain();
+    osc.type='triangle';osc.connect(gain);gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(f,ctx.currentTime+i*.15);
+    gain.gain.setValueAtTime(0,ctx.currentTime+i*.15);
+    gain.gain.linearRampToValueAtTime(.2,ctx.currentTime+i*.15+.05);
+    gain.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.15+.4);
+    osc.start(ctx.currentTime+i*.15);osc.stop(ctx.currentTime+i*.15+.4);
+  });
+}
+
+// Recording
+const recBtn=document.getElementById('recBtn');
+recBtn.onclick=async()=>{
+  if(!selectedCeleb) return;
+  if(recording){stopRecording();return;}
+  try{
+    audioStream=await navigator.mediaDevices.getUserMedia({audio:true});
+    startRecording();
+  }catch(e){
+    document.getElementById('recLabel').textContent='Microphone access denied. Please allow mic access.';
+  }
+};
+
+function startRecording(){
+  recording=true;
+  recBtn.classList.add('recording');
+  document.getElementById('recLabel').textContent='Recording... Tap to stop';
+  recordSeconds=0;
+  updateTimer();
+  recordTimer=setInterval(()=>{recordSeconds++;updateTimer();if(recordSeconds>=15)stopRecording();},1000);
+
+  // Waveform visualization
+  const ctx=getAudioCtx();
+  const source=ctx.createMediaStreamSource(audioStream);
+  analyserNode=ctx.createAnalyser();
+  analyserNode.fftSize=64;
+  source.connect(analyserNode);
+  setupWaveform();
+
+  mediaRecorder=new MediaRecorder(audioStream);
+  mediaRecorder.start();
+  mediaRecorder.ondataavailable=()=>{};
+}
+
+function setupWaveform(){
+  const wf=document.getElementById('waveform');
+  wf.innerHTML='';
+  const count=16;
+  for(let i=0;i<count;i++){
+    const bar=document.createElement('div');
+    bar.className='bar';
+    bar.style.height='4px';
+    wf.appendChild(bar);
+  }
+  animateWaveform();
+}
+
+function animateWaveform(){
+  if(!analyserNode||!recording)return;
+  const data=new Uint8Array(analyserNode.frequencyBinCount);
+  analyserNode.getByteFrequencyData(data);
+  const bars=document.querySelectorAll('.waveform .bar');
+  bars.forEach((b,i)=>{
+    const v=data[i]||0;
+    b.style.height=Math.max(4,v/6)+'px';
+    b.style.background=`hsl(${260+v/3},80%,${50+v/8}%)`;
+  });
+  animFrame=requestAnimationFrame(animateWaveform);
+}
+
+function updateTimer(){
+  document.getElementById('timer').textContent=`0:${String(recordSeconds).padStart(2,'0')} / 0:15`;
+}
+
+function stopRecording(){
+  recording=false;
+  clearInterval(recordTimer);
+  cancelAnimationFrame(animFrame);
+  recBtn.classList.remove('recording');
+  document.getElementById('timer').textContent='';
+  document.getElementById('waveform').innerHTML='';
+  document.getElementById('recLabel').textContent=`Tap to impersonate ${selectedCeleb.name}`;
+  if(mediaRecorder&&mediaRecorder.state!=='inactive') mediaRecorder.stop();
+  if(audioStream) audioStream.getTracks().forEach(t=>t.stop());
+  runAnalysis();
+}
+
+// Fake analysis
+function runAnalysis(){
+  const overlay=document.getElementById('analysisOverlay');
+  const text=document.getElementById('analysisText');
+  overlay.classList.add('active');
+  let step=0;
+  const iv=setInterval(()=>{
+    if(step>=ANALYSIS_STEPS.length){
+      clearInterval(iv);
+      overlay.classList.remove('active');
+      showResult();
+      return;
+    }
+    text.textContent=ANALYSIS_STEPS[step];
+    step++;
+  },500);
+}
+
+function showResult(){
+  const score=Math.floor(Math.random()*85)+8; // 8-92
+  const celeb=selectedCeleb.name;
+  const verdictFn=VERDICTS[Math.floor(Math.random()*VERDICTS.length)];
+  const verdictText=verdictFn(celeb,score);
+
+  // Score color
+  let color=score>70?'var(--green)':score>40?'var(--gold)':'var(--red)';
+
+  // Sound
+  if(score>70) playFanfare();
+  else if(score>40) playDing();
+  else playBuzzer();
+
+  // Animate score
+  const card=document.getElementById('resultCard');
+  card.classList.add('show');
+  document.getElementById('celebResult').textContent=`Impersonating: ${celeb}`;
+  document.getElementById('verdict').textContent=verdictText;
+
+  const arc=document.getElementById('scoreArc');
+  const circ=2*Math.PI*62;
+  arc.style.strokeDasharray=circ;
+  arc.style.strokeDashoffset=circ;
+  arc.style.stroke=color;
+  requestAnimationFrame(()=>{arc.style.strokeDashoffset=circ-(circ*score/100);});
+
+  const numEl=document.getElementById('scoreNum');
+  numEl.style.color=color;
+  let cur=0;
+  const si=setInterval(()=>{cur+=2;if(cur>=score){cur=score;clearInterval(si);}numEl.textContent=cur;},20);
+
+  // Leaderboard
+  addToLeaderboard(celeb,score,verdictText);
+
+  // Scroll to result
+  setTimeout(()=>card.scrollIntoView({behavior:'smooth',block:'center'}),300);
+}
+
+function addToLeaderboard(celeb,score,verdict){
+  leaderboard.push({celeb,score,verdict,time:Date.now()});
+  leaderboard.sort((a,b)=>b.score-a.score);
+  if(leaderboard.length>20) leaderboard=leaderboard.slice(0,20);
+  localStorage.setItem('ig-leaderboard',JSON.stringify(leaderboard));
+  renderLeaderboard();
+}
+
+function renderLeaderboard(){
+  const list=document.getElementById('lbList');
+  if(!leaderboard.length){list.innerHTML='<div class="lb-empty">No attempts yet. Be the first!</div>';return;}
+  list.innerHTML=leaderboard.slice(0,10).map((e,i)=>{
+    const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'normal';
+    const ago=timeAgo(e.time);
+    return `<div class="lb-entry">
+      <div class="lb-rank ${rankClass}">${i+1}</div>
+      <div class="lb-info"><div class="lb-celeb">${e.celeb}</div><div style="font-size:.7em;color:#666">${ago}</div></div>
+      <div class="lb-score">${e.score}</div>
+    </div>`;
+  }).join('');
+}
+
+function timeAgo(ts){
+  const s=Math.floor((Date.now()-ts)/1000);
+  if(s<60) return 'just now';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+function tryAgain(){
+  document.getElementById('resultCard').classList.remove('show');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function speakVerdict(){
+  const text=document.getElementById('verdict').textContent;
+  if('speechSynthesis' in window){
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.rate=.9;u.pitch=1.1;
+    speechSynthesis.speak(u);
+  }
+}
+
+function shareScore(){
+  const celeb=document.getElementById('celebResult').textContent.replace('Impersonating: ','');
+  const score=document.getElementById('scoreNum').textContent;
+  const verdict=document.getElementById('verdict').textContent;
+  const text=`Impression Grade: ${score}/100 impersonating ${celeb}! "${verdict}" Try it yourself!`;
+  if(navigator.share){
+    navigator.share({title:'Impression Grade',text}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn=document.querySelector('.btn-share');
+      btn.textContent='Copied!';
+      setTimeout(()=>btn.textContent='Share',2000);
+    }).catch(()=>{});
+  }
+}
+
+// Sound toggle
+document.getElementById('soundToggle').onclick=function(){
+  soundOn=!soundOn;
+  this.textContent=`Sound: ${soundOn?'ON':'OFF'}`;
+};
+
+// Init
+renderLeaderboard();
+</script>
+</body>
+</html>

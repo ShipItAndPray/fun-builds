@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUPERPOWER AUDIT -- The Bureau of Impractical Abilities</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
+
+  :root {
+    --pop-red: #FF1744;
+    --pop-yellow: #FFD600;
+    --pop-blue: #2979FF;
+    --pop-pink: #FF4081;
+    --pop-cyan: #00E5FF;
+    --pop-orange: #FF9100;
+    --pop-green: #00E676;
+    --ink: #1a1a2e;
+    --paper: #FFF8E1;
+    --dot-size: 2px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Comic Neue', cursive, sans-serif;
+    background: var(--paper);
+    background-image: radial-gradient(circle, #ccc var(--dot-size), transparent var(--dot-size));
+    background-size: 12px 12px;
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Comic panel borders */
+  .panel {
+    border: 4px solid var(--ink);
+    border-radius: 8px;
+    position: relative;
+    background: white;
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border: 2px solid var(--ink);
+    border-radius: 5px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 2rem 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--pop-yellow) 0%, var(--pop-orange) 100%);
+    border-bottom: 5px solid var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+    background-size: 8px 8px;
+    opacity: 0.08;
+  }
+
+  h1 {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2.2rem, 7vw, 4.5rem);
+    color: var(--ink);
+    text-shadow: 3px 3px 0 var(--pop-red), -1px -1px 0 white;
+    letter-spacing: 3px;
+    position: relative;
+    z-index: 1;
+    transform: rotate(-1deg);
+  }
+
+  .subtitle {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+    color: var(--pop-red);
+    margin-top: 0.3rem;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 2px;
+  }
+
+  .badge {
+    display: inline-block;
+    background: var(--pop-red);
+    color: white;
+    font-family: 'Bangers', cursive;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    transform: rotate(3deg);
+    margin-top: 0.5rem;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 1px;
+  }
+
+  /* Input area */
+  .input-zone {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .input-zone .panel {
+    padding: 1.5rem;
+  }
+
+  .input-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1.4rem;
+    color: var(--pop-blue);
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    padding: 0.7rem 1rem;
+    border: 3px solid var(--ink);
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    letter-spacing: 1px;
+  }
+
+  input[type="text"]:focus {
+    border-color: var(--pop-blue);
+    box-shadow: 0 0 0 3px rgba(41, 121, 255, 0.2);
+  }
+
+  input[type="text"]::placeholder {
+    color: #aaa;
+  }
+
+  .btn-audit {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    padding: 0.7rem 1.5rem;
+    background: var(--pop-red);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 3px 3px 0 var(--ink);
+    white-space: nowrap;
+  }
+
+  .btn-audit:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+
+  .btn-audit:active {
+    transform: translate(2px, 2px);
+    box-shadow: 1px 1px 0 var(--ink);
+  }
+
+  .quick-picks {
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .quick-picks span {
+    font-size: 0.8rem;
+    color: #888;
+  }
+
+  .quick-btn {
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    margin: 0.2rem;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .quick-btn:hover {
+    background: var(--pop-yellow);
+  }
+
+  /* Results */
+  .results {
+    max-width: 800px;
+    margin: 0 auto 3rem;
+    padding: 0 1rem;
+    display: none;
+  }
+
+  .results.visible { display: block; }
+
+  /* Score banner */
+  .score-banner {
+    text-align: center;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--pop-pink), var(--pop-red));
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-banner .panel-inner { position: relative; z-index: 1; }
+
+  .power-name {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: white;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.3);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+
+  .viability-label {
+    font-family: 'Bangers', cursive;
+    font-size: 1rem;
+    color: var(--pop-yellow);
+    margin-top: 0.5rem;
+    letter-spacing: 2px;
+  }
+
+  .score-big {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(3rem, 10vw, 6rem);
+    color: var(--pop-yellow);
+    text-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+    line-height: 1;
+  }
+
+  .score-out-of {
+    font-family: 'Comic Neue', cursive;
+    font-size: 1rem;
+    color: rgba(255,255,255,0.8);
+  }
+
+  .score-verdict {
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    color: white;
+    margin-top: 0.3rem;
+    letter-spacing: 1px;
+  }
+
+  /* Audit sections */
+  .audit-section {
+    margin-bottom: 1.2rem;
+  }
+
+  .audit-section .panel {
+    padding: 1.2rem;
+    transition: transform 0.15s;
+  }
+
+  .audit-section .panel:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.8rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pop-yellow);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  .section-severity {
+    margin-left: auto;
+    font-family: 'Bangers', cursive;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    color: white;
+    letter-spacing: 1px;
+  }
+
+  .severity-critical { background: var(--pop-red); }
+  .severity-high { background: var(--pop-orange); }
+  .severity-medium { background: var(--pop-blue); }
+  .severity-low { background: var(--pop-green); }
+
+  .section-body {
+    position: relative;
+    z-index: 1;
+  }
+
+  .finding {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #ddd;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .finding:last-child { border-bottom: none; }
+
+  .finding-label {
+    font-weight: 700;
+    color: var(--pop-red);
+  }
+
+  .cost-tag {
+    display: inline-block;
+    font-family: 'Bangers', cursive;
+    background: var(--pop-yellow);
+    border: 2px solid var(--ink);
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-left: 0.3rem;
+  }
+
+  /* Comparison section */
+  .comparison-panel {
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  }
+
+  .vs-badge {
+    display: inline-block;
+    font-family: 'Bangers', cursive;
+    font-size: 1.8rem;
+    color: var(--pop-red);
+    background: var(--pop-yellow);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    line-height: 44px;
+    text-align: center;
+    margin: 0.5rem auto;
+    display: block;
+  }
+
+  .comparison-text {
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem;
+    line-height: 1.6;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Share */
+  .share-zone {
+    text-align: center;
+    margin-top: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .btn-share {
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    padding: 0.6rem 1.5rem;
+    background: var(--pop-blue);
+    color: white;
+    border: 3px solid var(--ink);
+    border-radius: 6px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 3px 3px 0 var(--ink);
+    margin: 0.3rem;
+    transition: transform 0.1s;
+  }
+
+  .btn-share:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .btn-new {
+    background: var(--pop-green);
+    color: var(--ink);
+  }
+
+  /* Speech bubbles */
+  .speech-bubble {
+    position: relative;
+    background: white;
+    border: 3px solid var(--ink);
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 30px;
+    border-width: 15px 10px 0;
+    border-style: solid;
+    border-color: var(--ink) transparent transparent;
+  }
+
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: -11px;
+    left: 32px;
+    border-width: 12px 8px 0;
+    border-style: solid;
+    border-color: white transparent transparent;
+    z-index: 1;
+  }
+
+  /* POW/BAM effects */
+  .pow-effect {
+    position: absolute;
+    font-family: 'Bangers', cursive;
+    font-size: 2rem;
+    color: var(--pop-red);
+    text-shadow: 2px 2px 0 var(--pop-yellow);
+    transform: rotate(-15deg);
+    pointer-events: none;
+    z-index: 2;
+    animation: pow-pop 0.4s ease-out;
+  }
+
+  @keyframes pow-pop {
+    0% { transform: rotate(-15deg) scale(0); opacity: 0; }
+    50% { transform: rotate(-15deg) scale(1.3); }
+    100% { transform: rotate(-15deg) scale(1); opacity: 1; }
+  }
+
+  /* Loading animation */
+  .loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    display: none;
+  }
+
+  .loading.visible { display: block; }
+
+  .loading-text {
+    font-family: 'Bangers', cursive;
+    font-size: 1.5rem;
+    color: var(--pop-red);
+    letter-spacing: 2px;
+    animation: pulse 0.8s infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { opacity: 0.5; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1.02); }
+  }
+
+  .loading-sub {
+    font-size: 0.9rem;
+    color: #888;
+    margin-top: 0.5rem;
+  }
+
+  /* Stamp */
+  .stamp {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-family: 'Bangers', cursive;
+    font-size: 1.1rem;
+    color: var(--pop-red);
+    border: 3px solid var(--pop-red);
+    padding: 0.2rem 0.6rem;
+    transform: rotate(12deg);
+    opacity: 0.7;
+    z-index: 2;
+    letter-spacing: 2px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--ink);
+    color: white;
+    font-family: 'Bangers', cursive;
+    padding: 0.8rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    letter-spacing: 1px;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Disclaimer */
+  .disclaimer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.75rem;
+    color: #aaa;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .input-row { flex-direction: column; }
+    .btn-audit { width: 100%; }
+    .section-header { flex-wrap: wrap; }
+    .section-severity { margin-left: 0; margin-top: 0.3rem; }
+    .stamp { font-size: 0.8rem; top: 8px; right: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SUPERPOWER AUDIT</h1>
+  <div class="subtitle">The Bureau of Impractical Abilities</div>
+  <div class="badge">EST. 1938 -- "Keeping Heroes Honest"</div>
+</header>
+
+<div class="input-zone">
+  <div class="panel">
+    <div class="input-label">DECLARE YOUR SUPERPOWER FOR OFFICIAL AUDIT</div>
+    <div class="input-row">
+      <input type="text" id="powerInput" placeholder="e.g. Flying, Invisibility, Telekinesis..." autofocus>
+      <button class="btn-audit" id="auditBtn" onclick="runAudit()">AUDIT!</button>
+    </div>
+    <div class="quick-picks">
+      <span>Quick picks: </span>
+      <button class="quick-btn" onclick="quickPick('Flying')">Flying</button>
+      <button class="quick-btn" onclick="quickPick('Invisibility')">Invisibility</button>
+      <button class="quick-btn" onclick="quickPick('Super Strength')">Super Strength</button>
+      <button class="quick-btn" onclick="quickPick('Telepathy')">Telepathy</button>
+      <button class="quick-btn" onclick="quickPick('Time Travel')">Time Travel</button>
+      <button class="quick-btn" onclick="quickPick('Teleportation')">Teleportation</button>
+      <button class="quick-btn" onclick="quickPick('Shapeshifting')">Shapeshifting</button>
+      <button class="quick-btn" onclick="quickPick('Super Speed')">Super Speed</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading" id="loading">
+  <div class="loading-text" id="loadingText">AUDITING...</div>
+  <div class="loading-sub" id="loadingSub">Cross-referencing FAA databases...</div>
+</div>
+
+<div class="results" id="results"></div>
+
+<div class="toast" id="toast"></div>
+
+<div class="disclaimer">
+  This audit is conducted by the Bureau of Impractical Abilities (est. 1938). All findings are legally non-binding but emotionally devastating. No superpowers were harmed in the making of this audit.
+</div>
+
+<script>
+const loadingMessages = [
+  ["SCANNING FAA DATABASES...", "Checking airspace regulations..."],
+  ["CONSULTING IRS CODE...", "Finding obscure tax implications..."],
+  ["REVIEWING INSURANCE TABLES...", "Calculating premiums for unnatural abilities..."],
+  ["CHECKING OSHA COMPLIANCE...", "Workplace safety violations detected..."],
+  ["QUERYING MEDICAL LITERATURE...", "Cross-referencing side effects..."],
+  ["ANALYZING SOCIAL DYNAMICS...", "Measuring awkwardness quotient..."],
+  ["RUNNING COST ANALYSIS...", "The numbers are not looking good..."],
+  ["FILING ENVIRONMENTAL REVIEW...", "Assessing ecological damage potential..."],
+];
+
+function quickPick(power) {
+  document.getElementById('powerInput').value = power;
+  runAudit();
+}
+
+document.getElementById('powerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runAudit();
+});
+
+function runAudit() {
+  const power = document.getElementById('powerInput').value.trim();
+  if (!power) return;
+
+  document.getElementById('results').classList.remove('visible');
+  const loading = document.getElementById('loading');
+  loading.classList.add('visible');
+
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMessages.length;
+    document.getElementById('loadingText').textContent = loadingMessages[msgIdx][0];
+    document.getElementById('loadingSub').textContent = loadingMessages[msgIdx][1];
+  }, 400);
+
+  setTimeout(() => {
+    clearInterval(msgInterval);
+    loading.classList.remove('visible');
+    generateAudit(power);
+  }, 2200);
+}
+
+// Seeded random for consistent results per power
+function seededRandom(seed) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+  }
+  return function() {
+    h = (h * 16807 + 0) % 2147483647;
+    return (h & 0x7fffffff) / 0x7fffffff;
+  };
+}
+
+function pick(arr, rng) {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function pickN(arr, n, rng) {
+  const shuffled = [...arr].sort(() => rng() - 0.5);
+  return shuffled.slice(0, Math.min(n, arr.length));
+}
+
+function dollar(min, max, rng) {
+  const v = Math.floor(min + rng() * (max - min));
+  return '$' + v.toLocaleString();
+}
+
+function generateAudit(power) {
+  const pl = power.toLowerCase();
+  const rng = seededRandom(pl);
+  const score = Math.floor(4 + rng() * 19); // 4-22 out of 100
+
+  const verdicts = [
+    "ABSOLUTELY NOT VIABLE", "CATASTROPHICALLY IMPRACTICAL", "LEGALLY NIGHTMARISH",
+    "FINANCIALLY RUINOUS", "SOCIALLY DEVASTATING", "MEDICALLY INADVISABLE",
+    "BUREAUCRATICALLY IMPOSSIBLE", "INSURANCE-WISE: NO", "A LIABILITY LAWYER'S DREAM",
+    "WOULD NOT RECOMMEND", "TECHNICALLY LEGAL, PRACTICALLY INSANE"
+  ];
+
+  // ---- TEMPLATES (40+) ----
+
+  const taxFindings = [
+    `The IRS classifies "${power}" as a "non-standard income-generating capability." You owe self-employment tax on any value derived, including saved commute time.`,
+    `Under Section 482, ${power} constitutes an "unfair competitive advantage." The IRS will impute income at market rates even if you never use it commercially.`,
+    `Any ${power}-related savings (e.g., not buying plane tickets) are considered "constructive receipt of income" and taxable.`,
+    `You must file Form 8938 (FBAR) if your ${power} operates across international borders, even briefly.`,
+    `The AMT (Alternative Minimum Tax) specifically targets "extraordinary human capabilities" under a 2019 amendment nobody read.`,
+    `Depreciation of your ${power} is not allowed because the IRS considers it an "indefinite-lived intangible asset."`,
+    `If your ${power} generates heat, light, or electromagnetic energy, you owe excise tax as an unregulated power utility.`,
+    `Gift tax applies if you use ${power} to benefit others. Each instance is a separate taxable event.`,
+  ];
+
+  const insuranceFindings = [
+    `No major carrier will insure someone with ${power}. Your annual premium: ${dollar(45000, 280000, rng)}/year through Lloyd's of London "Extraordinary Risk" pool.`,
+    `Liability coverage for ${power}-related incidents starts at ${dollar(2000000, 10000000, rng)}/year. Umbrella policy required.`,
+    `Health insurance will classify ${power} as a "pre-existing genetic mutation." All related claims denied.`,
+    `Home insurance voided immediately. ${power} is classified as "keeping an uncontrolled hazard on premises."`,
+    `Auto insurance revoked. Underwriters cannot model risk for someone who ${pick(["can fly", "bends reality", "moves at inhuman speed", "is occasionally invisible", "generates dangerous energy"], rng)}.`,
+    `Life insurance actuaries have no mortality tables for "${power}." Default classification: "active combat zone."`,
+    `Workers' comp will not cover injuries sustained while using ${power}, even if your employer requested it.`,
+  ];
+
+  const regulatoryFindings = [
+    `FAA requires a Class 1 Medical Certificate and transponder if ${power} involves any form of flight, levitation, or "altitude-adjacent locomotion."`,
+    `The EPA classifies ${power} as a potential point-source pollutant. Environmental impact statement required (18-month process).`,
+    `OSHA mandates a full PPE assessment. Your ${power} creates ${pick(["inhalation hazards", "ergonomic risks", "thermal exposure", "radiation concerns", "fall hazards above 6 feet"], rng)} for bystanders.`,
+    `FCC licensing required if ${power} emits any electromagnetic radiation, including "vibes."`,
+    `The FDA will require Phase III clinical trials before you can use ${power} on or near food products.`,
+    `Under the ADA, using ${power} in the workplace creates "unreasonable accommodation burdens" for non-powered coworkers.`,
+    `TSA has pre-emptively flagged ${power} as a security concern. Expect secondary screening at all airports, forever.`,
+    `Local zoning laws prohibit "exercise of supernatural abilities" in residential areas (R-1 through R-4 zones).`,
+    `The Geneva Convention status of ${power} in armed conflict is "deeply ambiguous." Multiple nations have filed protests.`,
+    `Your ${power} violates at least 3 provisions of the Outer Space Treaty if used above the Karman line.`,
+  ];
+
+  const socialFindings = [
+    `${pick(["78%", "83%", "91%", "67%", "88%"], rng)} of surveyed adults said they would "feel uncomfortable" around someone with ${power}. The remaining ${pick(["22%", "17%", "9%", "33%", "12%"], rng)} just want to see a demonstration.`,
+    `Dating becomes ${pick(["exponentially more complicated", "a minefield of trust issues", "a consent nightmare", "basically impossible to explain on Hinge"], rng)}. "So what's your superpower?" is no longer a cute question.`,
+    `Friends will constantly ask you to use ${power} to help them move apartments. You will lose friends either way.`,
+    `Family gatherings: Uncle will ask you to prove it every time. Grandma will say it's "the devil's work." Cousin will try to monetize you on TikTok.`,
+    `Your neighbors filed a preemptive HOA complaint about your ${power}. The vote was unanimous.`,
+    `Job interviews become weird. Do you disclose? If yes, they won't hire you (liability). If no, it's fraud.`,
+    `You become the permanent designated ${pick(["problem solver", "party trick", "emergency contact", "family disappointment when you don't cure cancer"], rng)}.`,
+    `Social media: every post will have comments demanding you "do something useful" like solve world hunger. You just wanted to share brunch.`,
+  ];
+
+  const physicalFindings = [
+    `Chronic ${pick(["joint inflammation", "tendon strain", "spinal compression", "muscle fatigue", "nerve damage", "bone density loss"], rng)} from repeated ${power} use. Physical therapy: ${dollar(800, 3500, rng)}/month.`,
+    `Caloric requirements increase by ${pick(["340%", "580%", "1200%", "890%", "2100%"], rng)}. Your monthly grocery bill: ${dollar(2800, 8500, rng)}.`,
+    `${power} causes involuntary ${pick(["nosebleeds", "migraines", "muscle spasms", "vertigo", "tinnitus", "hair loss"], rng)} when overused. Threshold is lower than you'd hope.`,
+    `Sleep disruption: ${power} activates during REM sleep ${pick(["23%", "41%", "67%", "15%", "52%"], rng)} of the time. Partner will not stay.`,
+    `Your body's ${pick(["cortisol", "adrenaline", "serotonin", "dopamine", "melatonin"], rng)} levels are permanently elevated. Side effects include ${pick(["irritability", "paranoia", "compulsive heroism", "inability to relax", "random crying"], rng)}.`,
+    `Dermatologist warns of ${pick(["friction burns", "UV damage", "unusual callus patterns", "premature aging", "mysterious rashes"], rng)} associated with prolonged ${power} use.`,
+    `Annual colonoscopy recommended. No clear medical reason, but doctors are "not taking chances with whatever is going on in there."`,
+  ];
+
+  const financialFindings = [
+    `Estimated annual cost of maintaining ${power}: ${dollar(85000, 450000, rng)}. That's ${pick(["a nice house", "three Teslas", "four years of college", "a mid-career salary"], rng)}.`,
+    `Custom equipment/suit/gear required. Initial outfitting: ${dollar(15000, 120000, rng)}. Replacement every ${pick(["3 months", "6 months", "annually"], rng)}.`,
+    `Legal retainer for ${power}-related incidents: ${dollar(5000, 25000, rng)}/month. You will need it.`,
+    `Property damage deductible: ${dollar(50000, 500000, rng)} per incident. Average incidents per year: ${pick(["4.2", "7.8", "2.1", "11.3"], rng)}.`,
+    `Lost wages from mandatory ${pick(["government debriefings", "power calibration sessions", "court appearances", "Congressional hearings"], rng)}: ${dollar(20000, 80000, rng)}/year.`,
+    `Marketing/PR costs to maintain public image: ${dollar(30000, 150000, rng)}/year. One bad day and it triples.`,
+  ];
+
+  const legalFindings = [
+    `Precedent: In ${pick(["Martinez", "Chen", "O'Brien", "Nakamura", "Kowalski"], rng)} v. ${pick(["State of California", "City of New York", "the Pentagon", "Allstate Insurance", "United Airlines"], rng)} (${pick(["2019", "2021", "2023", "2020"], rng)}), the court ruled ${power}-like abilities create "strict liability" for all outcomes.`,
+    `Your ${power} violates ${pick(["14", "23", "7", "31", "19"], rng)} municipal ordinances just by existing. Fines begin accruing immediately.`,
+    `Mandatory registration in ${pick(["38", "42", "47", "50"], rng)} states. Failure to register: ${pick(["Class B felony", "2-5 years imprisonment", "permanent no-fly list"], rng)}.`,
+    `You cannot serve on a jury. Your ${power} creates "inherent bias" per the 14th Amendment, somehow.`,
+    `Restraining orders work differently. Courts must define a "${power}-specific exclusion zone" which nobody knows how to enforce.`,
+    `Your ${power} likely violates the Computer Fraud and Abuse Act if it involves any form of information access. Prosecutors are creative.`,
+  ];
+
+  const environmentalFindings = [
+    `${power} has a carbon footprint equivalent to ${pick(["3.2 SUVs", "a small factory", "17 Bitcoin mining rigs", "a round-trip flight to Mars", "the entire nation of Liechtenstein"], rng)}.`,
+    `Local wildlife has been ${pick(["disturbed", "traumatized", "relocated", "evolved defensively", "filed complaints (via animal advocates)"], rng)} due to ${power} usage in the area.`,
+    `Your ${power} generates ${pick(["electromagnetic interference", "low-frequency vibrations", "ozone depletion", "localized weather anomalies", "unexplained crop circles"], rng)} that affect a ${pick(["2-mile", "5-mile", "quarter-mile"], rng)} radius.`,
+  ];
+
+  const practicalFindings = [
+    `Finding clothes that accommodate ${power}: ${pick(["nearly impossible", "requires a personal tailor", "RIP every pair of pants you own", "Amazon doesn't have a filter for this"], rng)}.`,
+    `Commute: ${power} is actually ${pick(["slower than the subway during rush hour", "faster but you arrive sweaty and disoriented", "legally prohibited on most routes", "great until you hit a bug at 200 mph"], rng)}.`,
+    `Home modifications required: ${pick(["reinforced walls", "FAA-compliant roof hatch", "soundproofing", "radiation shielding", "extra-wide doorways", "industrial-grade cleaning supplies"], rng)}. Cost: ${dollar(25000, 180000, rng)}.`,
+    `Phone and electronics survival rate near your ${power}: ${pick(["12%", "34%", "8%", "51%", "3%"], rng)}. AppleCare does not cover "supernatural phenomena."`,
+    `Your ${power} is completely useless for the one thing you actually want: ${pick(["getting a good parking spot", "avoiding small talk", "making your WiFi faster", "getting a table at that restaurant", "folding fitted sheets"], rng)}.`,
+  ];
+
+  const existentialFindings = [
+    `Philosophers disagree on whether using ${power} makes you "more human" or "less." Your identity crisis budget: ${dollar(5000, 40000, rng)}/year (therapy).`,
+    `The "with great power" speech applies. You are legally obligated to hear it from ${pick(["every mentor figure", "random strangers", "your Uber driver", "a surprisingly philosophical barista"], rng)}.`,
+    `You will spend ${pick(["62%", "78%", "45%", "89%"], rng)} of your time explaining why you can't just "solve everything."`,
+    `Impostor syndrome intensifies: "Am I a hero or just ${pick(["a person with a weird medical condition", "a public hazard with good PR", "a walking insurance claim", "everyone's unpaid intern"], rng)}?"`,
+  ];
+
+  // Select findings
+  const sections = [
+    { title: "TAX IMPLICATIONS", icon: "\ud83d\udcb0", severity: "critical", findings: pickN(taxFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "INSURANCE ASSESSMENT", icon: "\ud83d\udee1\ufe0f", severity: "critical", findings: pickN(insuranceFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "REGULATORY COMPLIANCE", icon: "\ud83d\udcdc", severity: "critical", findings: pickN(regulatoryFindings, 3 + Math.floor(rng() * 2), rng) },
+    { title: "SOCIAL IMPACT ANALYSIS", icon: "\ud83d\ude2c", severity: "high", findings: pickN(socialFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "PHYSICAL SIDE EFFECTS", icon: "\ud83e\ude7a", severity: "high", findings: pickN(physicalFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "FINANCIAL BURDEN", icon: "\ud83d\udcb8", severity: "critical", findings: pickN(financialFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "LEGAL EXPOSURE", icon: "\u2696\ufe0f", severity: "high", findings: pickN(legalFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "ENVIRONMENTAL REVIEW", icon: "\ud83c\udf0d", severity: "medium", findings: pickN(environmentalFindings, 1 + Math.floor(rng() * 2), rng) },
+    { title: "PRACTICAL LOGISTICS", icon: "\ud83d\udce6", severity: "medium", findings: pickN(practicalFindings, 2 + Math.floor(rng() * 2), rng) },
+    { title: "EXISTENTIAL TOLL", icon: "\ud83e\udde0", severity: "low", findings: pickN(existentialFindings, 1 + Math.floor(rng() * 2), rng) },
+  ];
+
+  // Comparison
+  const comparisons = [
+    { mundane: "Business Class", note: "surprisingly similar back pain" },
+    { mundane: "A Good Ladder", note: "cheaper, OSHA-approved, no FAA license" },
+    { mundane: "Noise-Canceling Headphones", note: "achieves 80% of the same isolation, 0% of the lawsuits" },
+    { mundane: "A Fast Car", note: "same adrenaline, actual insurance options" },
+    { mundane: "A Really Good Blender", note: "equally destructive, far more useful daily" },
+    { mundane: "Wearing All Black", note: "socially equivalent stealth, zero side effects" },
+    { mundane: "Google Calendar", note: "better time management without rupturing spacetime" },
+    { mundane: "A Gym Membership", note: "same end result, with a sauna" },
+    { mundane: "Reading Body Language Books", note: "ethically acceptable mind-reading at 1/1000th the cost" },
+    { mundane: "A Good Disguise Kit", note: "achieves shapeshifting without the identity crisis" },
+    { mundane: "An E-Bike", note: "same speed through traffic, with a cup holder" },
+    { mundane: "A Loud Voice", note: "similar intimidation factor, no radiation" },
+    { mundane: "A Swiss Army Knife", note: "equally versatile, TSA mostly allows it" },
+    { mundane: "Hiring Movers", note: "same result, covered by insurance" },
+    { mundane: "A Taser", note: "comparable stopping power, fits in a purse" },
+  ];
+
+  const comp = pick(comparisons, rng);
+  const totalAnnualCost = dollar(120000, 890000, rng);
+
+  let html = '';
+
+  // Score banner
+  html += `
+    <div class="panel score-banner">
+      <div class="stamp">CLASSIFIED</div>
+      <div class="panel-inner">
+        <div class="power-name">${escapeHtml(power)}</div>
+        <div class="viability-label">PRACTICAL VIABILITY SCORE</div>
+        <div class="score-big">${score}/100</div>
+        <div class="score-out-of">where 100 = "actually useful" and 0 = "just set money on fire"</div>
+        <div class="score-verdict">"${pick(verdicts, rng)}"</div>
+      </div>
+    </div>
+  `;
+
+  // Total cost speech bubble
+  html += `
+    <div class="speech-bubble">
+      Estimated total annual cost of having "${escapeHtml(power)}": <span class="cost-tag">${totalAnnualCost}/yr</span><br>
+      That's before the therapy bills.
+    </div>
+  `;
+
+  // Audit sections
+  for (const section of sections) {
+    html += `
+      <div class="audit-section">
+        <div class="panel">
+          <div class="section-header">
+            <div class="section-icon">${section.icon}</div>
+            <div class="section-title">${section.title}</div>
+            <div class="section-severity severity-${section.severity}">${section.severity.toUpperCase()}</div>
+          </div>
+          <div class="section-body">
+            ${section.findings.map((f, i) => `
+              <div class="finding">
+                <span class="finding-label">Finding ${i + 1}:</span> ${f}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Comparison
+  html += `
+    <div class="audit-section">
+      <div class="panel comparison-panel">
+        <div class="section-header">
+          <div class="section-icon">\ud83e\udd3c</div>
+          <div class="section-title">MUNDANE ALTERNATIVE COMPARISON</div>
+        </div>
+        <div class="comparison-text">
+          ${escapeHtml(power)}
+          <div class="vs-badge">VS</div>
+          ${comp.mundane}
+          <br><em>${comp.note}</em>
+        </div>
+        <div class="speech-bubble">
+          Bureau recommendation: Just get the ${comp.mundane.toLowerCase()}. Seriously.
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Official conclusion
+  html += `
+    <div class="audit-section">
+      <div class="panel" style="background: linear-gradient(135deg, #FFF3E0, #FFE0B2);">
+        <div class="section-header">
+          <div class="section-icon">\ud83c\udfc6</div>
+          <div class="section-title">OFFICIAL BUREAU CONCLUSION</div>
+          <div class="section-severity severity-critical">FINAL</div>
+        </div>
+        <div class="section-body">
+          <div class="finding">
+            After thorough review, the Bureau of Impractical Abilities finds that <strong>"${escapeHtml(power)}"</strong> scores a <strong>${score}/100</strong> on the Practical Viability Index. ${pick([
+              "We've seen worse, but not recently.",
+              "The paperwork alone would take a lifetime.",
+              "We recommend therapy instead.",
+              "Even the intern said no.",
+              "This is why we can't have nice things.",
+              "Have you considered a hobby that doesn't violate physics?",
+              "The legal team quit after reading this file.",
+              "We're billing you for the emotional damage this audit caused our staff.",
+            ], rng)}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Share + new audit buttons
+  html += `
+    <div class="share-zone">
+      <button class="btn-share" onclick="shareAudit('${escapeHtml(power).replace(/'/g, "\\'")}', ${score})">SHARE AUDIT</button>
+      <button class="btn-share btn-new" onclick="newAudit()">NEW AUDIT</button>
+    </div>
+  `;
+
+  const results = document.getElementById('results');
+  results.innerHTML = html;
+  results.classList.add('visible');
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function shareAudit(power, score) {
+  const text = `I just got my superpower audited!\n\n"${power}" scored ${score}/100 on the Practical Viability Score.\n\nVerdict: ABSOLUTELY NOT VIABLE.\n\nGet your superpower audited:`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Superpower Audit', text: text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Audit copied to clipboard!');
+    });
+  } else {
+    showToast('Share not supported on this browser');
+  }
+}
+
+function newAudit() {
+  document.getElementById('results').classList.remove('visible');
+  document.getElementById('powerInput').value = '';
+  document.getElementById('powerInput').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+
+</body>
+</html>

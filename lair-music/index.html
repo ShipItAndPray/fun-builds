@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Villain Lair Ambient Soundscapes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Orbitron:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cinzel', serif;
+    background: #0a0a0a;
+    color: #c4c4c4;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background canvas */
+  #ambient-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  /* Fog overlay */
+  .fog {
+    position: fixed;
+    top: 0; left: 0;
+    width: 200%; height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.15;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(100,100,120,0.3) 25%,
+      transparent 50%
+    );
+    animation: fogDrift 20s linear infinite;
+  }
+
+  @keyframes fogDrift {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* Lightning flash overlay */
+  #lightning-flash {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    background: white;
+    opacity: 0;
+    transition: opacity 0.05s;
+  }
+
+  .container {
+    position: relative;
+    z-index: 3;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  h1 {
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    background: linear-gradient(180deg, #ff3333 0%, #8b0000 50%, #4a0000 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(139,0,0,0.5));
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 6px;
+    color: #666;
+    text-transform: uppercase;
+  }
+
+  /* Sound toggle */
+  .master-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+
+  .sound-toggle {
+    background: linear-gradient(145deg, #1a0000, #2a0000);
+    border: 2px solid #8b0000;
+    color: #ff4444;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.9rem;
+    padding: 12px 30px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    border-radius: 4px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .sound-toggle:hover {
+    background: linear-gradient(145deg, #2a0000, #3a0000);
+    box-shadow: 0 0 20px rgba(139,0,0,0.5);
+  }
+
+  .sound-toggle.active {
+    border-color: #00ff00;
+    color: #00ff00;
+    box-shadow: 0 0 15px rgba(0,255,0,0.3);
+  }
+
+  .sound-toggle.active::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: 10px;
+    width: 8px; height: 8px;
+    background: #00ff00;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Presets */
+  .presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+  }
+
+  .preset-btn {
+    background: linear-gradient(145deg, #111, #1a1a1a);
+    border: 1px solid #333;
+    color: #999;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    padding: 14px 8px;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 4px;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .preset-btn:hover {
+    border-color: #8b0000;
+    color: #ff4444;
+    box-shadow: 0 0 15px rgba(139,0,0,0.3);
+  }
+
+  .preset-btn.active {
+    border-color: #8b0000;
+    color: #ff4444;
+    background: linear-gradient(145deg, #1a0000, #250000);
+    box-shadow: 0 0 20px rgba(139,0,0,0.4);
+  }
+
+  .preset-icon {
+    font-size: 1.8rem;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  /* Sliders section */
+  .controls {
+    background: linear-gradient(145deg, rgba(15,15,15,0.9), rgba(20,20,20,0.9));
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 25px;
+    margin: 20px 0;
+    backdrop-filter: blur(10px);
+  }
+
+  .controls h2 {
+    font-size: 1rem;
+    color: #8b0000;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .slider-group {
+    margin-bottom: 18px;
+  }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    font-size: 0.85rem;
+  }
+
+  .slider-name {
+    color: #999;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+
+  .slider-value {
+    font-family: 'Orbitron', sans-serif;
+    color: #ff4444;
+    font-size: 0.8rem;
+    min-width: 35px;
+    text-align: right;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #1a1a1a;
+    border-radius: 3px;
+    outline: none;
+    border: 1px solid #333;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ff4444, #8b0000);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(139,0,0,0.6);
+    border: 2px solid #ff6666;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ff4444, #8b0000);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(139,0,0,0.6);
+    border: 2px solid #ff6666;
+  }
+
+  /* Visualizer */
+  #visualizer {
+    width: 100%;
+    height: 80px;
+    margin: 20px 0;
+    border-radius: 4px;
+    background: rgba(10,10,10,0.8);
+    border: 1px solid #222;
+  }
+
+  /* Share section */
+  .share-section {
+    text-align: center;
+    margin: 20px 0 40px;
+  }
+
+  .share-btn {
+    background: linear-gradient(145deg, #1a1a1a, #222);
+    border: 1px solid #444;
+    color: #999;
+    font-family: 'Cinzel', serif;
+    font-size: 0.8rem;
+    padding: 10px 25px;
+    cursor: pointer;
+    border-radius: 4px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+
+  .share-btn:hover {
+    border-color: #8b0000;
+    color: #ff4444;
+  }
+
+  #share-url {
+    display: none;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #ff4444;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    width: 100%;
+    word-break: break-all;
+    text-align: left;
+  }
+
+  .copied-toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #1a0000;
+    border: 1px solid #8b0000;
+    color: #ff4444;
+    padding: 10px 25px;
+    border-radius: 4px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.75rem;
+    z-index: 100;
+    transition: transform 0.3s ease;
+    letter-spacing: 2px;
+  }
+
+  .copied-toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* Status bar */
+  .status-bar {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    color: #444;
+    letter-spacing: 2px;
+    padding: 10px 0 30px;
+  }
+
+  /* Particles */
+  .particle {
+    position: fixed;
+    width: 2px;
+    height: 2px;
+    background: rgba(139,0,0,0.6);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Mobile */
+  @media (max-width: 600px) {
+    .container { padding: 10px; }
+    .controls { padding: 15px; }
+    .presets { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    .preset-btn { padding: 10px 5px; font-size: 0.65rem; }
+    .preset-icon { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="ambient-bg"></canvas>
+<div class="fog"></div>
+<div id="lightning-flash"></div>
+
+<div class="container">
+  <header>
+    <h1>Villain Lair</h1>
+    <div class="subtitle">Ambient Soundscape Generator</div>
+  </header>
+
+  <div class="master-controls">
+    <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">
+      Activate Lair
+    </button>
+  </div>
+
+  <div class="presets">
+    <button class="preset-btn" onclick="loadPreset('volcano')" data-preset="volcano">
+      <span class="preset-icon">🌋</span>
+      Volcano Fortress
+    </button>
+    <button class="preset-btn" onclick="loadPreset('ice')" data-preset="ice">
+      <span class="preset-icon">🏔️</span>
+      Ice Palace
+    </button>
+    <button class="preset-btn" onclick="loadPreset('bunker')" data-preset="bunker">
+      <span class="preset-icon">🏚️</span>
+      Underground Bunker
+    </button>
+    <button class="preset-btn" onclick="loadPreset('space')" data-preset="space">
+      <span class="preset-icon">🛸</span>
+      Space Station
+    </button>
+    <button class="preset-btn" onclick="loadPreset('gothic')" data-preset="gothic">
+      <span class="preset-icon">🏰</span>
+      Gothic Castle
+    </button>
+  </div>
+
+  <canvas id="visualizer"></canvas>
+
+  <div class="controls">
+    <h2>Lair Parameters</h2>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="slider-name">Menace Level</span>
+        <span class="slider-value" id="menace-val">50</span>
+      </div>
+      <input type="range" id="menace" min="0" max="100" value="50" oninput="updateSlider('menace')">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="slider-name">Echo Depth</span>
+        <span class="slider-value" id="echo-val">40</span>
+      </div>
+      <input type="range" id="echo" min="0" max="100" value="40" oninput="updateSlider('echo')">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="slider-name">Thunder Frequency</span>
+        <span class="slider-value" id="thunder-val">30</span>
+      </div>
+      <input type="range" id="thunder" min="0" max="100" value="30" oninput="updateSlider('thunder')">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="slider-name">Evil Laugh Probability</span>
+        <span class="slider-value" id="laugh-val">20</span>
+      </div>
+      <input type="range" id="laugh" min="0" max="100" value="20" oninput="updateSlider('laugh')">
+    </div>
+
+    <div class="slider-group">
+      <div class="slider-label">
+        <span class="slider-name">Pipe Organ Intensity</span>
+        <span class="slider-value" id="organ-val">35</span>
+      </div>
+      <input type="range" id="organ" min="0" max="100" value="35" oninput="updateSlider('organ')">
+    </div>
+  </div>
+
+  <div class="share-section">
+    <button class="share-btn" onclick="shareLair()">Share Your Lair</button>
+    <div id="share-url"></div>
+  </div>
+
+  <div class="status-bar" id="status">Systems offline</div>
+</div>
+
+<div class="copied-toast" id="toast">Link copied to clipboard</div>
+
+<script>
+// ==================== AUDIO ENGINE ====================
+let audioCtx = null;
+let isPlaying = false;
+let masterGain = null;
+let analyser = null;
+
+// Active sound nodes
+let droneOsc1, droneOsc2, droneOsc3, droneLFO, droneLFOGain;
+let droneGain, echoDelay, echoFeedback, echoGain;
+let organOscs = [];
+let organGain;
+let thunderInterval, laughInterval;
+let animFrame;
+let currentPreset = null;
+
+// Slider values
+const sliders = { menace: 50, echo: 40, thunder: 30, laugh: 20, organ: 35 };
+
+// Presets
+const presets = {
+  volcano: { menace: 80, echo: 30, thunder: 70, laugh: 15, organ: 20, colors: ['#1a0500','#3d0c00','#8b2500'], label: 'Volcano Fortress' },
+  ice:     { menace: 35, echo: 80, thunder: 20, laugh: 10, organ: 50, colors: ['#000a14','#001a33','#003366'], label: 'Ice Palace' },
+  bunker:  { menace: 60, echo: 20, thunder: 10, laugh: 30, organ: 15, colors: ['#0a0a05','#1a1a10','#2a2a1a'], label: 'Underground Bunker' },
+  space:   { menace: 45, echo: 70, thunder: 5,  laugh: 25, organ: 60, colors: ['#050510','#0a0a2a','#15154a'], label: 'Space Station' },
+  gothic:  { menace: 70, echo: 55, thunder: 50, laugh: 40, organ: 85, colors: ['#0a0008','#1a0010','#2a0020'], label: 'Gothic Castle' },
+};
+
+let bgColors = ['#0a0a0a','#111','#1a0000'];
+
+function initAudio() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0.6;
+
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 256;
+  masterGain.connect(analyser);
+  analyser.connect(audioCtx.destination);
+}
+
+function startSound() {
+  if (!audioCtx) initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  // === LOW DRONE ===
+  droneGain = audioCtx.createGain();
+  droneGain.gain.value = 0;
+  droneGain.connect(masterGain);
+
+  // Main drone oscillator - deep bass
+  droneOsc1 = audioCtx.createOscillator();
+  droneOsc1.type = 'sawtooth';
+  droneOsc1.frequency.value = 40;
+  const droneFilter1 = audioCtx.createBiquadFilter();
+  droneFilter1.type = 'lowpass';
+  droneFilter1.frequency.value = 120;
+  droneFilter1.Q.value = 2;
+  droneOsc1.connect(droneFilter1);
+  droneFilter1.connect(droneGain);
+  droneOsc1.start();
+
+  // Second drone - slightly detuned for thickness
+  droneOsc2 = audioCtx.createOscillator();
+  droneOsc2.type = 'sawtooth';
+  droneOsc2.frequency.value = 40.5;
+  const droneFilter2 = audioCtx.createBiquadFilter();
+  droneFilter2.type = 'lowpass';
+  droneFilter2.frequency.value = 100;
+  droneOsc2.connect(droneFilter2);
+  droneFilter2.connect(droneGain);
+  droneOsc2.start();
+
+  // Sub bass
+  droneOsc3 = audioCtx.createOscillator();
+  droneOsc3.type = 'sine';
+  droneOsc3.frequency.value = 30;
+  const subGain = audioCtx.createGain();
+  subGain.gain.value = 0.5;
+  droneOsc3.connect(subGain);
+  subGain.connect(droneGain);
+  droneOsc3.start();
+
+  // LFO for slow movement
+  droneLFO = audioCtx.createOscillator();
+  droneLFO.type = 'sine';
+  droneLFO.frequency.value = 0.1;
+  droneLFOGain = audioCtx.createGain();
+  droneLFOGain.gain.value = 5;
+  droneLFO.connect(droneLFOGain);
+  droneLFOGain.connect(droneOsc1.frequency);
+  droneLFOGain.connect(droneOsc2.frequency);
+  droneLFO.start();
+
+  // === ECHO/REVERB ===
+  echoDelay = audioCtx.createDelay(5.0);
+  echoDelay.delayTime.value = 0.4;
+  echoFeedback = audioCtx.createGain();
+  echoFeedback.gain.value = 0.3;
+  echoGain = audioCtx.createGain();
+  echoGain.gain.value = 0.3;
+
+  droneGain.connect(echoDelay);
+  echoDelay.connect(echoFeedback);
+  echoFeedback.connect(echoDelay);
+  echoDelay.connect(echoGain);
+  echoGain.connect(masterGain);
+
+  // === PIPE ORGAN ===
+  organGain = audioCtx.createGain();
+  organGain.gain.value = 0;
+  const organReverb = audioCtx.createDelay(2.0);
+  organReverb.delayTime.value = 0.8;
+  const organRevGain = audioCtx.createGain();
+  organRevGain.gain.value = 0.2;
+  organGain.connect(masterGain);
+  organGain.connect(organReverb);
+  organReverb.connect(organRevGain);
+  organRevGain.connect(masterGain);
+
+  // Minor chord: C2-Eb2-G2-C3 (organ-like tones)
+  const organNotes = [65.41, 77.78, 98.0, 130.81, 155.56];
+  organOscs = organNotes.map((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    // Organ uses combo of sine + triangle for pipe-like timbre
+    osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+    osc.frequency.value = freq;
+
+    // Add slight vibrato
+    const vib = audioCtx.createOscillator();
+    vib.type = 'sine';
+    vib.frequency.value = 4 + i * 0.5;
+    const vibGain = audioCtx.createGain();
+    vibGain.gain.value = 1.5;
+    vib.connect(vibGain);
+    vibGain.connect(osc.frequency);
+    vib.start();
+
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 400 + i * 100;
+    filter.Q.value = 1;
+
+    osc.connect(filter);
+    filter.connect(organGain);
+    osc.start();
+    return { osc, vib, filter };
+  });
+
+  // Fade in
+  droneGain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 2);
+
+  // Apply current settings
+  updateAllAudio();
+
+  // Start random events
+  scheduleThunder();
+  scheduleLaugh();
+}
+
+function stopSound() {
+  if (!audioCtx) return;
+
+  // Fade out
+  if (masterGain) {
+    masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1);
+  }
+
+  clearTimeout(thunderInterval);
+  clearTimeout(laughInterval);
+
+  setTimeout(() => {
+    [droneOsc1, droneOsc2, droneOsc3, droneLFO].forEach(o => { try { o.stop(); } catch(e){} });
+    organOscs.forEach(({osc, vib}) => { try { osc.stop(); vib.stop(); } catch(e){} });
+    organOscs = [];
+    audioCtx.close();
+    audioCtx = null;
+  }, 1200);
+}
+
+// === THUNDER ===
+function triggerThunder() {
+  if (!audioCtx || !isPlaying) return;
+
+  const now = audioCtx.currentTime;
+  const thunderGain = audioCtx.createGain();
+  thunderGain.connect(masterGain);
+
+  // Noise burst for thunder
+  const bufferSize = audioCtx.sampleRate * 3;
+  const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.8));
+  }
+
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = noiseBuffer;
+
+  const thunderFilter = audioCtx.createBiquadFilter();
+  thunderFilter.type = 'lowpass';
+  thunderFilter.frequency.value = 200;
+  thunderFilter.Q.value = 1;
+
+  noise.connect(thunderFilter);
+  thunderFilter.connect(thunderGain);
+
+  const intensity = sliders.menace / 100;
+  thunderGain.gain.setValueAtTime(0, now);
+  thunderGain.gain.linearRampToValueAtTime(0.4 + intensity * 0.4, now + 0.05);
+  thunderGain.gain.exponentialRampToValueAtTime(0.01, now + 2.5);
+
+  noise.start(now);
+  noise.stop(now + 3);
+
+  // Visual flash
+  flashLightning();
+}
+
+function flashLightning() {
+  const flash = document.getElementById('lightning-flash');
+  flash.style.opacity = '0.3';
+  setTimeout(() => { flash.style.opacity = '0'; }, 80);
+  setTimeout(() => { flash.style.opacity = '0.15'; }, 150);
+  setTimeout(() => { flash.style.opacity = '0'; }, 200);
+}
+
+function scheduleThunder() {
+  if (!isPlaying) return;
+  const freq = sliders.thunder;
+  if (freq < 3) { thunderInterval = setTimeout(scheduleThunder, 5000); return; }
+
+  // Higher thunder value = more frequent
+  const minDelay = Math.max(2000, 15000 - freq * 130);
+  const maxDelay = Math.max(5000, 30000 - freq * 250);
+  const delay = minDelay + Math.random() * (maxDelay - minDelay);
+
+  thunderInterval = setTimeout(() => {
+    if (Math.random() < freq / 100) triggerThunder();
+    scheduleThunder();
+  }, delay);
+}
+
+// === EVIL LAUGH ===
+function triggerLaugh() {
+  if (!audioCtx || !isPlaying) return;
+
+  const now = audioCtx.currentTime;
+  const laughGainNode = audioCtx.createGain();
+  laughGainNode.connect(masterGain);
+
+  // Synthesized evil laugh using formant synthesis
+  const laughDuration = 1.5 + Math.random() * 1.5;
+  const syllables = 3 + Math.floor(Math.random() * 4);
+
+  for (let s = 0; s < syllables; s++) {
+    const syllableStart = now + s * (laughDuration / syllables);
+    const syllableDur = laughDuration / syllables * 0.7;
+
+    // Vocal formant - low pitched "ha"
+    const osc = audioCtx.createOscillator();
+    osc.type = 'sawtooth';
+    const basePitch = 80 + Math.random() * 30;
+    osc.frequency.setValueAtTime(basePitch + s * 5, syllableStart);
+    osc.frequency.linearRampToValueAtTime(basePitch - 10, syllableStart + syllableDur);
+
+    // Formant filters for "ah" vowel
+    const f1 = audioCtx.createBiquadFilter();
+    f1.type = 'bandpass';
+    f1.frequency.value = 700 + Math.random() * 200;
+    f1.Q.value = 5;
+
+    const f2 = audioCtx.createBiquadFilter();
+    f2.type = 'bandpass';
+    f2.frequency.value = 1200 + Math.random() * 300;
+    f2.Q.value = 5;
+
+    const syllableGain = audioCtx.createGain();
+    syllableGain.gain.setValueAtTime(0, syllableStart);
+    syllableGain.gain.linearRampToValueAtTime(0.12, syllableStart + 0.03);
+    syllableGain.gain.exponentialRampToValueAtTime(0.001, syllableStart + syllableDur);
+
+    osc.connect(f1);
+    osc.connect(f2);
+    f1.connect(syllableGain);
+    f2.connect(syllableGain);
+    syllableGain.connect(laughGainNode);
+
+    // Add echo to the laugh
+    const laughEcho = audioCtx.createDelay(2.0);
+    laughEcho.delayTime.value = 0.3 + (sliders.echo / 100) * 0.5;
+    const laughEchoGain = audioCtx.createGain();
+    laughEchoGain.gain.value = 0.2;
+    syllableGain.connect(laughEcho);
+    laughEcho.connect(laughEchoGain);
+    laughEchoGain.connect(laughGainNode);
+
+    osc.start(syllableStart);
+    osc.stop(syllableStart + syllableDur + 0.1);
+  }
+
+  laughGainNode.gain.value = 0.3 + (sliders.menace / 100) * 0.3;
+}
+
+function scheduleLaugh() {
+  if (!isPlaying) return;
+  const prob = sliders.laugh;
+  if (prob < 3) { laughInterval = setTimeout(scheduleLaugh, 8000); return; }
+
+  const minDelay = Math.max(3000, 20000 - prob * 170);
+  const maxDelay = Math.max(8000, 40000 - prob * 350);
+  const delay = minDelay + Math.random() * (maxDelay - minDelay);
+
+  laughInterval = setTimeout(() => {
+    if (Math.random() < prob / 100) triggerLaugh();
+    scheduleLaugh();
+  }, delay);
+}
+
+// === UPDATE AUDIO PARAMS ===
+function updateAllAudio() {
+  if (!audioCtx || !isPlaying) return;
+
+  const menace = sliders.menace / 100;
+  const echo = sliders.echo / 100;
+  const organ = sliders.organ / 100;
+  const now = audioCtx.currentTime;
+
+  // Drone: higher menace = louder, lower pitch, more dissonant
+  if (droneGain) {
+    droneGain.gain.linearRampToValueAtTime(0.15 + menace * 0.35, now + 0.5);
+  }
+  if (droneOsc1) {
+    droneOsc1.frequency.linearRampToValueAtTime(50 - menace * 20, now + 0.5);
+  }
+  if (droneOsc2) {
+    droneOsc2.frequency.linearRampToValueAtTime(50.5 - menace * 20 + menace * 3, now + 0.5); // More detuning at higher menace
+  }
+  if (droneLFOGain) {
+    droneLFOGain.gain.linearRampToValueAtTime(3 + menace * 8, now + 0.5);
+  }
+
+  // Echo
+  if (echoDelay) {
+    echoDelay.delayTime.linearRampToValueAtTime(0.1 + echo * 0.9, now + 0.5);
+  }
+  if (echoFeedback) {
+    echoFeedback.gain.linearRampToValueAtTime(echo * 0.6, now + 0.5);
+  }
+  if (echoGain) {
+    echoGain.gain.linearRampToValueAtTime(echo * 0.5, now + 0.5);
+  }
+
+  // Organ
+  if (organGain) {
+    organGain.gain.linearRampToValueAtTime(organ * 0.25, now + 0.5);
+  }
+  organOscs.forEach(({filter}, i) => {
+    if (filter) {
+      filter.frequency.linearRampToValueAtTime(200 + organ * 800 + i * 100, now + 0.5);
+    }
+  });
+}
+
+// ==================== UI ====================
+function updateSlider(name) {
+  const el = document.getElementById(name);
+  sliders[name] = parseInt(el.value);
+  document.getElementById(name + '-val').textContent = sliders[name];
+  updateAllAudio();
+
+  // Clear preset selection when manually adjusting
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  currentPreset = null;
+}
+
+function loadPreset(name) {
+  const p = presets[name];
+  currentPreset = name;
+
+  Object.keys(sliders).forEach(key => {
+    sliders[key] = p[key];
+    document.getElementById(key).value = p[key];
+    document.getElementById(key + '-val').textContent = p[key];
+  });
+
+  bgColors = p.colors;
+
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-preset="${name}"]`).classList.add('active');
+
+  updateAllAudio();
+  document.getElementById('status').textContent = p.label + ' activated';
+}
+
+function toggleSound() {
+  const btn = document.getElementById('sound-toggle');
+  if (!isPlaying) {
+    isPlaying = true;
+    btn.classList.add('active');
+    btn.textContent = 'Deactivate Lair';
+    startSound();
+    startVisualizer();
+    document.getElementById('status').textContent = 'Systems online — generating ambience';
+  } else {
+    isPlaying = false;
+    btn.classList.remove('active');
+    btn.textContent = 'Activate Lair';
+    stopSound();
+    cancelAnimationFrame(animFrame);
+    document.getElementById('status').textContent = 'Systems offline';
+  }
+}
+
+// ==================== SHARE ====================
+function shareLair() {
+  const params = new URLSearchParams();
+  Object.entries(sliders).forEach(([k, v]) => params.set(k, v));
+  if (currentPreset) params.set('preset', currentPreset);
+
+  const url = window.location.origin + window.location.pathname + '?' + params.toString();
+  const urlEl = document.getElementById('share-url');
+  urlEl.style.display = 'block';
+  urlEl.textContent = url;
+
+  navigator.clipboard.writeText(url).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }).catch(() => {});
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('preset')) {
+    loadPreset(params.get('preset'));
+  }
+  ['menace','echo','thunder','laugh','organ'].forEach(key => {
+    if (params.has(key)) {
+      sliders[key] = parseInt(params.get(key));
+      document.getElementById(key).value = sliders[key];
+      document.getElementById(key + '-val').textContent = sliders[key];
+    }
+  });
+}
+
+// ==================== VISUALIZER ====================
+function startVisualizer() {
+  const canvas = document.getElementById('visualizer');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+  canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+
+  const bufferLength = analyser.frequencyBinCount;
+  const dataArray = new Uint8Array(bufferLength);
+
+  function draw() {
+    if (!isPlaying) return;
+    animFrame = requestAnimationFrame(draw);
+
+    analyser.getByteFrequencyData(dataArray);
+
+    ctx.fillStyle = 'rgba(10,10,10,0.3)';
+    ctx.fillRect(0, 0, w, h);
+
+    const barW = w / bufferLength * 2;
+    for (let i = 0; i < bufferLength; i++) {
+      const v = dataArray[i] / 255;
+      const barH = v * h * 0.9;
+      const x = i * barW;
+
+      const r = Math.floor(139 * v + 20);
+      const g = Math.floor(v * 20);
+      const b = Math.floor(v * 10);
+
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(x, h - barH, barW - 1, barH);
+
+      // Glow
+      ctx.fillStyle = `rgba(${r},${g},${b},0.3)`;
+      ctx.fillRect(x - 1, h - barH - 2, barW + 1, 4);
+    }
+  }
+
+  draw();
+}
+
+// ==================== AMBIENT BACKGROUND ====================
+function initBackground() {
+  const canvas = document.getElementById('ambient-bg');
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Particles
+  const particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -Math.random() * 0.5 - 0.1,
+      size: Math.random() * 2 + 0.5,
+      alpha: Math.random() * 0.4,
+    });
+  }
+
+  function drawBg() {
+    requestAnimationFrame(drawBg);
+    const w = canvas.width, h = canvas.height;
+
+    // Gradient background
+    const grad = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, w * 0.7);
+    grad.addColorStop(0, bgColors[1] || '#111');
+    grad.addColorStop(0.5, bgColors[0] || '#0a0a0a');
+    grad.addColorStop(1, '#000');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Pulsing center glow based on menace
+    const menace = sliders.menace / 100;
+    const pulseR = (Math.sin(Date.now() * 0.001) * 0.5 + 0.5) * menace;
+    const glowGrad = ctx.createRadialGradient(w/2, h * 0.4, 0, w/2, h * 0.4, w * 0.4);
+    const c = bgColors[2] || '#1a0000';
+    glowGrad.addColorStop(0, c + Math.floor(pulseR * 60 + 10).toString(16).padStart(2,'0'));
+    glowGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // Particles (embers / dust / ice crystals depending on preset)
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.alpha += (Math.random() - 0.5) * 0.02;
+      p.alpha = Math.max(0.05, Math.min(0.5, p.alpha));
+
+      if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+      if (p.x < -10) p.x = w + 10;
+      if (p.x > w + 10) p.x = -10;
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      const pc = bgColors[2] || '#8b0000';
+      ctx.fillStyle = pc;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    // Subtle vignette
+    const vig = ctx.createRadialGradient(w/2, h/2, w * 0.3, w/2, h/2, w * 0.8);
+    vig.addColorStop(0, 'transparent');
+    vig.addColorStop(1, 'rgba(0,0,0,0.6)');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  drawBg();
+}
+
+// ==================== INIT ====================
+window.addEventListener('DOMContentLoaded', () => {
+  loadFromURL();
+  initBackground();
+});
+
+// Handle window resize for visualizer
+window.addEventListener('resize', () => {
+  if (isPlaying) {
+    const canvas = document.getElementById('visualizer');
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+  }
+});
+</script>
+</body>
+</html>

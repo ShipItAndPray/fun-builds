@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passive Income BS Detector</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0a0f0a;
+    color: #c8e6c9;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .rain {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0; overflow: hidden;
+  }
+  .dollar {
+    position: absolute; top: -40px; font-size: 20px; opacity: 0.08;
+    animation: fall linear infinite; color: #4caf50;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); }
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 700px; margin: 0 auto; padding: 20px;
+  }
+  header {
+    text-align: center; padding: 40px 0 20px;
+  }
+  header h1 {
+    font-size: 2.4em; color: #4caf50;
+    text-shadow: 0 0 30px rgba(76,175,80,0.4);
+  }
+  header h1 span { color: #f44336; }
+  header p {
+    color: #81c784; margin-top: 8px; font-size: 1.1em;
+  }
+  .input-section {
+    margin: 30px 0; text-align: center;
+  }
+  .input-section input {
+    width: 100%; max-width: 500px; padding: 16px 20px;
+    font-size: 1.1em; border: 2px solid #2e7d32;
+    background: #1a261a; color: #e8f5e9; border-radius: 12px;
+    outline: none; transition: border-color 0.3s;
+  }
+  .input-section input:focus { border-color: #66bb6a; }
+  .input-section input::placeholder { color: #5a7a5a; }
+  .input-section button {
+    display: inline-block; margin-top: 14px; padding: 14px 36px;
+    font-size: 1.1em; font-weight: 700;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: #e8f5e9; border: none; border-radius: 12px;
+    cursor: pointer; transition: all 0.3s;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .input-section button:hover {
+    background: linear-gradient(135deg, #388e3c, #2e7d32);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76,175,80,0.3);
+  }
+  .examples {
+    text-align: center; margin: 10px 0 20px;
+    font-size: 0.85em; color: #5a7a5a;
+  }
+  .examples span {
+    display: inline-block; margin: 3px 4px; padding: 4px 10px;
+    background: #1a261a; border-radius: 20px; cursor: pointer;
+    border: 1px solid #2e4a2e; transition: all 0.2s;
+  }
+  .examples span:hover {
+    background: #2e4a2e; color: #a5d6a7;
+  }
+  /* Results */
+  #results {
+    display: none; margin-top: 20px;
+  }
+  .result-card {
+    background: #111a11; border: 1px solid #2e4a2e;
+    border-radius: 16px; padding: 28px; margin-bottom: 20px;
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .category-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 20px;
+    font-size: 0.8em; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 14px;
+  }
+  .cat-crypto { background: #1a237e; color: #7986cb; }
+  .cat-dropshipping { background: #4a148c; color: #b39ddb; }
+  .cat-courses { background: #006064; color: #80deea; }
+  .cat-mlm { background: #b71c1c; color: #ef9a9a; }
+  .cat-daytrading { background: #e65100; color: #ffcc80; }
+  .cat-realestate { background: #1b5e20; color: #a5d6a7; }
+  .cat-socialmedia { background: #4a148c; color: #ce93d8; }
+  .cat-ai { background: #263238; color: #90a4ae; }
+  .cat-generic { background: #37474f; color: #90a4ae; }
+  .steps {
+    list-style: none; margin: 16px 0;
+  }
+  .steps li {
+    padding: 10px 0; border-bottom: 1px solid #1a2a1a;
+    font-size: 1.05em; line-height: 1.5;
+  }
+  .steps li:last-child { border-bottom: none; }
+  .steps .step-num {
+    color: #f44336; font-weight: 700; margin-right: 8px;
+  }
+  .steps .step-arrow { color: #4caf50; margin: 0 6px; }
+  .reality-line {
+    color: #f44336; font-weight: 700; font-style: italic;
+    margin-top: 14px; font-size: 1.05em;
+    padding: 12px; background: rgba(244,67,54,0.08);
+    border-left: 3px solid #f44336; border-radius: 4px;
+  }
+  /* Delusion meter */
+  .delusion-section {
+    text-align: center; margin: 24px 0;
+  }
+  .delusion-label {
+    font-size: 0.9em; color: #81c784; margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 2px;
+  }
+  .meter-track {
+    width: 100%; height: 28px; background: #1a261a;
+    border-radius: 14px; overflow: hidden; position: relative;
+    border: 1px solid #2e4a2e;
+  }
+  .meter-fill {
+    height: 100%; border-radius: 14px;
+    transition: width 1s ease, background 1s ease;
+    display: flex; align-items: center; justify-content: flex-end;
+    padding-right: 12px; font-weight: 700; font-size: 0.85em;
+    color: #fff; min-width: 60px;
+  }
+  .meter-low { background: linear-gradient(90deg, #66bb6a, #fdd835); }
+  .meter-mid { background: linear-gradient(90deg, #fdd835, #ff9800); }
+  .meter-high { background: linear-gradient(90deg, #ff9800, #f44336); }
+  .meter-max { background: linear-gradient(90deg, #f44336, #b71c1c); }
+  .delusion-verdict {
+    margin-top: 8px; font-size: 1em; font-weight: 600;
+  }
+  /* But what if button */
+  .what-if-section { text-align: center; margin: 20px 0; }
+  .what-if-btn {
+    padding: 14px 28px; font-size: 1em;
+    background: transparent; color: #fdd835;
+    border: 2px dashed #fdd835; border-radius: 12px;
+    cursor: pointer; transition: all 0.3s;
+    font-weight: 600;
+  }
+  .what-if-btn:hover {
+    background: rgba(253,216,53,0.1);
+  }
+  .what-if-response {
+    display: none; margin-top: 14px; padding: 20px;
+    background: rgba(244,67,54,0.1); border: 1px solid #f44336;
+    border-radius: 12px; font-size: 1.2em; font-weight: 700;
+    color: #f44336; animation: slideUp 0.3s ease;
+  }
+  /* Share */
+  .share-section { text-align: center; margin: 24px 0 40px; }
+  .share-btn {
+    padding: 12px 24px; font-size: 0.95em;
+    background: #1a261a; color: #81c784;
+    border: 1px solid #2e4a2e; border-radius: 10px;
+    cursor: pointer; transition: all 0.3s; margin: 0 6px;
+  }
+  .share-btn:hover {
+    background: #2e4a2e; transform: translateY(-1px);
+  }
+  .copied-toast {
+    display: none; position: fixed; bottom: 30px; left: 50%;
+    transform: translateX(-50%); padding: 12px 24px;
+    background: #2e7d32; color: #e8f5e9; border-radius: 10px;
+    font-weight: 600; z-index: 100; animation: slideUp 0.3s ease;
+  }
+  .warning-banner {
+    text-align: center; padding: 8px; font-size: 0.75em;
+    color: #5a7a5a; margin-top: 40px;
+    border-top: 1px solid #1a2a1a;
+  }
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.7em; }
+    .container { padding: 12px; }
+    .result-card { padding: 20px; }
+    .input-section input { font-size: 1em; padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="rain" id="rain"></div>
+<div class="container">
+  <header>
+    <h1>Passive Income <span>BS</span> Detector</h1>
+    <p>Enter your get-rich-quick scheme. Get told exactly why it won't work.</p>
+  </header>
+
+  <div class="input-section">
+    <input type="text" id="schemeInput" placeholder='e.g. "I\'m going to flip NFTs"' autocomplete="off">
+    <div class="examples">
+      Try:
+      <span onclick="fillExample(this)">flip NFTs</span>
+      <span onclick="fillExample(this)">dropshipping on Shopify</span>
+      <span onclick="fillExample(this)">sell a course on making courses</span>
+      <span onclick="fillExample(this)">join an MLM</span>
+      <span onclick="fillExample(this)">day trade crypto</span>
+      <span onclick="fillExample(this)">Airbnb arbitrage</span>
+      <span onclick="fillExample(this)">AI wrapper SaaS</span>
+      <span onclick="fillExample(this)">TikTok dropshipping</span>
+      <span onclick="fillExample(this)">forex signals</span>
+      <span onclick="fillExample(this)">print on demand</span>
+    </div>
+    <button onclick="analyze()">Detect the BS</button>
+  </div>
+
+  <div id="results"></div>
+  <div id="toast" class="copied-toast">Copied to clipboard!</div>
+
+  <div class="warning-banner">
+    This is satire. But also... it's probably right.<br>
+    The only real passive income is the interest on money you already have.
+  </div>
+</div>
+
+<script>
+// --- Dollar rain ---
+const rain = document.getElementById('rain');
+for (let i = 0; i < 30; i++) {
+  const d = document.createElement('div');
+  d.className = 'dollar';
+  d.textContent = '$';
+  d.style.left = Math.random() * 100 + '%';
+  d.style.animationDuration = (4 + Math.random() * 6) + 's';
+  d.style.animationDelay = Math.random() * 8 + 's';
+  d.style.fontSize = (14 + Math.random() * 18) + 'px';
+  rain.appendChild(d);
+}
+
+// --- Templates DB ---
+const templates = {
+  crypto: [
+    {
+      steps: [
+        "Buy cryptocurrency that a stranger on Twitter told you about",
+        "Watch it pump 40% and feel like a genius",
+        "Tell everyone at dinner you're 'in crypto'",
+        "Watch it crash 85% overnight",
+        "Tell people you're 'in it for the technology'"
+      ],
+      reality: "95% of crypto traders lose money. The ones making it are the ones selling you the dream.",
+      delusion: 92
+    },
+    {
+      steps: [
+        "Buy NFT of a pixelated ape for $5,000",
+        "Set it as your profile picture to signal your financial sophistication",
+        "Watch the floor price drop 98%",
+        "Console yourself that you 'own' a JPEG",
+        "Realize right-click-save was free all along"
+      ],
+      reality: "The NFT market lost over 97% of its value. The only winners sold before you bought.",
+      delusion: 97
+    },
+    {
+      steps: [
+        "Launch a crypto token with a dog on it",
+        "Get 200 followers on Telegram",
+        "Pump the price with your savings",
+        "Watch the rug pull happen... to yourself",
+        "Rebrand and try again with a cat this time"
+      ],
+      reality: "Over 99% of meme coins go to zero. You're not early. You're exit liquidity.",
+      delusion: 95
+    },
+    {
+      steps: [
+        "Learn the word 'DeFi' from a YouTube video",
+        "Deposit life savings into a yield farm offering 9,000% APY",
+        "Celebrate your first day of 'passive income'",
+        "Discover what 'impermanent loss' means the hard way",
+        "Realize the protocol's founder was a 19-year-old in a Discord server"
+      ],
+      reality: "If the yield seems too good to be true, you're the yield.",
+      delusion: 96
+    },
+    {
+      steps: [
+        "Set up a crypto arbitrage bot from a Reddit tutorial",
+        "Deposit $2,000 into three exchanges",
+        "Bot makes $0.47 in 24 hours before gas fees",
+        "Gas fees: $312",
+        "Explain to your partner that you're 'still in the testing phase'"
+      ],
+      reality: "Arbitrage opportunities are captured by firms with sub-millisecond execution. Your laptop is not that.",
+      delusion: 88
+    },
+    {
+      steps: [
+        "Start a 'forex signals' Telegram group",
+        "Copy trades from another signals group you paid $99/month for",
+        "Get 3 good calls in a row purely by chance",
+        "Charge members $49/month based on your 'track record'",
+        "Blow up your own account on call #4"
+      ],
+      reality: "If they could really trade, they wouldn't need your $49.",
+      delusion: 91
+    },
+    {
+      steps: [
+        "Hear about Bitcoin at $60K and decide NOW is the time",
+        "Buy at $63K because it's 'going to $100K easy'",
+        "Watch it drop to $40K and buy more because 'dollar cost averaging'",
+        "Run out of dollars to cost average with",
+        "Hold for 3 years and break even, calling it 'a great investment'"
+      ],
+      reality: "Buying high and hoping is not an investment strategy. It's a prayer.",
+      delusion: 78
+    }
+  ],
+  dropshipping: [
+    {
+      steps: [
+        "Watch a 22-year-old in a rented Lambo explain dropshipping",
+        "Pay $297 for his course",
+        "Open a Shopify store selling phone cases from AliExpress",
+        "Spend $500 on Facebook ads that get 2 clicks",
+        "Realize the 22-year-old's real business was selling you the course"
+      ],
+      reality: "The dropshipping guru's real product is the dropshipping course. You are the customer, not the entrepreneur.",
+      delusion: 89
+    },
+    {
+      steps: [
+        "Find a 'winning product' on AliExpress for $3",
+        "List it on your store for $29.99",
+        "Get one order after $200 in ads",
+        "Product arrives in 45 days, broken",
+        "Customer files chargeback. Net profit: -$232"
+      ],
+      reality: "Dropshipping margins evaporate once you add ads, refunds, chargebacks, and your time. You'd earn more at minimum wage.",
+      delusion: 86
+    },
+    {
+      steps: [
+        "Set up a TikTok dropshipping store because someone said it's 'the new wave'",
+        "Make 40 TikTok videos showing products you've never touched",
+        "One goes semi-viral with 50K views",
+        "Get 3 orders, all from different countries with $15 shipping each",
+        "Spend more time handling refunds than creating content"
+      ],
+      reality: "TikTok's algorithm giveth and taketh away. Building a business on rented attention is building on quicksand.",
+      delusion: 84
+    },
+    {
+      steps: [
+        "Find a 'saturated market' and decide you'll be 'different'",
+        "Name your store something like 'LuxeVibes' or 'TrendNest'",
+        "Spend 3 weeks perfecting the logo instead of validating demand",
+        "Launch to zero traffic because nobody knows you exist",
+        "Blame the algorithm"
+      ],
+      reality: "There are 4 million Shopify stores. Your 'unique angle' is shared by 400,000 of them.",
+      delusion: 82
+    }
+  ],
+  courses: [
+    {
+      steps: [
+        "Make $200 from a side hustle once",
+        "Create a course teaching others how to make money from side hustles",
+        "Price it at $497 because 'you need to value yourself'",
+        "Course content: generic advice available free on YouTube",
+        "The only income you generate is from people buying the course"
+      ],
+      reality: "A course about making money that makes money from people who want to make money is a perpetual motion machine of delusion.",
+      delusion: 94
+    },
+    {
+      steps: [
+        "Read 3 books on a topic",
+        "Declare yourself an 'expert' and 'thought leader'",
+        "Create a $997 masterclass with 47 modules",
+        "Each module is 8 minutes of you reading your own slides",
+        "Add 'BONUS: Private Facebook Group' to justify the price"
+      ],
+      reality: "Real experts are too busy doing the thing to sell courses about doing the thing.",
+      delusion: 91
+    },
+    {
+      steps: [
+        "Create a course on how to create courses",
+        "Sell it to people who will create courses on creating courses",
+        "It's courses all the way down",
+        "Nobody in the chain has ever produced anything of actual value",
+        "This is technically an MLM but with Teachable"
+      ],
+      reality: "When the product is teaching people to sell what you're selling, you've invented a pyramid with better branding.",
+      delusion: 98
+    },
+    {
+      steps: [
+        "Film yourself in a coffee shop with a MacBook to look 'entrepreneurial'",
+        "Write a landing page with 'I went from broke to $10K/month'",
+        "The $10K/month is revenue, not profit. Profit is $340",
+        "Spend $2,000 on course platform and ads",
+        "Net loss: $1,660. But the Instagram story looked great"
+      ],
+      reality: "Revenue is vanity, profit is sanity. Most 'six-figure' course creators are six figures in debt.",
+      delusion: 90
+    }
+  ],
+  mlm: [
+    {
+      steps: [
+        "Get invited to a 'business opportunity' by someone you haven't spoken to since high school",
+        "Attend a presentation in a hotel conference room with motivational music",
+        "Sign up as a 'brand ambassador' for $299",
+        "Lose all your friends trying to recruit them",
+        "End up with a garage full of supplements nobody wants"
+      ],
+      reality: "99.6% of MLM participants lose money (FTC data). You're not joining a business. You're the customer.",
+      delusion: 99
+    },
+    {
+      steps: [
+        "Post '#BossBabe' on Instagram with a picture of leggings",
+        "Message every person in your contacts about a 'life-changing opportunity'",
+        "Recruit your mom and your best friend out of pity",
+        "Spend $400/month on product you 'need to maintain your level'",
+        "Company collapses. Founder buys a yacht. You have leggings"
+      ],
+      reality: "MLMs are legal pyramid schemes. The product exists solely to make the pyramid technically legal.",
+      delusion: 98
+    },
+    {
+      steps: [
+        "Join a 'health and wellness' MLM because 'the products are actually good'",
+        "Buy $500 of inventory to 'get started'",
+        "Sell $80 worth to family members who felt bad for you",
+        "Attend 'team calls' where everyone pretends to be crushing it",
+        "Quietly unsubscribe 6 months later, $2,400 poorer"
+      ],
+      reality: "If the products were actually good, they'd be sold in stores. The recruitment IS the business model.",
+      delusion: 96
+    },
+    {
+      steps: [
+        "Be told you can 'fire your boss' within 90 days",
+        "Realize you now have 1,000 bosses: your upline, their upline, corporate, and every customer",
+        "Work twice the hours for a tenth of the pay",
+        "Get called 'negative' when you point out nobody is making money",
+        "The only person who fired their boss is the founder, using your money"
+      ],
+      reality: "You didn't start a business. You paid for the privilege of being an unpaid salesperson.",
+      delusion: 97
+    }
+  ],
+  daytrading: [
+    {
+      steps: [
+        "Open a Robinhood account with $500",
+        "Watch a 3-hour YouTube trading course",
+        "Make $50 on your first trade and assume you've found your calling",
+        "Lose $400 on your second trade trying to 'scale up'",
+        "Tell people you're 'taking a break from the market to focus on strategy'"
+      ],
+      reality: "Studies show 80% of day traders lose money over any 12-month period. The other 20% mostly break even.",
+      delusion: 87
+    },
+    {
+      steps: [
+        "Learn what 'RSI' and 'MACD' mean from Investopedia",
+        "Draw lines on charts and call it 'technical analysis'",
+        "Convince yourself the market follows your crayon drawings",
+        "Market does the opposite of your analysis 7 times in a row",
+        "Conclude the market is 'manipulated' (it is, but not the way you think)"
+      ],
+      reality: "If drawing lines on charts predicted the future, every art student would be a billionaire.",
+      delusion: 85
+    },
+    {
+      steps: [
+        "Join a 'trading signals' Discord for $199/month",
+        "Follow a trade alert 30 seconds too late",
+        "Lose money on the entry because slippage ate your edge",
+        "Realize you're paying $199/month to lose money faster",
+        "Signal provider posts only their wins to Instagram"
+      ],
+      reality: "Trading signal services make money from subscriptions, not trading. If the signals worked, they wouldn't share them.",
+      delusion: 90
+    },
+    {
+      steps: [
+        "Paper trade for 2 weeks and 'crush it'",
+        "Go live with real money and immediately freeze on every decision",
+        "Revenge trade after a loss to 'make it back'",
+        "Blow up 60% of your account in one emotional afternoon",
+        "Google 'is day trading a scam' at 2 AM"
+      ],
+      reality: "Paper trading removes the only variable that matters: your emotions. It's like practicing surgery on a mannequin and then operating on yourself.",
+      delusion: 83
+    }
+  ],
+  realestate: [
+    {
+      steps: [
+        "Watch a 'no money down' real estate seminar infomercial",
+        "Pay $1,997 for the full seminar experience",
+        "Learn that 'no money down' means 'use other people's money'",
+        "No one will lend you money because you spent it on the seminar",
+        "Seminar guru makes money from seminar, not real estate"
+      ],
+      reality: "Real estate gurus make money teaching real estate. If their strategies worked, they'd be buying property, not selling tickets.",
+      delusion: 88
+    },
+    {
+      steps: [
+        "Decide to do 'Airbnb arbitrage' after seeing one TikTok",
+        "Lease an apartment for $2,000/month without telling the landlord",
+        "Furnish it with $3,000 of IKEA furniture",
+        "Get one 3-star review that tanks your listing",
+        "Landlord finds out, evicts you, keeps your deposit"
+      ],
+      reality: "Airbnb arbitrage: all the risk of a landlord, none of the equity, plus you're probably violating your lease.",
+      delusion: 86
+    },
+    {
+      steps: [
+        "Buy a 'fixer-upper' for $200K thinking you'll flip it",
+        "Budget $30K for renovations",
+        "Actual renovation cost: $85K and 8 months of your life",
+        "Market dips 5% during renovation",
+        "Sell for $5K less than total investment. Call it 'a learning experience'"
+      ],
+      reality: "House flipping on TV takes 30 minutes. In reality it takes your savings, your weekends, and your sanity.",
+      delusion: 80
+    },
+    {
+      steps: [
+        "Buy a rental property with 'passive income' dreams",
+        "Tenant stops paying rent month 2",
+        "Eviction takes 6 months and $3,000 in legal fees",
+        "Toilet explodes. Roof leaks. AC dies. All in the same month",
+        "Calculate your 'passive' income at -$8,000/year and $0/hour for your time"
+      ],
+      reality: "Rental income is only passive if you ignore maintenance, vacancies, bad tenants, and property management. So... never.",
+      delusion: 76
+    }
+  ],
+  socialmedia: [
+    {
+      steps: [
+        "Decide to become an 'influencer' because you got 200 likes on a photo once",
+        "Post daily for 3 months to an audience of 340 followers (280 are bots)",
+        "Get offered a 'brand deal' that pays in free product worth $12",
+        "Spend 4 hours on a sponsored post for a teeth whitening kit",
+        "Effective hourly rate: $3. But you're 'building your brand'"
+      ],
+      reality: "The average influencer with under 10K followers makes less than $100/year from their content. Your phone's battery costs more.",
+      delusion: 84
+    },
+    {
+      steps: [
+        "Start a YouTube channel about 'passive income'",
+        "Make 50 videos that each get 47 views",
+        "YouTube pays you $3.26 total after 6 months",
+        "Spend $2,000 on camera, mic, and lighting",
+        "Pivot to making videos about why YouTube doesn't work anymore"
+      ],
+      reality: "97% of YouTubers make less than minimum wage from ads. You're creating free content for Google's advertising business.",
+      delusion: 85
+    },
+    {
+      steps: [
+        "Start a 'faceless' YouTube channel because someone said it's easy money",
+        "Use AI voiceover, stock footage, and a template thumbnail",
+        "Channel looks identical to 50,000 other faceless channels",
+        "YouTube algorithm ignores you because there's nothing unique to promote",
+        "Earned: $1.47. Time invested: 200 hours"
+      ],
+      reality: "If it requires no face, no personality, and no expertise, it has no competitive advantage. There's a word for that: commodity.",
+      delusion: 82
+    }
+  ],
+  ai: [
+    {
+      steps: [
+        "Wrap ChatGPT in a slightly different UI",
+        "Call it 'AI-Powered [Industry] Assistant'",
+        "Charge $29/month for what OpenAI charges $20/month",
+        "OpenAI adds your exact feature to ChatGPT next Tuesday",
+        "Pivot to a different wrapper. Repeat until funding runs out"
+      ],
+      reality: "Building on top of an API you don't control is building a sandcastle below the tide line.",
+      delusion: 88
+    },
+    {
+      steps: [
+        "Learn the word 'prompt engineering' and add it to your LinkedIn",
+        "Sell 'custom AI prompts' on Etsy for $4.99 each",
+        "Make $23 in your first month and tweet about 'six-figure potential'",
+        "Model updates break all your prompts",
+        "Realize prompting is a skill with a half-life of about 3 months"
+      ],
+      reality: "Selling prompts is selling fish in a world where everyone's learning to fish. The market for middlemen is shrinking at AI speed.",
+      delusion: 83
+    },
+    {
+      steps: [
+        "Announce you're building an 'AI startup'",
+        "The entire product is an API call to Claude/GPT with a landing page",
+        "Spend 6 months on branding instead of building a moat",
+        "A 16-year-old rebuilds your product in a weekend",
+        "Pivot to 'AI consulting' which means you help people use ChatGPT"
+      ],
+      reality: "If your entire product can be replicated by a teenager with an API key, you don't have a product. You have a demo.",
+      delusion: 86
+    },
+    {
+      steps: [
+        "Decide to 'automate everything with AI agents'",
+        "Agent hallucinates, sends wrong email to your biggest client",
+        "Spend 3x more time fixing AI mistakes than doing the work manually",
+        "Still tell everyone AI 'saved you 10 hours a week'",
+        "It did not"
+      ],
+      reality: "AI automation works great until it doesn't, and it doesn't at the worst possible moment.",
+      delusion: 79
+    }
+  ]
+};
+
+const whatIfResponses = [
+  "You're not.",
+  "You're not. Nobody has ever been 'different' in the exact same way you think you are.",
+  "Narrator: They were not, in fact, different.",
+  "That's literally what everyone says. That's the whole business model -- making you think you're special.",
+  "Statistical probability that you're different: 0.4%. Statistical probability that you think you're different: 99.6%.",
+  "You're not different. You're just earlier in the disappointment timeline.",
+  "Every person who lost money on this said the exact same thing. Verbatim.",
+  "You're not different. But you ARE entertaining.",
+  "The 'I'm different' belief is literally step 1 of every scam's customer acquisition funnel.",
+  "Sure you are. That's why you're Googling get-rich-quick schemes at midnight.",
+  "You're not. But your capacity for self-delusion IS impressive.",
+  "Fun fact: 'But I'm different' is the most expensive sentence in the English language.",
+  "You're so not different that there's a template for your exact objection."
+];
+
+// --- Classification ---
+function classify(input) {
+  const t = input.toLowerCase();
+  const keywords = {
+    crypto: ['crypto', 'bitcoin', 'btc', 'eth', 'nft', 'token', 'defi', 'yield farm', 'web3', 'blockchain', 'altcoin', 'meme coin', 'rug', 'airdrop', 'staking', 'mining'],
+    dropshipping: ['dropship', 'shopify', 'aliexpress', 'ecommerce', 'e-commerce', 'print on demand', 'pod', 'amazon fba', 'fba', 'tiktok shop', 'etsy'],
+    courses: ['course', 'masterclass', 'coaching', 'ebook', 'digital product', 'info product', 'webinar', 'teach', 'knowledge'],
+    mlm: ['mlm', 'network marketing', 'multi-level', 'downline', 'upline', 'herbalife', 'amway', 'boss babe', 'hun', 'direct sales', 'brand ambassador', 'younique', 'monat', 'lularoe', 'arbonne'],
+    daytrading: ['day trad', 'trading', 'forex', 'options', 'stocks', 'scalp', 'swing trad', 'signal', 'technical analysis', 'chart pattern', 'robinhood', 'leverage'],
+    realestate: ['real estate', 'airbnb', 'rental', 'flip', 'property', 'landlord', 'reit', 'house hack', 'wholesal'],
+    socialmedia: ['influencer', 'youtube', 'tiktok', 'instagram', 'content creator', 'monetize', 'followers', 'subscriber', 'faceless', 'ugc'],
+    ai: ['ai ', ' ai', 'chatgpt', 'gpt', 'prompt', 'llm', 'saas', 'wrapper', 'automat', 'agent', 'claude']
+  };
+  let best = 'generic';
+  let maxHits = 0;
+  for (const [cat, words] of Object.entries(keywords)) {
+    const hits = words.filter(w => t.includes(w)).length;
+    if (hits > maxHits) { maxHits = hits; best = cat; }
+  }
+  // Fallback: try partial matches
+  if (best === 'generic') {
+    if (t.includes('passive') || t.includes('rich') || t.includes('money') || t.includes('income') || t.includes('hustle') || t.includes('side')) {
+      const cats = Object.keys(templates);
+      best = cats[Math.floor(Math.random() * cats.length)];
+    }
+  }
+  return best;
+}
+
+function getTemplate(category) {
+  const pool = templates[category];
+  if (!pool) {
+    // Generic fallback
+    return {
+      steps: [
+        "Watch a YouTube video about getting rich with this 'one weird trick'",
+        "Invest time and money based on a stranger's highlight reel",
+        "Realize the game is rigged and the only winner is the person selling the dream",
+        "Google '[scheme] + scam' at 1 AM",
+        "Start looking for the next scheme because this one will 'definitely be different'"
+      ],
+      reality: "If it sounds too good to be true, it is. Every single time. No exceptions. Ever.",
+      delusion: 88,
+      category: 'generic'
+    };
+  }
+  const t = pool[Math.floor(Math.random() * pool.length)];
+  t.category = category;
+  return t;
+}
+
+function getCatLabel(cat) {
+  const labels = {
+    crypto: 'Crypto / NFT / Web3',
+    dropshipping: 'Dropshipping / E-Commerce',
+    courses: 'Courses / Info Products',
+    mlm: 'MLM / Network Marketing',
+    daytrading: 'Day Trading / Forex',
+    realestate: 'Real Estate',
+    socialmedia: 'Social Media / Influencer',
+    ai: 'AI / SaaS Wrapper',
+    generic: 'Get-Rich-Quick'
+  };
+  return labels[cat] || 'Get-Rich-Quick';
+}
+
+function getMeterClass(score) {
+  if (score < 50) return 'meter-low';
+  if (score < 75) return 'meter-mid';
+  if (score < 90) return 'meter-high';
+  return 'meter-max';
+}
+
+function getVerdict(score) {
+  if (score >= 95) return 'MAXIMUM DELUSION. This is a masterclass in self-deception.';
+  if (score >= 90) return 'SEVERE DELUSION. You are the product being sold.';
+  if (score >= 80) return 'HIGH DELUSION. Reality will arrive shortly.';
+  if (score >= 70) return 'MODERATE DELUSION. There\'s a 2% chance this works. For someone else.';
+  return 'NOTABLE DELUSION. Not the worst idea, but the bar is underground.';
+}
+
+let currentResult = null;
+
+function analyze() {
+  const input = document.getElementById('schemeInput').value.trim();
+  if (!input) {
+    document.getElementById('schemeInput').style.borderColor = '#f44336';
+    setTimeout(() => document.getElementById('schemeInput').style.borderColor = '#2e7d32', 1500);
+    return;
+  }
+  const cat = classify(input);
+  const tpl = getTemplate(cat);
+  currentResult = { input, ...tpl };
+
+  const resultsDiv = document.getElementById('results');
+  resultsDiv.style.display = 'block';
+  resultsDiv.innerHTML = `
+    <div class="result-card">
+      <div class="category-badge cat-${tpl.category}">${getCatLabel(tpl.category)}</div>
+      <h2 style="color:#e8f5e9;margin-bottom:4px;font-size:1.2em;">Your Plan: "${escapeHtml(input)}"</h2>
+      <p style="color:#f44336;font-size:0.9em;margin-bottom:12px;">Here's how that actually goes:</p>
+      <ol class="steps">
+        ${tpl.steps.map((s, i) => `<li><span class="step-num">Step ${i + 1}:</span> ${s}</li>`).join('')}
+      </ol>
+      <div class="reality-line">${tpl.reality}</div>
+    </div>
+
+    <div class="result-card delusion-section">
+      <div class="delusion-label">Delusion Score</div>
+      <div class="meter-track">
+        <div class="meter-fill ${getMeterClass(tpl.delusion)}" id="meterFill" style="width:0%">${tpl.delusion}%</div>
+      </div>
+      <div class="delusion-verdict" style="color:${tpl.delusion >= 90 ? '#f44336' : tpl.delusion >= 75 ? '#ff9800' : '#fdd835'}">${getVerdict(tpl.delusion)}</div>
+    </div>
+
+    <div class="result-card what-if-section">
+      <button class="what-if-btn" onclick="whatIf(this)">But What If I'm Different?</button>
+      <div class="what-if-response" id="whatIfResponse"></div>
+    </div>
+
+    <div class="result-card share-section">
+      <button class="share-btn" onclick="copyResult()">Copy Reality Check</button>
+      <button class="share-btn" onclick="shareTwitter()">Share on X</button>
+    </div>
+  `;
+
+  // Animate meter
+  setTimeout(() => {
+    document.getElementById('meterFill').style.width = tpl.delusion + '%';
+  }, 100);
+
+  resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function whatIf(btn) {
+  const resp = document.getElementById('whatIfResponse');
+  resp.style.display = 'block';
+  resp.textContent = whatIfResponses[Math.floor(Math.random() * whatIfResponses.length)];
+  btn.textContent = 'But What If I\'m REALLY Different?';
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function copyResult() {
+  if (!currentResult) return;
+  const text = `PASSIVE INCOME BS DETECTOR\n\nScheme: "${currentResult.input}"\nCategory: ${getCatLabel(currentResult.category)}\nDelusion Score: ${currentResult.delusion}%\n\n${currentResult.steps.map((s, i) => `Step ${i + 1}: ${s}`).join('\n')}\n\nReality: ${currentResult.reality}\n\nVerdict: ${getVerdict(currentResult.delusion)}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 2000);
+  });
+}
+
+function shareTwitter() {
+  if (!currentResult) return;
+  const text = `My get-rich-quick scheme "${currentResult.input}" scored ${currentResult.delusion}% on the Delusion Meter.\n\n"${currentResult.reality}"\n\nPassive Income BS Detector:`;
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function fillExample(el) {
+  document.getElementById('schemeInput').value = el.textContent;
+}
+
+// Enter key
+document.getElementById('schemeInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>
