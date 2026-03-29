@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Crack Detector</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.15s;
+  }
+  body.flash { background: #ff69b4; }
+
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    margin: 20px 0 5px;
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    text-align: center;
+    color: #888;
+    font-size: 0.9rem;
+    margin-bottom: 25px;
+  }
+
+  .score-panel {
+    background: #1a1a1a;
+    border: 2px solid #ff69b4;
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .cringe-number {
+    font-size: 5rem;
+    font-weight: 900;
+    color: #ff69b4;
+    line-height: 1;
+  }
+  .cringe-label {
+    font-size: 0.85rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 5px;
+  }
+  .rating {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-top: 10px;
+    color: #ff1493;
+  }
+  .callout {
+    font-size: 1rem;
+    color: #ffb6c1;
+    margin-top: 8px;
+    min-height: 1.4em;
+    font-style: italic;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-box {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+  }
+  .stat-box .val {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ff69b4;
+  }
+  .stat-box .lbl {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 3px;
+  }
+
+  .pitch-display {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .pitch-display .freq {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #e0e0e0;
+    font-variant-numeric: tabular-nums;
+  }
+  .pitch-display .freq-label {
+    font-size: 0.7rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .pitch-bar-container {
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .pitch-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff69b4, #ff1493);
+    border-radius: 4px;
+    transition: width 0.05s;
+  }
+
+  #startBtn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: #fff;
+    margin-bottom: 20px;
+    transition: transform 0.1s, opacity 0.2s;
+  }
+  #startBtn:hover { transform: scale(1.02); }
+  #startBtn:active { transform: scale(0.98); }
+  #startBtn.recording {
+    background: linear-gradient(135deg, #dc143c, #8b0000);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  .history-section {
+    margin-top: 20px;
+  }
+  .history-section h3 {
+    color: #ff69b4;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .history-list {
+    list-style: none;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .history-list li {
+    background: #1a1a1a;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+  .history-list li .crack-info {
+    color: #ffb6c1;
+  }
+  .history-list li .crack-time {
+    color: #666;
+    font-size: 0.75rem;
+  }
+  .history-list li .crack-severity {
+    font-weight: 700;
+    color: #ff1493;
+  }
+
+  .share-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border: 2px solid #ff69b4;
+    border-radius: 12px;
+    cursor: pointer;
+    background: transparent;
+    color: #ff69b4;
+    margin-top: 15px;
+    transition: background 0.2s;
+  }
+  .share-btn:hover {
+    background: rgba(255, 105, 180, 0.1);
+  }
+
+  .worst-crack {
+    background: #1a1a1a;
+    border: 2px solid #dc143c;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .worst-crack.visible { display: block; }
+  .worst-crack .worst-title {
+    font-size: 0.75rem;
+    color: #dc143c;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+  }
+  .worst-crack .worst-detail {
+    font-size: 1.1rem;
+    color: #ffb6c1;
+    font-weight: 600;
+  }
+
+  .history-list::-webkit-scrollbar { width: 6px; }
+  .history-list::-webkit-scrollbar-track { background: #111; }
+  .history-list::-webkit-scrollbar-thumb { background: #ff69b4; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Voice Crack Detector</h1>
+  <p class="subtitle">Open your mouth. We'll judge it.</p>
+
+  <div class="score-panel">
+    <div class="cringe-number" id="cringeScore">0</div>
+    <div class="cringe-label">Cringe Score</div>
+    <div class="rating" id="rating">Smooth Operator</div>
+    <div class="callout" id="callout">Press start and speak into your mic...</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="val" id="crackCount">0</div>
+      <div class="lbl">Cracks</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="sessionTime">0:00</div>
+      <div class="lbl">Session</div>
+    </div>
+    <div class="stat-box">
+      <div class="val" id="avgSeverity">-</div>
+      <div class="lbl">Avg Severity</div>
+    </div>
+  </div>
+
+  <div class="pitch-display">
+    <div class="freq" id="pitchFreq">-- Hz</div>
+    <div class="freq-label">Current Pitch</div>
+    <div class="pitch-bar-container">
+      <div class="pitch-bar" id="pitchBar"></div>
+    </div>
+  </div>
+
+  <button id="startBtn">Start Recording</button>
+
+  <div class="worst-crack" id="worstCrack">
+    <div class="worst-title">Worst Crack Record</div>
+    <div class="worst-detail" id="worstDetail">-</div>
+  </div>
+
+  <div class="history-section">
+    <h3>Crack History</h3>
+    <ul class="history-list" id="historyList">
+      <li style="color: #555; text-align: center; display: block;">No cracks yet... are you even trying?</li>
+    </ul>
+  </div>
+
+  <button class="share-btn" id="shareBtn">Share Your Cringe Score</button>
+</div>
+
+<script>
+const calloutMessages = [
+  "Your voice just did a kickflip",
+  "Was that you or a squeaky door?",
+  "Congratulations, you've hit puberty... again",
+  "Someone oil this human",
+  "Your vocal cords filed a complaint",
+  "That was a cry for help from your larynx",
+  "The neighborhood dogs are howling",
+  "Are you speaking or beatboxing badly?",
+  "Your voice went to another dimension briefly",
+  "Did your soul just leave your body through your throat?",
+  "That crack could shatter a wine glass",
+  "Voice crack or mating call? Hard to tell",
+  "Your ancestors are cringing",
+  "Auto-tune just uninstalled itself",
+  "Even Siri felt secondhand embarrassment",
+  "Your voice just had a blue screen of death",
+  "That was less voice, more broken accordion",
+  "Someone call a vocal cord mechanic",
+  "Your throat just did the Windows shutdown sound",
+  "Pitch perfect? More like pitch pathetic",
+  "Your voice cracked harder than my phone screen",
+  "Somewhere, a choir director just fainted",
+  "You sound like a rubber chicken at a funeral",
+  "Voice said: 'I'm out of here'",
+  "That crack registered on the Richter scale",
+  "Your vocal cords are filing for divorce",
+  "Was that a voice crack or an exorcism?",
+  "Your throat sounds like a haunted staircase",
+  "Even autotune couldn't save that one",
+  "Your voice just ragequit",
+  "That's the sound of dignity leaving the chat",
+  "Yodeling isn't a personality trait",
+  "Your voice went from bass to soprano in 0.01 seconds",
+  "That crack echoed through generations",
+  "NASA detected that frequency shift from orbit",
+  "Your vocal cords just did a barrel roll",
+  "Alert: vocal crime in progress",
+  "Your voice went bungee jumping without a cord",
+  "That was a crack? I thought a portal opened",
+  "Congratulations, you just invented a new note"
+];
+
+let audioContext, analyser, dataArray, source, stream;
+let isRecording = false;
+let crackCount = 0;
+let cringeScore = 0;
+let sessionStart = null;
+let sessionTimer = null;
+let history = [];
+let worstCrack = { severity: 0, jump: 0 };
+let lastFreq = null;
+let lastFreqTime = 0;
+let severities = [];
+let usedCallouts = new Set();
+
+const startBtn = document.getElementById('startBtn');
+const cringeScoreEl = document.getElementById('cringeScore');
+const ratingEl = document.getElementById('rating');
+const calloutEl = document.getElementById('callout');
+const crackCountEl = document.getElementById('crackCount');
+const sessionTimeEl = document.getElementById('sessionTime');
+const avgSeverityEl = document.getElementById('avgSeverity');
+const pitchFreqEl = document.getElementById('pitchFreq');
+const pitchBar = document.getElementById('pitchBar');
+const historyList = document.getElementById('historyList');
+const worstCrackEl = document.getElementById('worstCrack');
+const worstDetailEl = document.getElementById('worstDetail');
+const shareBtn = document.getElementById('shareBtn');
+
+// Crack sound via oscillator
+function playCrackSound() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.frequency.setValueAtTime(800, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.3, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.2);
+}
+
+function autoCorrelate(buf, sampleRate) {
+  let size = buf.length;
+  let rms = 0;
+  for (let i = 0; i < size; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / size);
+  if (rms < 0.01) return -1;
+
+  let r1 = 0, r2 = size - 1;
+  const thresh = 0.2;
+  for (let i = 0; i < size / 2; i++) {
+    if (Math.abs(buf[i]) < thresh) { r1 = i; break; }
+  }
+  for (let i = 1; i < size / 2; i++) {
+    if (Math.abs(buf[size - i]) < thresh) { r2 = size - i; break; }
+  }
+
+  buf = buf.slice(r1, r2);
+  size = buf.length;
+
+  const c = new Array(size).fill(0);
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size - i; j++) {
+      c[i] += buf[j] * buf[j + i];
+    }
+  }
+
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+  let maxVal = -1, maxPos = -1;
+  for (let i = d; i < size; i++) {
+    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  }
+
+  let T0 = maxPos;
+  if (T0 < 1) return -1;
+  // Parabolic interpolation
+  const x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+  const a = (x1 + x3 - 2 * x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2 * a);
+
+  return sampleRate / T0;
+}
+
+function getRating(score) {
+  if (score === 0) return "Smooth Operator";
+  if (score <= 2) return "Minor Wobble";
+  if (score <= 4) return "Puberty Flashback";
+  if (score <= 6) return "Cringe Certified";
+  if (score <= 8) return "Glass Shattering";
+  if (score <= 10) return "Vocal Catastrophe";
+  return "Beyond Help";
+}
+
+function getRandomCallout() {
+  if (usedCallouts.size >= calloutMessages.length) usedCallouts.clear();
+  let idx;
+  do {
+    idx = Math.floor(Math.random() * calloutMessages.length);
+  } while (usedCallouts.has(idx));
+  usedCallouts.add(idx);
+  return calloutMessages[idx];
+}
+
+function flashScreen() {
+  document.body.classList.add('flash');
+  setTimeout(() => document.body.classList.remove('flash'), 200);
+}
+
+function calculateSeverity(jumpPercent) {
+  // jumpPercent is how much the freq changed (e.g. 0.6 = 60%)
+  if (jumpPercent < 0.6) return 1;
+  if (jumpPercent < 0.8) return 2;
+  if (jumpPercent < 1.2) return 3;
+  if (jumpPercent < 2.0) return 4;
+  return 5;
+}
+
+function onCrackDetected(fromFreq, toFreq, jumpPercent) {
+  crackCount++;
+  const severity = calculateSeverity(jumpPercent);
+  severities.push(severity);
+
+  // Cringe score: weighted sum
+  cringeScore = Math.round(severities.reduce((s, v) => s + v, 0) / 2);
+
+  crackCountEl.textContent = crackCount;
+  cringeScoreEl.textContent = cringeScore;
+  ratingEl.textContent = getRating(cringeScore);
+  calloutEl.textContent = getRandomCallout();
+
+  const avgSev = (severities.reduce((a, b) => a + b, 0) / severities.length).toFixed(1);
+  avgSeverityEl.textContent = avgSev;
+
+  flashScreen();
+  playCrackSound();
+
+  // Worst crack
+  if (severity > worstCrack.severity || (severity === worstCrack.severity && jumpPercent > worstCrack.jump)) {
+    worstCrack = { severity, jump: jumpPercent, from: fromFreq, to: toFreq };
+    worstCrackEl.classList.add('visible');
+    worstDetailEl.textContent = `${Math.round(fromFreq)} Hz -> ${Math.round(toFreq)} Hz (${Math.round(jumpPercent * 100)}% jump, severity ${severity}/5)`;
+  }
+
+  // History
+  const now = new Date();
+  const ts = now.toLocaleTimeString();
+  const entry = {
+    time: ts,
+    from: Math.round(fromFreq),
+    to: Math.round(toFreq),
+    jump: Math.round(jumpPercent * 100),
+    severity
+  };
+  history.unshift(entry);
+
+  // Update list
+  if (history.length === 1) historyList.innerHTML = '';
+  const li = document.createElement('li');
+  li.innerHTML = `
+    <span class="crack-info">${entry.from} Hz -> ${entry.to} Hz</span>
+    <span class="crack-severity">Sev ${entry.severity}/5</span>
+    <span class="crack-time">${entry.time}</span>
+  `;
+  historyList.prepend(li);
+}
+
+function detectPitch() {
+  if (!isRecording) return;
+
+  const floatData = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(floatData);
+
+  const freq = autoCorrelate(floatData, audioContext.sampleRate);
+  const now = performance.now();
+
+  if (freq > 50 && freq < 1500) {
+    pitchFreqEl.textContent = Math.round(freq) + ' Hz';
+    const barPct = Math.min(100, ((freq - 50) / 500) * 100);
+    pitchBar.style.width = barPct + '%';
+
+    if (lastFreq !== null && lastFreq > 0) {
+      const timeDelta = now - lastFreqTime;
+      if (timeDelta < 100 && timeDelta > 10) {
+        const jumpPercent = Math.abs(freq - lastFreq) / lastFreq;
+        if (jumpPercent > 0.5) {
+          onCrackDetected(lastFreq, freq, jumpPercent);
+        }
+      }
+    }
+
+    lastFreq = freq;
+    lastFreqTime = now;
+  } else {
+    pitchFreqEl.textContent = '-- Hz';
+    pitchBar.style.width = '0%';
+    // Don't reset lastFreq on silence so we can detect cracks after brief pauses
+  }
+
+  requestAnimationFrame(detectPitch);
+}
+
+function updateSessionTime() {
+  if (!sessionStart) return;
+  const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+  const min = Math.floor(elapsed / 60);
+  const sec = String(elapsed % 60).padStart(2, '0');
+  sessionTimeEl.textContent = `${min}:${sec}`;
+}
+
+async function startRecording() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    isRecording = true;
+    sessionStart = Date.now();
+    sessionTimer = setInterval(updateSessionTime, 1000);
+    lastFreq = null;
+    lastFreqTime = 0;
+
+    startBtn.textContent = 'Stop Recording';
+    startBtn.classList.add('recording');
+    calloutEl.textContent = 'Listening... try to speak normally (or don\'t)';
+
+    detectPitch();
+  } catch (err) {
+    calloutEl.textContent = 'Mic access denied. We can\'t judge you without it.';
+  }
+}
+
+function stopRecording() {
+  isRecording = false;
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioContext) audioContext.close();
+  if (sessionTimer) clearInterval(sessionTimer);
+
+  startBtn.textContent = 'Start Recording';
+  startBtn.classList.remove('recording');
+  calloutEl.textContent = `Session ended. ${crackCount} cracks detected. ${crackCount === 0 ? 'Suspicious...' : 'Yikes.'}`;
+  pitchFreqEl.textContent = '-- Hz';
+  pitchBar.style.width = '0%';
+}
+
+startBtn.addEventListener('click', () => {
+  if (isRecording) stopRecording();
+  else startRecording();
+});
+
+shareBtn.addEventListener('click', () => {
+  const text = `Voice Crack Detector Results:\nCringe Score: ${cringeScore} - "${getRating(cringeScore)}"\nCracks: ${crackCount}\n${worstCrack.severity > 0 ? `Worst: ${Math.round(worstCrack.from)} Hz -> ${Math.round(worstCrack.to)} Hz (${Math.round(worstCrack.jump * 100)}% jump)` : 'No cracks (suspiciously smooth)'}\n\nTry it yourself!`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Voice Crack Detector', text });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      shareBtn.textContent = 'Copied to clipboard!';
+      setTimeout(() => shareBtn.textContent = 'Share Your Cringe Score', 2000);
+    });
+  }
+});
+</script>
+</body>
+</html>

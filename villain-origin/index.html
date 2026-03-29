@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Villain Origin Story Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --blood: #8b0000;
+  --crimson: #dc143c;
+  --void: #0a0a0f;
+  --shadow: #1a1a2e;
+  --purple: #4a0e4e;
+  --gold: #c9a84c;
+  --bone: #d4c5a9;
+  --ghost: #e8e0d0;
+}
+
+body {
+  background: var(--void);
+  color: var(--ghost);
+  font-family: 'Crimson Text', serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Lightning flash overlay */
+#lightning-flash {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: white; opacity: 0; pointer-events: none; z-index: 9999;
+  transition: opacity 0.05s;
+}
+#lightning-flash.flash { opacity: 0.7; }
+
+/* Fog */
+.fog {
+  position: fixed; top: 0; left: 0; width: 200%; height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(30,0,40,0.15) 25%, transparent 50%, rgba(30,0,40,0.1) 75%, transparent 100%);
+  animation: fogDrift 20s linear infinite;
+  pointer-events: none; z-index: 1;
+}
+@keyframes fogDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* Header */
+header {
+  text-align: center; padding: 3rem 1rem 2rem;
+  position: relative; z-index: 2;
+}
+header h1 {
+  font-family: 'Creepster', cursive;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  color: var(--crimson);
+  text-shadow: 0 0 20px rgba(220,20,60,0.5), 0 0 60px rgba(220,20,60,0.2), 0 4px 8px rgba(0,0,0,0.8);
+  letter-spacing: 3px;
+  animation: titlePulse 3s ease-in-out infinite;
+}
+@keyframes titlePulse {
+  0%, 100% { text-shadow: 0 0 20px rgba(220,20,60,0.5), 0 0 60px rgba(220,20,60,0.2); }
+  50% { text-shadow: 0 0 40px rgba(220,20,60,0.8), 0 0 100px rgba(220,20,60,0.4); }
+}
+header p {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  color: var(--bone);
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Input section */
+.input-section {
+  max-width: 700px; margin: 0 auto 2rem; padding: 0 1.5rem;
+  position: relative; z-index: 2;
+}
+.input-wrapper {
+  position: relative;
+  background: linear-gradient(135deg, var(--shadow), #12121f);
+  border: 2px solid var(--blood);
+  border-radius: 12px; padding: 2rem;
+  box-shadow: 0 0 30px rgba(139,0,0,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+}
+.input-wrapper label {
+  display: block; font-family: 'Cinzel', serif;
+  font-size: 1.2rem; color: var(--gold);
+  margin-bottom: 1rem; text-align: center;
+}
+#annoyance-input {
+  width: 100%; padding: 1rem 1.2rem;
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(139,0,0,0.5);
+  border-radius: 8px; color: var(--ghost);
+  font-family: 'Crimson Text', serif; font-size: 1.15rem;
+  outline: none; transition: all 0.3s;
+}
+#annoyance-input:focus { border-color: var(--crimson); box-shadow: 0 0 20px rgba(220,20,60,0.3); }
+#annoyance-input::placeholder { color: rgba(212,197,169,0.4); font-style: italic; }
+
+.generate-btn {
+  display: block; margin: 1.5rem auto 0; padding: 1rem 3rem;
+  background: linear-gradient(135deg, var(--blood), #5a0000);
+  border: 2px solid var(--crimson); border-radius: 8px;
+  color: var(--ghost); font-family: 'Creepster', cursive;
+  font-size: 1.5rem; letter-spacing: 2px;
+  cursor: pointer; transition: all 0.3s;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  box-shadow: 0 4px 20px rgba(139,0,0,0.4);
+}
+.generate-btn:hover {
+  background: linear-gradient(135deg, var(--crimson), var(--blood));
+  box-shadow: 0 4px 40px rgba(220,20,60,0.6);
+  transform: translateY(-2px);
+}
+.generate-btn:active { transform: translateY(0); }
+
+/* Quick prompts */
+.quick-prompts {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  justify-content: center; margin-top: 1rem;
+}
+.quick-prompt {
+  padding: 0.4rem 0.8rem;
+  background: rgba(139,0,0,0.2); border: 1px solid rgba(139,0,0,0.4);
+  border-radius: 20px; color: var(--bone);
+  font-family: 'Crimson Text', serif; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.2s;
+}
+.quick-prompt:hover { background: rgba(139,0,0,0.5); border-color: var(--crimson); }
+
+/* Result section */
+#result {
+  max-width: 800px; margin: 0 auto 3rem; padding: 0 1.5rem;
+  position: relative; z-index: 2;
+  display: none;
+}
+#result.visible { display: block; animation: fadeUp 0.8s ease-out; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Villain Card */
+.villain-card {
+  background: linear-gradient(160deg, #1a0a20, #0f0f1a, #1a0a10);
+  border: 2px solid var(--blood);
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 0 50px rgba(139,0,0,0.3), 0 20px 60px rgba(0,0,0,0.8);
+}
+.card-header {
+  background: linear-gradient(135deg, var(--blood), var(--purple));
+  padding: 2rem; text-align: center;
+  position: relative; overflow: hidden;
+}
+.card-header::before {
+  content: ''; position: absolute; top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+  animation: shimmer 4s ease-in-out infinite;
+}
+@keyframes shimmer {
+  0%, 100% { transform: translate(0,0); }
+  50% { transform: translate(20%, 20%); }
+}
+.villain-icon {
+  font-size: 4rem; margin-bottom: 0.5rem;
+  filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+}
+.villain-name {
+  font-family: 'Creepster', cursive;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  color: white; letter-spacing: 3px;
+  text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.8);
+}
+.villain-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem; color: var(--gold);
+  margin-top: 0.3rem; font-style: italic;
+}
+
+/* Stats */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1px; background: rgba(139,0,0,0.3);
+  border-top: 1px solid rgba(139,0,0,0.3);
+  border-bottom: 1px solid rgba(139,0,0,0.3);
+}
+.stat-item {
+  background: rgba(10,10,15,0.9); padding: 1rem;
+  text-align: center;
+}
+.stat-label {
+  font-family: 'Cinzel', serif; font-size: 0.7rem;
+  color: var(--gold); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 0.3rem;
+}
+.stat-value {
+  font-family: 'Creepster', cursive; font-size: 1.5rem;
+  color: var(--crimson);
+}
+.stat-bar {
+  height: 4px; background: rgba(139,0,0,0.2);
+  border-radius: 2px; margin-top: 0.4rem; overflow: hidden;
+}
+.stat-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--blood), var(--crimson));
+  border-radius: 2px; transition: width 1.5s ease-out;
+  width: 0;
+}
+
+/* Origin story */
+.origin-story {
+  padding: 2rem; line-height: 1.9;
+}
+.origin-story .chapter {
+  font-family: 'Cinzel', serif; font-size: 0.85rem;
+  color: var(--gold); text-transform: uppercase;
+  letter-spacing: 3px; margin-bottom: 0.5rem;
+}
+.origin-story p {
+  font-size: 1.15rem; color: var(--bone);
+  margin-bottom: 1.2rem; text-indent: 1.5rem;
+}
+.origin-story .dramatic-line {
+  font-family: 'Cinzel', serif; font-size: 1.3rem;
+  color: var(--crimson); text-align: center;
+  font-weight: 700; margin: 1.5rem 0;
+  text-indent: 0; font-style: italic;
+  text-shadow: 0 0 10px rgba(220,20,60,0.3);
+}
+.origin-story .villain-reveal {
+  font-family: 'Creepster', cursive; font-size: clamp(1.5rem, 4vw, 2.2rem);
+  color: var(--crimson); text-align: center;
+  margin: 2rem 0 1rem; text-indent: 0;
+  text-shadow: 0 0 30px rgba(220,20,60,0.5);
+  animation: revealPulse 2s ease-in-out infinite;
+}
+@keyframes revealPulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.7; }
+}
+
+/* Weakness & Catchphrase */
+.extras {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: rgba(139,0,0,0.3);
+  border-top: 1px solid rgba(139,0,0,0.3);
+}
+.extra-item {
+  background: rgba(10,10,15,0.9); padding: 1.2rem;
+  text-align: center;
+}
+.extra-item h4 {
+  font-family: 'Cinzel', serif; font-size: 0.7rem;
+  color: var(--gold); text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 0.5rem;
+}
+.extra-item p {
+  font-family: 'Crimson Text', serif; font-size: 1.05rem;
+  color: var(--bone); font-style: italic;
+}
+
+/* Action buttons */
+.action-buttons {
+  display: flex; gap: 0.8rem; padding: 1.5rem;
+  justify-content: center; flex-wrap: wrap;
+}
+.action-btn {
+  padding: 0.7rem 1.5rem;
+  background: rgba(139,0,0,0.3); border: 1px solid var(--blood);
+  border-radius: 8px; color: var(--bone);
+  font-family: 'Cinzel', serif; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.3s;
+  letter-spacing: 1px;
+}
+.action-btn:hover {
+  background: rgba(139,0,0,0.6); border-color: var(--crimson);
+  box-shadow: 0 0 15px rgba(220,20,60,0.3);
+}
+
+/* Narration indicator */
+#narration-indicator {
+  position: fixed; bottom: 1.5rem; right: 1.5rem;
+  background: rgba(139,0,0,0.9); border: 1px solid var(--crimson);
+  border-radius: 8px; padding: 0.6rem 1rem;
+  font-family: 'Cinzel', serif; font-size: 0.8rem;
+  color: var(--ghost); z-index: 100;
+  display: none; animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+/* Footer */
+footer {
+  text-align: center; padding: 2rem;
+  font-family: 'Cinzel', serif; font-size: 0.8rem;
+  color: rgba(212,197,169,0.3); position: relative; z-index: 2;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .extras { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .input-wrapper { padding: 1.2rem; }
+  .origin-story { padding: 1.2rem; }
+}
+
+/* Typing animation for story */
+.typewriter { overflow: hidden; border-right: 2px solid var(--crimson); white-space: nowrap; animation: blink 0.7s step-end infinite; display: inline; }
+@keyframes blink { 50% { border-color: transparent; } }
+</style>
+</head>
+<body>
+
+<div id="lightning-flash"></div>
+<div class="fog"></div>
+
+<header>
+  <h1>VILLAIN ORIGIN STORY</h1>
+  <p>Every villain was once a victim of a minor inconvenience</p>
+</header>
+
+<div class="input-section">
+  <div class="input-wrapper">
+    <label>What annoyed you today?</label>
+    <input type="text" id="annoyance-input" placeholder="Someone took my parking spot..." maxlength="200" />
+    <button class="generate-btn" id="generate-btn" onclick="generateVillain()">UNLEASH YOUR DARKNESS</button>
+    <div class="quick-prompts">
+      <span class="quick-prompt" onclick="usePrompt(this)">Someone took my parking spot</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">My WiFi keeps dropping</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">Coworker microwaved fish</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">Stepped in a puddle</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">My code won't compile</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">Reply-all email chain</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">Alarm didn't go off</span>
+      <span class="quick-prompt" onclick="usePrompt(this)">Left my lunch at home</span>
+    </div>
+  </div>
+</div>
+
+<div id="result">
+  <div class="villain-card" id="villain-card">
+    <div class="card-header">
+      <div class="villain-icon" id="villain-icon"></div>
+      <div class="villain-name" id="villain-name"></div>
+      <div class="villain-title" id="villain-title"></div>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="origin-story" id="origin-story"></div>
+    <div class="extras">
+      <div class="extra-item">
+        <h4>Fatal Weakness</h4>
+        <p id="weakness"></p>
+      </div>
+      <div class="extra-item">
+        <h4>Catchphrase</h4>
+        <p id="catchphrase"></p>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-btn" onclick="narrateStory()">Narrate Story</button>
+      <button class="action-btn" onclick="shareVillain()">Share Villain Card</button>
+      <button class="action-btn" onclick="generateVillain()">Reroll Origin</button>
+    </div>
+  </div>
+</div>
+
+<div id="narration-indicator">Narrating your dark origin...</div>
+
+<footer>Every great villain started somewhere mundane.</footer>
+
+<script>
+// ============ WEB AUDIO: SOUND EFFECTS ============
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+function ensureAudio() { if (!audioCtx) audioCtx = new AudioCtx(); return audioCtx; }
+
+function playThunder() {
+  const ctx = ensureAudio();
+  const duration = 2.5;
+  const bufferSize = ctx.sampleRate * duration;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  // Generate thunder: filtered noise with envelope
+  for (let i = 0; i < bufferSize; i++) {
+    const t = i / ctx.sampleRate;
+    const env = Math.exp(-t * 2) * (1 + 0.5 * Math.sin(t * 20));
+    data[i] = (Math.random() * 2 - 1) * env * 0.6;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  // Low pass for rumble
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass'; lp.frequency.value = 200;
+  lp.frequency.setValueAtTime(800, ctx.currentTime);
+  lp.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + duration);
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.8, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+  source.connect(lp); lp.connect(gain); gain.connect(ctx.destination);
+  source.start();
+}
+
+function playEvilLaugh() {
+  const ctx = ensureAudio();
+  const now = ctx.currentTime;
+  // Series of descending "ha" sounds using oscillators
+  const laughNotes = [350, 300, 340, 280, 320, 260, 300, 240];
+  laughNotes.forEach((freq, i) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(freq, now + i * 0.15);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.7, now + i * 0.15 + 0.12);
+    gain.gain.setValueAtTime(0.15, now + i * 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.14);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now + i * 0.15);
+    osc.stop(now + i * 0.15 + 0.15);
+  });
+}
+
+function playDramaticSting() {
+  const ctx = ensureAudio();
+  const now = ctx.currentTime;
+  // Deep dramatic chord
+  [65, 82, 98, 131].forEach(freq => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 3);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 3);
+  });
+}
+
+function playRiser() {
+  const ctx = ensureAudio();
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(80, now);
+  osc.frequency.exponentialRampToValueAtTime(800, now + 1.5);
+  gain.gain.setValueAtTime(0.08, now);
+  gain.gain.linearRampToValueAtTime(0.25, now + 1.3);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 1.6);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now + 1.7);
+}
+
+function triggerLightning() {
+  const flash = document.getElementById('lightning-flash');
+  flash.classList.add('flash');
+  setTimeout(() => flash.classList.remove('flash'), 80);
+  setTimeout(() => { flash.classList.add('flash'); setTimeout(() => flash.classList.remove('flash'), 50); }, 150);
+}
+
+// ============ VILLAIN DATA ============
+const archetypes = [
+  { prefix: "The", style: "mastermind", icon: "🧠", title: "Criminal Mastermind" },
+  { prefix: "Lord", style: "dark-lord", icon: "👑", title: "Dark Overlord" },
+  { prefix: "Doctor", style: "mad-scientist", icon: "🧪", title: "Mad Scientist" },
+  { prefix: "The", style: "phantom", icon: "👻", title: "Phantom of Vengeance" },
+  { prefix: "Baron", style: "aristocrat", icon: "🎩", title: "Aristocrat of Chaos" },
+  { prefix: "The", style: "elemental", icon: "⚡", title: "Elemental Terror" },
+  { prefix: "Captain", style: "commander", icon: "⚔️", title: "Commander of Despair" },
+  { prefix: "The", style: "shadow", icon: "🌑", title: "Shadow Walker" },
+  { prefix: "Professor", style: "genius", icon: "📐", title: "Evil Genius" },
+  { prefix: "The", style: "beast", icon: "🐉", title: "Unleashed Beast" },
+  { prefix: "Count", style: "vampire", icon: "🦇", title: "Eternal Night-Dweller" },
+  { prefix: "The", style: "trickster", icon: "🃏", title: "Agent of Chaos" },
+  { prefix: "Madam", style: "sorceress", icon: "🔮", title: "Dark Enchantress" },
+  { prefix: "The", style: "machine", icon: "⚙️", title: "Mechanical Menace" },
+  { prefix: "Grand", style: "overlord", icon: "💀", title: "Supreme Overlord" },
+  { prefix: "The", style: "void", icon: "🕳️", title: "Void Bringer" },
+  { prefix: "Sir", style: "knight", icon: "🗡️", title: "Dark Knight of Malice" },
+  { prefix: "The", style: "storm", icon: "🌪️", title: "Storm Herald" },
+  { prefix: "Agent", style: "spy", icon: "🕶️", title: "Master of Deception" },
+  { prefix: "The", style: "plague", icon: "☠️", title: "Harbinger of Plague" },
+  { prefix: "Arch", style: "nemesis", icon: "🔥", title: "Supreme Nemesis" },
+  { prefix: "The", style: "wraith", icon: "💨", title: "Wraith of Ruin" },
+  { prefix: "Warden", style: "jailer", icon: "🔒", title: "Eternal Imprisoner" },
+  { prefix: "The", style: "serpent", icon: "🐍", title: "Venomous Schemer" },
+  { prefix: "Chancellor", style: "politician", icon: "🏛️", title: "Corrupt Chancellor" },
+  { prefix: "The", style: "collector", icon: "💎", title: "Obsessive Collector" },
+  { prefix: "Phantom", style: "ghost", icon: "🌫️", title: "Unseen Terror" },
+  { prefix: "The", style: "clock", icon: "⏰", title: "Master of Time" },
+  { prefix: "Duke", style: "noble", icon: "⚜️", title: "Noble Tyrant" },
+  { prefix: "The", style: "spider", icon: "🕸️", title: "Web Weaver" },
+  { prefix: "Admiral", style: "naval", icon: "🏴‍☠️", title: "Dark Admiral" },
+  { prefix: "The", style: "mirror", icon: "🪞", title: "Mirror Breaker" },
+  { prefix: "Overlord", style: "supreme", icon: "👁️", title: "All-Seeing Tyrant" },
+  { prefix: "The", style: "frost", icon: "❄️", title: "Frost Bringer" },
+  { prefix: "Master", style: "puppeteer", icon: "🎭", title: "Puppet Master" },
+  { prefix: "The", style: "inferno", icon: "🔥", title: "Living Inferno" },
+  { prefix: "Empress", style: "ruler", icon: "👸", title: "Empress of Shadows" },
+  { prefix: "The", style: "glitch", icon: "💻", title: "Digital Nightmare" },
+  { prefix: "Cardinal", style: "religious", icon: "⛪", title: "False Prophet" },
+  { prefix: "The", style: "swarm", icon: "🦟", title: "Swarm Lord" },
+  { prefix: "Magistrate", style: "judge", icon: "⚖️", title: "Judge of the Damned" },
+  { prefix: "The", style: "echo", icon: "📡", title: "Echo of Despair" },
+  { prefix: "Czar", style: "despot", icon: "🫅", title: "Iron Despot" },
+  { prefix: "The", style: "leech", icon: "🩸", title: "Life Drainer" },
+  { prefix: "Sentinel", style: "guard", icon: "🗼", title: "Dark Sentinel" },
+  { prefix: "The", style: "moth", icon: "🦋", title: "Devourer of Light" },
+  { prefix: "Vizier", style: "advisor", icon: "📜", title: "Treacherous Vizier" },
+  { prefix: "The", style: "monolith", icon: "🗿", title: "Immovable Terror" },
+  { prefix: "Regent", style: "usurper", icon: "🪖", title: "Usurper Supreme" },
+  { prefix: "The", style: "abyss", icon: "🌊", title: "Voice from the Abyss" },
+  { prefix: "Marshal", style: "military", icon: "🎖️", title: "Dark Marshal" },
+  { prefix: "The", style: "cipher", icon: "🔐", title: "Unbreakable Cipher" },
+];
+
+const nameWords = {
+  parking: ["Phantom","Claimer","Taker","Prowler","Sentinel","Shadow","Warden"],
+  food: ["Devourer","Glutton","Famine","Hunger","Feaster","Blight","Rot"],
+  tech: ["Glitch","Virus","Crash","Buffer","Null","Void","Overflow","Daemon"],
+  weather: ["Storm","Tempest","Flood","Frost","Thunder","Cyclone","Blizzard"],
+  people: ["Misanthrope","Recluse","Phantom","Specter","Outcast","Pariah"],
+  work: ["Grinder","Taskmaster","Overlord","Burnout","Deadline","Crunch"],
+  sleep: ["Insomniac","Nightmare","Sleepless","Dreamkiller","Wakeful"],
+  money: ["Miser","Collector","Hoarder","Debt","Penny","Vault"],
+  traffic: ["Gridlock","Roadrage","Bumper","Deadlock","Brake","Swerve"],
+  noise: ["Decibel","Screech","Cacophony","Discord","Static","Drone"],
+  general: ["Menace","Scourge","Bane","Reckoning","Nemesis","Havoc","Doom","Wrath","Fury","Malice","Torment","Vendetta","Chaos","Entropy","Oblivion"]
+};
+
+const categoryKeywords = {
+  parking: ["park","spot","car","drive","garage","lot","space","vehicle"],
+  food: ["food","lunch","eat","cook","microwave","coffee","snack","hungry","fish","fridge","kitchen"],
+  tech: ["wifi","internet","computer","phone","code","compile","bug","crash","app","update","password","email","software","bluetooth","printer","battery"],
+  weather: ["rain","cold","hot","snow","wet","puddle","umbrella","wind","storm","sun"],
+  people: ["someone","coworker","neighbor","friend","boss","stranger","person","they","roommate","partner"],
+  work: ["work","meeting","deadline","project","office","zoom","presentation","manager","review"],
+  sleep: ["alarm","sleep","morning","wake","tired","bed","nap","insomnia"],
+  money: ["money","price","expensive","bill","pay","charge","fee","cost","tax"],
+  traffic: ["traffic","commute","bus","train","road","late","subway","uber"],
+  noise: ["loud","noise","bark","honk","snore","music","drill","construction"]
+};
+
+function detectCategory(text) {
+  const lower = text.toLowerCase();
+  let best = "general", bestCount = 0;
+  for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+    const count = keywords.filter(k => lower.includes(k)).length;
+    if (count > bestCount) { bestCount = count; best = cat; }
+  }
+  return best;
+}
+
+function extractKeyNoun(text) {
+  const lower = text.toLowerCase();
+  const stopWords = new Set(["i","me","my","the","a","an","it","is","was","are","were","am","been","be","have","has","had","do","does","did","will","would","could","should","can","may","might","shall","to","of","in","for","on","with","at","by","from","up","about","into","through","during","before","after","above","below","between","out","off","over","under","again","further","then","once","here","there","when","where","why","how","all","both","each","few","more","most","other","some","such","no","nor","not","only","own","same","so","than","too","very","just","because","as","but","and","or","if","that","this","these","those","what","which","who","whom","they","them","their","someone","something","today","got","went","took","made","keep","keeps","kept","really","always","never","every","much","don't","didn't","won't","can't"];
+  const words = lower.replace(/[^a-z\s]/g, '').split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+  return words[words.length - 1] || words[0] || "grievance";
+}
+
+function generateVillainName(text) {
+  const category = detectCategory(text);
+  const pool = [...(nameWords[category] || []), ...nameWords.general];
+  const noun = extractKeyNoun(text);
+  const archetype = archetypes[Math.floor(Math.random() * archetypes.length)];
+  const nameWord = pool[Math.floor(Math.random() * pool.length)];
+
+  // Generate themed name
+  const capNoun = noun.charAt(0).toUpperCase() + noun.slice(1);
+  const patterns = [
+    `${archetype.prefix} ${capNoun} ${nameWord}`,
+    `${archetype.prefix} ${nameWord}`,
+    `${archetype.prefix} ${capNoun}`,
+    `${nameWord} ${capNoun}`,
+  ];
+  const name = patterns[Math.floor(Math.random() * patterns.length)];
+  return { name, archetype };
+}
+
+// ============ ORIGIN STORY TEMPLATES ============
+function generateStory(annoyance, villainName) {
+  const templates = [
+    // Template 1: Classic
+    () => `<div class="chapter">Chapter I: The Incident</div>
+<p>They say the line between sanity and supervillainy is thinner than most people think. For the one who would become ${villainName}, that line was crossed on an ordinary day, in the most ordinary of ways.</p>
+<p>It started simply enough: ${annoyance}. A minor inconvenience, you might say. A footnote in anyone else's day. But for this particular soul, it was the final straw on a camel's back that had been accumulating straws for decades.</p>
+<p class="dramatic-line">"Never again," they whispered, as something ancient and terrible stirred within them.</p>
+<p>That night, standing alone in the pale glow of a flickering streetlight, they made a vow to the uncaring universe. They would reshape this world, bending it to their iron will, ensuring that no one would ever suffer such an indignity again... or perhaps, ensuring that EVERYONE would.</p>
+<p>The authorities would later pinpoint this exact moment as the birth of something they could not contain. Psychologists would write papers. Governments would convene emergency sessions.</p>
+<p class="villain-reveal">And from that day forward, they were no longer just a person. They were... ${villainName}.</p>`,
+
+    // Template 2: News report
+    () => `<div class="chapter">Classified File #X-7734: Origin Report</div>
+<p>SUBJECT exhibits classic megalomania onset. Initial trigger event classified as Level 1 mundane grievance: ${annoyance}. However, subject's response was anything but mundane.</p>
+<p>Within 48 hours of the incident, subject had already begun constructing what authorities would later describe as "an unnecessarily elaborate lair." Neighbors reported strange lights, maniacal laughter, and the distinct hum of machinery that shouldn't exist.</p>
+<p class="dramatic-line">"I tried to play by society's rules," subject was recorded saying. "But society broke its own rules first."</p>
+<p>What followed was a transformation so complete, so devastatingly theatrical, that even seasoned criminal psychologists were forced to admit a grudging admiration for the sheer commitment to the bit.</p>
+<p>The subject adopted a new identity, complete with costume, catchphrase, and an origin story they insisted on narrating to anyone who would listen, and several who would not.</p>
+<p class="villain-reveal">The file is now labeled with one name only: ${villainName}.</p>`,
+
+    // Template 3: Fairy tale
+    () => `<div class="chapter">Once Upon a Grievance...</div>
+<p>Once, in a time not so different from our own, there lived an unremarkable person who asked nothing extraordinary of the world. Just basic decency. Just simple fairness. Just the bare minimum of cosmic justice.</p>
+<p>The universe, as it so often does, responded with: ${annoyance}.</p>
+<p>Now, a lesser soul might have sighed, muttered something unprintable, and moved on. But this was no lesser soul. Oh no. This was a soul forged in the fires of accumulated micro-aggressions, tempered by years of swallowed frustration, and sharpened to a razor's edge by this one... final... insult.</p>
+<p class="dramatic-line">"If the world will not grant me peace, then I shall grant the world... chaos."</p>
+<p>They retreated into darkness, and when they emerged, they were someone else entirely. Someone with a plan. Someone with a presence that made rooms go cold and lights flicker. Someone whose name would be spoken in hushed, terrified tones across every continent.</p>
+<p>Children would be warned. Monuments would tremble. And somewhere, in the shadows, a figure would smile, remembering the moment it all began.</p>
+<p class="villain-reveal">For they had become... ${villainName}.</p>`,
+
+    // Template 4: Monologue
+    () => `<div class="chapter">The Monologue (As Delivered to a Captive Audience)</div>
+<p>"You want to know how I became this? You want to understand the mind behind the mayhem? Fine. I'll tell you. But you won't like it."</p>
+<p>"It was a day like any other. I was minding my own business, hurting no one, asking nothing of the cosmos but the simple dignity that every sentient being deserves. And then... ${annoyance}."</p>
+<p>"I know what you're thinking. 'That's it? THAT's what pushed you over the edge?' And to that I say: yes. Because it wasn't just that one thing. It was every time. Every slight. Every ignored complaint. Every 'it's not that big of a deal.' Every dismissal of my perfectly valid frustration."</p>
+<p class="dramatic-line">"Do you know what happens when you push someone who has nothing left to lose? You create something magnificent."</p>
+<p>"I didn't choose this path. This path chose me. And now? Now I have the plan, the resources, the dramatic lighting, and absolutely nothing left to lose."</p>
+<p>"So before you judge me, before you call the authorities, before you try to reason with me using your pathetic 'perspective' and 'proportional response'... just know that I gave this world every chance."</p>
+<p class="villain-reveal">"I am ${villainName}. And this... is only the beginning."</p>`,
+
+    // Template 5: Documentary
+    () => `<div class="chapter">Excerpt: "The Making of a Monster" (Documentary, Award-Winning)</div>
+<p>[NARRATOR]: The day began unremarkably. Coffee was consumed. Routines were followed. There was no cosmic warning, no ominous music, no sign whatsoever that the world was about to witness the birth of its newest and most theatrically committed villain.</p>
+<p>[NARRATOR]: And then it happened. ${annoyance}. Security cameras captured the exact moment. Watch closely. There. That twitch. That barely perceptible shift in the eyes from 'mildly annoyed citizen' to 'future scourge of civilization.'</p>
+<p class="dramatic-line">[SUBJECT, interview footage]: "Something broke inside me that day. Or perhaps... something was finally fixed."</p>
+<p>[NARRATOR]: What followed defied all predictive models. Within weeks, a figure emerged from the shadows, clad in darkness and armed with a grudge so specific yet so cosmically amplified that behavioral scientists are still writing dissertations.</p>
+<p>[EXPERT]: "In my thirty years of studying criminal psychology, I've never seen someone commit so fully to an aesthetic born from such a relatable grievance."</p>
+<p class="villain-reveal">[NARRATOR]: The world now knows them only as... ${villainName}.</p>`,
+
+    // Template 6: Prophecy
+    () => `<div class="chapter">The Prophecy Fulfilled</div>
+<p>The ancient texts spoke of a darkness that would rise not from war, not from famine, not from any great catastrophe, but from the most mundane of provocations. For centuries, scholars dismissed these passages as metaphor. They were wrong.</p>
+<p>The prophecy was specific: ${annoyance}. "When this indignity falls upon the Chosen One," the scrolls read, "the transformation shall be swift, irreversible, and extremely dramatic."</p>
+<p>And so it was. On that fateful day, as the universe delivered its petty insult with surgical precision, something awakened. Something that had been dormant in the human genome since the dawn of civilization, waiting for exactly this trigger.</p>
+<p class="dramatic-line">The stars themselves seemed to dim, as if the cosmos recognized the gravity of what it had unleashed.</p>
+<p>Seismographs registered a tremor with no geological explanation. Street lights exploded in a six-block radius. And from the epicenter of this disturbance emerged a figure, transformed, transcended, and deeply, profoundly annoyed.</p>
+<p>The prophecy had named them. History would remember them. The world would fear them.</p>
+<p class="villain-reveal">The Prophecy called them... ${villainName}.</p>`,
+
+    // Template 7: Lab Report
+    () => `<div class="chapter">Lab Report: Subject Zero</div>
+<p>TRIGGER EVENT: ${annoyance}. Classified threat level: Omega. Initial assessment suggested standard civilian grievance. This assessment was catastrophically incorrect.</p>
+<p>Hour 1: Subject exhibits unusual calm. Witnesses describe a "thousand-yard stare" and the faint sound of an orchestral score that seemed to emanate from nowhere.</p>
+<p>Hour 6: Subject observed purchasing items from seventeen different hardware stores. Pattern analysis reveals components consistent with "doomsday device (theatrical variant)."</p>
+<p class="dramatic-line">Hour 12: Subject issues manifesto. It is 47 pages long, single-spaced, and terrifyingly well-written.</p>
+<p>Hour 24: All attempts at negotiation fail. Subject responds to each outreach with increasingly elaborate displays of villainy, including but not limited to: smoke machines, dramatic cape billowing, and a custom theme song.</p>
+<p>Hour 48: Containment officially classified as FAILED. Subject has transcended mere criminality and entered the realm of "theatrical existential threat."</p>
+<p class="villain-reveal">Subject has self-designated as: ${villainName}.</p>`,
+
+    // Template 8: Memoir
+    () => `<div class="chapter">From the Memoirs: "It Started With a Grievance"</div>
+<p>If you had told me a year ago that I would become the most feared name in twelve time zones, I would have laughed. I was ordinary. Painfully, aggressively ordinary. I recycled. I held doors for strangers. I used my turn signal.</p>
+<p>And then: ${annoyance}.</p>
+<p>People always ask if there was a moment of hesitation. A moment where I thought, "Perhaps I'm overreacting." I want to be honest with you, dear reader: no. There was not. The response was immediate, total, and, I dare say, proportional to the cosmic injustice inflicted upon me.</p>
+<p class="dramatic-line">I did not break. I evolved.</p>
+<p>My first act was to redesign my entire aesthetic. Gone were the sensible neutrals and reasonable footwear. In their place: darkness, drama, and an accessory budget that would make a Bond villain weep.</p>
+<p>My second act was The Plan. I cannot reveal its details here, as my lawyers have advised against self-incrimination. But I will say this: it involves exactly the right amount of thunder effects and maniacal laughter.</p>
+<p class="villain-reveal">They gave me a name. They gave me a legend. I am ${villainName}.</p>`,
+  ];
+
+  return templates[Math.floor(Math.random() * templates.length)]();
+}
+
+// ============ STATS & EXTRAS ============
+const weaknesses = [
+  "A sincere apology and a gift card",
+  "Puppies (cannot resist petting them)",
+  "Their mom's disappointment",
+  "Free samples at the grocery store",
+  "A really good playlist",
+  "Someone remembering their birthday",
+  "ASMR videos",
+  "Fresh cookies from the oven",
+  "A warm blanket on a cold day",
+  "Unexpected compliments from strangers",
+  "Baby animal videos",
+  "When someone saves them a seat",
+  "A perfectly brewed cup of tea",
+  "Finding money in old jacket pockets",
+  "Nostalgic cartoon theme songs",
+  "A handwritten thank-you note",
+  "When the bus arrives right on time",
+  "A stranger holding the elevator",
+  "The first day of spring",
+  "Getting a text from an old friend",
+  "Free refills",
+  "A parking spot right at the front",
+  "Someone laughing at their joke",
+  "The smell of rain on hot pavement",
+  "A dog that chooses to sit next to them",
+];
+
+const catchphrases = [
+  "You should have been nicer.",
+  "I ASKED for one thing. ONE. THING.",
+  "Chaos is just unappreciated order.",
+  "The world had its chance.",
+  "I didn't start this. But I will END it.",
+  "Manners cost nothing. My vengeance costs everything.",
+  "You call it overreacting. I call it... justice.",
+  "I was polite once. Look where that got me.",
+  "This isn't revenge. It's a lifestyle.",
+  "You could have prevented this. You chose not to.",
+  "I'm not mad. I'm rebranded.",
+  "Behold the consequences of your inconsideration!",
+  "They told me to 'let it go.' So I let EVERYTHING go.",
+  "Every villain is just a hero whose email was ignored.",
+  "I gave the world patience. It gave me THIS.",
+  "Welcome to the era of my inconvenience.",
+  "Minor? MINOR?! I'll show you MINOR!",
+  "I used to believe in second chances. Now I believe in second bases... of operations.",
+  "The abyss stared back. I stared harder.",
+  "You made your bed. Now lie in the wreckage.",
+];
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+// ============ MAIN GENERATOR ============
+function generateVillain() {
+  const input = document.getElementById('annoyance-input').value.trim();
+  if (!input) {
+    document.getElementById('annoyance-input').focus();
+    document.getElementById('annoyance-input').style.borderColor = 'var(--crimson)';
+    setTimeout(() => document.getElementById('annoyance-input').style.borderColor = '', 1000);
+    return;
+  }
+
+  // Sound effects sequence
+  playRiser();
+  setTimeout(() => { playThunder(); triggerLightning(); }, 1500);
+  setTimeout(() => playDramaticSting(), 2200);
+
+  // Generate villain data
+  const { name, archetype } = generateVillainName(input);
+  const evilRating = rand(70, 100);
+  const theatricality = rand(80, 100);
+  const pettiness = rand(85, 100);
+  const commitment = rand(75, 100);
+  const dangerLevel = rand(60, 95);
+
+  const stats = [
+    { label: "Evil Rating", value: evilRating, display: evilRating + "/100" },
+    { label: "Theatricality", value: theatricality, display: theatricality + "%" },
+    { label: "Pettiness", value: pettiness, display: pettiness + "%" },
+    { label: "Commitment", value: commitment, display: commitment + "%" },
+    { label: "Danger Level", value: dangerLevel, display: dangerLevel + "/100" },
+  ];
+
+  // Populate card
+  document.getElementById('villain-icon').textContent = archetype.icon;
+  document.getElementById('villain-name').textContent = name;
+  document.getElementById('villain-title').textContent = archetype.title;
+
+  const statsGrid = document.getElementById('stats-grid');
+  statsGrid.innerHTML = stats.map(s => `
+    <div class="stat-item">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value">${s.display}</div>
+      <div class="stat-bar"><div class="stat-bar-fill" data-width="${s.value}"></div></div>
+    </div>
+  `).join('');
+
+  document.getElementById('origin-story').innerHTML = generateStory(input, name);
+  document.getElementById('weakness').textContent = pick(weaknesses);
+  document.getElementById('catchphrase').textContent = '"' + pick(catchphrases) + '"';
+
+  // Show result
+  const result = document.getElementById('result');
+  result.classList.remove('visible');
+  setTimeout(() => {
+    result.classList.add('visible');
+    result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Animate stat bars
+    setTimeout(() => {
+      document.querySelectorAll('.stat-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.width + '%';
+      });
+    }, 300);
+    // Evil laugh after reveal
+    setTimeout(() => playEvilLaugh(), 1500);
+  }, 2300);
+
+  // Store for sharing/narration
+  window._currentVillain = { name, annoyance: input, archetype };
+}
+
+// ============ SPEECH SYNTHESIS NARRATION ============
+function narrateStory() {
+  if (!('speechSynthesis' in window)) { alert("Your browser doesn't support speech synthesis."); return; }
+  window.speechSynthesis.cancel();
+
+  const storyEl = document.getElementById('origin-story');
+  const text = storyEl.innerText;
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.85;
+  utterance.pitch = 0.7;
+
+  // Try to get a deep/dramatic voice
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => /daniel|james|google uk male|aaron|tom/i.test(v.name))
+    || voices.find(v => /male/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utterance.voice = preferred;
+
+  const indicator = document.getElementById('narration-indicator');
+  indicator.style.display = 'block';
+  utterance.onend = () => { indicator.style.display = 'none'; };
+  utterance.onerror = () => { indicator.style.display = 'none'; };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+// ============ SHARE ============
+async function shareVillain() {
+  if (!window._currentVillain) return;
+  const v = window._currentVillain;
+  const shareText = `My villain origin story: "${v.annoyance}" turned me into ${v.name} (${v.archetype.icon} ${v.archetype.title})! Generate yours:`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'My Villain Origin Story', text: shareText });
+    } catch(e) { /* user cancelled */ }
+  } else {
+    // Fallback: copy to clipboard
+    try {
+      await navigator.clipboard.writeText(shareText);
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = 'Copied to Clipboard!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    } catch(e) {
+      // Fallback fallback
+      prompt('Copy your villain card:', shareText);
+    }
+  }
+}
+
+// ============ QUICK PROMPTS ============
+function usePrompt(el) {
+  document.getElementById('annoyance-input').value = el.textContent;
+}
+
+// Enter key support
+document.getElementById('annoyance-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') generateVillain();
+});
+
+// Load voices (some browsers need this)
+if ('speechSynthesis' in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

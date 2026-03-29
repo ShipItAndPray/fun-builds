@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passive-Aggressive Note Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+  }
+
+  h1 {
+    font-size: 2rem;
+    margin: 20px 0 5px;
+    text-align: center;
+    color: #2c3e50;
+  }
+
+  .subtitle {
+    color: #7f8c8d;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 700px;
+  }
+
+  .input-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+  }
+
+  .input-section label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+    background: #fafafa;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: #f39c12;
+    background: #fff;
+  }
+
+  .style-selector {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+
+  .style-btn {
+    padding: 8px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    color: #555;
+  }
+
+  .style-btn:hover {
+    border-color: #f39c12;
+    color: #f39c12;
+  }
+
+  .style-btn.active {
+    background: #f39c12;
+    border-color: #f39c12;
+    color: #fff;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 8px;
+  }
+
+  .generate-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(243,156,18,0.4);
+  }
+
+  .generate-btn:active {
+    transform: translateY(0);
+  }
+
+  .output-section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    display: none;
+    position: relative;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .output-header h2 {
+    font-size: 1rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .icon-btn {
+    padding: 8px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .icon-btn:hover {
+    border-color: #f39c12;
+    color: #f39c12;
+  }
+
+  .output-text {
+    padding: 20px;
+    border-radius: 12px;
+    font-size: 1rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    min-height: 80px;
+  }
+
+  /* Style-specific output styling */
+  .style-office-email .output-text {
+    background: #fefefe;
+    border: 1px solid #e8e8e8;
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+  }
+
+  .style-sticky-note .output-text {
+    background: #fff9c4;
+    border: none;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+    transform: rotate(-0.5deg);
+    font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+    font-size: 1.05rem;
+    padding: 24px;
+  }
+
+  .style-formal-letter .output-text {
+    background: #fafaf8;
+    border: 1px solid #d5d0c4;
+    font-family: 'Times New Roman', Georgia, serif;
+    padding: 30px;
+    font-size: 1rem;
+    line-height: 1.8;
+  }
+
+  .style-text-message .output-text {
+    background: #e8f5e9;
+    border-radius: 18px 18px 4px 18px;
+    font-family: -apple-system, 'Segoe UI', sans-serif;
+    padding: 16px 20px;
+    font-size: 0.95rem;
+    max-width: 85%;
+  }
+
+  .copied {
+    background: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: #fff !important;
+  }
+
+  .anger-meter {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #999;
+    text-align: center;
+  }
+
+  footer {
+    margin-top: 30px;
+    color: #bbb;
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5rem; }
+    .style-selector { gap: 6px; }
+    .style-btn { padding: 6px 12px; font-size: 0.8rem; }
+    .output-text { font-size: 0.92rem; }
+    body { padding: 12px; }
+    .input-section, .output-section { padding: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Passive-Aggressive Note Generator</h1>
+<p class="subtitle">Turn your rage into corporate-approved pleasantries</p>
+
+<div class="container">
+  <div class="input-section">
+    <label>Your angry message</label>
+    <textarea id="angryInput" placeholder="e.g. STOP EATING MY LUNCH YOU ANIMALS"></textarea>
+
+    <label style="margin-top:16px;">Output style</label>
+    <div class="style-selector">
+      <button class="style-btn active" data-style="office-email">Office Email</button>
+      <button class="style-btn" data-style="sticky-note">Sticky Note</button>
+      <button class="style-btn" data-style="formal-letter">Formal Letter</button>
+      <button class="style-btn" data-style="text-message">Text Message</button>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">Make It Passive-Aggressive</button>
+    <div class="anger-meter" id="angerMeter"></div>
+  </div>
+
+  <div class="output-section" id="outputSection">
+    <div class="output-header">
+      <h2>Your refined message</h2>
+      <div class="btn-row">
+        <button class="icon-btn" id="copyBtn" onclick="copyOutput()">&#128203; Copy</button>
+        <button class="icon-btn" id="speakBtn" onclick="speakOutput()">&#128264; Read Aloud</button>
+        <button class="icon-btn" id="regenBtn" onclick="regenerate()">&#128260; Remix</button>
+      </div>
+    </div>
+    <div class="output-text" id="outputText"></div>
+  </div>
+</div>
+
+<footer>No feelings were (openly) hurt in the making of this note.</footer>
+
+<script>
+// ============================================================
+// PATTERN DATABASE (50+ transformation patterns)
+// ============================================================
+
+const openers = {
+  'office-email': [
+    "Hi team! \u{1F60A}",
+    "Good morning, everyone! \u{1F60A}",
+    "Hello wonderful colleagues! \u{1F60A}",
+    "Hi all! Hope you're having a great day! \u{2728}",
+    "Hey team! Quick note! \u{1F60A}",
+    "Hi friends! \u{1F44B}",
+    "Greetings, esteemed colleagues! \u{1F60A}",
+    "Hello lovely people! \u{2728}",
+  ],
+  'sticky-note': [
+    "Hey! \u{1F60A}",
+    "Hi there! \u{1F44B}",
+    "Quick note! \u{2764}\uFE0F",
+    "FYI! \u{1F60A}",
+    "Friendly PSA! \u{1F31F}",
+    "\u{2728} Gentle reminder! \u{2728}",
+    "Hello friend! \u{1F60A}",
+  ],
+  'formal-letter': [
+    "Dear Esteemed Colleague,\n\nI hope this correspondence finds you in excellent health and spirits.",
+    "To Whom It May Concern,\n\nI write to you today with the utmost respect and collegiality.",
+    "Dear Valued Team Member,\n\nPlease allow me to take a moment of your surely very busy schedule.",
+    "Dear Sir or Madam,\n\nI trust this letter reaches you well.",
+    "To My Distinguished Colleague,\n\nIt is with great consideration that I pen this note.",
+  ],
+  'text-message': [
+    "heyyy \u{1F60A}",
+    "hiii so um",
+    "hey bestie \u{1F49B}",
+    "omg hi \u{1F60A}",
+    "soo like",
+    "hey! quick thing lol",
+    "hi just wanted to say \u{1F60A}",
+  ]
+};
+
+const closers = {
+  'office-email': [
+    "\n\nThanks so much for your understanding! \u{1F49B}\n\nBest regards,\nA Concerned (but totally not upset!) Colleague",
+    "\n\nAppreciate your cooperation! \u{1F60A}\n\nWarmest wishes,\nManagement (just kidding, but also not)",
+    "\n\nThanks a million! You're all the best! \u{2728}\n\nKindly,\nSomeone Who Definitely Isn't Keeping Track",
+    "\n\nSo grateful for this wonderful team! \u{1F64F}\n\nWith appreciation,\nYour Friendly Neighborhood Colleague",
+    "\n\nThank you for being the amazing humans you are! \u{1F60A}\n\nCheers,\nA Patient Soul",
+    "\n\nLooking forward to everyone's continued cooperation! \u{1F31F}\n\nAll the best,\nA Very Understanding Person",
+  ],
+  'sticky-note': [
+    "\n\nThanks!! \u{1F60A}\u{1F49B}",
+    "\n\nXOXO \u{2764}\uFE0F",
+    "\n\nThanks a bunch! \u{2728}\u{1F60A}",
+    "\n\nYou're the best! \u{1F31F}",
+    "\n\nAppreciate it! \u{1F49B}\u{1F49B}\u{1F49B}",
+    "\n\n\u{1F60A} Thx! \u{1F60A}",
+  ],
+  'formal-letter': [
+    "\n\nI remain confident in your capacity for self-improvement and eagerly await the positive changes that shall undoubtedly follow.\n\nWith the warmest of professional regards,\nA Concerned Stakeholder",
+    "\n\nI trust this matter will be resolved with the same efficiency and professionalism that characterizes our esteemed workplace.\n\nYours most sincerely,\nA Well-Wishing Colleague",
+    "\n\nShould you require further clarification on these remarkably straightforward expectations, please do not hesitate to inquire.\n\nMost respectfully yours,\nAn Advocate for Workplace Harmony",
+  ],
+  'text-message': [
+    "\n\nanyway love u \u{1F49B}\u{1F60A}",
+    "\n\nlol no worries tho!! \u{1F60A}\u{2764}\uFE0F",
+    "\n\nhaha anyway it's totally fine \u{1F60A}\u{1F60A}",
+    "\n\nnot a big deal at ALL just saying \u{1F49B}",
+    "\n\njust thought you should know!! \u{1F60A}\u{2728}",
+    "\n\nok byeee \u{1F49B}\u{1F49B}\u{1F49B}",
+  ]
+};
+
+// Topic detection patterns and their passive-aggressive translations
+const topicPatterns = [
+  // FOOD / LUNCH
+  {
+    match: /\b(lunch|food|eat|eating|fridge|refrigerator|leftovers|sandwich|snack|meal|yogurt|drink|milk|soda|coffee creamer|creamer)\b/i,
+    templates: [
+      "Just a friendly reminder that the items in the fridge labeled with names are, in fact, the personal property of those individuals. I know it can be SO confusing when things look delicious and don't have your name on them, but rest assured, they do belong to someone who was probably really looking forward to eating them! \u{1F60A}",
+      "Per my last email (and the one before that, and the one before that), the shared refrigerator operates on a simple principle: if your name isn't on it, it isn't yours! I know, revolutionary concept! \u{2728}",
+      "As previously discussed in our last 47 informal conversations about this topic, the food in the communal fridge with names on it has been claimed! Shocking, I know! \u{1F60A}",
+      "I just wanted to circle back on the whole 'food disappearing from the fridge' situation. I'm sure it's just an innocent misunderstanding happening every. single. day. \u{1F49B}",
+      "Quick PSA: The fridge is not a community buffet! I mean, unless I missed that memo? Did I miss a memo? I don't think I missed a memo. \u{1F60A}",
+      "I absolutely love how adventurous some of us are with trying new foods! Especially foods that belong to other people! So brave! \u{2728}",
+    ]
+  },
+  // NOISE / VOLUME
+  {
+    match: /\b(loud|noise|noisy|volume|quiet|shut up|music|headphones|talking|yelling|screaming|speaker|sound)\b/i,
+    templates: [
+      "I absolutely LOVE how passionate some of us are about sharing our musical taste/conversations/general existence with the entire floor! However, some of us (not naming names!) work best in a slightly less concert-like environment. \u{1F60A}",
+      "Per my last email, I wanted to gently suggest that perhaps headphones might be a wonderful investment! They're truly life-changing, and I mean that in the most supportive way possible. \u{2728}",
+      "Just to clarify, the open floor plan was designed for collaboration, not necessarily for recreating the atmosphere of a busy airport terminal! But that's just one person's humble opinion! \u{1F60A}",
+      "I'm sure we can all agree that indoor voices are a wonderful invention! Almost as wonderful as the sound of blessed, golden silence! \u{1F49B}",
+      "Friendly reminder that noise-canceling headphones can only do so much! At some point, physics simply cannot overcome the sheer enthusiasm of certain nearby conversations! \u{1F60A}",
+    ]
+  },
+  // CLEANLINESS / MESS
+  {
+    match: /\b(clean|mess|messy|dirty|dishes|sink|trash|garbage|wipe|wash|filth|gross|disgusting|pig|slob|counter|microwave|spill)\b/i,
+    templates: [
+      "I noticed that our shared kitchen space has developed its own unique ecosystem! While I appreciate biodiversity, perhaps we could aim for a slightly more hygienic environment? Just a thought! \u{1F60A}",
+      "Friendly reminder that the dish fairy retired last quarter due to burnout. Please wash your own dishes! I believe in you! \u{2728}",
+      "As previously discussed, the communal areas work best when ALL of us contribute to their upkeep. I know it's easy to assume someone else will handle it, but plot twist: that someone is YOU! \u{1F60A}",
+      "Just to clarify, the sink is for washing dishes, not for creating a modern art installation out of dirty mugs! Although I must say, the current arrangement is very avant-garde. \u{1F49B}",
+      "Per my last email, I'd like to revisit the groundbreaking concept of 'cleaning up after yourself.' I've attached a helpful diagram for anyone still struggling with this complex procedure! \u{1F60A}",
+      "I'm starting to think some of us believe that leaving dishes in the sink long enough will cause them to develop sentience and wash themselves. Spoiler alert: that's not how it works! \u{2728}",
+    ]
+  },
+  // BATHROOM
+  {
+    match: /\b(bathroom|toilet|restroom|flush|seat|paper|towel|soap)\b/i,
+    templates: [
+      "Just a gentle reminder that the bathroom is a shared sacred space, and there are certain courtesies that one might extend to fellow humans who will use it after them! I trust this needs no further elaboration! \u{1F60A}",
+      "Per my last email, I'd like to revisit bathroom etiquette 101. I know it's not the most glamorous topic, but some of us clearly need a refresher! \u{2728}",
+      "As previously discussed, what happens in the bathroom shouldn't leave evidence for the next person. I feel like this should go without saying, and yet here we are! \u{1F49B}",
+    ]
+  },
+  // TEMPERATURE / THERMOSTAT
+  {
+    match: /\b(cold|hot|thermostat|temperature|AC|air conditioning|heater|freezing|sweating|blanket|jacket)\b/i,
+    templates: [
+      "I just wanted to have a friendly chat about the thermostat situation! I know we all have different comfort levels, but I'm fairly certain the office isn't meant to double as a walk-in freezer OR a sauna! \u{1F60A}",
+      "Per my last email, perhaps we could reach a temperature compromise that doesn't require half the office to wear parkas while the other half fans themselves with manila folders? Just a thought! \u{2728}",
+      "As previously discussed, the thermostat is not a personal climate control device. I know it's tempting to adjust it every time you walk past, but maybe we could try NOT doing that? \u{1F49B}",
+    ]
+  },
+  // MEETINGS
+  {
+    match: /\b(meeting|meetings|late|on time|calendar|schedule|invite|agenda|zoom|call|conference)\b/i,
+    templates: [
+      "Just a friendly reminder that meetings have this really interesting feature called a 'start time!' It's that number listed on the calendar invite, and it means the meeting begins at that exact moment! Fascinating, right? \u{1F60A}",
+      "Per my last email, I'd like to gently suggest that perhaps arriving to meetings on time could be a fun new team challenge! I bet we could do it if we really tried! \u{2728}",
+      "As previously discussed (in the meeting you were late to), punctuality is a wonderful way to show respect for everyone's time! I know time is a social construct, but our paychecks are not! \u{1F49B}",
+      "I absolutely adore how some of us treat meeting times as gentle suggestions rather than firm commitments! It really keeps the rest of us on our toes! \u{1F60A}",
+    ]
+  },
+  // PARKING
+  {
+    match: /\b(park|parking|spot|space|car|drive|lot|garage|double)\b/i,
+    templates: [
+      "Just wanted to send a quick note about the parking situation! I know those white lines on the ground can be SO confusing, but they're actually meant to indicate individual parking spaces! One car per space! Mind-blowing, I know! \u{1F60A}",
+      "Per my last email, I'd like to revisit the art of parking within the designated lines. I believe in all of us! We got our licenses somehow, right? \u{2728}",
+      "Friendly reminder that parking spots, much like personal boundaries, are meant to be respected! \u{1F49B}",
+    ]
+  },
+  // REPLY ALL / EMAIL
+  {
+    match: /\b(reply all|email|reply-all|inbox|cc|forward|thread|unsubscribe)\b/i,
+    templates: [
+      "Just to clarify, the 'Reply All' button is not the default option! I know it's right there, looking all clickable and tempting, but maybe we could all take a deep breath and consider whether ALL 200 people on this thread really need to know that you 'agree'? \u{1F60A}",
+      "Per my last email (which you apparently didn't read, based on your reply), the Reply All button should be used with the same caution as a fire extinguisher: only in genuine emergencies! \u{2728}",
+      "As previously discussed, our inboxes are sacred spaces. Let's treat them with the reverence they deserve by not flooding them with unnecessary replies to the entire company! \u{1F49B}",
+    ]
+  },
+  // STEALING / TAKING
+  {
+    match: /\b(steal|stole|stolen|take|taking|took|mine|thief|borrow|touch|use|using)\b/i,
+    templates: [
+      "I've noticed that certain personal items have been going on little unauthorized adventures around the office! While I admire their spirit of exploration, I'd really prefer they stay exactly where I left them! \u{1F60A}",
+      "Per my last email, there seems to be some confusion about the concept of personal property. Here's a handy rule: if you didn't buy it, bring it, or receive it as a gift, it's probably not yours! \u{2728}",
+      "Just to clarify, 'borrowing without asking' has another name, and it's not one that looks great on a performance review! But I'm sure it's all just innocent misunderstandings! \u{1F49B}",
+      "As previously discussed, I am absolutely thrilled to share my things! When asked! Which hasn't been happening! But it's totally fine! \u{1F60A}",
+    ]
+  },
+  // SMELL / ODOR
+  {
+    match: /\b(smell|stink|stinks|odor|perfume|cologne|fish|microwave fish|reek|scent|fragrance|deodorant)\b/i,
+    templates: [
+      "I wanted to address a rather... atmospheric situation that's been developing in our shared space. Without pointing any fingers (or noses), perhaps we could all be a tiny bit more mindful of the olfactory experience we're creating for others? \u{1F60A}",
+      "Per my last email, I'd like to gently suggest that certain aromatic choices might be better suited for outdoor environments. Or perhaps another zip code! Just a thought! \u{2728}",
+      "As previously discussed, the open floor plan means we all share not just space, but also air. Let's make that air as pleasant as possible for everyone, shall we? \u{1F49B}",
+    ]
+  },
+  // DEADLINE / WORK
+  {
+    match: /\b(deadline|late|work|project|task|assignment|finish|complete|deliver|slack|lazy|do your job|pull your weight)\b/i,
+    templates: [
+      "Just circling back on the timeline we all agreed to! I know deadlines can feel like mere suggestions in this fun, creative environment, but it turns out other people's work actually depends on yours! Who knew! \u{1F60A}",
+      "Per my last email (and the 6 follow-ups since), I wanted to check in on the status of your deliverables! I'm sure they're coming along beautifully at whatever pace feels right for your creative process! \u{2728}",
+      "As previously discussed, 'I'll get to it' is not actually a deadline. But I appreciate the optimism! Really, I do! \u{1F49B}",
+      "Friendly reminder that when we say 'end of day,' we mean THIS day! In THIS calendar year! Just wanted to make sure we're all on the same page! \u{1F60A}",
+    ]
+  },
+  // PERSONAL SPACE
+  {
+    match: /\b(space|desk|cubicle|stuff|belongings|area|seat|chair|hover|breathing down)\b/i,
+    templates: [
+      "I just wanted to have a lovely chat about personal space! You know, that invisible bubble around each of us that exists for everyone's comfort and sanity? It's wonderful! You should try respecting it! \u{1F60A}",
+      "Per my last email, I'd like to revisit the concept of boundaries. Not the emotional kind (though those too), but the physical kind! Like, the edge of my desk is a great starting point! \u{2728}",
+      "As previously discussed, my workspace is, in fact, MY workspace. I appreciate the desire to be close to me, but perhaps we could maintain at least a business-casual distance? \u{1F49B}",
+    ]
+  },
+];
+
+// Passive-aggressive phrase insertions
+const paInsertions = [
+  "as per my previous communication,",
+  "per my last email,",
+  "as previously discussed,",
+  "just to clarify,",
+  "friendly reminder that",
+  "I'm sure it was just an oversight, but",
+  "not to be that person, but",
+  "I hate to bring this up again, but",
+  "I don't mean to be difficult, but",
+  "with all due respect,",
+  "going forward,",
+  "for future reference,",
+  "as I'm sure you're already aware,",
+  "I just want to make sure we're on the same page:",
+  "correct me if I'm wrong, but",
+  "if it's not too much trouble,",
+  "I'm sure you didn't mean to, but",
+  "no offense, but",
+  "just a thought, but maybe",
+  "it would be really super great if",
+  "bless your heart, but",
+  "I'm sure you were just busy, but",
+  "I totally understand that you're swamped, however",
+  "not to micromanage, but",
+  "I trust this goes without saying, but apparently it doesn't:",
+  "as a gentle reminder,",
+  "I'm not upset at all, but",
+  "I find it interesting that",
+  "I couldn't help but notice that",
+  "it has come to my attention that",
+];
+
+const smileys = ["\u{1F60A}", "\u{1F642}", "\u{2728}", "\u{1F49B}", "\u{1F31F}", "\u{1F64F}", "\u{1F44D}", "\u{1F33C}", "\u{2764}\uFE0F", "\u{1F60C}"];
+
+// Generic fallback when no topic matches
+const genericTemplates = [
+  "I just wanted to take a moment to address something that has been on my mind! I'm sure it's all coming from a place of love, but it would be SO wonderful if we could all be a little more mindful about how our actions affect others! \u{1F60A}",
+  "Per my last email, I'd love for us to revisit some basic principles of being considerate human beings! I know we're all capable of it \u2014 I've seen glimpses! \u{2728}",
+  "As previously discussed, there are certain behaviors that, while I'm SURE are completely unintentional, have a way of making shared spaces less enjoyable for everyone! Just something to think about! \u{1F49B}",
+  "I wanted to send a quick, totally not passive-aggressive note about something that's been happening! I'm absolutely not keeping score, but if I were, well... let's just say the tally is getting impressive! \u{1F60A}",
+  "Just circling back to gently remind everyone that we share this space/planet/existence, and a tiny bit of courtesy goes a LONG way! Not that anyone here needs reminding! But just in case! \u{2728}",
+  "I'm writing this with nothing but love and warmth in my heart! And also a teensy, tiny bit of frustration that I've completely buried under layers of professionalism! \u{1F49B}",
+  "Hi! So I've been thinking about how to phrase this in the nicest possible way, and I've decided that no matter how I say it, what really needs to happen is pretty clear! \u{1F60A}",
+];
+
+// ============================================================
+// CORE TRANSFORMATION ENGINE
+// ============================================================
+
+let currentStyle = 'office-email';
+let lastInput = '';
+
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function measureAnger(text) {
+  let score = 0;
+  const upper = (text.match(/[A-Z]/g) || []).length;
+  const total = text.replace(/\s/g, '').length || 1;
+  score += (upper / total) * 40;
+  score += (text.match(/!/g) || []).length * 5;
+  score += (text.match(/\?{2,}/g) || []).length * 8;
+  score += (text.match(/fuck|shit|damn|hell|ass|stupid|idiot|moron|hate|kill|die|worst|terrible|horrible|disgusting|pathetic/gi) || []).length * 10;
+  score += (text.match(/stop|never|always|every time|sick of|tired of|enough/gi) || []).length * 5;
+  return Math.min(100, Math.round(score));
+}
+
+function transform(rawInput, style) {
+  const text = rawInput.trim();
+  if (!text) return '';
+
+  // Find matching topic
+  let body = null;
+  for (const tp of topicPatterns) {
+    if (tp.match.test(text)) {
+      body = pick(tp.templates);
+      break;
+    }
+  }
+
+  if (!body) {
+    body = pick(genericTemplates);
+    // Inject context from the original message
+    const lowerText = text.toLowerCase().replace(/[^a-z\s]/g, '');
+    const words = lowerText.split(/\s+/).filter(w => w.length > 3);
+    if (words.length > 0) {
+      const insertion = pick(paInsertions);
+      const extraLine = `\n\n${insertion.charAt(0).toUpperCase() + insertion.slice(1)} ${pick(smileys)} the situation regarding "${words.slice(0, 4).join(' ')}" is something I'd love for us to address with the grace and maturity I know we're all capable of!`;
+      body += extraLine;
+    }
+  }
+
+  // Add extra passive-aggressive garnish based on anger level
+  const anger = measureAnger(text);
+  if (anger > 60) {
+    body += `\n\nP.S. I'm not upset. Not even a little bit. ${pick(smileys)}`;
+  }
+  if (anger > 80) {
+    body += `\nP.P.S. Truly, genuinely, 100% not bothered. At all. ${pick(smileys)}${pick(smileys)}`;
+  }
+
+  const opener = pick(openers[style]);
+  const closer = pick(closers[style]);
+
+  return `${opener}\n\n${body}${closer}`;
+}
+
+// ============================================================
+// UI LOGIC
+// ============================================================
+
+// Style selector
+document.querySelectorAll('.style-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentStyle = btn.dataset.style;
+  });
+});
+
+// Generate
+document.getElementById('generateBtn').addEventListener('click', generate);
+document.getElementById('angryInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate();
+});
+
+function generate() {
+  const input = document.getElementById('angryInput').value;
+  if (!input.trim()) return;
+  lastInput = input;
+
+  const result = transform(input, currentStyle);
+  const outputSection = document.getElementById('outputSection');
+  const outputText = document.getElementById('outputText');
+
+  outputSection.style.display = 'block';
+  outputSection.className = `output-section style-${currentStyle}`;
+  outputText.textContent = result;
+
+  // Anger meter
+  const anger = measureAnger(input);
+  const meter = document.getElementById('angerMeter');
+  const level = anger > 80 ? 'volcanic' : anger > 60 ? 'spicy' : anger > 40 ? 'simmering' : anger > 20 ? 'mildly annoyed' : 'politely perturbed';
+  meter.textContent = `Anger detected: ${anger}% (${level}) \u2192 Converted to 100% professional \u2728`;
+
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function regenerate() {
+  if (lastInput) {
+    const result = transform(lastInput, currentStyle);
+    document.getElementById('outputText').textContent = result;
+  }
+}
+
+function copyOutput() {
+  const text = document.getElementById('outputText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.innerHTML = '&#10003; Copied!';
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.innerHTML = '&#128203; Copy';
+    }, 2000);
+  });
+}
+
+function speakOutput() {
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    document.getElementById('speakBtn').innerHTML = '&#128264; Read Aloud';
+    return;
+  }
+
+  const text = document.getElementById('outputText').textContent;
+  // Strip emojis for cleaner speech
+  const cleanText = text.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{2764}\u{FE0F}\u{FE0E}\u{200D}]/gu, '');
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 0.85;
+  utterance.pitch = 1.3;
+
+  // Try to find a friendly-sounding voice
+  const voices = speechSynthesis.getVoices();
+  const preferred = voices.find(v => /samantha|karen|victoria|fiona|moira/i.test(v.name))
+    || voices.find(v => /female|woman/i.test(v.name))
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utterance.voice = preferred;
+
+  utterance.onstart = () => {
+    document.getElementById('speakBtn').innerHTML = '&#128263; Stop';
+  };
+  utterance.onend = () => {
+    document.getElementById('speakBtn').innerHTML = '&#128264; Read Aloud';
+  };
+
+  speechSynthesis.speak(utterance);
+}
+
+// Preload voices
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+</script>
+</body>
+</html>

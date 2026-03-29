@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Dance Rater</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0f;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255,0,200,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(0,200,255,0.08) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-align: center;
+    background: linear-gradient(135deg, #ff00c8, #00d4ff, #ff00c8);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradShift 3s ease infinite;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 10px;
+  }
+  @keyframes gradShift {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .subtitle {
+    color: #888;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: -8px;
+  }
+  .score-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+  }
+  .score-ring svg {
+    width: 200px;
+    height: 200px;
+    transform: rotate(-90deg);
+  }
+  .score-ring .bg { stroke: #1a1a2e; }
+  .score-ring .fg {
+    stroke: url(#neonGrad);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.3s ease;
+  }
+  .score-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .score-num {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #ff00c8, #00d4ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .rating-badge {
+    font-size: 1.3rem;
+    font-weight: 800;
+    text-align: center;
+    padding: 8px 24px;
+    border-radius: 40px;
+    border: 2px solid rgba(255,0,200,0.3);
+    background: rgba(255,0,200,0.05);
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .verdict {
+    font-size: 0.9rem;
+    color: #aaa;
+    text-align: center;
+    min-height: 60px;
+    font-style: italic;
+    line-height: 1.4;
+    padding: 0 10px;
+  }
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+  .metric {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .metric-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #00d4ff;
+  }
+  .metric-label {
+    font-size: 0.65rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+  .tempo-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .tempo-label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .tempo-val {
+    font-size: 0.85rem;
+    color: #ff00c8;
+    font-weight: 700;
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 80%;
+    height: 4px;
+    background: linear-gradient(90deg, #ff00c8, #00d4ff);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px rgba(255,0,200,0.5);
+    cursor: pointer;
+  }
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-start {
+    background: linear-gradient(135deg, #ff00c8, #7b00ff);
+    color: #fff;
+    box-shadow: 0 4px 30px rgba(255,0,200,0.3);
+  }
+  .btn-start:active { transform: scale(0.97); }
+  .btn-stop {
+    background: rgba(255,50,50,0.15);
+    color: #ff5555;
+    border: 2px solid rgba(255,50,50,0.3);
+  }
+  .high-score {
+    font-size: 0.8rem;
+    color: #555;
+    text-align: center;
+  }
+  .high-score span {
+    color: #ffd700;
+    font-weight: 700;
+  }
+  .pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ff00c8;
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .pulse-dot.active {
+    animation: pulse 0.4s ease infinite alternate;
+  }
+  @keyframes pulse {
+    to { box-shadow: 0 0 12px rgba(255,0,200,0.8); transform: scale(1.3); }
+  }
+  .desktop-warning {
+    display: none;
+    text-align: center;
+    color: #ff5555;
+    padding: 20px;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255,50,50,0.2);
+    border-radius: 12px;
+    background: rgba(255,50,50,0.05);
+    width: 100%;
+  }
+  .floor-glow {
+    position: fixed;
+    bottom: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(255,0,200,0.15), transparent 70%);
+    pointer-events: none;
+    transition: opacity 0.5s;
+    opacity: 0;
+  }
+  .floor-glow.active { opacity: 1; }
+  .beat-flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.05s;
+    z-index: 0;
+  }
+  .beat-flash.kick { background: radial-gradient(ellipse at 50% 80%, rgba(255,0,200,0.08), transparent 60%); }
+</style>
+</head>
+<body>
+<div class="beat-flash kick" id="beatFlash"></div>
+<div class="floor-glow" id="floorGlow"></div>
+
+<div class="container">
+  <h1>Dance Rater</h1>
+  <p class="subtitle">Shake your phone. We judge you.</p>
+
+  <div class="desktop-warning" id="desktopWarn">
+    This app needs a phone with an accelerometer.<br>Open it on your mobile device.
+  </div>
+
+  <div class="score-ring" id="scoreRing">
+    <svg viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#ff00c8"/>
+          <stop offset="100%" stop-color="#00d4ff"/>
+        </linearGradient>
+      </defs>
+      <circle class="bg" cx="100" cy="100" r="85" fill="none" stroke-width="10"/>
+      <circle class="fg" id="scoreFg" cx="100" cy="100" r="85" fill="none" stroke-width="10"
+        stroke-dasharray="534" stroke-dashoffset="534"/>
+    </svg>
+    <div class="score-text">
+      <div class="score-num" id="scoreNum">0</div>
+      <div class="score-label">Score</div>
+    </div>
+  </div>
+
+  <div class="rating-badge" id="ratingBadge">Ready to Judge</div>
+
+  <div class="verdict" id="verdict">Hit Start and shake that phone like you mean it.</div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-val" id="metIntensity">0</div>
+      <div class="metric-label">Intensity</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="metRhythm">0</div>
+      <div class="metric-label">Rhythm</div>
+    </div>
+    <div class="metric">
+      <div class="metric-val" id="metVariety">0</div>
+      <div class="metric-label">Variety</div>
+    </div>
+  </div>
+
+  <div class="tempo-section">
+    <div class="tempo-label">Beat Tempo</div>
+    <div class="tempo-val"><span id="bpmVal">120</span> BPM</div>
+    <input type="range" id="bpmSlider" min="60" max="180" value="120" step="1">
+  </div>
+
+  <button class="btn btn-start" id="btnStart">
+    <span class="pulse-dot" id="pulseDot"></span> Start Dancing
+  </button>
+
+  <div class="high-score" id="highScoreDisplay">Session High: <span id="highScoreVal">0</span></div>
+</div>
+
+<script>
+const CIRC = 2 * Math.PI * 85; // ~534
+
+// Funny verdict templates
+const VERDICTS = {
+  standing: [
+    "We've seen statues with more rhythm.",
+    "Your phone thinks it's on a table. It's not wrong.",
+    "Are you even holding the phone?",
+    "A sloth in a coma out-dances you right now.",
+    "This isn't a standing meditation app.",
+    "Even your heartbeat has more bounce than this.",
+    "The floor is dancing harder than you.",
+    "404: Dance moves not found.",
+    "If stillness were a sport, you'd be Olympic gold.",
+    "Your phone filed a missing persons report for your dance moves."
+  ],
+  awkward: [
+    "Your moves suggest you learned to dance from an instructional VHS from 1997.",
+    "This is what happens when you dance at a wedding sober.",
+    "You dance like you're trying not to spill soup.",
+    "Somewhere, a dad is proud of these moves.",
+    "It's giving 'just got out of a full body cast.'",
+    "You move like WiFi in a basement -- spotty and unreliable.",
+    "This is the choreography equivalent of a typo.",
+    "You're dancing like your shoes are on the wrong feet.",
+    "Bold strategy -- confuse the beat so it can't judge you.",
+    "Your rhythm has the consistency of British weather."
+  ],
+  getting: [
+    "Okay okay, we see some potential here.",
+    "You're cooking. Slowly. On low heat. But cooking.",
+    "Your body is negotiating with the beat and making progress.",
+    "Not terrible! Your mirror would be cautiously optimistic.",
+    "The rhythm acknowledged your existence. That's growth.",
+    "You've graduated from 'seizure' to 'intentional movement.'",
+    "If dancing were an essay, you'd get a solid B-minus.",
+    "Your feet and the beat are in a long-distance relationship.",
+    "Some of those moves were almost on purpose!",
+    "Mediocre in a charming way. Like a golden retriever at a rave."
+  ],
+  dancer: [
+    "You actually have moves! The phone is impressed.",
+    "The beat fears you. In a good way.",
+    "If your moves were a stock, we'd invest.",
+    "Your dance card is officially full.",
+    "The algorithm respects you. And the algorithm respects nobody.",
+    "You dance like rent is due and the landlord is watching.",
+    "Smooth. Controlled. Your phone is having a good time.",
+    "Your ancestors felt that groove in the afterlife.",
+    "This is the kind of energy that gets free drinks at the bar.",
+    "You could teach a masterclass called 'Shaking It Right.'"
+  ],
+  legend: [
+    "TRANSCENDENT. The phone is crying tears of accelerometer data.",
+    "You are the main character and the whole club knows it.",
+    "The beat didn't choose you. You chose the beat. Then conquered it.",
+    "NASA called. Your moves are visible from space.",
+    "If dancing were illegal, you'd be on Interpol's most wanted list.",
+    "The laws of physics just filed a complaint.",
+    "BeyoncE would nod approvingly. Probably.",
+    "Your body is a weapon and the dance floor is the crime scene.",
+    "They're going to write songs about what just happened.",
+    "The phone's accelerometer needs a cigarette after that."
+  ]
+};
+
+function pickVerdict(tier) {
+  const arr = VERDICTS[tier];
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function getTier(score) {
+  if (score < 10) return { name: 'Standing Still', tier: 'standing', color: '#555' };
+  if (score < 30) return { name: 'Awkward Sway', tier: 'awkward', color: '#ff5555' };
+  if (score < 55) return { name: 'Getting There', tier: 'getting', color: '#ffaa00' };
+  if (score < 80) return { name: 'Actual Dancer', tier: 'dancer', color: '#00d4ff' };
+  return { name: 'L E G E N D', tier: 'legend', color: '#ffd700' };
+}
+
+// State
+let dancing = false;
+let audioCtx = null;
+let beatInterval = null;
+let bpm = 120;
+let highScore = 0;
+let score = 0;
+
+// Motion tracking
+let motionSamples = [];
+let peakTimes = [];
+let axisHistory = { x: [], y: [], z: [] };
+const WINDOW = 8000; // 8s analysis window
+
+// DOM
+const $score = document.getElementById('scoreNum');
+const $fg = document.getElementById('scoreFg');
+const $badge = document.getElementById('ratingBadge');
+const $verdict = document.getElementById('verdict');
+const $btn = document.getElementById('btnStart');
+const $bpm = document.getElementById('bpmSlider');
+const $bpmVal = document.getElementById('bpmVal');
+const $hi = document.getElementById('highScoreVal');
+const $intensity = document.getElementById('metIntensity');
+const $rhythm = document.getElementById('metRhythm');
+const $variety = document.getElementById('metVariety');
+const $flash = document.getElementById('beatFlash');
+const $glow = document.getElementById('floorGlow');
+const $pulse = document.getElementById('pulseDot');
+const $warn = document.getElementById('desktopWarn');
+
+// Check for accelerometer
+const hasMotion = 'DeviceMotionEvent' in window;
+if (!hasMotion || (!('ontouchstart' in window) && !navigator.maxTouchPoints)) {
+  $warn.style.display = 'block';
+}
+
+$bpm.addEventListener('input', () => {
+  bpm = +$bpm.value;
+  $bpmVal.textContent = bpm;
+  if (dancing) { stopBeat(); startBeat(); }
+});
+
+$btn.addEventListener('click', async () => {
+  if (!dancing) {
+    // Request permission on iOS
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try {
+        const perm = await DeviceMotionEvent.requestPermission();
+        if (perm !== 'granted') { alert('Motion permission denied.'); return; }
+      } catch(e) { alert('Motion permission error.'); return; }
+    }
+    startDancing();
+  } else {
+    stopDancing();
+  }
+});
+
+function startDancing() {
+  dancing = true;
+  motionSamples = [];
+  peakTimes = [];
+  axisHistory = { x: [], y: [], z: [] };
+  score = 0;
+  updateDisplay(0, 0, 0, 0);
+
+  $btn.className = 'btn btn-stop';
+  $btn.innerHTML = '<span class="pulse-dot active" id="pulseDot"></span> Stop Dancing';
+  $glow.classList.add('active');
+
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  startBeat();
+  window.addEventListener('devicemotion', onMotion);
+  updateLoop();
+}
+
+function stopDancing() {
+  dancing = false;
+  $btn.className = 'btn btn-start';
+  $btn.innerHTML = '<span class="pulse-dot" id="pulseDot"></span> Start Dancing';
+  $glow.classList.remove('active');
+
+  stopBeat();
+  window.removeEventListener('devicemotion', onMotion);
+
+  // Final verdict
+  const tier = getTier(score);
+  $badge.textContent = tier.name;
+  $badge.style.borderColor = tier.color;
+  $badge.style.color = tier.color;
+  $verdict.textContent = pickVerdict(tier.tier);
+
+  if (score > highScore) {
+    highScore = score;
+    $hi.textContent = Math.round(highScore);
+  }
+}
+
+function onMotion(e) {
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if (!a) return;
+  const now = Date.now();
+  const mag = Math.sqrt((a.x||0)**2 + (a.y||0)**2 + (a.z||0)**2);
+
+  motionSamples.push({ t: now, mag });
+  axisHistory.x.push({ t: now, v: a.x||0 });
+  axisHistory.y.push({ t: now, v: a.y||0 });
+  axisHistory.z.push({ t: now, v: a.z||0 });
+
+  // Detect peaks for rhythm analysis (threshold relative movement)
+  if (mag > 14) {
+    if (peakTimes.length === 0 || now - peakTimes[peakTimes.length-1] > 150) {
+      peakTimes.push(now);
+    }
+  }
+
+  // Trim old data
+  const cutoff = now - WINDOW;
+  motionSamples = motionSamples.filter(s => s.t > cutoff);
+  peakTimes = peakTimes.filter(t => t > cutoff);
+  for (const axis of ['x','y','z']) {
+    axisHistory[axis] = axisHistory[axis].filter(s => s.t > cutoff);
+  }
+}
+
+function calcIntensity() {
+  if (motionSamples.length < 5) return 0;
+  // Average magnitude minus gravity (~9.8)
+  const avg = motionSamples.reduce((s,v) => s + v.mag, 0) / motionSamples.length;
+  const intensity = Math.max(0, avg - 9.8);
+  // Scale: 0-15 maps to 0-100
+  return Math.min(100, (intensity / 12) * 100);
+}
+
+function calcRhythm() {
+  if (peakTimes.length < 3) return 0;
+  const beatMs = 60000 / bpm;
+  // Calculate intervals between peaks
+  const intervals = [];
+  for (let i = 1; i < peakTimes.length; i++) {
+    intervals.push(peakTimes[i] - peakTimes[i-1]);
+  }
+  if (intervals.length === 0) return 0;
+
+  // How close are intervals to beat interval or half/double?
+  let matchScore = 0;
+  for (const iv of intervals) {
+    const targets = [beatMs, beatMs/2, beatMs*2];
+    const best = Math.min(...targets.map(t => Math.abs(iv - t) / t));
+    matchScore += Math.max(0, 1 - best * 2);
+  }
+  return Math.min(100, (matchScore / intervals.length) * 100);
+}
+
+function calcVariety() {
+  // Measure std dev across each axis -- more variety = more axes used
+  let totalVar = 0;
+  for (const axis of ['x','y','z']) {
+    const arr = axisHistory[axis];
+    if (arr.length < 5) continue;
+    const mean = arr.reduce((s,v) => s + v.v, 0) / arr.length;
+    const variance = arr.reduce((s,v) => s + (v.v - mean)**2, 0) / arr.length;
+    totalVar += Math.sqrt(variance);
+  }
+  // Scale: 0-15 maps to 0-100
+  return Math.min(100, (totalVar / 12) * 100);
+}
+
+let animFrame = null;
+function updateLoop() {
+  if (!dancing) return;
+
+  const intensity = calcIntensity();
+  const rhythm = calcRhythm();
+  const variety = calcVariety();
+
+  // Weighted score
+  const raw = intensity * 0.4 + rhythm * 0.35 + variety * 0.25;
+  // Smooth towards target
+  score += (raw - score) * 0.1;
+  score = Math.max(0, Math.min(100, score));
+
+  updateDisplay(score, intensity, rhythm, variety);
+
+  animFrame = requestAnimationFrame(updateLoop);
+}
+
+function updateDisplay(sc, intensity, rhythm, variety) {
+  const s = Math.round(sc);
+  $score.textContent = s;
+  const offset = CIRC - (CIRC * sc / 100);
+  $fg.setAttribute('stroke-dashoffset', offset);
+
+  const tier = getTier(sc);
+  $badge.textContent = tier.name;
+  $badge.style.borderColor = tier.color;
+  $badge.style.color = tier.color;
+
+  $intensity.textContent = Math.round(intensity);
+  $rhythm.textContent = Math.round(rhythm);
+  $variety.textContent = Math.round(variety);
+
+  // Update high score live
+  if (sc > highScore) {
+    highScore = sc;
+    $hi.textContent = Math.round(highScore);
+  }
+}
+
+// ---- Web Audio Beat Engine ----
+function startBeat() {
+  const beatSec = 60 / bpm;
+  let step = 0;
+  function tick() {
+    if (!dancing) return;
+    const t = audioCtx.currentTime;
+    if (step % 4 === 0) playKick(t);
+    else if (step % 4 === 2) playSnare(t);
+    if (step % 2 === 0) playHat(t);
+
+    // Visual flash on kick
+    if (step % 4 === 0) {
+      $flash.style.opacity = '0.6';
+      setTimeout(() => $flash.style.opacity = '0', 80);
+    }
+
+    step++;
+    beatInterval = setTimeout(tick, beatSec * 1000 / 2);
+  }
+  tick();
+}
+
+function stopBeat() {
+  clearTimeout(beatInterval);
+  beatInterval = null;
+}
+
+function playKick(t) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(150, t);
+  osc.frequency.exponentialRampToValueAtTime(30, t + 0.12);
+  gain.gain.setValueAtTime(0.8, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.15);
+}
+
+function playSnare(t) {
+  // Noise burst
+  const bufSize = audioCtx.sampleRate * 0.08;
+  const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'highpass';
+  filt.frequency.value = 1000;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.5, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+  noise.connect(filt).connect(gain).connect(audioCtx.destination);
+  noise.start(t);
+  noise.stop(t + 0.1);
+}
+
+function playHat(t) {
+  const bufSize = audioCtx.sampleRate * 0.03;
+  const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+  const noise = audioCtx.createBufferSource();
+  noise.buffer = buf;
+  const filt = audioCtx.createBiquadFilter();
+  filt.type = 'highpass';
+  filt.frequency.value = 5000;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.2, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+  noise.connect(filt).connect(gain).connect(audioCtx.destination);
+  noise.start(t);
+  noise.stop(t + 0.04);
+}
+</script>
+</body>
+</html>

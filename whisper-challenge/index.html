@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Whisper Challenge</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #fff;
+    overflow-x: hidden;
+  }
+
+  .confetti-piece {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    animation: confettiFall 2s ease-out forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+    100% { opacity: 0; transform: translateY(400px) rotate(720deg) scale(0.3); }
+  }
+
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 6px;
+    background: linear-gradient(90deg, #f7971e, #ffd200, #f7971e);
+    background-size: 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer { 0%{background-position:0%} 100%{background-position:200%} }
+
+  .subtitle {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  /* Controls row */
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .controls button, .controls select {
+    padding: 8px 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .controls button:hover, .controls select:hover {
+    background: rgba(255,255,255,0.15);
+  }
+
+  .controls select { -webkit-appearance: none; }
+
+  .controls .active {
+    background: rgba(255, 210, 0, 0.25);
+    border-color: #ffd200;
+    color: #ffd200;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    justify-content: space-around;
+    background: rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stat {
+    text-align: center;
+    min-width: 70px;
+  }
+
+  .stat-val {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #ffd200;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Game area */
+  .game-area {
+    background: rgba(255,255,255,0.05);
+    border-radius: 18px;
+    padding: 28px 20px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .player-indicator {
+    font-size: 0.85rem;
+    color: #ffd200;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  .player-indicator.show { display: block; }
+
+  .whisper-btn {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 210, 0, 0.4);
+    background: radial-gradient(circle, rgba(255,210,0,0.15), transparent);
+    color: #ffd200;
+    font-size: 2.4rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .whisper-btn:hover {
+    transform: scale(1.08);
+    border-color: #ffd200;
+    box-shadow: 0 0 30px rgba(255,210,0,0.2);
+  }
+
+  .whisper-btn:active { transform: scale(0.95); }
+
+  .whisper-btn.playing {
+    animation: pulse 0.6s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 10px rgba(255,210,0,0.2); }
+    50% { box-shadow: 0 0 40px rgba(255,210,0,0.4); }
+  }
+
+  .hint {
+    color: #777;
+    font-size: 0.85rem;
+    margin-bottom: 18px;
+    min-height: 20px;
+  }
+
+  .guess-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.2s;
+    text-align: center;
+  }
+
+  .guess-input:focus { border-color: #ffd200; }
+
+  .guess-input::placeholder { color: #555; }
+
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f7971e, #ffd200);
+    color: #000;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(255,210,0,0.3); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Result */
+  .result {
+    margin-top: 20px;
+    padding: 18px;
+    border-radius: 14px;
+    display: none;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result.show { display: block; }
+
+  .result.great { background: rgba(0,200,100,0.15); border: 1px solid rgba(0,200,100,0.3); }
+  .result.ok { background: rgba(255,210,0,0.15); border: 1px solid rgba(255,210,0,0.3); }
+  .result.bad { background: rgba(255,60,60,0.15); border: 1px solid rgba(255,60,60,0.3); }
+
+  .result-percent {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .result-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: #ccc;
+  }
+
+  .result-text strong { color: #fff; }
+
+  .next-btn {
+    margin-top: 14px;
+    padding: 10px 28px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .next-btn:hover { background: rgba(255,255,255,0.15); }
+
+  /* 2p scores */
+  .two-player-scores {
+    display: none;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .two-player-scores.show { display: flex; }
+
+  .p-score {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    background: rgba(255,255,255,0.05);
+    border: 2px solid transparent;
+    transition: border-color 0.3s;
+  }
+
+  .p-score.active-turn { border-color: #ffd200; }
+
+  .p-score .name { font-weight: 600; font-size: 0.9rem; }
+  .p-score .score { font-size: 1.8rem; font-weight: 700; color: #ffd200; }
+
+  /* Floating particles */
+  .particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(255,210,0,0.3);
+    pointer-events: none;
+    animation: floatUp 6s linear infinite;
+  }
+
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translateY(100vh) scale(0); }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-10vh) scale(1); }
+  }
+
+  .replay-count {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 6px;
+  }
+
+  @media (max-width: 500px) {
+    h1 { font-size: 1.7rem; }
+    .whisper-btn { width: 100px; height: 100px; font-size: 2rem; }
+    .stat-val { font-size: 1.3rem; }
+    .controls button, .controls select { padding: 6px 12px; font-size: 0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Whisper Challenge</h1>
+  <p class="subtitle">Can you hear what the robot whispers?</p>
+
+  <div class="controls">
+    <select id="difficulty" onchange="setDifficulty(this.value)">
+      <option value="easy">Easy</option>
+      <option value="hard" selected>Hard</option>
+      <option value="impossible">Impossible</option>
+    </select>
+    <button id="modeBtn" onclick="toggleMode()">1 Player</button>
+    <select id="voiceSelect" onchange="setVoice(this.value)">
+      <option value="">Default Voice</option>
+    </select>
+  </div>
+
+  <div class="two-player-scores" id="twoPlayerScores">
+    <div class="p-score active-turn" id="p1box">
+      <div class="name">Player 1</div>
+      <div class="score" id="p1score">0</div>
+    </div>
+    <div class="p-score" id="p2box">
+      <div class="name">Player 2</div>
+      <div class="score" id="p2score">0</div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" id="scoreVal">0</div>
+      <div class="stat-label">Score</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="streakVal">0</div>
+      <div class="stat-label">Streak</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="bestVal">0</div>
+      <div class="stat-label">Best</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" id="roundVal">0</div>
+      <div class="stat-label">Round</div>
+    </div>
+  </div>
+
+  <div class="game-area">
+    <div class="player-indicator" id="playerInd">Player 1's turn</div>
+
+    <button class="whisper-btn" id="whisperBtn" onclick="playWhisper()">
+      <span id="btnIcon">&#128227;</span>
+    </button>
+
+    <div class="hint" id="hint">Tap the speaker to hear the whisper</div>
+    <div class="replay-count" id="replayCount"></div>
+
+    <input type="text" class="guess-input" id="guessInput" placeholder="Type what you heard..."
+           disabled autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <button class="submit-btn" id="submitBtn" onclick="submitGuess()" disabled>Check My Guess</button>
+
+    <div class="result" id="result">
+      <div class="result-percent" id="resultPercent"></div>
+      <div class="result-text" id="resultText"></div>
+      <button class="next-btn" onclick="nextRound()">Next Whisper &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PHRASES = [
+  "Purple burglar alarm","Irish wristwatch","Unique New York","Red leather yellow leather",
+  "Toy boat","Rubber baby buggy bumpers","She sells seashells by the seashore",
+  "Peter Piper picked a peck of pickled peppers","How much wood would a woodchuck chuck",
+  "Sixth sick sheik","The big black bug bled blue blood","Freshly fried fish",
+  "A proper copper coffee pot","Three free throws","Specific Pacific",
+  "Eleven benevolent elephants","Cinnamon synonym","Rural brewery",
+  "Aluminum linoleum","Worcestershire sauce","Squirrel burglar","Anesthetist",
+  "Otorhinolaryngologist","Isthmus","Phenomenon","Anemone","Particularly peculiar",
+  "Statistical analysis","Supercalifragilistic","Serendipitous shenanigans",
+  "Refrigerator repairman","Inexplicably extraordinary","Discombobulated dinosaur",
+  "Flibbertigibbet","Absquatulate immediately","Lollygagging leprechaun",
+  "Bamboozled baboon","Cattywampus catastrophe","Hullabaloo hullabaloo",
+  "Kerfuffle at the waffle house","Nincompoop navigator","Skedaddle and scram",
+  "Persnickety penguin parade","Willy nilly wombat","Malarkey and mayhem",
+  "Rambunctious raccoon rodeo","Higgledy piggledy","Codswallop and balderdash",
+  "Gobbledygook generator","Brouhaha at the barbecue","Pizzazz and panache",
+  "Discombobulated duck","Flummoxed flamingo fiesta","Rigmarole and ruckus",
+  "Slapdash sasquatch","Taradiddle and tomfoolery","Whippersnapper walrus",
+  "Bumfuzzled butterfly","Collywobbles and canoodle","Diphthong dilemma",
+  "Fandangle festival","Gibberish gymnasium","Hobbledehoy hullabaloo",
+  "Jiggery pokery jamboree","Lickety split licorice","Mumbo jumbo marathon",
+  "Namby pamby narwhal","Okey dokey artichoke","Poppycock pandemic",
+  "Ragamuffin rebellion","Snickersnee symphony","Tintinnabulation tuesday",
+  "Extraterrestrial existentialism","Flibbertigibbet philosopher",
+  "Antidisestablishmentarianism","Superconductor superintendent",
+  "Hippopotomonstrosesquippedaliophobia","Pseudopseudohypoparathyroidism",
+  "Floccinaucinihilipilification","Honorificabilitudinity","Incomprehensibilities",
+  "Strengths and lengths","Twelfth night","Sixth sphinx","Crisp crust crackles",
+  "Three thin thinkers","Bad blood","Pad kid poured curd","Fred fed Ted bread",
+  "A skunk sat on a stump","Six slippery snails slid slowly seaward"
+];
+
+const REACTIONS_GREAT = [
+  "Superhuman hearing!","Are you a bat?!","Absolutely nailed it!",
+  "Whisper wizard!","Ears of a fox!","You could hear a pin drop on Mars!"
+];
+const REACTIONS_OK = [
+  "Close enough!","Almost had it!","Not bad for a whisper!",
+  "Your ears are warming up!","So close yet so far!","Decent guess!"
+];
+const REACTIONS_BAD = [
+  "Did you even have the volume on?","Were you in another room?",
+  "That's... creative!","Points for imagination!","Bless your ears!",
+  "Maybe try a hearing aid?"
+];
+
+const DIFFICULTY = {
+  easy: { volume: 0.18, rate: 0.9, pitch: 1.0, replays: 3 },
+  hard: { volume: 0.08, rate: 1.2, pitch: 0.8, replays: 2 },
+  impossible: { volume: 0.03, rate: 1.6, pitch: 0.6, replays: 1 }
+};
+
+let state = {
+  difficulty: 'hard',
+  twoPlayer: false,
+  currentPlayer: 1,
+  currentPhrase: '',
+  hasPlayed: false,
+  replaysLeft: 2,
+  score: 0,
+  streak: 0,
+  bestStreak: 0,
+  round: 0,
+  p1Score: 0,
+  p2Score: 0,
+  usedPhrases: [],
+  selectedVoice: null
+};
+
+let audioCtx = null;
+let voices = [];
+
+// Init voices
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = '<option value="">Default Voice</option>';
+  voices.forEach((v, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = v.name.replace(/Microsoft |Google |Apple /, '').substring(0, 30);
+    sel.appendChild(opt);
+  });
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+function setVoice(idx) {
+  state.selectedVoice = idx === '' ? null : voices[parseInt(idx)];
+}
+
+function setDifficulty(d) {
+  state.difficulty = d;
+  if (state.hasPlayed) {
+    state.replaysLeft = DIFFICULTY[d].replays;
+    updateReplayCount();
+  }
+}
+
+function toggleMode() {
+  state.twoPlayer = !state.twoPlayer;
+  const btn = document.getElementById('modeBtn');
+  btn.textContent = state.twoPlayer ? '2 Players' : '1 Player';
+  btn.classList.toggle('active', state.twoPlayer);
+  document.getElementById('twoPlayerScores').classList.toggle('show', state.twoPlayer);
+  document.getElementById('playerInd').classList.toggle('show', state.twoPlayer);
+  state.currentPlayer = 1;
+  state.p1Score = 0;
+  state.p2Score = 0;
+  updateTwoPlayerUI();
+  resetRound();
+}
+
+function getRandomPhrase() {
+  if (state.usedPhrases.length >= PHRASES.length) state.usedPhrases = [];
+  let available = PHRASES.filter(p => !state.usedPhrases.includes(p));
+  let phrase = available[Math.floor(Math.random() * available.length)];
+  state.usedPhrases.push(phrase);
+  return phrase;
+}
+
+function playWhisper() {
+  if (state.hasPlayed && state.replaysLeft <= 0) return;
+
+  speechSynthesis.cancel();
+
+  if (!state.currentPhrase) {
+    state.currentPhrase = getRandomPhrase();
+    state.round++;
+    document.getElementById('roundVal').textContent = state.round;
+    state.replaysLeft = DIFFICULTY[state.difficulty].replays;
+  }
+
+  if (state.hasPlayed) {
+    state.replaysLeft--;
+  }
+  state.hasPlayed = true;
+
+  const cfg = DIFFICULTY[state.difficulty];
+  const utter = new SpeechSynthesisUtterance(state.currentPhrase);
+  utter.volume = cfg.volume;
+  utter.rate = cfg.rate;
+  utter.pitch = cfg.pitch;
+  if (state.selectedVoice) utter.voice = state.selectedVoice;
+
+  const btn = document.getElementById('whisperBtn');
+  btn.classList.add('playing');
+  utter.onend = () => btn.classList.remove('playing');
+  utter.onerror = () => btn.classList.remove('playing');
+
+  speechSynthesis.speak(utter);
+
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('hint').textContent = 'Type your guess below...';
+  document.getElementById('guessInput').focus();
+  updateReplayCount();
+}
+
+function updateReplayCount() {
+  const el = document.getElementById('replayCount');
+  if (state.hasPlayed) {
+    el.textContent = state.replaysLeft > 0 ? `${state.replaysLeft} replay${state.replaysLeft !== 1 ? 's' : ''} left` : 'No replays left';
+  } else {
+    el.textContent = '';
+  }
+}
+
+function similarity(a, b) {
+  a = a.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '');
+  b = b.toLowerCase().trim().replace(/[^a-z0-9 ]/g, '');
+  if (a === b) return 100;
+
+  const wordsA = a.split(/\s+/);
+  const wordsB = b.split(/\s+/);
+
+  // Word-level match
+  let wordMatches = 0;
+  wordsB.forEach(wb => {
+    const idx = wordsA.findIndex(wa => wa === wb);
+    if (idx >= 0) { wordMatches++; wordsA.splice(idx, 1); }
+  });
+  const wordScore = (wordMatches / Math.max(wordsB.length, 1)) * 100;
+
+  // Levenshtein on full string
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m + 1}, (_, i) => {
+    const row = new Array(n + 1);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+    }
+  }
+  const charScore = (1 - dp[m][n] / Math.max(m, n, 1)) * 100;
+
+  return Math.round(Math.max(wordScore, charScore, (wordScore + charScore) / 2));
+}
+
+function submitGuess() {
+  const guess = document.getElementById('guessInput').value.trim();
+  if (!guess) return;
+
+  const pct = similarity(guess, state.currentPhrase);
+  const result = document.getElementById('result');
+  const percentEl = document.getElementById('resultPercent');
+  const textEl = document.getElementById('resultText');
+
+  let reaction, cls;
+  if (pct >= 80) {
+    reaction = REACTIONS_GREAT[Math.floor(Math.random() * REACTIONS_GREAT.length)];
+    cls = 'great';
+    state.score += pct;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+    spawnConfetti();
+  } else if (pct >= 40) {
+    reaction = REACTIONS_OK[Math.floor(Math.random() * REACTIONS_OK.length)];
+    cls = 'ok';
+    state.score += Math.floor(pct / 2);
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+  } else {
+    reaction = REACTIONS_BAD[Math.floor(Math.random() * REACTIONS_BAD.length)];
+    cls = 'bad';
+    state.streak = 0;
+    playBuzz();
+  }
+
+  if (state.twoPlayer) {
+    if (state.currentPlayer === 1) state.p1Score += pct;
+    else state.p2Score += pct;
+    updateTwoPlayerUI();
+  }
+
+  percentEl.textContent = pct + '%';
+  textEl.innerHTML = `<strong>${reaction}</strong><br>
+    You heard: "<em>${escHtml(guess)}</em>"<br>
+    Actual: "<em>${escHtml(state.currentPhrase)}</em>"`;
+
+  result.className = 'result show ' + cls;
+
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('scoreVal').textContent = state.score;
+  document.getElementById('streakVal').textContent = state.streak;
+  document.getElementById('bestVal').textContent = state.bestStreak;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function nextRound() {
+  if (state.twoPlayer) {
+    state.currentPlayer = state.currentPlayer === 1 ? 2 : 1;
+    updateTwoPlayerUI();
+  }
+  resetRound();
+}
+
+function resetRound() {
+  state.currentPhrase = '';
+  state.hasPlayed = false;
+  state.replaysLeft = DIFFICULTY[state.difficulty].replays;
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('result').className = 'result';
+  document.getElementById('hint').textContent = 'Tap the speaker to hear the whisper';
+  document.getElementById('replayCount').textContent = '';
+}
+
+function updateTwoPlayerUI() {
+  document.getElementById('p1score').textContent = state.p1Score;
+  document.getElementById('p2score').textContent = state.p2Score;
+  document.getElementById('p1box').classList.toggle('active-turn', state.currentPlayer === 1);
+  document.getElementById('p2box').classList.toggle('active-turn', state.currentPlayer === 2);
+  document.getElementById('playerInd').textContent = `Player ${state.currentPlayer}'s turn`;
+}
+
+function playBuzz() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.4);
+  } catch(e) {}
+}
+
+function spawnConfetti() {
+  const colors = ['#ffd200','#f7971e','#ff6b6b','#48dbfb','#0abde3','#ff9ff3','#55efc4'];
+  for (let i = 0; i < 30; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.top = (Math.random() * 30 + 10) + 'vh';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDelay = Math.random() * 0.5 + 's';
+    c.style.width = c.style.height = (4 + Math.random() * 8) + 'px';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2500);
+  }
+}
+
+// Floating particles
+for (let i = 0; i < 12; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + 'vw';
+  p.style.animationDelay = Math.random() * 6 + 's';
+  p.style.animationDuration = (4 + Math.random() * 4) + 's';
+  document.body.appendChild(p);
+}
+
+// Enter to submit
+document.getElementById('guessInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitGuess();
+});
+</script>
+</body>
+</html>

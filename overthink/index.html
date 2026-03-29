@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overthink It</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0a1a;
+    --surface: #1a1333;
+    --purple: #9b59b6;
+    --purple-light: #c39bd3;
+    --purple-dark: #6c3483;
+    --purple-glow: rgba(155, 89, 182, 0.3);
+    --text: #e8daef;
+    --text-dim: #8e7aa0;
+    --red: #e74c3c;
+    --anxiety-low: #2ecc71;
+    --anxiety-mid: #f39c12;
+    --anxiety-high: #e74c3c;
+    --anxiety-max: #c0392b;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+
+  header h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, var(--purple-light), var(--purple), var(--purple-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    color: var(--text-dim);
+    font-size: 0.95rem;
+    font-style: italic;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 15px 0 20px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+  }
+
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: var(--purple-light);
+  }
+
+  /* Anxiety meter */
+  .anxiety-container {
+    margin: 15px auto;
+    max-width: 400px;
+  }
+
+  .anxiety-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+  }
+
+  .anxiety-bar {
+    height: 12px;
+    background: var(--surface);
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(155, 89, 182, 0.2);
+  }
+
+  .anxiety-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 6px;
+    transition: width 0.5s ease, background 0.5s ease;
+    background: var(--anxiety-low);
+  }
+
+  /* Input area */
+  .input-area {
+    text-align: center;
+    margin: 25px 0;
+  }
+
+  .input-area input {
+    width: 100%;
+    max-width: 500px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: 2px solid var(--purple-dark);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .input-area input:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 20px var(--purple-glow);
+  }
+
+  .input-area input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .btn-overthink {
+    background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+    color: white;
+    box-shadow: 0 4px 15px var(--purple-glow);
+  }
+
+  .btn-overthink:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px var(--purple-glow);
+  }
+
+  .btn-overthink:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-panic {
+    background: var(--red);
+    color: white;
+    display: none;
+    animation: pulse-panic 1s ease-in-out infinite;
+  }
+
+  .btn-panic.visible {
+    display: inline-block;
+  }
+
+  .btn-panic:hover {
+    transform: translateY(-2px);
+  }
+
+  @keyframes pulse-panic {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+  }
+
+  .btn-share {
+    background: transparent;
+    border: 2px solid var(--purple-dark);
+    color: var(--purple-light);
+    display: none;
+  }
+
+  .btn-share.visible {
+    display: inline-block;
+  }
+
+  .btn-share:hover {
+    background: var(--purple-dark);
+    color: white;
+  }
+
+  /* Spiral tree */
+  .spiral-tree {
+    margin: 20px 0;
+    padding: 0 10px;
+  }
+
+  .thought-node {
+    margin-left: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .thought-node.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .thought-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 15px;
+    margin: 4px 0;
+    border-radius: 10px;
+    background: var(--surface);
+    border-left: 3px solid var(--purple);
+    position: relative;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .thought-content .connector {
+    position: absolute;
+    left: -16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--purple-dark), transparent);
+  }
+
+  .depth-indicator {
+    font-size: 0.7rem;
+    color: var(--purple-dark);
+    min-width: 20px;
+    padding-top: 2px;
+    font-weight: bold;
+  }
+
+  .thought-text {
+    flex: 1;
+  }
+
+  .thought-text .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: var(--purple-light);
+    animation: blink 0.7s step-end infinite;
+    vertical-align: text-bottom;
+    margin-left: 2px;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* Depth-based indentation and color intensity */
+  .thought-node[data-depth="1"] { margin-left: 0; }
+  .thought-node[data-depth="2"] { margin-left: 25px; }
+  .thought-node[data-depth="3"] { margin-left: 50px; }
+  .thought-node[data-depth="4"] { margin-left: 75px; }
+  .thought-node[data-depth="5"] { margin-left: 100px; }
+  .thought-node[data-depth="6"] { margin-left: 120px; }
+  .thought-node[data-depth="7"] { margin-left: 135px; }
+  .thought-node[data-depth="8"] { margin-left: 145px; }
+  .thought-node[data-depth="9"] { margin-left: 150px; }
+  .thought-node[data-depth="10"] { margin-left: 155px; }
+  .thought-node[data-depth="11"] { margin-left: 160px; }
+  .thought-node[data-depth="12"] { margin-left: 165px; }
+
+  .thought-node[data-depth="1"] .thought-content { border-left-color: #8e44ad; }
+  .thought-node[data-depth="2"] .thought-content { border-left-color: #9b59b6; }
+  .thought-node[data-depth="3"] .thought-content { border-left-color: #a569bd; }
+  .thought-node[data-depth="4"] .thought-content { border-left-color: #af7ac5; background: rgba(26, 19, 51, 0.9); }
+  .thought-node[data-depth="5"] .thought-content { border-left-color: #bb8fce; background: rgba(26, 19, 51, 0.85); }
+  .thought-node[data-depth="6"] .thought-content { border-left-color: #c39bd3; background: rgba(26, 19, 51, 0.8); }
+  .thought-node[data-depth="7"] .thought-content { border-left-color: #d2b4de; background: rgba(40, 20, 60, 0.85); }
+  .thought-node[data-depth="8"] .thought-content { border-left-color: #d7bde2; background: rgba(50, 20, 60, 0.85); }
+  .thought-node[data-depth="9"] .thought-content { border-left-color: #e8daef; background: rgba(60, 20, 55, 0.85); }
+  .thought-node[data-depth="10"] .thought-content { border-left-color: #e74c3c; background: rgba(70, 15, 40, 0.9); }
+  .thought-node[data-depth="11"] .thought-content { border-left-color: #c0392b; background: rgba(80, 10, 30, 0.9); }
+  .thought-node[data-depth="12"] .thought-content { border-left-color: #ff0000; background: rgba(90, 5, 20, 0.9); }
+
+  /* Calm overlay */
+  .calm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: background 1s ease;
+    z-index: 100;
+  }
+
+  .calm-overlay.active {
+    background: rgba(0, 0, 0, 0.85);
+    pointer-events: all;
+  }
+
+  .calm-message {
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 1s ease 0.5s;
+  }
+
+  .calm-overlay.active .calm-message {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .calm-message h2 {
+    font-size: 2.5rem;
+    color: var(--anxiety-low);
+    margin-bottom: 15px;
+  }
+
+  .calm-message p {
+    font-size: 1.1rem;
+    color: var(--text-dim);
+    margin-bottom: 25px;
+  }
+
+  .calm-message .btn {
+    background: var(--anxiety-low);
+    color: var(--bg);
+  }
+
+  /* Share modal */
+  .share-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+
+  .share-modal.active { display: flex; }
+
+  .share-box {
+    background: var(--surface);
+    border: 1px solid var(--purple-dark);
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .share-box h3 {
+    color: var(--purple-light);
+    margin-bottom: 15px;
+  }
+
+  .share-box textarea {
+    width: 100%;
+    height: 200px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--purple-dark);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    resize: none;
+    margin-bottom: 15px;
+  }
+
+  .share-box .btn-row {
+    justify-content: center;
+  }
+
+  .btn-copy {
+    background: var(--purple);
+    color: white;
+  }
+
+  .btn-close-share {
+    background: transparent;
+    border: 1px solid var(--text-dim);
+    color: var(--text-dim);
+  }
+
+  /* Suggestions */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 12px;
+  }
+
+  .suggestion {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--purple-dark);
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .suggestion:hover {
+    background: var(--purple-dark);
+    color: white;
+    border-color: var(--purple);
+  }
+
+  /* Screen shake at high anxiety */
+  @keyframes screen-shake {
+    0%, 100% { transform: translate(0); }
+    25% { transform: translate(-2px, 1px); }
+    50% { transform: translate(1px, -2px); }
+    75% { transform: translate(-1px, 2px); }
+  }
+
+  body.shaking {
+    animation: screen-shake 0.15s ease-in-out;
+  }
+
+  /* responsive */
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.8rem; }
+    .thought-node[data-depth="2"] { margin-left: 15px; }
+    .thought-node[data-depth="3"] { margin-left: 30px; }
+    .thought-node[data-depth="4"] { margin-left: 40px; }
+    .thought-node[data-depth="5"] { margin-left: 50px; }
+    .thought-node[data-depth="6"] { margin-left: 55px; }
+    .thought-node[data-depth="7"] { margin-left: 60px; }
+    .thought-node[data-depth="8"] { margin-left: 65px; }
+    .thought-node[data-depth="9"] { margin-left: 68px; }
+    .thought-node[data-depth="10"] { margin-left: 70px; }
+    .thought-node[data-depth="11"] { margin-left: 72px; }
+    .thought-node[data-depth="12"] { margin-left: 74px; }
+    .container { padding: 12px; }
+    .stats-bar { gap: 15px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Overthink It</h1>
+      <p>Type a simple decision. Watch it spiral.</p>
+    </header>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="spiralCount">0</div>
+        <div class="stat-label">Spirals Deep</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="totalThoughts">0</div>
+        <div class="stat-label">Thoughts</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="timeWasted">0s</div>
+        <div class="stat-label">Time Wasted</div>
+      </div>
+    </div>
+
+    <div class="anxiety-container">
+      <div class="anxiety-label">
+        <span>Anxiety Level</span>
+        <span id="anxietyText">Calm</span>
+      </div>
+      <div class="anxiety-bar">
+        <div class="anxiety-fill" id="anxietyFill"></div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="decisionInput" placeholder="Should I text them back?" maxlength="120" autocomplete="off">
+      <div class="suggestions" id="suggestions">
+        <button class="suggestion" onclick="useSuggestion(this)">Should I text them back?</button>
+        <button class="suggestion" onclick="useSuggestion(this)">Should I order pizza?</button>
+        <button class="suggestion" onclick="useSuggestion(this)">Should I speak up in the meeting?</button>
+        <button class="suggestion" onclick="useSuggestion(this)">Should I post this selfie?</button>
+        <button class="suggestion" onclick="useSuggestion(this)">Should I change my hair?</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-overthink" id="btnOverthink" onclick="startOverthinking()">Overthink It</button>
+        <button class="btn btn-panic" id="btnPanic" onclick="stopThinking()">STOP THINKING</button>
+        <button class="btn btn-share" id="btnShare" onclick="shareSpiral()">Share Spiral</button>
+      </div>
+    </div>
+
+    <div class="spiral-tree" id="spiralTree"></div>
+  </div>
+
+  <!-- Calm overlay -->
+  <div class="calm-overlay" id="calmOverlay">
+    <div class="calm-message">
+      <h2>Breathe.</h2>
+      <p>It's just a text. It's just a pizza. It's just a meeting.<br>You're okay.</p>
+      <button class="btn" onclick="closeCalmOverlay()">I'm okay now</button>
+    </div>
+  </div>
+
+  <!-- Share modal -->
+  <div class="share-modal" id="shareModal">
+    <div class="share-box">
+      <h3>Share Your Spiral</h3>
+      <textarea id="shareText" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn btn-copy" onclick="copySpiral()">Copy to Clipboard</button>
+        <button class="btn btn-close-share" onclick="closeShare()">Close</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// OVERTHINKING TEMPLATES — 80+ across categories
+// ============================================================
+const templates = {
+  dating: [
+    "But what if they don't reply?",
+    "What if they DO reply but it's one word?",
+    "What if the one word is 'k'?",
+    "What does 'k' mean? Are they mad?",
+    "Should I have added an emoji? Was it too dry?",
+    "Was the emoji too much? Did I seem desperate?",
+    "They left me on read... it's been 3 minutes",
+    "Maybe their phone died? Or maybe they hate me?",
+    "What if they screenshot it to their group chat?",
+    "What if they're showing it to someone right now, laughing?",
+    "Should I double text? No, that's clingy. But what if they didn't see it?",
+    "What if they're with someone else right now?",
+    "I should've waited longer to reply. Now I look too eager.",
+    "What if my message had a typo and I didn't notice?",
+    "What if 'haha' means they're not actually laughing?",
+    "They used a period. A PERIOD. That's aggressive.",
+    "What if I'm reading too much into this? What if I'm not reading enough?",
+    "Should I unsend it? Wait, they'll see I unsent it. That's worse.",
+    "What if they think I'm boring?",
+    "What if our entire relationship is built on misread texts?",
+    "They replied with just an emoji. What does that MEAN?",
+    "Their typing indicator appeared then disappeared. WHAT HAPPENED?",
+  ],
+  work: [
+    "What if my boss reads it the wrong way?",
+    "Should I have cc'd someone? Did I cc too many people?",
+    "What if this email sounds passive-aggressive?",
+    "Is 'per my last email' too snarky?",
+    "What if everyone in the meeting thinks my idea is stupid?",
+    "What if I get fired for this? Can they fire me for this?",
+    "I said 'sounds good' but does that sound too casual?",
+    "What if they're already planning to replace me?",
+    "Should I speak up or will I say something dumb?",
+    "What if they think I'm not a team player?",
+    "Was that Slack message too many exclamation marks? Did I seem unhinged?",
+    "What if my camera was on when I was making that face?",
+    "What if they noticed I was on mute but not actually muting my mic?",
+    "What if I'm the person everyone dreads seeing in the chat?",
+    "I said 'let's circle back' and now I hate myself",
+    "What if my screen share showed something embarrassing?",
+  ],
+  social: [
+    "What if nobody laughs at my joke?",
+    "What if they only invited me to be polite?",
+    "Did I talk too much? I definitely talked too much.",
+    "Should I have said goodbye to everyone individually?",
+    "What if they're all hanging out without me right now?",
+    "Was that laugh too loud? People probably noticed.",
+    "What if they thought I was being sarcastic?",
+    "I waved at someone who wasn't waving at me. My life is over.",
+    "What if they're judging me for what I ordered?",
+    "I said 'you too' when the waiter said 'enjoy your meal'",
+    "What if they could tell my smile was fake?",
+    "What if everyone secretly tolerates me?",
+    "I said 'haha' out loud. Like, the word 'haha'. To a human.",
+    "What if that silence was my fault?",
+    "Did I overshare? I definitely overshared.",
+    "What if they're talking about me in THEIR group chat?",
+  ],
+  food: [
+    "What if the pizza arrives cold?",
+    "But what if I regret not getting extra cheese?",
+    "What if the delivery driver judges my order?",
+    "Is ordering food at 2am a cry for help?",
+    "What if I should've cooked instead? Am I failing at adulthood?",
+    "What if the restaurant sees my order history? It's... a lot.",
+    "What if the food is bad and I wasted money?",
+    "Should I tip more? Was 20% enough? What if they remember me?",
+    "What if my DoorDash driver eats my fries? I'd eat my fries.",
+    "What if I get food poisoning and miss work and get fired?",
+    "Is this emotional eating? Should I journal instead? No. Pizza.",
+    "What if someone sees the delivery and judges me?",
+  ],
+  existential: [
+    "Wait, why does this even matter?",
+    "What if nothing I do matters?",
+    "What if I'm overthinking about overthinking?",
+    "What if everyone is this anxious and just hiding it?",
+    "What if THIS is the decision that changes everything?",
+    "But what if it ISN'T and I just wasted 20 minutes spiraling?",
+    "What if I'm the NPC in someone else's story?",
+    "What if parallel-universe me already made the right choice?",
+    "What if my anxiety IS my personality at this point?",
+    "What if I peak right now and it's all downhill from here?",
+    "What if future me is cringing at present me right now?",
+    "What if I'm the only real person and everyone else is a simulation?",
+    "What if the universe is indifferent and I'm spiraling over NOTHING?",
+    "Am I growing as a person or just getting older?",
+  ],
+  selfie: [
+    "What if nobody likes it?",
+    "What if it gets exactly 11 likes? That's worse than zero.",
+    "Is this filter too much? Do I look like myself?",
+    "What if my ex sees it? What if they DON'T see it?",
+    "Should I delete it after 10 minutes if it doesn't pop off?",
+    "What if someone zooms in and sees something weird?",
+    "Is the caption trying too hard? Is no caption trying too hard?",
+    "What if people think I'm vain? What if they think I'm insecure?",
+    "What if my coworkers see it and it's weird on Monday?",
+    "What if the algorithm buries it and I wasted a good hair day?",
+  ],
+};
+
+// Category detection keywords
+const categoryKeywords = {
+  dating: ['text', 'message', 'reply', 'dm', 'date', 'call', 'crush', 'them back', 'respond', 'tinder', 'match', 'ex'],
+  work: ['meeting', 'email', 'boss', 'work', 'job', 'interview', 'presentation', 'deadline', 'coworker', 'slack', 'speak up', 'resign', 'quit'],
+  social: ['party', 'friend', 'invite', 'hang out', 'plans', 'social', 'talk to', 'say hi', 'conversation', 'joke'],
+  food: ['pizza', 'order', 'eat', 'food', 'cook', 'restaurant', 'delivery', 'lunch', 'dinner', 'snack', 'doordash', 'ubereats'],
+  selfie: ['selfie', 'photo', 'post', 'instagram', 'picture', 'pic', 'story', 'upload', 'tiktok'],
+};
+
+// State
+let isOverthinking = false;
+let spiralDepth = 0;
+let totalThoughtCount = 0;
+let timeStarted = null;
+let timeInterval = null;
+let currentTypewriter = null;
+let thoughtQueue = [];
+let processingQueue = false;
+let allThoughts = [];
+
+// Detect category from input
+function detectCategory(input) {
+  const lower = input.toLowerCase();
+  let bestCat = null;
+  let bestScore = 0;
+
+  for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+    const score = keywords.filter(kw => lower.includes(kw)).length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestCat = cat;
+    }
+  }
+  return bestCat || 'existential';
+}
+
+// Pick a random thought from a category
+function pickThought(category, depth) {
+  const pool = templates[category];
+  // As depth increases, mix in existential dread
+  if (depth > 6 && Math.random() < 0.4) {
+    return templates.existential[Math.floor(Math.random() * templates.existential.length)];
+  }
+  // Sometimes branch into a related category
+  const allCats = Object.keys(templates);
+  if (depth > 3 && Math.random() < 0.25) {
+    const randomCat = allCats[Math.floor(Math.random() * allCats.length)];
+    return templates[randomCat][Math.floor(Math.random() * templates[randomCat].length)];
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// Update anxiety meter
+function updateAnxiety() {
+  const pct = Math.min(100, (spiralDepth / 12) * 100);
+  const fill = document.getElementById('anxietyFill');
+  const text = document.getElementById('anxietyText');
+
+  fill.style.width = pct + '%';
+
+  if (pct < 25) {
+    fill.style.background = 'var(--anxiety-low)';
+    text.textContent = 'Calm-ish';
+  } else if (pct < 50) {
+    fill.style.background = 'var(--anxiety-mid)';
+    text.textContent = 'Mildly Spiraling';
+  } else if (pct < 75) {
+    fill.style.background = 'var(--anxiety-high)';
+    text.textContent = 'Full Spiral Mode';
+  } else {
+    fill.style.background = 'var(--anxiety-max)';
+    text.textContent = 'EXISTENTIAL CRISIS';
+  }
+
+  // Screen shake at high anxiety
+  if (pct > 70 && Math.random() < 0.3) {
+    document.body.classList.add('shaking');
+    setTimeout(() => document.body.classList.remove('shaking'), 150);
+  }
+}
+
+// Update stats
+function updateStats() {
+  document.getElementById('spiralCount').textContent = spiralDepth;
+  document.getElementById('totalThoughts').textContent = totalThoughtCount;
+}
+
+function updateTimer() {
+  if (!timeStarted) return;
+  const elapsed = Math.floor((Date.now() - timeStarted) / 1000);
+  if (elapsed < 60) {
+    document.getElementById('timeWasted').textContent = elapsed + 's';
+  } else {
+    const m = Math.floor(elapsed / 60);
+    const s = elapsed % 60;
+    document.getElementById('timeWasted').textContent = m + 'm ' + s + 's';
+  }
+}
+
+// Typewriter effect — returns a promise
+function typewriterEffect(element, text) {
+  return new Promise(resolve => {
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    element.appendChild(cursor);
+
+    const speed = Math.max(15, 40 - spiralDepth * 2); // Gets faster as anxiety builds
+
+    function type() {
+      if (!isOverthinking) {
+        cursor.remove();
+        element.textContent = text;
+        resolve();
+        return;
+      }
+      if (i < text.length) {
+        element.textContent = text.substring(0, i + 1);
+        element.appendChild(cursor);
+        i++;
+        currentTypewriter = setTimeout(type, speed);
+      } else {
+        cursor.remove();
+        resolve();
+      }
+    }
+    type();
+  });
+}
+
+// Add a thought node to the tree
+async function addThought(text, depth) {
+  if (!isOverthinking) return;
+
+  spiralDepth = depth;
+  totalThoughtCount++;
+  updateStats();
+  updateAnxiety();
+
+  allThoughts.push({ text, depth });
+
+  const tree = document.getElementById('spiralTree');
+  const node = document.createElement('div');
+  node.className = 'thought-node';
+  node.dataset.depth = Math.min(depth, 12);
+
+  const content = document.createElement('div');
+  content.className = 'thought-content';
+
+  const depthLabel = document.createElement('span');
+  depthLabel.className = 'depth-indicator';
+  depthLabel.textContent = depth + '.';
+
+  const textEl = document.createElement('span');
+  textEl.className = 'thought-text';
+
+  content.appendChild(depthLabel);
+  content.appendChild(textEl);
+  node.appendChild(content);
+  tree.appendChild(node);
+
+  // Animate in
+  requestAnimationFrame(() => {
+    node.classList.add('visible');
+    node.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  });
+
+  // Typewriter
+  await typewriterEffect(textEl, text);
+}
+
+// Main spiral engine
+async function runSpiral(category) {
+  const input = document.getElementById('decisionInput').value.trim();
+
+  // First thought — echo the original decision as a worried restatement
+  const openers = [
+    `Okay so... "${input}" ...but wait.`,
+    `"${input}" — simple enough, right? RIGHT?`,
+    `Let me think about "${input}" for just a sec... oh no.`,
+    `"${input}" ...this should be easy. It's not.`,
+  ];
+  await addThought(openers[Math.floor(Math.random() * openers.length)], 1);
+
+  if (!isOverthinking) return;
+  await pause(400);
+
+  // Generate the spiral chain
+  const usedThoughts = new Set();
+  for (let depth = 2; depth <= 14; depth++) {
+    if (!isOverthinking) break;
+
+    let thought;
+    let attempts = 0;
+    do {
+      thought = pickThought(category, depth);
+      attempts++;
+    } while (usedThoughts.has(thought) && attempts < 20);
+    usedThoughts.add(thought);
+
+    await addThought(thought, depth);
+    if (!isOverthinking) break;
+
+    // Pause between thoughts — gets shorter as spiral intensifies
+    const delay = Math.max(200, 800 - depth * 50);
+    await pause(delay);
+  }
+
+  // Final catastrophic thought
+  if (isOverthinking) {
+    const finals = [
+      "Maybe I should just never make any decisions ever again.",
+      "This is fine. Everything is fine. Nothing is fine.",
+      "I've been staring at this for 10 minutes. I need help.",
+      "And THAT is why I can never leave the house again.",
+      "Anyway, I'll just do nothing and regret it forever.",
+      "...and now I'm too tired to actually do the thing.",
+      "Great, now I'm anxious AND hungry.",
+    ];
+    await pause(500);
+    await addThought(finals[Math.floor(Math.random() * finals.length)], 15);
+  }
+
+  // Show share button when done
+  if (isOverthinking) {
+    isOverthinking = false;
+    document.getElementById('btnOverthink').disabled = false;
+    document.getElementById('btnShare').classList.add('visible');
+  }
+}
+
+function pause(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Start overthinking
+function startOverthinking() {
+  const input = document.getElementById('decisionInput').value.trim();
+  if (!input) {
+    document.getElementById('decisionInput').focus();
+    return;
+  }
+
+  // Reset
+  isOverthinking = true;
+  spiralDepth = 0;
+  totalThoughtCount = 0;
+  allThoughts = [];
+  document.getElementById('spiralTree').innerHTML = '';
+  document.getElementById('btnOverthink').disabled = true;
+  document.getElementById('btnPanic').classList.add('visible');
+  document.getElementById('btnShare').classList.remove('visible');
+  document.getElementById('suggestions').style.display = 'none';
+  updateStats();
+  updateAnxiety();
+
+  // Start timer
+  timeStarted = Date.now();
+  if (timeInterval) clearInterval(timeInterval);
+  timeInterval = setInterval(updateTimer, 1000);
+
+  const category = detectCategory(input);
+  runSpiral(category);
+}
+
+// STOP THINKING panic button
+function stopThinking() {
+  isOverthinking = false;
+  if (currentTypewriter) clearTimeout(currentTypewriter);
+  if (timeInterval) clearInterval(timeInterval);
+
+  document.getElementById('btnOverthink').disabled = false;
+  document.getElementById('btnPanic').classList.remove('visible');
+  document.getElementById('btnShare').classList.add('visible');
+
+  // Play a calming "sound" via Web Audio API
+  playCalmSound();
+
+  // Show calm overlay
+  document.getElementById('calmOverlay').classList.add('active');
+}
+
+function playCalmSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Gentle chord: C major with soft attack
+    const freqs = [261.63, 329.63, 392.00, 523.25];
+    freqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.3 + i * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + 3.5);
+    });
+  } catch (e) { /* silent fail */ }
+}
+
+function closeCalmOverlay() {
+  document.getElementById('calmOverlay').classList.remove('active');
+}
+
+// Share spiral
+function shareSpiral() {
+  const input = document.getElementById('decisionInput').value.trim();
+  let text = `My Overthinking Spiral\n`;
+  text += `Decision: "${input}"\n`;
+  text += `Depth: ${spiralDepth} levels deep\n`;
+  text += `Total thoughts: ${totalThoughtCount}\n`;
+  text += `${'='.repeat(40)}\n\n`;
+
+  allThoughts.forEach(t => {
+    text += `${'  '.repeat(Math.min(t.depth - 1, 8))}${t.depth}. ${t.text}\n`;
+  });
+
+  text += `\n---\nGenerated at overthink-it | stop spiraling, start living`;
+
+  document.getElementById('shareText').value = text;
+  document.getElementById('shareModal').classList.add('active');
+}
+
+function copySpiral() {
+  const textarea = document.getElementById('shareText');
+  textarea.select();
+  navigator.clipboard.writeText(textarea.value).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy to Clipboard', 2000);
+  });
+}
+
+function closeShare() {
+  document.getElementById('shareModal').classList.remove('active');
+}
+
+function useSuggestion(btn) {
+  document.getElementById('decisionInput').value = btn.textContent;
+  document.getElementById('decisionInput').focus();
+}
+
+// Enter key to start
+document.getElementById('decisionInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startOverthinking();
+});
+</script>
+</body>
+</html>

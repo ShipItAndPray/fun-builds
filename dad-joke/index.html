@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dad Joke Machine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Cabin:wght@400;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --wood-dark: #5C3A1E;
+    --wood-med: #8B6914;
+    --wood-light: #C4A35A;
+    --wood-pale: #E8D5A3;
+    --wood-bg: #3E2510;
+    --cream: #FFF8E7;
+    --gold: #DAA520;
+  }
+
+  body {
+    font-family: 'Cabin', sans-serif;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        transparent 0px, transparent 60px,
+        rgba(0,0,0,0.04) 60px, rgba(0,0,0,0.04) 62px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        transparent 0px, transparent 200px,
+        rgba(0,0,0,0.02) 200px, rgba(0,0,0,0.02) 202px
+      ),
+      linear-gradient(180deg, #A0784C 0%, #8B6914 30%, #7A5C2E 60%, #6B4E28 100%);
+    min-height: 100vh;
+    color: var(--cream);
+    overflow-x: hidden;
+  }
+
+  .header {
+    text-align: center;
+    padding: 24px 16px 12px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 100%);
+  }
+  .header h1 {
+    font-family: 'Alfa Slab One', serif;
+    font-size: clamp(1.8rem, 5vw, 3rem);
+    color: var(--gold);
+    text-shadow: 2px 3px 4px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+  }
+  .header .subtitle {
+    font-size: 0.95rem;
+    color: var(--wood-pale);
+    margin-top: 4px;
+    opacity: 0.8;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 8px 16px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(218,165,32,0.3);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    color: var(--wood-pale);
+  }
+  .stat strong { color: var(--gold); }
+
+  /* Category filter */
+  .categories {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+  }
+  .cat-btn {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--wood-light);
+    color: var(--wood-pale);
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: 'Cabin', sans-serif;
+    transition: all 0.2s;
+  }
+  .cat-btn:hover, .cat-btn.active {
+    background: var(--gold);
+    color: var(--wood-bg);
+    border-color: var(--gold);
+    font-weight: 700;
+  }
+
+  /* Lever */
+  .lever-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 16px;
+  }
+  .lever-wrapper {
+    position: relative;
+    width: 120px;
+    height: 200px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .lever-track {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 180px;
+    background: linear-gradient(90deg, #4A3520, #6B4E28, #4A3520);
+    border-radius: 8px;
+    top: 10px;
+    border: 2px solid rgba(0,0,0,0.3);
+    box-shadow: inset 0 0 8px rgba(0,0,0,0.4);
+  }
+  .lever-handle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 50px;
+    background: linear-gradient(180deg, #C4A35A, #A0784C, #8B6914);
+    border-radius: 12px;
+    top: 10px;
+    transition: top 0.15s ease-in, 0.3s ease-out;
+    box-shadow:
+      0 4px 12px rgba(0,0,0,0.4),
+      inset 0 2px 4px rgba(255,255,255,0.2),
+      inset 0 -2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--wood-dark);
+  }
+  .lever-handle span {
+    font-family: 'Alfa Slab One', serif;
+    font-size: 1rem;
+    color: var(--wood-bg);
+    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
+    letter-spacing: 2px;
+  }
+  .lever-wrapper:active .lever-handle,
+  .lever-wrapper.pulled .lever-handle {
+    top: 140px;
+  }
+  .lever-wrapper.pulled .lever-handle {
+    transition: top 0.15s ease-in;
+  }
+  .lever-base {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 20px;
+    background: linear-gradient(180deg, #5C3A1E, #3E2510);
+    border-radius: 0 0 12px 12px;
+    border: 2px solid rgba(0,0,0,0.3);
+  }
+
+  /* Joke display */
+  .joke-area {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 16px;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .joke-card {
+    background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.15));
+    border: 2px solid rgba(218,165,32,0.25);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+  }
+  .joke-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .joke-setup {
+    font-size: 1.25rem;
+    color: var(--cream);
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+  .joke-punchline {
+    font-family: 'Alfa Slab One', serif;
+    font-size: 1.4rem;
+    color: var(--gold);
+    line-height: 1.3;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.4s ease;
+  }
+  .joke-punchline.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .joke-category-tag {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 0.7rem;
+    background: rgba(218,165,32,0.2);
+    color: var(--gold);
+    padding: 3px 10px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .joke-category-tag.visible { opacity: 1; }
+
+  .waiting-text {
+    font-size: 1rem;
+    color: var(--wood-pale);
+    opacity: 0.5;
+    text-align: center;
+  }
+
+  /* Rating */
+  .rating-area {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px;
+    flex-wrap: wrap;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .rating-area.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .rate-btn {
+    background: rgba(0,0,0,0.25);
+    border: 2px solid var(--wood-light);
+    color: var(--cream);
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-family: 'Cabin', sans-serif;
+    transition: all 0.2s;
+  }
+  .rate-btn:hover {
+    background: var(--gold);
+    color: var(--wood-bg);
+    border-color: var(--gold);
+    transform: scale(1.05);
+  }
+  .rate-btn.selected {
+    background: var(--gold);
+    color: var(--wood-bg);
+    border-color: var(--gold);
+  }
+
+  /* Actions row */
+  .actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 16px 20px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    background: linear-gradient(180deg, var(--wood-med), var(--wood-dark));
+    border: 2px solid var(--wood-light);
+    color: var(--cream);
+    padding: 10px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: 'Cabin', sans-serif;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Favorites */
+  .favorites-section {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 16px 24px;
+  }
+  .fav-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    padding: 10px 0;
+    border-top: 1px solid rgba(218,165,32,0.2);
+  }
+  .fav-header h2 {
+    font-family: 'Alfa Slab One', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+  }
+  .fav-toggle {
+    color: var(--wood-pale);
+    font-size: 0.8rem;
+  }
+  .fav-list {
+    display: none;
+  }
+  .fav-list.open { display: block; }
+  .fav-item {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(218,165,32,0.15);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 8px;
+    position: relative;
+  }
+  .fav-item .fav-setup {
+    font-size: 0.9rem;
+    color: var(--cream);
+    margin-bottom: 4px;
+  }
+  .fav-item .fav-punch {
+    font-size: 0.95rem;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .fav-item .fav-remove {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: var(--wood-light);
+    cursor: pointer;
+    font-size: 1rem;
+    opacity: 0.5;
+  }
+  .fav-item .fav-remove:hover { opacity: 1; }
+  .fav-empty {
+    color: var(--wood-pale);
+    opacity: 0.5;
+    font-size: 0.85rem;
+    padding: 8px 0;
+  }
+
+  /* Groan overlay */
+  .groan-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .groan-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .groan-text {
+    font-family: 'Alfa Slab One', serif;
+    font-size: clamp(3rem, 12vw, 6rem);
+    color: var(--gold);
+    text-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    animation: groanPulse 0.6s ease-in-out;
+  }
+  @keyframes groanPulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Speaking indicator */
+  .speaking-indicator {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    color: var(--gold);
+    font-size: 0.8rem;
+  }
+  .speaking-indicator.active { display: flex; }
+  .speaking-indicator .dot {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: speakDot 0.8s ease-in-out infinite;
+  }
+  .speaking-indicator .dot:nth-child(2) { animation-delay: 0.15s; }
+  .speaking-indicator .dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes speakDot {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DAD JOKE MACHINE</h1>
+  <div class="subtitle">Mandatory groans since 2026</div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat">Streak: <strong id="streakCount">0</strong> days</div>
+  <div class="stat">Jokes told: <strong id="jokeCount">0</strong></div>
+  <div class="stat">Groans caused: <strong id="groanCount">0</strong></div>
+</div>
+
+<div class="categories">
+  <button class="cat-btn active" data-cat="all">All</button>
+  <button class="cat-btn" data-cat="classic">Classic</button>
+  <button class="cat-btn" data-cat="food">Food</button>
+  <button class="cat-btn" data-cat="science">Science</button>
+  <button class="cat-btn" data-cat="work">Work</button>
+</div>
+
+<div class="lever-container">
+  <div class="lever-wrapper" id="lever" role="button" tabindex="0" aria-label="Pull lever for dad joke">
+    <div class="lever-track"></div>
+    <div class="lever-handle"><span>PULL</span></div>
+    <div class="lever-base"></div>
+  </div>
+</div>
+
+<div class="joke-area" id="jokeArea">
+  <p class="waiting-text" id="waitingText">Pull the lever for peak comedy...</p>
+  <div class="joke-card" id="jokeCard">
+    <div class="joke-setup" id="jokeSetup"></div>
+    <div class="joke-punchline" id="jokePunchline"></div>
+    <div class="joke-category-tag" id="jokeCatTag"></div>
+  </div>
+</div>
+
+<div class="speaking-indicator" id="speakingIndicator">
+  <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  <span>Speaking to nearby dad...</span>
+</div>
+
+<div class="rating-area" id="ratingArea">
+  <button class="rate-btn" data-rating="terrible" title="Terrible">&#x1F610; Terrible</button>
+  <button class="rate-btn" data-rating="awful" title="Awful">&#x1F611; Awful</button>
+  <button class="rate-btn" data-rating="so-bad" title="So Bad It's Good">&#x1FAE0; So Bad It's Good</button>
+</div>
+
+<div class="actions">
+  <button class="action-btn" id="favBtn" disabled>&#9733; Favorite</button>
+  <button class="action-btn" id="speakBtn" disabled>&#x1F4E2; Tell to Nearby Dad</button>
+  <button class="action-btn" id="shareBtn" disabled>&#x1F4CB; Copy</button>
+</div>
+
+<div class="favorites-section">
+  <div class="fav-header" id="favHeader">
+    <h2>&#9733; Favorites</h2>
+    <span class="fav-toggle" id="favToggle">Show</span>
+  </div>
+  <div class="fav-list" id="favList">
+    <p class="fav-empty" id="favEmpty">No favorites yet. Save some groan-worthy gems!</p>
+  </div>
+</div>
+
+<div class="groan-overlay" id="groanOverlay">
+  <div class="groan-text">UGGHHH</div>
+</div>
+
+<script>
+// ──────────────────────────────────────────
+// DAD JOKE DATABASE (110 jokes, 4 categories)
+// ──────────────────────────────────────────
+const JOKES = [
+  // CLASSIC (30)
+  {s:"I'm afraid for the calendar.",p:"Its days are numbered.",c:"classic"},
+  {s:"Why don't skeletons ever go trick-or-treating?",p:"Because they have no body to go with.",c:"classic"},
+  {s:"I only know 25 letters of the alphabet.",p:"I don't know Y.",c:"classic"},
+  {s:"What do you call a fake noodle?",p:"An impasta.",c:"classic"},
+  {s:"Why did the scarecrow win an award?",p:"He was outstanding in his field.",c:"classic"},
+  {s:"I used to hate facial hair...",p:"But then it grew on me.",c:"classic"},
+  {s:"Why can't a nose be 12 inches long?",p:"Because then it would be a foot.",c:"classic"},
+  {s:"What do you call a bear with no teeth?",p:"A gummy bear.",c:"classic"},
+  {s:"What did the ocean say to the beach?",p:"Nothing, it just waved.",c:"classic"},
+  {s:"Why do fathers take an extra pair of socks when they go golfing?",p:"In case they get a hole in one.",c:"classic"},
+  {s:"What do you call a man with no arms and no legs in a pool?",p:"Bob.",c:"classic"},
+  {s:"I'm reading a book about anti-gravity.",p:"It's impossible to put down.",c:"classic"},
+  {s:"What do you call cheese that isn't yours?",p:"Nacho cheese.",c:"classic"},
+  {s:"Why don't eggs tell jokes?",p:"They'd crack each other up.",c:"classic"},
+  {s:"I used to play piano by ear.",p:"Now I use my hands.",c:"classic"},
+  {s:"What has ears but cannot hear?",p:"A cornfield.",c:"classic"},
+  {s:"Why did the bicycle fall over?",p:"Because it was two tired.",c:"classic"},
+  {s:"What do you call a sleeping dinosaur?",p:"A dino-snore.",c:"classic"},
+  {s:"I told my wife she was drawing her eyebrows too high.",p:"She looked surprised.",c:"classic"},
+  {s:"What did one wall say to the other?",p:"I'll meet you at the corner.",c:"classic"},
+  {s:"Why don't scientists trust atoms?",p:"Because they make up everything.",c:"classic"},
+  {s:"I'm on a seafood diet.",p:"I see food and I eat it.",c:"classic"},
+  {s:"How do you organize a space party?",p:"You planet.",c:"classic"},
+  {s:"What do you call a factory that makes okay products?",p:"A satisfactory.",c:"classic"},
+  {s:"Want to hear a joke about construction?",p:"I'm still working on it.",c:"classic"},
+  {s:"Why did the math book look so sad?",p:"Because it had too many problems.",c:"classic"},
+  {s:"What did the janitor say when he jumped out of the closet?",p:"Supplies!",c:"classic"},
+  {s:"How does a penguin build its house?",p:"Igloos it together.",c:"classic"},
+  {s:"What do you call a dog that does magic tricks?",p:"A Labracadabrador.",c:"classic"},
+  {s:"I got carded at a liquor store, and my Blockbuster card accidentally fell out.",p:"The cashier said never mind.",c:"classic"},
+
+  // FOOD (28)
+  {s:"What do you call a sad strawberry?",p:"A blueberry.",c:"food"},
+  {s:"Why did the tomato turn red?",p:"Because it saw the salad dressing.",c:"food"},
+  {s:"What do you call a peanut in a spacesuit?",p:"An astronut.",c:"food"},
+  {s:"Why did the cookie go to the hospital?",p:"Because it felt crummy.",c:"food"},
+  {s:"What does a lemon say when it answers the phone?",p:"Yellow!",c:"food"},
+  {s:"Why did the banana go to the doctor?",p:"It wasn't peeling well.",c:"food"},
+  {s:"What do you call a lazy spud?",p:"A couch potato.",c:"food"},
+  {s:"How do you make a lemon drop?",p:"Just let it fall.",c:"food"},
+  {s:"What's a pepper that won't leave you alone?",p:"Jalapeno business.",c:"food"},
+  {s:"Why did the grape stop in the middle of the road?",p:"Because it ran out of juice.",c:"food"},
+  {s:"What did the sushi say to the bee?",p:"Wasabi!",c:"food"},
+  {s:"What kind of tea is hard to swallow?",p:"Reality.",c:"food"},
+  {s:"Why do mushrooms get invited to all the parties?",p:"Because they're such fun-guys.",c:"food"},
+  {s:"What do you call a fish without eyes?",p:"A fsh.",c:"food"},
+  {s:"How does Moses make his coffee?",p:"Hebrews it.",c:"food"},
+  {s:"What did the buffalo say when his kid went to college?",p:"Bison.",c:"food"},
+  {s:"Why couldn't the sesame seed leave the casino?",p:"He was on a roll.",c:"food"},
+  {s:"What do you call two birds in love?",p:"Tweethearts. Also they share a nest egg.",c:"food"},
+  {s:"What's orange and sounds like a parrot?",p:"A carrot.",c:"food"},
+  {s:"I just burned 2,000 calories.",p:"That's the last time I leave brownies in the oven.",c:"food"},
+  {s:"What do you get when you cross a snowman and a vampire?",p:"Frostbite.",c:"food"},
+  {s:"Why don't melons get married?",p:"Because they cantaloupe.",c:"food"},
+  {s:"What do elves learn in school?",p:"The elf-abet. Then they have cookies.",c:"food"},
+  {s:"What did the mayonnaise say when the fridge was opened?",p:"Close the door, I'm dressing!",c:"food"},
+  {s:"Why did the coffee file a police report?",p:"It got mugged.",c:"food"},
+  {s:"What did the cake say to the fork?",p:"You want a piece of me?",c:"food"},
+  {s:"Why did the M&M go to school?",p:"It wanted to be a Smartie.",c:"food"},
+  {s:"A ham sandwich walks into a bar and orders a beer.",p:"The bartender says, 'Sorry, we don't serve food here.'",c:"food"},
+
+  // SCIENCE (26)
+  {s:"Did you hear about the claustrophobic astronaut?",p:"He just needed a little space.",c:"science"},
+  {s:"Why can't you trust an atom?",p:"They make up literally everything.",c:"science"},
+  {s:"What did the proton say to the electron?",p:"Stop being so negative.",c:"science"},
+  {s:"Why did the photon check no luggage?",p:"Because it was traveling light.",c:"science"},
+  {s:"What do you do with a sick chemist?",p:"If you can't helium, and you can't curium, then you barium.",c:"science"},
+  {s:"I have a joke about chemistry.",p:"But I don't think it will get a reaction.",c:"science"},
+  {s:"What's a physicist's favorite food?",p:"Fission chips.",c:"science"},
+  {s:"Why do biologists look forward to casual Fridays?",p:"They're allowed to wear genes to work.",c:"science"},
+  {s:"Did you hear oxygen went on a date with potassium?",p:"It went OK.",c:"science"},
+  {s:"What do computers snack on?",p:"Microchips.",c:"science"},
+  {s:"Why did the sun go to school?",p:"To get a little brighter.",c:"science"},
+  {s:"How do you cut the ocean in half?",p:"With a sea-saw.",c:"science"},
+  {s:"What kind of music do planets like?",p:"Neptunes.",c:"science"},
+  {s:"Why did the PowerPoint cross the road?",p:"To get to the other slide.",c:"science"},
+  {s:"Parallel lines have so much in common.",p:"It's a shame they'll never meet.",c:"science"},
+  {s:"I told a chemistry joke in class.",p:"There was no reaction.",c:"science"},
+  {s:"What did the thermometer say to the graduated cylinder?",p:"You may have graduated, but I've got many degrees.",c:"science"},
+  {s:"Why is the mushroom always invited to science fairs?",p:"Because he's a fungi to be around.",c:"science"},
+  {s:"What do you get when you put a radio in the fridge?",p:"Cool music.",c:"science"},
+  {s:"Why did the geologist break up with their partner?",p:"They took them for granite.",c:"science"},
+  {s:"How do trees access the internet?",p:"They log in.",c:"science"},
+  {s:"What did one tectonic plate say when it bumped into the other?",p:"Sorry, my fault.",c:"science"},
+  {s:"What's a tornado's favorite game?",p:"Twister.",c:"science"},
+  {s:"Why did the cell phone get glasses?",p:"It lost all its contacts.",c:"science"},
+  {s:"What did the DNA say to the other DNA?",p:"Do these genes make me look fat?",c:"science"},
+  {s:"Why do moon rocks taste better than Earth rocks?",p:"Because they're a little meteor.",c:"science"},
+
+  // WORK (26)
+  {s:"I got fired from the calendar factory.",p:"All I did was take a day off.",c:"work"},
+  {s:"My boss told me to have a good day.",p:"So I went home.",c:"work"},
+  {s:"I used to work at a shoe recycling shop.",p:"It was sole destroying.",c:"work"},
+  {s:"I quit my job at the donut factory.",p:"I was fed up with the hole business.",c:"work"},
+  {s:"Why did the can crusher quit his job?",p:"Because it was soda pressing.",c:"work"},
+  {s:"I lost my job at the bank on my very first day.",p:"A woman asked me to check her balance, so I pushed her over.",c:"work"},
+  {s:"I'm writing a book about all the things I should be doing.",p:"It's called an autobiography of procrastination.",c:"work"},
+  {s:"My resume is just a list of things I never want to do again.",p:"It's two pages long.",c:"work"},
+  {s:"Why did the developer go broke?",p:"Because he used up all his cache.",c:"work"},
+  {s:"What do you call a group of unorganized cats?",p:"A cat-astrophe. Much like my filing system.",c:"work"},
+  {s:"I told my boss three companies were after me and I needed a raise.",p:"He asked which three. I said Gas, Electric, and Water.",c:"work"},
+  {s:"Why do programmers prefer dark mode?",p:"Because light attracts bugs.",c:"work"},
+  {s:"I have a joke about being unemployed.",p:"But it doesn't work.",c:"work"},
+  {s:"I didn't want to believe my dad was stealing from his job as a road worker.",p:"But when I got home, all the signs were there.",c:"work"},
+  {s:"My email password has been hacked. That's the third time I've had to rename my cat.",p:"Meowth2024 is now Meowth2025.",c:"work"},
+  {s:"What's the best way to watch a fly fishing tournament?",p:"Live stream. Like my meetings.",c:"work"},
+  {s:"I asked the librarian if the library had any books about paranoia.",p:"She whispered, 'They're right behind you.'",c:"work"},
+  {s:"Why do accountants make good lovers?",p:"They're great with figures.",c:"work"},
+  {s:"What does a clock do when it's hungry?",p:"It goes back four seconds. Like me at the office snack bar.",c:"work"},
+  {s:"I told my computer I needed a break.",p:"It said 'No problem,' and crashed.",c:"work"},
+  {s:"What's the difference between a poorly dressed man on a tricycle and a well-dressed man on a bicycle?",p:"Attire.",c:"work"},
+  {s:"I'm great at multitasking.",p:"I can waste time, be unproductive, and procrastinate all at once.",c:"work"},
+  {s:"Why did the spreadsheet go to therapy?",p:"It had too many issues with its cells.",c:"work"},
+  {s:"My coworker said I have no sense of direction.",p:"I wasn't sure where he was coming from.",c:"work"},
+  {s:"Why did the stapler go to the doctor?",p:"It was feeling run down.",c:"work"},
+  {s:"What's the best thing about Switzerland?",p:"I don't know, but the flag is a big plus.",c:"work"},
+];
+
+// ──────────────────────────────────────────
+// WEB AUDIO SOUNDS
+// ──────────────────────────────────────────
+let audioCtx = null;
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playRimshot() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  // Snare-like hit
+  function hit(time) {
+    const noise = ctx.createBufferSource();
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.15, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.6;
+    noise.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'highpass';
+    filt.frequency.value = 1000;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.7, time);
+    gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
+    noise.connect(filt);
+    filt.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(time);
+    // Tonal hit
+    const osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180, time);
+    osc.frequency.exponentialRampToValueAtTime(60, time + 0.1);
+    const g2 = ctx.createGain();
+    g2.gain.setValueAtTime(0.5, time);
+    g2.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+    osc.connect(g2);
+    g2.connect(ctx.destination);
+    osc.start(time);
+    osc.stop(time + 0.15);
+  }
+  // Ba-dum TSS pattern
+  hit(t);
+  hit(t + 0.18);
+  // Cymbal crash
+  const cymNoise = ctx.createBufferSource();
+  const cymBuf = ctx.createBuffer(1, ctx.sampleRate * 0.8, ctx.sampleRate);
+  const cymData = cymBuf.getChannelData(0);
+  for (let i = 0; i < cymData.length; i++) cymData[i] = (Math.random() * 2 - 1);
+  cymNoise.buffer = cymBuf;
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 6000;
+  bp.Q.value = 0.5;
+  const cymGain = ctx.createGain();
+  cymGain.gain.setValueAtTime(0.5, t + 0.36);
+  cymGain.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+  cymNoise.connect(bp);
+  bp.connect(cymGain);
+  cymGain.connect(ctx.destination);
+  cymNoise.start(t + 0.36);
+}
+
+function playGroan() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  const duration = 1.5;
+  // Deep groan - descending tone
+  [1, 1.01, 0.99].forEach((detune, i) => {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(180 * detune, t);
+    osc.frequency.linearRampToValueAtTime(90 * detune, t + duration);
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.setValueAtTime(800, t);
+    filt.frequency.linearRampToValueAtTime(300, t + duration);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.15, t + 0.1);
+    gain.gain.setValueAtTime(0.15, t + 0.3);
+    gain.gain.linearRampToValueAtTime(0, t + duration);
+    osc.connect(filt);
+    filt.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + duration);
+  });
+  // Add some noise for breath quality
+  const noise = ctx.createBufferSource();
+  const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+  noise.buffer = buf;
+  const nfilt = ctx.createBiquadFilter();
+  nfilt.type = 'bandpass';
+  nfilt.frequency.value = 400;
+  nfilt.Q.value = 2;
+  const ng = ctx.createGain();
+  ng.gain.setValueAtTime(0, t);
+  ng.gain.linearRampToValueAtTime(0.06, t + 0.1);
+  ng.gain.linearRampToValueAtTime(0, t + duration);
+  noise.connect(nfilt);
+  nfilt.connect(ng);
+  ng.connect(ctx.destination);
+  noise.start(t);
+}
+
+function playLeverSound() {
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(200, t);
+  osc.frequency.exponentialRampToValueAtTime(80, t + 0.12);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.15, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  osc.connect(g);
+  g.connect(ctx.destination);
+  osc.start(t);
+  osc.stop(t + 0.15);
+}
+
+// ──────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────
+let currentJoke = null;
+let currentCategory = 'all';
+let isAnimating = false;
+let favorites = JSON.parse(localStorage.getItem('dj_favs') || '[]');
+let stats = JSON.parse(localStorage.getItem('dj_stats') || '{"jokes":0,"groans":0,"lastDate":null,"streak":0}');
+
+// Update streak
+const today = new Date().toDateString();
+if (stats.lastDate === today) {
+  // Same day, keep streak
+} else if (stats.lastDate) {
+  const last = new Date(stats.lastDate);
+  const diff = Math.floor((new Date(today) - last) / 86400000);
+  if (diff === 1) {
+    stats.streak++;
+  } else if (diff > 1) {
+    stats.streak = 0;
+  }
+}
+updateStatsDisplay();
+
+// ──────────────────────────────────────────
+// DOM
+// ──────────────────────────────────────────
+const lever = document.getElementById('lever');
+const jokeCard = document.getElementById('jokeCard');
+const jokeSetup = document.getElementById('jokeSetup');
+const jokePunchline = document.getElementById('jokePunchline');
+const jokeCatTag = document.getElementById('jokeCatTag');
+const waitingText = document.getElementById('waitingText');
+const ratingArea = document.getElementById('ratingArea');
+const groanOverlay = document.getElementById('groanOverlay');
+const favBtn = document.getElementById('favBtn');
+const speakBtn = document.getElementById('speakBtn');
+const shareBtn = document.getElementById('shareBtn');
+const favList = document.getElementById('favList');
+const favEmpty = document.getElementById('favEmpty');
+const favHeader = document.getElementById('favHeader');
+const favToggle = document.getElementById('favToggle');
+const speakingIndicator = document.getElementById('speakingIndicator');
+
+// ──────────────────────────────────────────
+// CATEGORY FILTER
+// ──────────────────────────────────────────
+document.querySelectorAll('.cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCategory = btn.dataset.cat;
+  });
+});
+
+// ──────────────────────────────────────────
+// LEVER PULL
+// ──────────────────────────────────────────
+function pullLever() {
+  if (isAnimating) return;
+  isAnimating = true;
+
+  playLeverSound();
+  lever.classList.add('pulled');
+
+  setTimeout(() => {
+    lever.classList.remove('pulled');
+  }, 400);
+
+  // Pick joke
+  const pool = currentCategory === 'all' ? JOKES : JOKES.filter(j => j.c === currentCategory);
+  let joke;
+  do {
+    joke = pool[Math.floor(Math.random() * pool.length)];
+  } while (joke === currentJoke && pool.length > 1);
+  currentJoke = joke;
+
+  // Reset UI
+  waitingText.style.display = 'none';
+  jokeCard.classList.remove('visible');
+  jokePunchline.classList.remove('visible');
+  jokeCatTag.classList.remove('visible');
+  ratingArea.classList.remove('visible');
+  document.querySelectorAll('.rate-btn').forEach(b => b.classList.remove('selected'));
+  favBtn.disabled = true;
+  speakBtn.disabled = true;
+  shareBtn.disabled = true;
+
+  // Show setup
+  setTimeout(() => {
+    jokeSetup.textContent = joke.s;
+    jokePunchline.textContent = joke.p;
+    jokeCatTag.textContent = joke.c.charAt(0).toUpperCase() + joke.c.slice(1);
+    jokeCard.classList.add('visible');
+  }, 300);
+
+  // Show punchline after 2s
+  setTimeout(() => {
+    jokePunchline.classList.add('visible');
+    jokeCatTag.classList.add('visible');
+    playRimshot();
+
+    // Enable buttons
+    favBtn.disabled = false;
+    speakBtn.disabled = false;
+    shareBtn.disabled = false;
+    ratingArea.classList.add('visible');
+
+    // Update stats
+    stats.jokes++;
+    stats.lastDate = today;
+    if (stats.streak === 0 && stats.jokes === 1) stats.streak = 1;
+    else if (stats.streak === 0) stats.streak = 1;
+    saveStats();
+    updateStatsDisplay();
+  }, 2300);
+
+  // Groan after 3s more (5.3s total)
+  setTimeout(() => {
+    stats.groans++;
+    saveStats();
+    updateStatsDisplay();
+    playGroan();
+    groanOverlay.classList.add('visible');
+    setTimeout(() => {
+      groanOverlay.classList.remove('visible');
+      isAnimating = false;
+    }, 1500);
+  }, 5300);
+}
+
+lever.addEventListener('click', pullLever);
+lever.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pullLever(); }
+});
+
+// ──────────────────────────────────────────
+// RATING
+// ──────────────────────────────────────────
+document.querySelectorAll('.rate-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.rate-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+// ──────────────────────────────────────────
+// FAVORITE
+// ──────────────────────────────────────────
+favBtn.addEventListener('click', () => {
+  if (!currentJoke) return;
+  const exists = favorites.some(f => f.s === currentJoke.s);
+  if (!exists) {
+    favorites.push({ s: currentJoke.s, p: currentJoke.p, c: currentJoke.c });
+    localStorage.setItem('dj_favs', JSON.stringify(favorites));
+    favBtn.textContent = '\u2713 Saved!';
+    setTimeout(() => { favBtn.textContent = '\u2605 Favorite'; }, 1500);
+    renderFavorites();
+  } else {
+    favBtn.textContent = 'Already saved!';
+    setTimeout(() => { favBtn.textContent = '\u2605 Favorite'; }, 1500);
+  }
+});
+
+// ──────────────────────────────────────────
+// SPEAK TO NEARBY DAD
+// ──────────────────────────────────────────
+speakBtn.addEventListener('click', () => {
+  if (!currentJoke || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const setup = new SpeechSynthesisUtterance(currentJoke.s);
+  setup.rate = 0.9;
+  setup.pitch = 0.8;
+  const punchline = new SpeechSynthesisUtterance(currentJoke.p);
+  punchline.rate = 0.85;
+  punchline.pitch = 0.9;
+
+  speakingIndicator.classList.add('active');
+  setup.onend = () => {
+    setTimeout(() => { window.speechSynthesis.speak(punchline); }, 1500);
+  };
+  punchline.onend = () => {
+    speakingIndicator.classList.remove('active');
+  };
+  window.speechSynthesis.speak(setup);
+});
+
+// ──────────────────────────────────────────
+// COPY
+// ──────────────────────────────────────────
+shareBtn.addEventListener('click', () => {
+  if (!currentJoke) return;
+  const text = `${currentJoke.s}\n${currentJoke.p}`;
+  navigator.clipboard.writeText(text).then(() => {
+    shareBtn.innerHTML = '&#x2713; Copied!';
+    setTimeout(() => { shareBtn.innerHTML = '&#x1F4CB; Copy'; }, 1500);
+  }).catch(() => {});
+});
+
+// ──────────────────────────────────────────
+// FAVORITES LIST
+// ──────────────────────────────────────────
+let favOpen = false;
+favHeader.addEventListener('click', () => {
+  favOpen = !favOpen;
+  favList.classList.toggle('open', favOpen);
+  favToggle.textContent = favOpen ? 'Hide' : 'Show';
+});
+
+function renderFavorites() {
+  if (favorites.length === 0) {
+    favList.innerHTML = '<p class="fav-empty">No favorites yet. Save some groan-worthy gems!</p>';
+    return;
+  }
+  favList.innerHTML = favorites.map((f, i) => `
+    <div class="fav-item">
+      <div class="fav-setup">${escHtml(f.s)}</div>
+      <div class="fav-punch">${escHtml(f.p)}</div>
+      <button class="fav-remove" onclick="removeFav(${i})" title="Remove">&times;</button>
+    </div>
+  `).join('');
+}
+
+window.removeFav = function(i) {
+  favorites.splice(i, 1);
+  localStorage.setItem('dj_favs', JSON.stringify(favorites));
+  renderFavorites();
+};
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+renderFavorites();
+
+// ──────────────────────────────────────────
+// STATS
+// ──────────────────────────────────────────
+function saveStats() {
+  localStorage.setItem('dj_stats', JSON.stringify(stats));
+}
+function updateStatsDisplay() {
+  document.getElementById('streakCount').textContent = stats.streak;
+  document.getElementById('jokeCount').textContent = stats.jokes;
+  document.getElementById('groanCount').textContent = stats.groans;
+}
+</script>
+</body>
+</html>
