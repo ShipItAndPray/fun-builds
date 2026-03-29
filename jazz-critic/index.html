@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jazz Critic</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-size:2em;background:linear-gradient(135deg,#ffd54f,#ff8f00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{color:#888;margin-bottom:20px;font-size:0.9em;text-align:center}
+.stage{background:#1a1a2e;border-radius:20px;padding:30px;max-width:500px;width:100%;text-align:center}
+.critic-avatar{font-size:4em;margin-bottom:10px}
+.critic-name{color:#ffd54f;font-size:0.9em;margin-bottom:15px;font-style:italic}
+.viz{height:60px;display:flex;align-items:end;justify-content:center;gap:2px;margin:15px 0}
+.viz .bar{width:5px;background:linear-gradient(to top,#ffd54f,#ff8f00);border-radius:2px;transition:height .08s}
+.btn{padding:15px 35px;border-radius:12px;border:none;font-size:1.1em;cursor:pointer;color:#fff;margin:5px;transition:all .3s}
+.btn-rec{background:linear-gradient(135deg,#ffd54f,#ff8f00);color:#000}
+.btn-rec:hover{transform:scale(1.05)}
+.btn-stop{background:#ff5252;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}
+.critique{margin-top:20px;display:none;animation:fadeIn .5s}
+.critique.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.critique-text{font-size:1.1em;line-height:1.7;font-style:italic;color:#ccc;margin-bottom:15px;text-align:left;padding:15px;background:#111;border-radius:12px;border-left:3px solid #ffd54f}
+.rating{display:flex;align-items:center;gap:10px;justify-content:center;margin:15px 0}
+.rating-label{color:#888;font-size:0.85em}
+.rating-val{font-size:1.5em;font-weight:bold}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.tag{padding:4px 10px;border-radius:12px;font-size:0.75em;background:#1a1a2e;border:1px solid #333;color:#aaa}
+.history{max-width:500px;width:100%;margin-top:20px}
+.history h3{color:#888;font-size:0.85em;margin-bottom:10px}
+.hist-item{background:#1a1a2e;border-radius:10px;padding:12px;margin-bottom:8px;font-size:0.85em;cursor:pointer}
+.hist-item:hover{background:#222}
+.hist-quote{color:#ffd54f;font-style:italic}
+.status{color:#888;font-size:0.85em;margin-top:10px}
+</style>
+</head>
+<body>
+<h1>Jazz Critic</h1>
+<p class="subtitle">Record any sound. Get withering jazz musician feedback.</p>
+
+<div class="stage">
+  <div class="critic-avatar">🎷</div>
+  <div class="critic-name" id="criticName">Professor Dizzy McBebop III, Jazz Theorist</div>
+  <div class="viz" id="viz"></div>
+  <button class="btn btn-rec" id="recBtn" onclick="toggleRecord()">Record Sound</button>
+  <div class="status" id="status">Tap to record. The critic is listening...</div>
+  <div class="critique" id="critique">
+    <div class="critique-text" id="critiqueText"></div>
+    <div class="rating">
+      <span class="rating-label">Jazz Rating:</span>
+      <span class="rating-val" id="ratingVal"></span>
+    </div>
+    <div class="tags" id="tags"></div>
+  </div>
+</div>
+<div class="history" id="historySection" style="display:none">
+  <h3>Previous Critiques</h3>
+  <div id="history"></div>
+</div>
+
+<script>
+const criticNames = [
+  "Professor Dizzy McBebop III, Jazz Theorist",
+  "Thelonious Stumps, Modal Authority",
+  "Ella Critzgerald, Vocal Deconstructionist",
+  "Miles Scowlis, Cool School Arbiter",
+  "Charlie Barker, Bebop Purist",
+  "Count Baseless, Big Band Skeptic",
+  "Duke Yellington, Orchestral Snob",
+  "Billie Hollaback, Blues Supremacist",
+  "Art Blakely, Hard Bop Fundamentalist",
+  "Herbie Handsoff, Fusion Contrarian",
+];
+
+const critiques = [
+  "This lacks the modal interchange of Coltrane's later work. Where's the chromaticism? Where's the SOUL? I've heard more musical depth from a car alarm.",
+  "Interesting use of... silence. Very John Cage. Except Cage meant to do it. You, I suspect, did not.",
+  "The rhythmic phrasing suggests someone who has heard jazz exactly once, from three rooms away, while wearing earplugs.",
+  "I detect influences of early Ornette Coleman. Not the genius part. The part where people walked out of the club.",
+  "Your tonal center is everywhere and nowhere simultaneously. That's either free jazz or a medical emergency.",
+  "Miles Davis once said 'Don't play what's there, play what's not there.' You've taken that too literally by playing nothing of value.",
+  "The harmonic content reminds me of a chord chart that fell in a puddle. Soggy, illegible, and fundamentally ruined.",
+  "I'm hearing tritone substitutions where there should be none. Actually, I'm hearing tritone substitutions where there aren't any. My ears are trying to find SOMETHING to analyze.",
+  "Coltrane practiced 12 hours a day. What you've presented suggests 12 seconds. On a Tuesday. While distracted.",
+  "The polyrhythmic complexity here is... well, there isn't any. It's mono-rhythmic. Possibly a-rhythmic. Clinically dead, rhythmically speaking.",
+  "This has the emotional depth of elevator music, but without the structural integrity.",
+  "Your performance channels the energy of someone who just discovered that saxophones exist and immediately decided to critique them.",
+  "I haven't heard phrasing this disjointed since my nephew tried to play recorder at Thanksgiving. He was four.",
+  "The bluesy undertones suggest suffering. I believe you. I, too, am suffering. Listening to this.",
+  "Art Tatum could play 1000 notes per minute and each one meant something. You played 4 notes. None of them meant anything.",
+  "This is to music what a sneeze is to conversation -- technically audible, fundamentally unintended.",
+  "Where's the swing? The groove? The pocket? This is unpocketed. Grooveless. Anti-swing. The jazz equivalent of standing still at a dance.",
+  "Duke Ellington said 'It don't mean a thing if it ain't got that swing.' This ain't got that swing. Or that thing. Or any thing.",
+  "Your use of space between notes is... well, it's generous. TOO generous. The notes are lonely. They need companionship.",
+  "I detect a Mixolydian approach. By which I mean you mixed up all the modes and landed on something Lydian by accident.",
+  "The attack and decay of each note suggests someone poking music with a stick from a safe distance.",
+  "Mingus would have fired you. Not from the band -- from the building. Through a window.",
+  "This recording has the sonic texture of a cat walking across a keyboard. The cat, however, has more natural rhythm.",
+  "I'm sensing a lack of head arrangement. A lack of arrangement. A lack of head. Just... a lack.",
+  "Your vibrato is reminiscent of someone shivering. Musically and literally cold.",
+  "Bird lived fast and played faster. You're playing at the speed of geological erosion.",
+  "The dissonance here isn't intentional enough to be avant-garde, and isn't pleasant enough to be anything else.",
+  "In the tradition of free jazz, this is free. As in, nobody should pay for it. Under any circumstances.",
+  "Your approach to harmony is... democratic. Every note gets equal say. This results in chaos. Like actual democracy.",
+  "Monk used silence as a weapon. You use silence as a refuge from the sounds you just made.",
+  "I've heard more coherent musical statements from a dropped tray of dishes.",
+  "The temporal feel wavers between 'ahead of the beat' and 'in a different time zone.'",
+  "This has the spontaneity of planned jazz without the planning. So just... spontaneous noise.",
+  "Your dynamics range from 'barely audible' to 'barely audible but slightly louder.' Riveting.",
+  "Somewhere, a jazz angel just lost its wings. That angel was me. I've lost my will to fly.",
+  "The timbral quality suggests your instrument was recently retrieved from a dumpster. A wet dumpster.",
+  "I'm reminded of late-period Sun Ra. Specifically, the period where everyone in the audience left.",
+  "Your phrasing has the grace of a bowling ball rolling down stairs. In a library. During a funeral.",
+  "This performance asks the question: what is jazz? And then answers: not this.",
+  "Sonny Rollins practiced on a bridge for two years. I suggest a longer bridge. And more years. Many more years.",
+  "The melodic contour of your performance resembles a stock market crash. Fitting, as my faith in music just plummeted.",
+  "I detect chromatic passing tones. They're passing through and they are NOT stopping. Smart notes.",
+  "What you've created isn't music. It's an audio restraining order against rhythm.",
+];
+
+const jazzTags = [
+  "anti-swing","post-tonal debris","rhythm-adjacent","aggressively atonal","neo-confusion",
+  "un-bebop","chaos theory","free-form collapse","modal catastrophe","harmonic void",
+  "groove-negative","rhythmically challenged","tonally bankrupt","melodically insolvent",
+  "spiritually depleted","chromatically confused","harmonically homeless","tempo-fluid",
+  "jazz-adjacent at best","musically translucent","sonically opaque","rhythmically divorced"
+];
+
+const ratings = [
+  "0.5/5 Saxophones","1/5 Saxophones","0.3/5 Saxophones","1.5/5 Saxophones",
+  "-1/5 Saxophones","0/5 Saxophones","0.7/5 Saxophones","0.1/5 Saxophones",
+  "1/10 Blue Notes","2/5 Saxophones (generous)","0.4/5 Saxophones"
+];
+
+let recording = false, audioCtx, analyser;
+const vizDiv = document.getElementById('viz');
+const bars = [];
+for (let i = 0; i < 36; i++) {
+  const b = document.createElement('div');
+  b.className = 'bar';
+  b.style.height = '3px';
+  vizDiv.appendChild(b);
+  bars.push(b);
+}
+
+async function toggleRecord() {
+  if (recording) { stopRecord(); return; }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    const src = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    recording = true;
+    document.getElementById('recBtn').textContent = 'Stop Recording';
+    document.getElementById('recBtn').className = 'btn btn-stop';
+    document.getElementById('status').textContent = 'Recording... make some sound!';
+    document.getElementById('critique').classList.remove('show');
+    document.getElementById('criticName').textContent = criticNames[Math.floor(Math.random()*criticNames.length)];
+    animate();
+    setTimeout(() => { if (recording) stopRecord(); }, 8000);
+  } catch(e) {
+    document.getElementById('status').textContent = 'Need mic access for the critic to judge you!';
+  }
+}
+
+function animate() {
+  if (!recording) return;
+  requestAnimationFrame(animate);
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const step = Math.floor(data.length / 36);
+  for (let i = 0; i < 36; i++) bars[i].style.height = Math.max(3, data[i*step]/3) + 'px';
+}
+
+async function stopRecord() {
+  recording = false;
+  document.getElementById('recBtn').textContent = 'Record Sound';
+  document.getElementById('recBtn').className = 'btn btn-rec';
+  bars.forEach(b => b.style.height = '3px');
+  // Analyzing
+  document.getElementById('status').textContent = 'The critic is formulating their disdain...';
+  await new Promise(r => setTimeout(r, 1500));
+  deliverCritique();
+}
+
+function deliverCritique() {
+  const text = critiques[Math.floor(Math.random()*critiques.length)];
+  const rating = ratings[Math.floor(Math.random()*ratings.length)];
+  document.getElementById('critiqueText').textContent = text;
+  document.getElementById('ratingVal').textContent = rating;
+  document.getElementById('ratingVal').style.color = '#ff5252';
+  // Tags
+  const tagDiv = document.getElementById('tags');
+  tagDiv.innerHTML = '';
+  const numTags = 3 + Math.floor(Math.random()*3);
+  const shuffled = [...jazzTags].sort(() => Math.random()-0.5);
+  for (let i = 0; i < numTags; i++) {
+    const t = document.createElement('span');
+    t.className = 'tag';
+    t.textContent = '#' + shuffled[i];
+    tagDiv.appendChild(t);
+  }
+  document.getElementById('critique').classList.add('show');
+  document.getElementById('status').textContent = 'Record again to receive more suffering.';
+  // History
+  const hist = document.getElementById('history');
+  const item = document.createElement('div');
+  item.className = 'hist-item';
+  item.innerHTML = `<div class="hist-quote">"${text.substring(0,80)}..."</div><div style="color:#888;font-size:0.8em;margin-top:5px">${rating}</div>`;
+  hist.prepend(item);
+  if (hist.children.length > 8) hist.lastChild.remove();
+  document.getElementById('historySection').style.display = 'block';
+}
+</script>
+</body>
+</html>

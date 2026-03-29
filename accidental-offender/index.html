@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Accidental Offender</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
+.container{max-width:500px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ff4488,#aa44ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
+.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.country-btn{padding:12px 8px;background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#ddd;font-size:.85rem;cursor:pointer;text-align:center;transition:.2s}
+.country-btn:hover{border-color:#aa44ff;color:#aa44ff}
+.country-btn.active{background:#1a0a2a;border-color:#aa44ff;color:#aa44ff}
+.search-input{width:100%;padding:12px;background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#fff;font-size:1rem;margin-bottom:12px}
+.search-input::placeholder{color:#555}
+.warnings{margin-top:16px;display:none}
+.warnings h2{font-size:1.1rem;color:#aa44ff;margin-bottom:12px}
+.warning-card{background:#1a1020;border-left:4px solid #ff4488;border-radius:0 12px 12px 0;padding:16px;margin-bottom:12px;animation:slideIn .3s}
+.warning-card .phrase{font-size:1.1rem;font-weight:700;color:#ffcc00;margin-bottom:4px}
+.warning-card .meaning{font-size:.85rem;color:#ff88aa;margin-bottom:8px}
+.warning-card .explanation{font-size:.85rem;color:#999;line-height:1.5}
+.warning-card .severity-tag{display:inline-block;font-size:.7rem;padding:2px 10px;border-radius:10px;margin-top:8px}
+.sev-mild{background:#1a1a0a;color:#ffcc00}
+.sev-awkward{background:#2a1a0a;color:#ff8800}
+.sev-offensive{background:#2a0a0a;color:#ff4444}
+.sev-dangerous{background:#ff0044;color:#fff}
+.stat-bar{display:flex;gap:10px;margin:16px 0}
+.stat{flex:1;background:#1a1a2e;border-radius:12px;padding:12px;text-align:center}
+.stat .num{font-size:1.5rem;font-weight:700;color:#aa44ff}
+.stat .label{font-size:.7rem;color:#666;margin-top:4px}
+.tip{background:#0a0a1a;border:1px solid #333;border-radius:10px;padding:12px;margin-top:16px;font-size:.85rem;color:#888;display:none}
+.tip strong{color:#aa44ff}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Accidental Offender</h1>
+<p class="subtitle">Innocent in English. Catastrophic elsewhere.</p>
+<input class="search-input" id="search" placeholder="Search countries..." oninput="filterCountries()" />
+<div class="country-grid" id="countryGrid"></div>
+<div class="warnings" id="warnings"><h2 id="warningTitle"></h2><div id="warningList"></div></div>
+<div class="stat-bar" id="statBar" style="display:none">
+<div class="stat"><div class="num" id="totalWarnings">0</div><div class="label">Warnings</div></div>
+<div class="stat"><div class="num" id="dangerCount">0</div><div class="label">Dangerous</div></div>
+<div class="stat"><div class="num" id="survivalTip">?</div><div class="label">Survival Rating</div></div>
+</div>
+<div class="tip" id="tip"></div>
+</div>
+
+<script>
+const data={
+"Japan":{
+tip:"Bow slightly when greeting. Never tip. Remove shoes indoors.",
+phrases:[
+{phrase:"Thumbs up",meaning:"Can be rude to older generations",explanation:"While younger Japanese people are fine with it, older generations may find a thumbs up dismissive or rude, similar to flipping someone off.",severity:"mild"},
+{phrase:"'Chin chin!' (cheers toast)",meaning:"Means 'penis' in Japanese",explanation:"If you try to toast with 'chin chin' like some European countries, you'll get horrified stares. Use 'kanpai' instead.",severity:"offensive"},
+{phrase:"Blowing your nose in public",meaning:"Considered very rude",explanation:"Sniffling is preferred over blowing your nose at the table. Step away if you must. This is a serious faux pas.",severity:"awkward"},
+{phrase:"Passing food chopstick to chopstick",meaning:"Funeral ritual",explanation:"This mimics a Japanese funeral ceremony where cremated bones are passed between chopsticks. Extremely taboo at dinner.",severity:"dangerous"},
+{phrase:"Sticking chopsticks upright in rice",meaning:"Resembles funeral incense",explanation:"This is how incense sticks are placed at funerals. Doing this at dinner is like putting a gravestone on the table.",severity:"dangerous"},
+{phrase:"Tipping at restaurants",meaning:"Considered insulting",explanation:"Tipping implies the service was charity work, not professional. Staff may chase you down to return the money.",severity:"awkward"},
+{phrase:"Opening a gift immediately",meaning:"Seen as greedy",explanation:"In Japan, you wait to open gifts privately. Tearing it open in front of the giver is considered rude and materialistic.",severity:"awkward"}
+]},
+"Thailand":{
+tip:"Never touch anyone's head. Always remove shoes at temples.",
+phrases:[
+{phrase:"Touching someone's head",meaning:"Deeply offensive",explanation:"The head is the most sacred part of the body in Thai culture. Even ruffling a child's hair is a serious offense.",severity:"dangerous"},
+{phrase:"Pointing your feet at someone",meaning:"Feet are the lowest, dirtiest part",explanation:"Showing the soles of your feet, especially toward a Buddha image or person, is extremely disrespectful.",severity:"offensive"},
+{phrase:"Stepping on money",meaning:"Illegal - it has the King's image",explanation:"Thai currency features the King's portrait. Stepping on it is literally a crime under lese-majeste laws.",severity:"dangerous"},
+{phrase:"Saying bad things about the royal family",meaning:"Can lead to prison",explanation:"Thailand's lese-majeste laws are strict. Even casual negative comments about the monarchy can result in 3-15 years in prison.",severity:"dangerous"},
+{phrase:"Patting someone on the back",meaning:"Overly familiar and rude",explanation:"Physical contact with strangers, especially older people, is considered inappropriate in Thai culture.",severity:"awkward"}
+]},
+"Germany":{
+tip:"Be punctual. Jaywalking is frowned upon. Recycling is serious business.",
+phrases:[
+{phrase:"'Gift' (English word)",meaning:"Means 'poison' in German",explanation:"Walking into a German shop and saying you brought a 'gift' could cause concern. The German word for present is 'Geschenk.'",severity:"awkward"},
+{phrase:"Wishing 'Happy Birthday' early",meaning:"Considered very bad luck",explanation:"Germans believe wishing someone happy birthday before the actual day brings bad luck. Wait until the day itself.",severity:"awkward"},
+{phrase:"The OK hand gesture",meaning:"Can mean 'a**hole'",explanation:"The circle made with thumb and index finger can be interpreted as calling someone a body part in some German contexts.",severity:"offensive"},
+{phrase:"Staring at someone",meaning:"Surprisingly normal (they stare back)",explanation:"Germans make prolonged eye contact. If you look away, YOU seem rude. If you stare, you're fine. Reverse psychology.",severity:"mild"},
+{phrase:"Being late",meaning:"Deeply disrespectful",explanation:"German punctuality is legendary. Being even 5 minutes late is considered rude and unreliable.",severity:"awkward"}
+]},
+"Brazil":{
+tip:"Embrace physical contact. Brazilians stand close and touch during conversation.",
+phrases:[
+{phrase:"OK hand gesture (thumb + index circle)",meaning:"Equivalent to the middle finger",explanation:"The gesture Americans use for 'OK' or 'perfect' is one of the most offensive gestures in Brazil. Absolutely do not use it.",severity:"dangerous"},
+{phrase:"'Preservativo' (sounds like preservative)",meaning:"Means 'condom' in Portuguese",explanation:"Asking if food has 'preservativos' will get you very different answers than expected at a Brazilian restaurant.",severity:"awkward"},
+{phrase:"Arriving on time to a party",meaning:"Considered rude and eager",explanation:"Brazilian social events start 30-60 minutes late. Showing up on time means the host isn't ready and you're being pushy.",severity:"mild"},
+{phrase:"Wearing green and yellow casually",meaning:"Political statement",explanation:"Brazil's flag colors have become politically charged. Wearing green and yellow can be seen as making a political statement.",severity:"awkward"},
+{phrase:"Refusing food offered by a host",meaning:"Very insulting",explanation:"Brazilian hospitality is generous. Refusing food or drink when offered is seen as rejecting the host personally.",severity:"offensive"}
+]},
+"France":{
+tip:"Always say 'Bonjour' when entering a shop. It's not optional.",
+phrases:[
+{phrase:"Skipping 'Bonjour' when entering a shop",meaning:"Extremely rude",explanation:"Not greeting with 'Bonjour' before any interaction is the #1 way tourists offend the French. Always, always say it.",severity:"offensive"},
+{phrase:"'Je suis plein(e)' (I am full)",meaning:"'I am pregnant' in colloquial French",explanation:"After a meal, saying 'je suis plein' (I'm full) actually means 'I'm pregnant.' Say 'j'ai bien mange' instead.",severity:"awkward"},
+{phrase:"Splitting the bill",meaning:"Considered cheap and awkward",explanation:"In France, one person typically pays the whole bill. Asking to split it, especially on a date, is a major faux pas.",severity:"awkward"},
+{phrase:"Asking for ketchup",meaning:"Insulting to the chef",explanation:"Putting ketchup on French cuisine implies it needs help. Some restaurants will refuse to serve it on principle.",severity:"offensive"},
+{phrase:"'Excite' (sounds like English 'excited')",meaning:"'Excite' means 'sexually aroused'",explanation:"Telling a French person you're 'tres excite' about something means something very different than enthusiasm.",severity:"offensive"},
+{phrase:"Bringing wine to a dinner party",meaning:"Implies the host has bad taste",explanation:"The host has already chosen the wine. Bringing your own suggests theirs isn't good enough.",severity:"mild"}
+]},
+"China":{
+tip:"Exchange business cards with both hands. Never write in red ink.",
+phrases:[
+{phrase:"Giving a clock as a gift",meaning:"Means 'attending a funeral'",explanation:"'Giving a clock' (song zhong) sounds identical to 'attending a funeral' in Chinese. This is one of the biggest gift taboos.",severity:"dangerous"},
+{phrase:"Writing someone's name in red ink",meaning:"Means they're dead or you wish death",explanation:"Red ink for names is reserved for the deceased in Chinese culture. Writing a living person's name in red is deeply offensive.",severity:"dangerous"},
+{phrase:"Sticking chopsticks upright in rice",meaning:"Funeral offering",explanation:"Like Japan, this resembles incense at funerals. One of the most well-known dining taboos in Chinese culture.",severity:"offensive"},
+{phrase:"Giving an umbrella as a gift",meaning:"Means 'separation' (sounds like 'san')",explanation:"The word for umbrella (san) sounds like 'separation.' Giving one suggests you want to end the relationship.",severity:"awkward"},
+{phrase:"The number 4 in any context",meaning:"Sounds like 'death'",explanation:"Four (si) is homophonous with death. Avoid giving 4 of anything, staying on 4th floors, or the number in gifts.",severity:"awkward"},
+{phrase:"Tipping",meaning:"Can be insulting",explanation:"Tipping in China can imply the worker needs charity. In many contexts it's seen as condescending.",severity:"mild"}
+]},
+"India":{
+tip:"Use your right hand for everything social. Left hand is considered unclean.",
+phrases:[
+{phrase:"Using your left hand to eat or give",meaning:"The left hand is 'unclean'",explanation:"The left hand is traditionally associated with bathroom hygiene. Using it to eat, give, or receive is very offensive.",severity:"offensive"},
+{phrase:"Pointing with your finger",meaning:"Very rude gesture",explanation:"Pointing at people with your index finger is considered aggressive. Use your whole hand or chin to indicate direction.",severity:"awkward"},
+{phrase:"Wearing shoes inside a home or temple",meaning:"Major disrespect",explanation:"Shoes are considered dirty. Entering someone's home or a temple without removing them is deeply disrespectful.",severity:"offensive"},
+{phrase:"Public displays of affection",meaning:"Highly inappropriate",explanation:"Kissing or hugging in public, even between married couples, is considered indecent in much of India.",severity:"offensive"},
+{phrase:"Touching books or paper with your feet",meaning:"Disrespecting knowledge/Saraswati",explanation:"Books represent Saraswati (goddess of knowledge). Touching them with feet, even accidentally, requires an apology gesture.",severity:"awkward"},
+{phrase:"Saying 'no' directly to an invitation",meaning:"Considered very blunt and rude",explanation:"Indians tend to say 'I'll try' or 'maybe' rather than a direct no. Blunt refusal can offend hosts deeply.",severity:"mild"}
+]},
+"Turkey":{
+tip:"Tea is sacred. Accept it when offered. Haggle at bazaars.",
+phrases:[
+{phrase:"Thumbs up",meaning:"Vulgar gesture (like middle finger)",explanation:"In parts of Turkey, a thumbs up is roughly equivalent to the middle finger. Use with extreme caution.",severity:"offensive"},
+{phrase:"OK hand gesture",meaning:"Calling someone a body part",explanation:"The circle gesture means you're calling someone a specific anatomical opening. Very offensive.",severity:"offensive"},
+{phrase:"Blowing your nose at the table",meaning:"Disgusting and very rude",explanation:"Leave the table to blow your nose. Doing it at the table, especially during a meal, is considered repulsive.",severity:"awkward"},
+{phrase:"Refusing tea",meaning:"Rejecting friendship",explanation:"Tea is the symbol of Turkish hospitality. Refusing it is like refusing the person's friendship.",severity:"awkward"},
+{phrase:"Crossing your legs showing shoe soles",meaning:"Showing the bottom of your foot is insulting",explanation:"The sole of the shoe is dirty. Showing it to someone, especially an elder, is a serious insult.",severity:"offensive"}
+]},
+"South Korea":{
+tip:"Pour drinks for others with two hands. Never pour your own.",
+phrases:[
+{phrase:"Pouring your own drink",meaning:"Bad manners and bad luck",explanation:"In Korean drinking culture, others pour for you and you pour for them. Pouring your own is both rude and considered unlucky.",severity:"awkward"},
+{phrase:"Writing names in red ink",meaning:"The person is dead or dying",explanation:"Like China, red ink for names is associated with death. Never write a Korean person's name in red.",severity:"dangerous"},
+{phrase:"Receiving with one hand",meaning:"Disrespectful, especially from elders",explanation:"Always use two hands (or support your arm) when receiving anything from someone older. One hand is casual disrespect.",severity:"awkward"},
+{phrase:"Sticking chopsticks in rice",meaning:"Funeral ritual offering",explanation:"Same as Japan and China - this resembles incense sticks at a funeral. Major taboo.",severity:"offensive"},
+{phrase:"Calling someone by first name",meaning:"Only for close friends or inferiors",explanation:"Koreans use titles and family names. Using someone's first name without permission implies you consider them beneath you.",severity:"awkward"}
+]},
+"Italy":{
+tip:"Espresso is for mornings only. Cappuccino after 11am is a crime.",
+phrases:[
+{phrase:"Ordering cappuccino after 11am",meaning:"Marks you as clueless tourist",explanation:"Italians consider milk-based coffee a morning drink. Ordering one after lunch will get you genuine pity from your waiter.",severity:"mild"},
+{phrase:"Adding parmesan to seafood pasta",meaning:"Culinary blasphemy",explanation:"Cheese on fish pasta is considered an abomination. The waiter may physically stop you from doing this.",severity:"offensive"},
+{phrase:"Asking for 'pepperoni' pizza",meaning:"You'll get bell peppers",explanation:"Pepperoni in Italian means bell peppers (peperoni). You want 'salame piccante' for the spicy meat.",severity:"mild"},
+{phrase:"'Cazzo' (sounds like casual exclamation)",meaning:"Very vulgar swear word",explanation:"This word sounds innocuous to English ears but is one of the strongest vulgarities in Italian. Do not repeat it casually.",severity:"offensive"},
+{phrase:"Eating on the go / standing",meaning:"Rushed and disrespectful to food",explanation:"Italians sit down for meals. Walking while eating or rushing through food is seen as uncivilized.",severity:"mild"},
+{phrase:"Cutting spaghetti with a knife",meaning:"Culinary crime",explanation:"This will horrify any Italian watching. Twirl it with a fork. No knife. No spoon. Fork only.",severity:"awkward"}
+]}
+};
+
+const countries=Object.keys(data);
+let activeCountry=null;
+
+function renderCountries(filter=''){
+const f=filter.toLowerCase();
+const filtered=countries.filter(c=>c.toLowerCase().includes(f));
+document.getElementById('countryGrid').innerHTML=filtered.map(c=>
+`<div class="country-btn ${activeCountry===c?'active':''}" onclick="selectCountry('${c}')">${c}</div>`
+).join('');
+}
+
+function filterCountries(){
+renderCountries(document.getElementById('search').value);
+}
+
+function selectCountry(c){
+activeCountry=c;
+renderCountries(document.getElementById('search').value);
+const info=data[c];
+const w=document.getElementById('warnings');
+w.style.display='block';
+document.getElementById('warningTitle').textContent=`${c}: ${info.phrases.length} Ways to Offend`;
+document.getElementById('warningList').innerHTML=info.phrases.map(p=>
+`<div class="warning-card">
+<div class="phrase">"${p.phrase}"</div>
+<div class="meaning">${p.meaning}</div>
+<div class="explanation">${p.explanation}</div>
+<span class="severity-tag sev-${p.severity}">${p.severity.toUpperCase()}</span>
+</div>`
+).join('');
+const dangers=info.phrases.filter(p=>p.severity==='dangerous').length;
+const total=info.phrases.length;
+const survivalRatings=['A+','A','B+','B','C','D','F'];
+const sIdx=Math.min(Math.floor(dangers*2+total/3),survivalRatings.length-1);
+document.getElementById('statBar').style.display='flex';
+document.getElementById('totalWarnings').textContent=total;
+document.getElementById('dangerCount').textContent=dangers;
+document.getElementById('survivalTip').textContent=survivalRatings[sIdx];
+const tip=document.getElementById('tip');
+tip.style.display='block';
+tip.innerHTML=`<strong>Survival Tip:</strong> ${info.tip}`;
+}
+
+renderCountries();
+</script>
+</body>
+</html>
