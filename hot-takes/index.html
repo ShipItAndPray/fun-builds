@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hot Takes Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --fire-1: #ff4500;
+    --fire-2: #ff6b35;
+    --fire-3: #ffa500;
+    --fire-4: #ffd700;
+    --ember: #8b0000;
+    --dark: #1a0a00;
+    --darker: #0d0500;
+    --card-bg: rgba(30, 10, 0, 0.85);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--darker);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated fire background */
+  .fire-bg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 50% 100%, rgba(255,69,0,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 20% 80%, rgba(255,165,0,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(255,165,0,0.15) 0%, transparent 50%),
+      var(--darker);
+  }
+
+  .ember-particle {
+    position: fixed;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--fire-3);
+    pointer-events: none;
+    z-index: 1;
+    animation: float-up linear forwards;
+  }
+
+  @keyframes float-up {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-100vh) scale(0); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 2;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 100px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  .header h1 {
+    font-family: 'Bangers', cursive;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    background: linear-gradient(180deg, var(--fire-4) 0%, var(--fire-1) 50%, var(--ember) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    filter: drop-shadow(0 0 20px rgba(255,69,0,0.5));
+  }
+
+  .header p {
+    color: var(--fire-3);
+    font-size: 1rem;
+    margin-top: 8px;
+    opacity: 0.8;
+  }
+
+  /* Input area */
+  .input-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+
+  .input-area input {
+    flex: 1;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    border: 2px solid var(--fire-2);
+    border-radius: 12px;
+    background: rgba(20,5,0,0.9);
+    color: #fff;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .input-area input:focus {
+    border-color: var(--fire-4);
+    box-shadow: 0 0 20px rgba(255,165,0,0.3);
+  }
+
+  .input-area input::placeholder { color: rgba(255,165,0,0.4); }
+
+  .btn-generate {
+    padding: 16px 28px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: 'Bangers', cursive;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--fire-1), var(--fire-3));
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-generate:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(255,69,0,0.6);
+  }
+
+  .btn-generate:active { transform: scale(0.97); }
+
+  /* Spiciness meter */
+  .spice-meter {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,69,0,0.3);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: none;
+  }
+
+  .spice-meter.visible { display: block; }
+
+  .spice-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .spice-label span {
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--fire-3);
+  }
+
+  .spice-level-text {
+    font-family: 'Bangers', cursive;
+    font-size: 1.3rem;
+    color: var(--fire-4);
+  }
+
+  .spice-bar-track {
+    height: 16px;
+    background: rgba(255,69,0,0.15);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .spice-bar-fill {
+    height: 100%;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #ffd700, #ffa500, #ff6b35, #ff4500, #8b0000);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .spice-bar-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 30px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4));
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+
+  .fire-icons {
+    display: flex;
+    gap: 2px;
+    margin-top: 8px;
+    font-size: 1.3rem;
+  }
+
+  .fire-icon {
+    transition: transform 0.3s, filter 0.3s;
+    filter: grayscale(1) opacity(0.3);
+  }
+
+  .fire-icon.lit {
+    filter: none;
+    animation: flame-dance 0.4s ease-in-out infinite alternate;
+  }
+
+  @keyframes flame-dance {
+    0% { transform: scale(1) rotate(-3deg); }
+    100% { transform: scale(1.15) rotate(3deg); }
+  }
+
+  /* Take card */
+  .take-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,69,0,0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    animation: card-in 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes card-in {
+    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .take-card.unhinged {
+    border-color: var(--fire-1);
+    box-shadow: 0 0 30px rgba(255,69,0,0.2);
+  }
+
+  .take-card.max-unhinged {
+    border-color: var(--fire-4);
+    box-shadow: 0 0 40px rgba(255,215,0,0.3), 0 0 80px rgba(255,69,0,0.2);
+    animation: card-in 0.5s cubic-bezier(0.4, 0, 0.2, 1), pulse-border 2s infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 30px rgba(255,69,0,0.2); }
+    50% { box-shadow: 0 0 50px rgba(255,215,0,0.4), 0 0 100px rgba(255,69,0,0.3); }
+  }
+
+  .take-level {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .level-mild { background: rgba(255,215,0,0.2); color: var(--fire-4); }
+  .level-medium { background: rgba(255,165,0,0.2); color: var(--fire-3); }
+  .level-spicy { background: rgba(255,107,53,0.2); color: var(--fire-2); }
+  .level-unhinged { background: rgba(255,69,0,0.3); color: var(--fire-1); }
+  .level-certifiable { background: rgba(139,0,0,0.4); color: #ff6b6b; }
+
+  .take-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 16px;
+  }
+
+  .take-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn-vote {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-vote:hover { background: rgba(255,255,255,0.15); }
+  .btn-vote.voted { pointer-events: none; }
+
+  .btn-reasonable { border-color: rgba(100,200,100,0.4); }
+  .btn-reasonable:hover { background: rgba(100,200,100,0.2); border-color: rgba(100,200,100,0.6); }
+  .btn-reasonable.voted { background: rgba(100,200,100,0.3); border-color: rgba(100,200,100,0.8); }
+
+  .btn-unhinged-vote { border-color: rgba(255,69,0,0.4); }
+  .btn-unhinged-vote:hover { background: rgba(255,69,0,0.2); border-color: rgba(255,69,0,0.6); }
+  .btn-unhinged-vote.voted { background: rgba(255,69,0,0.3); border-color: rgba(255,69,0,0.8); }
+
+  .btn-share {
+    margin-left: auto;
+    border-color: rgba(100,150,255,0.4);
+  }
+  .btn-share:hover { background: rgba(100,150,255,0.2); border-color: rgba(100,150,255,0.6); }
+
+  .vote-count {
+    font-size: 0.75rem;
+    opacity: 0.6;
+    margin-left: 4px;
+  }
+
+  /* History section */
+  .history-section {
+    margin-top: 40px;
+    display: none;
+  }
+
+  .history-section.visible { display: block; }
+
+  .history-title {
+    font-family: 'Bangers', cursive;
+    font-size: 1.8rem;
+    color: var(--fire-3);
+    margin-bottom: 16px;
+    letter-spacing: 2px;
+  }
+
+  .history-item {
+    padding: 14px 18px;
+    background: rgba(20,5,0,0.6);
+    border: 1px solid rgba(255,69,0,0.15);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .history-item .topic { color: var(--fire-3); font-weight: 600; }
+  .history-item .count { color: rgba(255,255,255,0.5); font-size: 0.8rem; white-space: nowrap; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--fire-1);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    z-index: 100;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 500px) {
+    .input-area { flex-direction: column; }
+    .btn-generate { width: 100%; }
+    .take-actions { gap: 8px; }
+    .btn-share { margin-left: 0; }
+    .container { padding: 12px 12px 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="fire-bg"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>HOT TAKES GENERATOR</h1>
+    <p>Enter any topic. Watch opinions go from mild to absolutely unhinged.</p>
+  </div>
+
+  <div class="input-area">
+    <input type="text" id="topicInput" placeholder="Enter a topic... (e.g. Pizza, Cats, Mondays)" autofocus>
+    <button class="btn-generate" id="generateBtn">IGNITE</button>
+  </div>
+
+  <div class="spice-meter" id="spiceMeter">
+    <div class="spice-label">
+      <span>Spiciness</span>
+      <span class="spice-level-text" id="spiceLevelText">Mild</span>
+    </div>
+    <div class="spice-bar-track">
+      <div class="spice-bar-fill" id="spiceBarFill" style="width: 0%"></div>
+    </div>
+    <div class="fire-icons" id="fireIcons"></div>
+  </div>
+
+  <div id="takesContainer"></div>
+
+  <div class="history-section" id="historySection">
+    <div class="history-title">Previous Burns</div>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// 60+ Hot Take Templates — organized by escalating spiciness
+// ============================================================
+const templates = [
+  // LEVEL 1-2: Mildly warm — defensible but slightly edgy
+  { level: 1, t: "{topic} is honestly overrated and people are afraid to say it." },
+  { level: 1, t: "Most people have terrible taste in {topic}." },
+  { level: 1, t: "If you think about it, {topic} peaked 10 years ago." },
+  { level: 1, t: "{topic} fans are the most defensive people on the internet." },
+  { level: 2, t: "Putting pineapple on {topic} is not only fine, it's superior." },
+  { level: 2, t: "The best {topic} is the one nobody talks about." },
+  { level: 2, t: "{topic} is just a personality trait for boring people." },
+  { level: 2, t: "Kids today will never understand real {topic}." },
+  { level: 2, t: "Europe does {topic} better than America and it's not close." },
+  { level: 2, t: "Your favorite {topic} is mid at best." },
+
+  // LEVEL 3-4: Medium heat — raised eyebrows
+  { level: 3, t: "{topic} should require a government-issued license." },
+  { level: 3, t: "AI will replace {topic} within 5 years and nobody is ready." },
+  { level: 3, t: "{topic} is literally just a scam we all agreed to participate in." },
+  { level: 3, t: "People who are really into {topic} are hiding something." },
+  { level: 3, t: "If {topic} disappeared tomorrow, society would actually improve." },
+  { level: 4, t: "{topic} should be taught as a martial art." },
+  { level: 4, t: "The CEO of {topic} should be elected democratically." },
+  { level: 4, t: "{topic} was better when it was illegal." },
+  { level: 4, t: "We need weight classes for {topic}." },
+  { level: 4, t: "{topic} peaked during the Roman Empire and it's been downhill since." },
+  { level: 4, t: "Competitive {topic} should be an Olympic sport." },
+
+  // LEVEL 5-6: Spicy — people start arguing
+  { level: 5, t: "{topic} should be eaten with chopsticks. All of it. Always." },
+  { level: 5, t: "The correct way to enjoy {topic} is underwater." },
+  { level: 5, t: "{topic} is secretly controlled by Big Mattress." },
+  { level: 5, t: "If you don't cry during {topic}, you're a sociopath." },
+  { level: 5, t: "{topic} needs a villain arc and I'm here for it." },
+  { level: 5, t: "The only honest review of {topic} was written by a 4-year-old." },
+  { level: 6, t: "{topic} should only be legal between 2am and 4am." },
+  { level: 6, t: "Every piece of {topic} should come with a terms of service." },
+  { level: 6, t: "Shakespeare was actually writing about {topic} the whole time." },
+  { level: 6, t: "{topic} is the reason we don't have flying cars." },
+  { level: 6, t: "Your therapist secretly judges your {topic} choices." },
+  { level: 6, t: "Dogs understand {topic} better than most humans." },
+
+  // LEVEL 7-8: Unhinged — social media wars
+  { level: 7, t: "{topic} is a simulation and I have the patch notes to prove it." },
+  { level: 7, t: "The moon landing was faked to distract us from the real {topic} conspiracy." },
+  { level: 7, t: "Ancient Egyptians built the pyramids as giant {topic} storage units." },
+  { level: 7, t: "{topic} communicates through radio waves and the government knows." },
+  { level: 7, t: "Elon Musk's real mission is to bring {topic} to Mars." },
+  { level: 7, t: "{topic} was invented by time travelers and we're living in the aftermath." },
+  { level: 8, t: "The Illuminati's entire business model is based on {topic}." },
+  { level: 8, t: "{topic} is sentient and it's been judging us for centuries." },
+  { level: 8, t: "Every war in human history was secretly about {topic}." },
+  { level: 8, t: "Area 51 is just a warehouse for premium {topic}." },
+  { level: 8, t: "Your {topic} has a secret second life when you're not looking." },
+  { level: 8, t: "{topic} is the fifth fundamental force of physics." },
+
+  // LEVEL 9-10: Certifiably unhinged — pure chaos
+  { level: 9, t: "{topic} was invented by dolphins and the government is covering it up." },
+  { level: 9, t: "We are all living inside a giant {topic} and the universe is the topping." },
+  { level: 9, t: "The meaning of life is {topic}. That's it. The philosophers were wrong." },
+  { level: 9, t: "{topic} exists in the 4th dimension and what we experience is just its shadow." },
+  { level: 9, t: "Trees are actually farming us to produce better {topic}." },
+  { level: 9, t: "The ocean is just {topic} soup that got out of hand 4 billion years ago." },
+  { level: 9, t: "Every dream you've ever had was just your brain doing {topic} simulations." },
+  { level: 10, t: "{topic} is the reason gravity exists and I will not be taking questions." },
+  { level: 10, t: "God's first draft of the universe was just {topic}. Everything else is DLC." },
+  { level: 10, t: "The Big Bang was actually two pieces of {topic} colliding at the speed of light." },
+  { level: 10, t: "Babies are born knowing the truth about {topic} but forget it to survive in society." },
+  { level: 10, t: "{topic} doesn't exist. We are all hallucinating the same thing simultaneously." },
+  { level: 10, t: "Every atom in your body was once part of a {topic}. You ARE {topic}." },
+  { level: 10, t: "When you die, the light at the end of the tunnel IS {topic}." },
+  { level: 10, t: "Parallel universes exist specifically so every possible {topic} outcome can happen." },
+  { level: 10, t: "Math is just {topic}'s way of understanding itself." },
+  { level: 10, t: "Consciousness is what happens when {topic} becomes aware of its own existence." },
+];
+
+// ============================================================
+// Sizzle sound via Web Audio API
+// ============================================================
+let audioCtx = null;
+
+function playSizzle() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const bufferSize = audioCtx.sampleRate * 0.45;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / bufferSize;
+      // White noise with envelope + slight crackle
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2) * 0.3;
+      // Add some crackle pops
+      if (Math.random() < 0.003) data[i] += (Math.random() - 0.5) * 0.8;
+    }
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    // Bandpass for sizzle character
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 6000 + Math.random() * 4000;
+    filter.Q.value = 0.5;
+    source.connect(filter);
+    filter.connect(audioCtx.destination);
+    source.start();
+  } catch (e) { /* audio not supported */ }
+}
+
+// ============================================================
+// Ember particles
+// ============================================================
+function spawnEmbers(count) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const ember = document.createElement('div');
+      ember.className = 'ember-particle';
+      ember.style.left = (Math.random() * 100) + '%';
+      ember.style.bottom = '0';
+      ember.style.width = (2 + Math.random() * 4) + 'px';
+      ember.style.height = ember.style.width;
+      ember.style.background = ['#ff4500','#ffa500','#ffd700','#ff6b35'][Math.floor(Math.random()*4)];
+      ember.style.animationDuration = (3 + Math.random() * 5) + 's';
+      document.body.appendChild(ember);
+      ember.addEventListener('animationend', () => ember.remove());
+    }, i * 80);
+  }
+}
+
+// ============================================================
+// State
+// ============================================================
+let currentTopic = '';
+let currentLevel = 0;
+let generatedTakes = []; // { text, level, reasonable: 0, unhinged: 0 }
+let history = JSON.parse(localStorage.getItem('hotTakesHistory') || '[]');
+let usedTemplateIndices = new Set();
+
+// ============================================================
+// DOM refs
+// ============================================================
+const topicInput = document.getElementById('topicInput');
+const generateBtn = document.getElementById('generateBtn');
+const spiceMeter = document.getElementById('spiceMeter');
+const spiceLevelText = document.getElementById('spiceLevelText');
+const spiceBarFill = document.getElementById('spiceBarFill');
+const fireIcons = document.getElementById('fireIcons');
+const takesContainer = document.getElementById('takesContainer');
+const historySection = document.getElementById('historySection');
+const historyList = document.getElementById('historyList');
+const toast = document.getElementById('toast');
+
+// Build fire icons
+for (let i = 0; i < 10; i++) {
+  const span = document.createElement('span');
+  span.className = 'fire-icon';
+  span.textContent = '\uD83D\uDD25';
+  fireIcons.appendChild(span);
+}
+
+// ============================================================
+// Generate a take
+// ============================================================
+function getRandomTemplate(level) {
+  // Find templates at or near this level
+  const candidates = templates.filter((t, idx) => {
+    return t.level <= level && t.level >= level - 1 && !usedTemplateIndices.has(idx);
+  });
+  if (candidates.length === 0) {
+    // Reset used set and try again
+    usedTemplateIndices.clear();
+    return getRandomTemplate(level);
+  }
+  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+  const idx = templates.indexOf(chosen);
+  usedTemplateIndices.add(idx);
+  return chosen;
+}
+
+function generateTake() {
+  const topic = topicInput.value.trim();
+  if (!topic) {
+    topicInput.focus();
+    topicInput.style.borderColor = '#ff0000';
+    setTimeout(() => topicInput.style.borderColor = '', 500);
+    return;
+  }
+
+  if (topic !== currentTopic) {
+    // New topic — reset
+    currentTopic = topic;
+    currentLevel = 0;
+    generatedTakes = [];
+    takesContainer.innerHTML = '';
+    usedTemplateIndices.clear();
+  }
+
+  // Escalate level
+  currentLevel = Math.min(currentLevel + 1, 10);
+
+  const template = getRandomTemplate(currentLevel);
+  const takeText = template.t.replace(/\{topic\}/g, topic);
+
+  const takeData = { text: takeText, level: currentLevel, reasonable: 0, unhinged: 0 };
+  generatedTakes.unshift(takeData);
+
+  // Update spice meter
+  updateSpiceMeter(currentLevel);
+
+  // Play sizzle
+  playSizzle();
+
+  // Spawn embers proportional to level
+  spawnEmbers(currentLevel * 3);
+
+  // Render take card
+  renderTakeCard(takeData, 0);
+
+  // Update history
+  updateHistory(topic);
+
+  // Update button text at high levels
+  if (currentLevel >= 8) {
+    generateBtn.textContent = 'MAXIMUM CHAOS';
+  } else if (currentLevel >= 5) {
+    generateBtn.textContent = 'MORE FIRE';
+  } else {
+    generateBtn.textContent = 'HOTTER';
+  }
+}
+
+function getLevelLabel(level) {
+  if (level <= 2) return { text: `Level ${level} \u2022 Mild`, cls: 'level-mild' };
+  if (level <= 4) return { text: `Level ${level} \u2022 Medium`, cls: 'level-medium' };
+  if (level <= 6) return { text: `Level ${level} \u2022 Spicy`, cls: 'level-spicy' };
+  if (level <= 8) return { text: `Level ${level} \u2022 Unhinged`, cls: 'level-unhinged' };
+  return { text: `Level ${level} \u2022 CERTIFIABLE`, cls: 'level-certifiable' };
+}
+
+function renderTakeCard(data, index) {
+  const label = getLevelLabel(data.level);
+  const cardClass = data.level >= 9 ? 'max-unhinged' : data.level >= 7 ? 'unhinged' : '';
+
+  const card = document.createElement('div');
+  card.className = `take-card ${cardClass}`;
+  card.innerHTML = `
+    <div class="take-level ${label.cls}">${label.text}</div>
+    <div class="take-text">${data.text}</div>
+    <div class="take-actions">
+      <button class="btn-vote btn-reasonable" onclick="vote(this, 'reasonable', ${index})">
+        That's actually reasonable <span class="vote-count">${data.reasonable || ''}</span>
+      </button>
+      <button class="btn-vote btn-unhinged-vote" onclick="vote(this, 'unhinged', ${index})">
+        UNHINGED <span class="vote-count">${data.unhinged || ''}</span>
+      </button>
+      <button class="btn-vote btn-share" onclick="shareTake(${index})">
+        Share
+      </button>
+    </div>
+  `;
+
+  takesContainer.prepend(card);
+}
+
+function vote(btn, type, index) {
+  const data = generatedTakes[index];
+  if (!data) return;
+  data[type]++;
+  const card = btn.closest('.take-card');
+  const buttons = card.querySelectorAll('.btn-vote:not(.btn-share)');
+  buttons.forEach(b => b.classList.add('voted'));
+
+  // Update count display
+  const countSpan = btn.querySelector('.vote-count');
+  if (countSpan) countSpan.textContent = data[type];
+
+  if (type === 'unhinged') {
+    spawnEmbers(8);
+    showToast('CERTIFIED UNHINGED');
+  } else {
+    showToast('Surprisingly reasonable...');
+  }
+}
+
+function shareTake(index) {
+  const data = generatedTakes[index];
+  if (!data) return;
+  const shareText = `Hot Take (Level ${data.level}/10): ${data.text}\n\nGenerated by Hot Takes Generator`;
+
+  if (navigator.share) {
+    navigator.share({ text: shareText }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('Copied to clipboard!');
+    });
+  } else {
+    showToast('Share not supported');
+  }
+}
+
+function updateSpiceMeter(level) {
+  spiceMeter.classList.add('visible');
+  const pct = (level / 10) * 100;
+  spiceBarFill.style.width = pct + '%';
+
+  const labels = ['', 'Mild', 'Warm', 'Toasty', 'Spicy', 'HOT', 'SCORCHING', 'VOLCANIC', 'NUCLEAR', 'SUPERNOVA', 'BEYOND REALITY'];
+  spiceLevelText.textContent = labels[level] || 'Mild';
+
+  // Light up fire icons
+  const icons = fireIcons.querySelectorAll('.fire-icon');
+  icons.forEach((icon, i) => {
+    if (i < level) {
+      icon.classList.add('lit');
+      icon.style.animationDelay = (i * 0.08) + 's';
+    } else {
+      icon.classList.remove('lit');
+    }
+  });
+}
+
+function updateHistory(topic) {
+  const existing = history.find(h => h.topic.toLowerCase() === topic.toLowerCase());
+  if (existing) {
+    existing.count = generatedTakes.length;
+    existing.maxLevel = currentLevel;
+  } else {
+    history.unshift({ topic, count: 1, maxLevel: currentLevel });
+  }
+  if (history.length > 20) history.pop();
+  localStorage.setItem('hotTakesHistory', JSON.stringify(history));
+  renderHistory();
+}
+
+function renderHistory() {
+  if (history.length === 0) return;
+  historySection.classList.add('visible');
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item" onclick="loadTopic('${h.topic.replace(/'/g, "\\'")}')">
+      <span class="topic">${h.topic}</span>
+      <span class="count">${h.count} take${h.count !== 1 ? 's' : ''} \u2022 Max Level ${h.maxLevel}</span>
+    </div>
+  `).join('');
+}
+
+function loadTopic(topic) {
+  topicInput.value = topic;
+  currentTopic = '';
+  generateTake();
+}
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ============================================================
+// Event listeners
+// ============================================================
+generateBtn.addEventListener('click', generateTake);
+topicInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') generateTake();
+});
+
+// Initial ember ambiance
+setInterval(() => spawnEmbers(1), 3000);
+
+// Render saved history on load
+renderHistory();
+</script>
+</body>
+</html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Red Flag Detector - Is This a Relationship or a Crime Scene?</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0d0d0d;
+    color: #e0e0e0;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 2.2rem;
+    color: #ff2d2d;
+    margin-bottom: 4px;
+    text-shadow: 0 0 20px rgba(255, 45, 45, 0.3);
+  }
+
+  header h1 .flag-icon { font-size: 2.4rem; }
+
+  header p {
+    color: #888;
+    font-size: 0.95rem;
+    font-style: italic;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 180px;
+    background: #1a1a1a;
+    border: 2px solid #333;
+    border-radius: 12px;
+    color: #e0e0e0;
+    font-size: 1rem;
+    padding: 16px;
+    resize: vertical;
+    transition: border-color 0.3s;
+    font-family: inherit;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: #ff2d2d;
+    box-shadow: 0 0 12px rgba(255, 45, 45, 0.15);
+  }
+
+  textarea::placeholder { color: #555; }
+
+  .btn-analyze {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, #cc0000, #ff2d2d);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.3s;
+    text-transform: uppercase;
+  }
+
+  .btn-analyze:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(255, 45, 45, 0.35);
+  }
+
+  .btn-analyze:active { transform: translateY(0); }
+
+  .meter-section {
+    margin-top: 32px;
+    display: none;
+  }
+
+  .meter-section.visible { display: block; }
+
+  .meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .meter-bar {
+    width: 100%;
+    height: 28px;
+    background: #1a1a1a;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #333;
+  }
+
+  .meter-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 14px;
+    transition: width 1.2s ease-out, background 0.6s;
+    background: linear-gradient(90deg, #ffcc00, #ff6600, #ff2d2d, #8b0000);
+  }
+
+  .flag-count-display {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #ff2d2d;
+    text-shadow: 0 0 30px rgba(255, 45, 45, 0.4);
+  }
+
+  .flag-count-display span { font-size: 1rem; color: #888; font-weight: 400; }
+
+  .verdict-box {
+    margin-top: 24px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a0000, #2a0a0a);
+    border: 2px solid #ff2d2d;
+    border-radius: 12px;
+    text-align: center;
+    display: none;
+  }
+
+  .verdict-box.visible { display: block; }
+
+  .verdict-text {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: #ffcccc;
+    font-style: italic;
+  }
+
+  .flags-list {
+    margin-top: 24px;
+    display: none;
+  }
+
+  .flags-list.visible { display: block; }
+
+  .flags-list h3 {
+    color: #ff2d2d;
+    margin-bottom: 12px;
+    font-size: 1.1rem;
+  }
+
+  .flag-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: #141414;
+    border-radius: 10px;
+    border-left: 4px solid;
+    animation: flagSlide 0.4s ease-out forwards;
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  @keyframes flagSlide {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .flag-item.yellow { border-left-color: #ffcc00; }
+  .flag-item.red { border-left-color: #ff2d2d; }
+  .flag-item.crimson { border-left-color: #8b0000; }
+  .flag-item.run { border-left-color: #ff00ff; background: #1a0018; }
+
+  .flag-severity {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .flag-severity.yellow { background: #ffcc00; color: #000; }
+  .flag-severity.red { background: #ff2d2d; color: #fff; }
+  .flag-severity.crimson { background: #8b0000; color: #fff; }
+  .flag-severity.run { background: #ff00ff; color: #fff; animation: pulse 0.8s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .flag-desc {
+    font-size: 0.92rem;
+    color: #ccc;
+  }
+
+  .flag-desc strong { color: #ff9999; }
+
+  .btn-share {
+    display: none;
+    width: 100%;
+    margin-top: 20px;
+    padding: 14px;
+    background: #1a1a1a;
+    border: 2px solid #ff2d2d;
+    border-radius: 12px;
+    color: #ff2d2d;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-share.visible { display: block; }
+  .btn-share:hover { background: #2a0a0a; }
+
+  .clean-result {
+    display: none;
+    text-align: center;
+    margin-top: 40px;
+    padding: 30px;
+    background: #0a1a0a;
+    border: 2px solid #00cc44;
+    border-radius: 12px;
+  }
+
+  .clean-result.visible { display: block; }
+  .clean-result h2 { color: #00cc44; margin-bottom: 8px; }
+  .clean-result p { color: #88cc88; }
+
+  .examples {
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .examples button {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    color: #888;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin: 4px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .examples button:hover {
+    border-color: #ff2d2d;
+    color: #ff9999;
+  }
+
+  footer {
+    text-align: center;
+    margin-top: 48px;
+    color: #444;
+    font-size: 0.78rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1><span class="flag-icon">&#9873;</span> Red Flag Detector</h1>
+    <p>Describe the situation. We'll tell you what you already know.</p>
+  </header>
+
+  <textarea id="input" placeholder="Tell us everything. 'So we've been talking for 3 months but they say they're not ready for a relationship yet. They still hang out with their ex every weekend and say I'm being jealous. They borrowed money last week and...'"></textarea>
+
+  <div class="examples">
+    <button onclick="loadExample(0)">Situationship nightmare</button>
+    <button onclick="loadExample(1)">Love bombing classic</button>
+    <button onclick="loadExample(2)">The gaslighter</button>
+  </div>
+
+  <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">&#9873; ANALYZE</button>
+
+  <div class="meter-section" id="meterSection">
+    <div class="meter-label">
+      <span>Healthy</span>
+      <span>Concerning</span>
+      <span>EVACUATE</span>
+    </div>
+    <div class="meter-bar">
+      <div class="meter-fill" id="meterFill"></div>
+    </div>
+    <div class="flag-count-display" id="flagCount"></div>
+  </div>
+
+  <div class="verdict-box" id="verdictBox">
+    <div class="verdict-text" id="verdictText"></div>
+  </div>
+
+  <div class="flags-list" id="flagsList">
+    <h3>Detected Red Flags:</h3>
+    <div id="flagsContainer"></div>
+  </div>
+
+  <div class="clean-result" id="cleanResult">
+    <h2>All Clear</h2>
+    <p>No red flags detected. Either this is healthy... or you left out the important parts.</p>
+  </div>
+
+  <button class="btn-share" id="shareBtn" onclick="shareResult()">Share This Disaster</button>
+
+  <footer>Not actual relationship advice. But also... maybe listen to the flags.</footer>
+</div>
+
+<script>
+const FLAG_PATTERNS = [
+  // RUN tier
+  { pattern: /\bhit(s|ting)?\s+me\b/i, label: "Physical violence", severity: "run", snark: "This is not a red flag. This is a crime." },
+  { pattern: /\bphysical(ly)?\s+(abus|violen|hurt|harm)/i, label: "Physical abuse", severity: "run", snark: "Run. Now. Not tomorrow. Now." },
+  { pattern: /\bthreaten(s|ed|ing)?\s+(to\s+)?(kill|hurt|harm|hit)/i, label: "Threats of violence", severity: "run", snark: "People who love you don't threaten to hurt you." },
+  { pattern: /\bstalk(s|ed|ing|er)?\b/i, label: "Stalking behavior", severity: "run", snark: "Following you isn't love. It's a restraining order waiting to happen." },
+  { pattern: /\btrap(ped|ping|s)?\s+(me|you|in)/i, label: "Trapping / isolation", severity: "run", snark: "If you feel trapped, believe that feeling." },
+  { pattern: /\bcontrol(s|ling)?\s+(who|what|where|when|my|every)/i, label: "Controlling behavior", severity: "run", snark: "A partner, not a parole officer." },
+  { pattern: /\bforced?\s+(me|sex|into)/i, label: "Coercion / force", severity: "run", snark: "Consent is not optional. Ever." },
+  { pattern: /\bisola(te|tes|ted|ting)\b/i, label: "Isolation tactics", severity: "run", snark: "Cutting you off from everyone = making you dependent on them." },
+  { pattern: /\bcheck(s|ing)?\s+my\s+(phone|messages|email|location)/i, label: "Privacy invasion", severity: "run", snark: "A partner who checks your phone is looking for control, not connection." },
+  { pattern: /\bwon'?t\s+let\s+me\s+(leave|go|see|talk|have)/i, label: "Restricting freedom", severity: "run", snark: "If you need permission to live your life, you're in captivity." },
+
+  // CRIMSON tier
+  { pattern: /\bgaslight/i, label: "Gaslighting", severity: "crimson", snark: "Making you question your reality is a strategy, not a misunderstanding." },
+  { pattern: /\bthat\s+never\s+happened\b/i, label: "Reality denial", severity: "crimson", snark: "'That never happened' is the gaslighter's national anthem." },
+  { pattern: /\byou'?re\s+(crazy|insane|psycho|losing\s+it|imagining|overreact)/i, label: "Calling you crazy", severity: "crimson", snark: "You're not crazy. They're just hoping you'll believe that." },
+  { pattern: /\b(narcissis|sociopath|manipulat)/i, label: "Manipulative personality", severity: "crimson", snark: "If the word fits, the shoe fits." },
+  { pattern: /\blove\s*bomb/i, label: "Love bombing", severity: "crimson", snark: "Overwhelming affection early on is a deposit on future control." },
+  { pattern: /\b(said|says?)\s+(they'?d|they\s+would)\s+(kill|hurt|harm)\s+(them|him|her)sel(f|ves)/i, label: "Emotional hostage-taking", severity: "crimson", snark: "Threatening self-harm to keep you is manipulation, not love." },
+  { pattern: /\bif\s+you\s+leave.*I'?ll/i, label: "Conditional threats", severity: "crimson", snark: "Love doesn't come with ultimatums." },
+  { pattern: /\beveryone\s+(thinks|says|knows)\s+you'?re/i, label: "Mob mentality manipulation", severity: "crimson", snark: "Turning everyone against you. Classic isolation move." },
+  { pattern: /\bsecret(ly)?\s+(married|dating|relationship|family|wife|husband)/i, label: "Secret life", severity: "crimson", snark: "Surprise! You're the side quest in their main storyline." },
+  { pattern: /\bcheat(s|ed|ing)?\b/i, label: "Cheating", severity: "crimson", snark: "If they cheat WITH you, they'll cheat ON you." },
+  { pattern: /\b(took|stole|stealing|takes)\s+(my\s+)?(money|card|savings)/i, label: "Financial abuse", severity: "crimson", snark: "Love doesn't have a minimum balance requirement." },
+  { pattern: /\banger\s+(issue|problem|management)/i, label: "Anger issues", severity: "crimson", snark: "Anger issues are just violence on a payment plan." },
+  { pattern: /\bpunches?\s+(wall|hole|door)/i, label: "Intimidation through destruction", severity: "crimson", snark: "Today it's the wall. Tomorrow it won't be." },
+  { pattern: /\bscream(s|ed|ing)?\s+at\s+me/i, label: "Screaming at partner", severity: "crimson", snark: "Volume is not an argument technique." },
+  { pattern: /\b(my\s+)?fault.*everything/i, label: "Blame-shifting everything", severity: "crimson", snark: "If everything is your fault, nothing is their responsibility." },
+
+  // RED tier
+  { pattern: /\bnot\s+(ready|looking)\s+for\s+(a\s+)?(relationship|commitment|anything\s+serious)/i, label: "Not ready for commitment", severity: "red", snark: "Translation: not ready for commitment... with YOU." },
+  { pattern: /\bit'?s\s+complicated\b/i, label: "'It's complicated'", severity: "red", snark: "No it isn't. They want options." },
+  { pattern: /\b(still\s+)?(friends|hangs?\s+out|close|talks?)\s+(with\s+)?(all\s+)?(their|his|her)\s+ex/i, label: "Still close with ex(es)", severity: "red", snark: "The Museum of Past Relationships is still open for guided tours." },
+  { pattern: /\bdoes(n'?t| not)\s+believe\s+in\s+labels/i, label: "Doesn't believe in labels", severity: "red", snark: "'I don't believe in labels' = 'I want the benefits without the commitment.'" },
+  { pattern: /\bnot\s+like\s+(other|the\s+other)\s+(guys?|girls?|women|men|people)/i, label: "'Not like other people'", severity: "red", snark: "Everyone who says this IS exactly like the others." },
+  { pattern: /\b(3|4|5|6|7|8|9|10|\d{2,})\s+(months?|years?)\s+(and|but)\s+(still|no|hasn'?t|haven'?t|won'?t|never)/i, label: "Long time, no progress", severity: "red", snark: "If it hasn't progressed in that long, it's not going to." },
+  { pattern: /\bleft\s+on\s+read/i, label: "Left on read", severity: "red", snark: "The message was received. The silence IS the answer." },
+  { pattern: /\b(ghost|ghosted|ghosting)\b/i, label: "Ghosting", severity: "red", snark: "Disappearing is the coward's breakup." },
+  { pattern: /\bbreadcrumb/i, label: "Breadcrumbing", severity: "red", snark: "Giving you just enough attention to keep you on the hook." },
+  { pattern: /\b(hot\s+and\s+cold|push\s*(-|\s+and\s+)pull)/i, label: "Hot and cold behavior", severity: "red", snark: "Inconsistency is a choice, not a personality trait." },
+  { pattern: /\bonly\s+(texts?|calls?|hits?\s+me\s+up)\s+(at\s+)?(night|late|2|3|1\s*am|midnight)/i, label: "Late-night-only contact", severity: "red", snark: "You're not their person. You're their 2am backup plan." },
+  { pattern: /\bsituation\s*ship/i, label: "Situationship", severity: "red", snark: "A situationship is just a relationship without the respect." },
+  { pattern: /\bkeep(s|ing)?\s+(it|things|us)\s+(secret|private|quiet|hidden)/i, label: "Keeping relationship secret", severity: "red", snark: "If they hide you, you're not a partner. You're a secret." },
+  { pattern: /\bnot\s+(on|posted\s+on)\s+(social\s+media|instagram|insta|facebook|fb)/i, label: "Hidden from social media", severity: "red", snark: "If you don't exist on their socials, do you exist in their life?" },
+  { pattern: /\b(borrow|lend|loan)(ed|s|ing)?\s+(money|cash)/i, label: "Borrowing money", severity: "red", snark: "Date someone, not fund someone." },
+  { pattern: /\bowe(s|d)?\s+me\s+money/i, label: "Owes money", severity: "red", snark: "When money flows one way, so does the power." },
+  { pattern: /\bwon'?t\s+(introduce|meet)\s+(me\s+to\s+)?(family|friends|parents|mom|dad)/i, label: "Won't introduce to family/friends", severity: "red", snark: "If you haven't met anyone in their life, you're not IN their life." },
+  { pattern: /\b(moved|moving)\s+(in|together)\s+(after|within)\s+(a\s+)?(week|month|2|3|one|two|three)/i, label: "Moving too fast", severity: "red", snark: "U-Haul speed relationships usually crash." },
+  { pattern: /\bsoul\s*mate.*((first|1st)\s+(date|week|day)|just\s+met)/i, label: "Instant soulmate declaration", severity: "red", snark: "Calling you their soulmate on day 3 is not romantic. It's concerning." },
+  { pattern: /\b(married|spouse|wife|husband).*separ(ate|ated|ating)/i, label: "Separated (still married)", severity: "red", snark: "'Separated' is married with extra steps." },
+  { pattern: /\bsay(s|ing)?\s+sorry\s+but\s+(does|keeps?|never\s+change|do(es)?\s+it\s+again)/i, label: "Apology without change", severity: "red", snark: "An apology without changed behavior is just manipulation." },
+  { pattern: /\b(always|keeps?)\s+(break|broke|breaking)\s+(up|it\s+off)/i, label: "Cycle of breaking up", severity: "red", snark: "On-again off-again is just indecision wearing a relationship costume." },
+  { pattern: /\b(their|his|her)\s+(mom|mother|dad|father|parent)\s+(hates?|doesn'?t\s+like|controls?)/i, label: "Family interference", severity: "red", snark: "You're not just dating them. You're dating the whole dysfunctional family." },
+  { pattern: /\bneeds?\s+(space|time|to\s+find\s+(themselves|myself))/i, label: "Needs space / time", severity: "red", snark: "Needing space from you specifically is the gentlest breakup they can't commit to." },
+  { pattern: /\b(ex|ex'?s)\s+(still|keeps?|won'?t\s+stop)/i, label: "Ex interference", severity: "red", snark: "If the ex is still in the picture, you're the third wheel." },
+  { pattern: /\bother\s+(girls?|guys?|women|men|people)\s+(are|were|keep)/i, label: "Comparing to others", severity: "red", snark: "Comparison is the grave where relationships are buried." },
+  { pattern: /\bdrunk(en)?\s+(call|text|message|dm)/i, label: "Only contacts when drunk", severity: "red", snark: "Alcohol doesn't create feelings. It lowers standards." },
+  { pattern: /\bdo\s+it\s+again/i, label: "Repeated bad behavior", severity: "red", snark: "Once is a mistake. Twice is a pattern. Three times is a personality." },
+
+  // YELLOW tier
+  { pattern: /\bjealous(y)?\b/i, label: "Jealousy issues", severity: "yellow", snark: "A little jealousy is human. A lot is a prison sentence." },
+  { pattern: /\b(never|doesn'?t|don'?t|won'?t)\s+(text|call|reach\s+out|initiate|message)\s+(me\s+)?first/i, label: "Never initiates contact", severity: "yellow", snark: "If you're always the one reaching out, you're chasing, not dating." },
+  { pattern: /\b(always|only)\s+(talk|talks?)\s+about\s+(themselves?|himself|herself)/i, label: "Only talks about themselves", severity: "yellow", snark: "A conversation is a two-player game." },
+  { pattern: /\b(bad|poor|terrible|horrible)\s+(communicat|texter)/i, label: "Bad communicator", severity: "yellow", snark: "Bad communication isn't a personality trait. It's a choice." },
+  { pattern: /\bplaying\s+(hard\s+to\s+get|games?|mind\s+games?)/i, label: "Playing games", severity: "yellow", snark: "Adults communicate. Children play games." },
+  { pattern: /\b(cancel|cancels?|cancelled|bailed?|flake[ds]?)\s+(on\s+me|plans?|last\s+minute|every\s+time|again)/i, label: "Constantly canceling", severity: "yellow", snark: "Canceling plans is prioritizing everything over you." },
+  { pattern: /\b(always|keep(s)?)\s+(on\s+)?(their|the|his|her)\s+phone/i, label: "Always on phone", severity: "yellow", snark: "If they can't put the phone down around you, their attention is elsewhere." },
+  { pattern: /\bwhat\s+are\s+we\b/i, label: "'What are we?' unanswered", severity: "yellow", snark: "If you have to ask 'what are we,' you already know." },
+  { pattern: /\b(friends?\s+with\s+benefits|fwb|hookup|hook\s*up)\b/i, label: "FWB / hookup dynamic", severity: "yellow", snark: "The 'benefits' rarely include emotional security." },
+  { pattern: /\b(toxic|drama|problematic)\b/i, label: "Self-described toxicity", severity: "yellow", snark: "When someone tells you they're toxic, believe them the first time." },
+  { pattern: /\b(trust\s+issue|insecure|insecurity|trust\s+problem)/i, label: "Trust issues", severity: "yellow", snark: "Trust issues from the past, applied to your present." },
+  { pattern: /\b(dating\s+app|tinder|bumble|hinge|grindr)\b/i, label: "Still on dating apps", severity: "yellow", snark: "Still swiping while 'with' you. The math doesn't math." },
+  { pattern: /\b(doesn'?t|don'?t|never)\s+(remember|listen|pay\s+attention)/i, label: "Doesn't listen or remember", severity: "yellow", snark: "Not remembering what matters to you means you don't matter." },
+  { pattern: /\b(passive\s+aggressive|silent\s+treatment)/i, label: "Passive-aggressive / silent treatment", severity: "yellow", snark: "The silent treatment is emotional punishment." },
+  { pattern: /\b(my\s+friends?\s+(say|think|told)|everyone\s+says)/i, label: "Friends see the problem", severity: "yellow", snark: "When everyone around you sees it, it's time to open your eyes." },
+  { pattern: /\b(different\s+person|changed|not\s+the\s+same)\s+(after|once|when|now)/i, label: "Changed after getting comfortable", severity: "yellow", snark: "The mask dropped. This is who they actually are." },
+  { pattern: /\b(settle|settling)\b/i, label: "Settling feeling", severity: "yellow", snark: "If it feels like settling, it IS settling." },
+  { pattern: /\b(too\s+busy|never\s+has?\s+time|no\s+time)/i, label: "Always too busy", severity: "yellow", snark: "Everyone has the same 24 hours. Priorities are a choice." },
+  { pattern: /\b(love|like)\s+(them|him|her)\s+but/i, label: "'I love them, but...'", severity: "yellow", snark: "Everything before the 'but' is the lie you tell yourself." },
+  { pattern: /\bcompare(s|d|ing)?\s+(me|you)\s+to\s+(their|his|her|the)\s+ex/i, label: "Compares to ex", severity: "yellow", snark: "Being compared to the ex means they're not over the ex." },
+  { pattern: /\b(deserve|worthy|good\s+enough)/i, label: "Self-worth questioning", severity: "yellow", snark: "If the relationship makes you question your worth, it's worthless." },
+  { pattern: /\bmaybe\s+(they'?ll|it'?ll|things?\s+will)\s+change/i, label: "Hoping they'll change", severity: "yellow", snark: "They won't. Next question." },
+  { pattern: /\b(walk(s|ed|ing)?\s+on\s+eggshells|afraid\s+to\s+bring\s+(it|things?)\s+up)/i, label: "Walking on eggshells", severity: "yellow", snark: "If you're afraid to communicate, the relationship is already broken." },
+  { pattern: /\b(seen\s+zone|left\s+me\s+on\s+seen)/i, label: "Seen-zoned", severity: "yellow", snark: "Seen but not responded to. Digital emotional neglect." },
+  { pattern: /\bon\s+(a\s+)?break\b/i, label: "On a break", severity: "yellow", snark: "A break is a breakup with a return policy." },
+  { pattern: /\b(just|only)\s+(a\s+)?(joke|kidding|joking)/i, label: "Hurtful 'jokes'", severity: "yellow", snark: "Cruelty disguised as humor is still cruelty." },
+  { pattern: /\bnever\s+(apologize|says?\s+sorry)/i, label: "Never apologizes", severity: "yellow", snark: "Someone who can't say sorry can't grow." },
+  { pattern: /\blied?\s+(to\s+me|about)/i, label: "Lying", severity: "red", snark: "A relationship built on lies is a house built on sand." },
+  { pattern: /\bhide(s|ing)?\s+(their|his|her)\s+phone/i, label: "Hiding phone", severity: "red", snark: "If the phone is a secret, so is something on it." },
+  { pattern: /\b(doesn'?t|don'?t)\s+(respect|care\s+about)\s+(my|your)\s+(boundar|feeling|opinion)/i, label: "Disrespects boundaries", severity: "red", snark: "Boundaries aren't suggestions. They're requirements." },
+  { pattern: /\b(guilt\s*trip|make(s)?\s+me\s+feel\s+guilty)/i, label: "Guilt-tripping", severity: "red", snark: "Guilt is their favorite currency, and they're spending yours." },
+  { pattern: /\bnever\s+(wrong|at\s+fault|takes?\s+blame)/i, label: "Never wrong", severity: "red", snark: "Someone who's never wrong is always dangerous." },
+  { pattern: /\b(i'?m|feel)\s+(not\s+)?(happy|unhappy|miserable|sad|depressed|anxious|stressed)\s+(in|with|around)/i, label: "Unhappy in relationship", severity: "yellow", snark: "Your feelings are data. This data says leave." },
+];
+
+const VERDICTS_BY_COUNT = {
+  low: [
+    "Might be a yellow light. Proceed with caution and one eye open.",
+    "A couple of flags. Not a parade yet, but pack an umbrella.",
+    "Some concerns here. Your friends are probably already worried.",
+    "Low flag count, but quality over quantity applies to red flags too.",
+    "These alone might be manageable. But you're here for a reason.",
+  ],
+  medium: [
+    "This situation contains {n} red flags. That's not a relationship, that's a parade.",
+    "{n} flags detected. This isn't a partner, it's a project.",
+    "Found {n} flags. At this point, the flag IS the relationship.",
+    "{n} red flags. Your gut already knew. Your brain is just catching up.",
+    "This situation is {n} red flags in a trench coat pretending to be love.",
+    "{n} flags. Somewhere, a therapist just got a new boat payment.",
+    "Detected {n} flags. This isn't a relationship, it's a case study.",
+    "{n} red flags. You don't need a partner, you need a lawyer.",
+    "That's {n} flags. The only label this deserves is 'hazardous waste.'",
+    "{n} flags flying high. This relationship needs a safety briefing.",
+  ],
+  high: [
+    "{n} red flags. This isn't a relationship, it's a true crime podcast waiting to happen.",
+    "We found {n} flags and stopped counting because our detector caught fire.",
+    "{n} flags. This is less of a relationship and more of a hostage negotiation.",
+    "{n} flags?! Babe, this isn't love. This is a crime scene with candles.",
+    "Counted {n} flags. At this point, running isn't enough. Change your name.",
+    "{n} red flags. This relationship has more warnings than a cigarette pack.",
+    "That's {n} flags. You don't need a partner, you need witness protection.",
+    "{n} flags detected. The UN would classify this as a humanitarian crisis.",
+    "Found {n} flags. This relationship violates the Geneva Convention.",
+    "{n} flags. I'm not a therapist but I play one on this website. LEAVE.",
+  ],
+  extreme: [
+    "{n} RED FLAGS. This isn't a relationship, it's an emergency. Close this tab and open Google Maps to the nearest exit.",
+    "We ran out of flag emojis at {n}. This situation needs an intervention, not an app.",
+    "{n} flags. Congratulations, you've collected the full set. Now throw the whole person away.",
+    "{n} red flags detected. I'm a website and even I'm concerned for your safety.",
+    "{n} flags. This relationship didn't just cross the line, it doesn't know the line exists.",
+    "{n} flags. This isn't a red flag, it's the entire Soviet Union.",
+    "DEFCON 1. {n} flags detected. This situation is what they warn you about in health class.",
+    "{n} flags. At this point I'm ethically required to remind you: National DV Hotline is 1-800-799-7233.",
+    "{n} red flags. This person isn't your type. Your type should be 'emotionally available and not terrifying.'",
+    "{n} flags. Honey, the red flags have red flags.",
+  ],
+};
+
+const EXAMPLES = [
+  "We've been talking for 6 months but they say they're not ready for a relationship. They still hang out with their ex every weekend and say it's complicated. They only text me late at night and when I asked what are we, they said they don't believe in labels. My friends all say I should leave but I love them and I think maybe they'll change. They borrowed money last month and haven't mentioned it since.",
+  "We met 2 weeks ago and they already said I'm their soulmate. They want to move in together after one month. They text me 50 times a day and get upset if I don't respond immediately. They say they're not like other guys. They bought me expensive gifts and say they've never felt this way before. They want me to stop hanging out with my guy friends because it makes them jealous.",
+  "Every time we argue, they say that never happened or I'm imagining things. They call me crazy when I bring up something they said. My friends think they're a narcissist. They scream at me when they're angry then say it's my fault for pushing their buttons. They check my phone every night and won't let me see my friends. I'm always walking on eggshells. They say sorry but do it again every time."
+];
+
+function loadExample(i) {
+  document.getElementById('input').value = EXAMPLES[i];
+}
+
+let lastResults = null;
+
+function analyze() {
+  const text = document.getElementById('input').value.trim();
+  if (!text) return;
+
+  document.getElementById('cleanResult').classList.remove('visible');
+  document.getElementById('meterSection').classList.remove('visible');
+  document.getElementById('verdictBox').classList.remove('visible');
+  document.getElementById('flagsList').classList.remove('visible');
+  document.getElementById('shareBtn').classList.remove('visible');
+  document.getElementById('meterFill').style.width = '0%';
+
+  const found = [];
+  const seen = new Set();
+
+  for (const rule of FLAG_PATTERNS) {
+    if (!rule.pattern) continue;
+    if (rule.pattern.test(text)) {
+      const key = rule.label;
+      if (!seen.has(key)) {
+        seen.add(key);
+        found.push(rule);
+      }
+    }
+  }
+
+  const order = { run: 0, crimson: 1, red: 2, yellow: 3 };
+  found.sort((a, b) => order[a.severity] - order[b.severity]);
+
+  lastResults = { count: found.length, flags: found, text };
+
+  if (found.length === 0) {
+    document.getElementById('cleanResult').classList.add('visible');
+    return;
+  }
+
+  const meterSection = document.getElementById('meterSection');
+  meterSection.classList.add('visible');
+  const pct = Math.min(100, (found.length / 15) * 100);
+  setTimeout(() => {
+    document.getElementById('meterFill').style.width = pct + '%';
+  }, 100);
+
+  const countEl = document.getElementById('flagCount');
+  countEl.innerHTML = found.length + ' <span>flag' + (found.length !== 1 ? 's' : '') + ' detected</span>';
+
+  let tier;
+  if (found.length <= 3) tier = 'low';
+  else if (found.length <= 7) tier = 'medium';
+  else if (found.length <= 12) tier = 'high';
+  else tier = 'extreme';
+
+  const pool = VERDICTS_BY_COUNT[tier];
+  const verdict = pool[Math.floor(Math.random() * pool.length)].replace(/\{n\}/g, found.length);
+
+  setTimeout(() => {
+    const vBox = document.getElementById('verdictBox');
+    vBox.classList.add('visible');
+    document.getElementById('verdictText').textContent = verdict;
+  }, 600);
+
+  const container = document.getElementById('flagsContainer');
+  container.innerHTML = '';
+
+  found.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'flag-item ' + f.severity;
+    div.style.animationDelay = (0.8 + i * 0.12) + 's';
+
+    const severityLabels = { yellow: 'YELLOW FLAG', red: 'RED FLAG', crimson: 'CRIMSON FLAG', run: 'RUN' };
+
+    div.innerHTML = '<span class="flag-severity ' + f.severity + '">' + severityLabels[f.severity] + '</span>' +
+      '<div class="flag-desc"><strong>' + f.label + '</strong><br>' + f.snark + '</div>';
+    container.appendChild(div);
+  });
+
+  setTimeout(() => {
+    document.getElementById('flagsList').classList.add('visible');
+    document.getElementById('shareBtn').classList.add('visible');
+  }, 800);
+}
+
+function shareResult() {
+  if (!lastResults) return;
+  var n = lastResults.count;
+  var msg = 'I just ran my dating situation through the Red Flag Detector and it found ' + n + ' red flag' + (n !== 1 ? 's' : '') + '. ';
+  if (n >= 8) msg += "I need to reconsider my life choices.";
+  else if (n >= 4) msg += "That's not great.";
+  else msg += "Could be worse... right?";
+
+  if (navigator.share) {
+    navigator.share({ title: 'Red Flag Detector Results', text: msg }).catch(function(){});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(msg).then(function() {
+      var btn = document.getElementById('shareBtn');
+      btn.textContent = 'Copied to clipboard!';
+      setTimeout(function() { btn.textContent = 'Share This Disaster'; }, 2000);
+    });
+  }
+}
+
+document.getElementById('input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    analyze();
+  }
+});
+</script>
+</body>
+</html>

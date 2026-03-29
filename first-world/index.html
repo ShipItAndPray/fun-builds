@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>First World Tragedies - A Greek Tragedy Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8d48b;
+    --marble: #f5f0e8;
+    --marble-dark: #e0d5c3;
+    --blood: #8b1a1a;
+    --blood-light: #b22222;
+    --ink: #1a1a1a;
+    --shadow: rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--marble);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Greek column borders */
+  .columns-left, .columns-right {
+    position: fixed;
+    top: 0; bottom: 0;
+    width: 60px;
+    z-index: 10;
+    pointer-events: none;
+  }
+  .columns-left { left: 0; }
+  .columns-right { right: 0; }
+
+  .column {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, #d4c9b0, #f0e8d6 30%, #e8dcc4 70%, #d4c9b0);
+    box-shadow: 2px 0 8px var(--shadow);
+  }
+  .column::before, .column::after {
+    content: '';
+    position: absolute;
+    left: -8px; right: -8px;
+    height: 40px;
+    background: linear-gradient(180deg, #c4b896, #e0d5c3 40%, #d4c9b0);
+    border-radius: 2px;
+  }
+  .column::before { top: 0; }
+  .column::after { bottom: 0; }
+
+  .columns-left .column { left: 10px; }
+  .columns-right .column { right: 10px; }
+
+  /* Main container */
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 80px;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 768px) {
+    .columns-left, .columns-right { width: 30px; }
+    .column { width: 20px; }
+    .column::before, .column::after { left: -4px; right: -4px; height: 24px; }
+    .columns-left .column { left: 5px; }
+    .columns-right .column { right: 5px; }
+    .container { padding: 20px 40px; }
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 2.8em;
+    font-weight: 900;
+    color: var(--blood);
+    text-shadow: 2px 2px 4px var(--shadow);
+    letter-spacing: 3px;
+    line-height: 1.2;
+  }
+
+  .header .subtitle {
+    font-size: 1.3em;
+    font-style: italic;
+    color: var(--gold);
+    margin-top: 10px;
+  }
+
+  .masks {
+    font-size: 3em;
+    margin: 15px 0;
+  }
+
+  /* Input area */
+  .input-area {
+    background: white;
+    border: 3px solid var(--gold);
+    border-radius: 12px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 4px 20px var(--shadow);
+    position: relative;
+  }
+
+  .input-area::before {
+    content: 'Speak thy grievance unto the Oracle';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 0 15px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85em;
+    color: var(--gold);
+    white-space: nowrap;
+  }
+
+  .input-area label {
+    display: block;
+    font-size: 1.1em;
+    font-style: italic;
+    color: #666;
+    margin-bottom: 12px;
+  }
+
+  .input-area textarea {
+    width: 100%;
+    padding: 15px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2em;
+    border: 2px solid var(--marble-dark);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.3s;
+  }
+
+  .input-area textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  .dramatize-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 16px 50px;
+    font-family: 'Cinzel', serif;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: var(--marble);
+    background: linear-gradient(135deg, var(--blood) 0%, var(--blood-light) 50%, var(--blood) 100%);
+    border: 3px solid var(--gold);
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(139,26,26,0.4);
+  }
+
+  .dramatize-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(139,26,26,0.6);
+    background: linear-gradient(135deg, var(--blood-light) 0%, #cc2222 50%, var(--blood-light) 100%);
+  }
+
+  .dramatize-btn:active { transform: translateY(0); }
+
+  .dramatize-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Tragedy output */
+  .tragedy-container {
+    display: none;
+    margin-top: 40px;
+    animation: fadeIn 1s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .tragedy-title {
+    text-align: center;
+    font-family: 'Cinzel', serif;
+    font-size: 2em;
+    font-weight: 700;
+    color: var(--blood);
+    margin-bottom: 10px;
+    text-shadow: 1px 1px 3px var(--shadow);
+  }
+
+  .tragedy-byline {
+    text-align: center;
+    font-style: italic;
+    color: var(--gold);
+    font-size: 1.1em;
+    margin-bottom: 30px;
+  }
+
+  .act {
+    background: white;
+    border-left: 4px solid var(--gold);
+    padding: 25px 30px;
+    margin-bottom: 25px;
+    border-radius: 0 8px 8px 0;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: slideIn 0.8s ease;
+    animation-fill-mode: both;
+  }
+
+  .act:nth-child(1) { animation-delay: 0.2s; }
+  .act:nth-child(2) { animation-delay: 0.6s; }
+  .act:nth-child(3) { animation-delay: 1.0s; }
+  .act:nth-child(4) { animation-delay: 1.4s; }
+  .act:nth-child(5) { animation-delay: 1.8s; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .act-header {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3em;
+    font-weight: 700;
+    color: var(--blood);
+    margin-bottom: 12px;
+    border-bottom: 2px solid var(--gold-light);
+    padding-bottom: 8px;
+  }
+
+  .act-body {
+    font-size: 1.15em;
+    line-height: 1.8;
+    color: #333;
+  }
+
+  .act-stage-direction {
+    font-style: italic;
+    color: #888;
+    margin-top: 10px;
+    font-size: 0.95em;
+  }
+
+  /* Tragedy score */
+  .tragedy-score {
+    text-align: center;
+    margin: 30px 0;
+    padding: 25px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a1a1a 100%);
+    border: 3px solid var(--gold);
+    border-radius: 12px;
+    color: var(--marble);
+  }
+
+  .tragedy-score h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4em;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .skulls {
+    font-size: 2.5em;
+    letter-spacing: 8px;
+    margin: 10px 0;
+  }
+
+  .score-label {
+    font-style: italic;
+    color: var(--gold-light);
+    font-size: 1.1em;
+  }
+
+  /* Reality check */
+  .reality-check {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border: 2px dashed var(--gold);
+    border-radius: 12px;
+  }
+
+  .reality-check h3 {
+    font-family: 'Cinzel', serif;
+    color: var(--blood);
+    margin-bottom: 10px;
+  }
+
+  .reality-check p {
+    font-size: 1.1em;
+    font-style: italic;
+    color: #666;
+    line-height: 1.6;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin: 25px 0;
+  }
+
+  .control-btn {
+    padding: 12px 25px;
+    font-family: 'Cinzel', serif;
+    font-size: 1em;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+    color: var(--ink);
+  }
+
+  .control-btn:hover {
+    background: var(--gold);
+    color: white;
+  }
+
+  .control-btn.narrate {
+    background: var(--blood);
+    color: white;
+    border-color: var(--blood);
+  }
+
+  .control-btn.narrate:hover {
+    background: var(--blood-light);
+  }
+
+  .control-btn.narrate.speaking {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139,26,26,0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(139,26,26,0); }
+  }
+
+  /* Share area */
+  .share-area {
+    display: none;
+    text-align: center;
+    margin: 20px 0;
+    padding: 20px;
+    background: white;
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+  }
+
+  .share-area textarea {
+    width: 100%;
+    height: 120px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1em;
+    padding: 10px;
+    border: 1px solid var(--marble-dark);
+    border-radius: 6px;
+    margin: 10px 0;
+    resize: none;
+  }
+
+  .copied-msg {
+    color: var(--blood);
+    font-weight: 600;
+    display: none;
+  }
+
+  /* Loading */
+  .loading {
+    display: none;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .loading .oracle-text {
+    font-family: 'Cinzel', serif;
+    font-size: 1.3em;
+    color: var(--blood);
+    animation: breathe 2s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 40px 0 20px;
+    font-style: italic;
+    color: #999;
+    font-size: 0.9em;
+  }
+
+  /* Curtain effect */
+  .curtain {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 100;
+    pointer-events: none;
+  }
+  .curtain-left, .curtain-right {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50%;
+    background: linear-gradient(180deg, #4a0000, #8b1a1a 30%, #6b0000 70%, #3a0000);
+  }
+  .curtain-left { left: 0; transform: translateX(-100%); }
+  .curtain-right { right: 0; transform: translateX(100%); }
+
+  .curtain.opening {
+    display: block;
+    pointer-events: all;
+  }
+  .curtain.opening .curtain-left {
+    animation: curtainLeft 2s ease-in-out forwards;
+  }
+  .curtain.opening .curtain-right {
+    animation: curtainRight 2s ease-in-out forwards;
+  }
+
+  @keyframes curtainLeft {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+  @keyframes curtainRight {
+    0% { transform: translateX(0); }
+    30% { transform: translateX(0); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* Suggestions */
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+    justify-content: center;
+  }
+
+  .suggestion {
+    padding: 6px 14px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95em;
+    font-style: italic;
+    background: var(--marble);
+    border: 1px solid var(--gold-light);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .suggestion:hover {
+    background: var(--gold-light);
+    color: var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<div class="columns-left"><div class="column"></div></div>
+<div class="columns-right"><div class="column"></div></div>
+
+<div class="curtain" id="curtain">
+  <div class="curtain-left"></div>
+  <div class="curtain-right"></div>
+</div>
+
+<div class="container">
+  <header class="header">
+    <div class="masks">🎭</div>
+    <h1>First World Tragedies</h1>
+    <p class="subtitle">Where minor inconveniences become epic Greek drama</p>
+  </header>
+
+  <div class="input-area">
+    <label>What trivial misfortune hath befallen thee?</label>
+    <textarea id="complaint" placeholder="My WiFi is slow..." maxlength="300"></textarea>
+    <div class="suggestions">
+      <span class="suggestion" onclick="useSuggestion(this)">My WiFi is slow</span>
+      <span class="suggestion" onclick="useSuggestion(this)">My phone is at 2%</span>
+      <span class="suggestion" onclick="useSuggestion(this)">The coffee shop is out of oat milk</span>
+      <span class="suggestion" onclick="useSuggestion(this)">My Uber is 8 minutes away</span>
+      <span class="suggestion" onclick="useSuggestion(this)">Netflix is buffering</span>
+    </div>
+    <button class="dramatize-btn" id="dramatizeBtn" onclick="dramatize()">
+      &#9876; DRAMATIZE &#9876;
+    </button>
+  </div>
+
+  <div class="loading" id="loading">
+    <p class="oracle-text">The Oracle consults the ancient texts...</p>
+  </div>
+
+  <div class="tragedy-container" id="tragedyContainer"></div>
+
+  <footer class="footer">
+    <p>"Is this not the cruellest fate?" &mdash; You, probably</p>
+    <p style="margin-top:8px;">A production of the First World Amphitheatre &bull; Est. MMXXVI</p>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+// AUDIO ENGINE - Web Audio API dramatic sounds
+// ============================================================
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function ensureAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function playDramaticStrings(duration = 3) {
+  ensureAudio();
+  const now = audioCtx.currentTime;
+
+  // Dark sustained chord: D minor (D2, A2, D3, F3)
+  const freqs = [73.42, 110, 146.83, 174.61];
+  freqs.forEach((f, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(f, now);
+    // Slight vibrato
+    osc.frequency.setValueAtTime(f, now);
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.frequency.value = 5;
+    lfoGain.gain.value = 2;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    lfo.start(now);
+    lfo.stop(now + duration);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(800, now);
+    filter.frequency.linearRampToValueAtTime(300, now + duration);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.06, now + 0.5);
+    gain.gain.setValueAtTime(0.06, now + duration - 1);
+    gain.gain.linearRampToValueAtTime(0, now + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now + i * 0.1);
+    osc.stop(now + duration);
+  });
+}
+
+function playThunder() {
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  const bufferSize = audioCtx.sampleRate * 2;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
+  }
+
+  const source = audioCtx.createBufferSource();
+  source.buffer = buffer;
+
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(200, now);
+  filter.frequency.exponentialRampToValueAtTime(40, now + 2);
+
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.4, now);
+  gain.gain.exponentialRampToValueAtTime(0.01, now + 2);
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  source.start(now);
+}
+
+function playDoomChord() {
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  // Diminished chord
+  [130.81, 155.56, 185.00, 220.00].forEach(f => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = f;
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.3);
+    gain.gain.linearRampToValueAtTime(0, now + 2.5);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 2.5);
+  });
+}
+
+function playGong() {
+  ensureAudio();
+  const now = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(90, now);
+  osc.frequency.exponentialRampToValueAtTime(60, now + 4);
+  gain.gain.setValueAtTime(0.2, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 4);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(now);
+  osc.stop(now + 4);
+
+  // Add shimmer
+  const noise = audioCtx.createOscillator();
+  const nGain = audioCtx.createGain();
+  noise.type = 'triangle';
+  noise.frequency.value = 180;
+  nGain.gain.setValueAtTime(0.03, now);
+  nGain.gain.exponentialRampToValueAtTime(0.001, now + 3);
+  noise.connect(nGain);
+  nGain.connect(audioCtx.destination);
+  noise.start(now);
+  noise.stop(now + 3);
+}
+
+// ============================================================
+// TRAGEDY GENERATOR ENGINE
+// ============================================================
+
+const tragedyTitles = [
+  "The {NOUN} of Sorrows", "The Fall of the House of {NOUN}",
+  "The Lament of {HERO}", "Woe Upon {PLACE}",
+  "The Curse of the {NOUN}", "The Downfall of {HERO}",
+  "{HERO} Unchained", "The Last Days of {NOUN}",
+  "A Dirge for {NOUN}", "The Reckoning of {HERO}",
+  "Tears of the {NOUN}", "{HERO} Against the Gods",
+  "The Unraveling of {NOUN}", "Prometheus and the {NOUN}",
+  "The Siege of {PLACE}", "The Prophecy of the {NOUN}",
+  "The Weeping {NOUN}", "{HERO} in Exile",
+  "The Oracle's Warning: A Tragedy of {NOUN}", "The {NOUN} Requiem"
+];
+
+const bylines = [
+  "A tragedy in {N} acts, penned in the tears of mortals",
+  "Performed at the Amphitheatre of Mild Suffering",
+  "As foretold by the Oracle of Minor Complaints",
+  "Sponsored by the Chorus of Unnecessary Despair",
+  "A {N}-act catastrophe witnessed by the Muses themselves",
+  "Presented by the Ministry of Trivial Tribulations"
+];
+
+const actTemplates = {
+  exposition: [
+    "In the great kingdom of {HERO}'s dwelling, there existed a sacred covenant between mortal and {THING}. For generations untold, the {THING} had faithfully served, delivering {BENEFIT} to all who resided within these hallowed walls. The people knew peace. The people knew contentment. But lo, the Fates had other plans.",
+    "Hear me, O Muses, as I recount the tale of {HERO}, once blessed among mortals. In those golden days, {THING} flowed like nectar from Olympus itself. None could have foreseen the darkness that would descend upon this prosperous household. None could have imagined such {ADJ} devastation.",
+    "It was in the {TIME} when first the signs appeared. {HERO}, beloved of the gods (or so they thought), sat in their sacred {PLACE}, partaking of {THING} as they had done since time immemorial. The birds sang. The sun warmed the earth. All was right in the cosmos. But hark! A tremor in the firmament...",
+    "The chronicles of {HERO} begin in an age of plenty. {THING} was abundant, {BENEFIT} was assured, and the household thrived under the benevolent gaze of the Technology Gods. If only {HERO} had heeded the Oracle's warning: 'Nothing this good lasts, especially not {THING}.'",
+    "Before the calamity, before the tears, before the desperate refreshing of screens, there was paradise. {HERO} lived in blissful communion with {THING}, ignorant of the cosmic machinery already grinding toward catastrophe.",
+    "{HERO} rose that fateful morning with the lightness of one who does not yet know their world is about to end. The {THING} hummed its eternal song. {BENEFIT} seemed as certain as the sunrise. Oh, sweet ignorance! Oh, doomed innocence!"
+  ],
+  risingAction: [
+    "Then came the first omen. The {THING} faltered. Just for a moment -- a flicker, a stutter, a brief interruption that might have meant nothing. But {HERO}, trained in the ancient arts of paranoia, felt the cold hand of dread upon their shoulder. 'No,' they whispered to the uncaring void. 'Not the {THING}.'",
+    "The Chorus of Neighbors noticed nothing amiss, for they were fools. Only {HERO} possessed the sensitivity to detect the shift. The {THING} was {PROBLEM}! At first, mere {SEVERITY}. But {HERO} knew -- they KNEW -- this was but the opening salvo in a war against their very happiness.",
+    "Act by act, the tragedy unfurled like a dark tapestry woven by Moirai themselves. The {THING} began to {PROBLEM}, slowly at first, as if testing {HERO}'s resolve. 'Perhaps it will pass,' {HERO} said, bargaining with gods who had already sealed their fate.",
+    "The gods, those capricious architects of despair, sent their first messenger: the {THING} began to {PROBLEM}. {HERO} performed the ancient ritual of turning it off and on again, but the sacred rite failed. The chorus wailed.",
+    "Like Cassandra before them, {HERO} saw the signs that others dismissed. The {THING} was {PROBLEM}. They told their household. They told their friends. 'You're overreacting,' came the reply. But {HERO} was not overreacting. {HERO} was, for once, reacting exactly the right amount.",
+    "The descent began not with a bang, but with a {SEVERITY}. A single {PROBLEM} in the once-mighty {THING}. {HERO} stared at it the way one stares at a crack in a dam -- knowing that behind it lay an ocean of suffering."
+  ],
+  climax: [
+    "AND THEN THE UNTHINKABLE HAPPENED. The {THING} did fully and completely {CATASTROPHE}. {HERO} stood motionless, like Niobe turned to stone by grief. The clock on the wall ticked. The universe held its breath. In that moment, {HERO} understood what Oedipus understood, what Lear understood, what every tragic hero throughout history has understood: the gods are cruel, and {THING} is their cruelest instrument.",
+    "The climax arrived with the subtlety of Zeus's thunderbolt. {THING} -- sacred, trusted, eternal {THING} -- did {CATASTROPHE}. {HERO} let out a cry that echoed through the ages, a sound that contained within it all the accumulated suffering of every mortal who has ever {SUFFERED}. Prometheus chained to his rock would have wept in sympathy.",
+    "In the third hour of the ordeal, {HERO} reached the point of no return. The {THING} had {CATASTROPHE}, and no amount of {REMEDY} could reverse the damage. Standing alone in the {PLACE}, illuminated only by the cruel light of their situation, {HERO} raised their fists to the heavens and cried: 'WHY? What did I do to deserve this?!'",
+    "The catastrophe struck at precisely the worst possible moment. {HERO} needed {THING} most desperately, and it was precisely then that {THING} chose to {CATASTROPHE}. Was this coincidence? Or was it proof that the universe is a malevolent entity with an extremely specific sense of comedic timing?",
+    "Reader, it {CATASTROPHE_PAST}. The {THING}, once the crown jewel of {HERO}'s existence, now lay in ruins -- metaphorical ruins, but ruins nonetheless. In the silence that followed, {HERO} could hear the Fates laughing. They were not subtle about it.",
+    "With the force of a thousand tiny annoyances, the {THING} finally {CATASTROPHE_PAST}. {HERO} collapsed into their chair -- the same chair where, moments ago, all had been well. How quickly paradise becomes purgatory. How swiftly the comfortable becomes the catastrophic."
+  ],
+  fallingAction: [
+    "{HERO} attempted {REMEDY} after {REMEDY}, each more desperate than the last. They consulted the Oracle of Google. They performed the sacred reboot. They even considered -- may the gods forgive them -- {DESPERATE_MEASURE}. But the {THING} remained in its fallen state, mocking their every effort.",
+    "In the aftermath, {HERO} wandered their domain like a ghost. The {THING} sat there, present but useless, like a throne without a kingdom. Other mortals went about their lives, unaware that civilization itself hung by a thread. 'How can they not see?' {HERO} muttered. 'How can they not FEEL the wrongness of this?'",
+    "Hours passed. Or was it minutes? Time itself had lost meaning in this new, diminished world. {HERO} tried {REMEDY}. They tried bargaining. They tried acceptance. They tried bargaining again. The five stages of grief played out in fast-forward, each more undignified than the last.",
+    "The aftermath was worse than the event itself. {HERO} sat in stunned silence, contemplating the fragility of modern existence. All it took was one {THING} to {PROBLEM}, and the entire edifice of comfort came crashing down. Icarus flew too close to the sun. {HERO} relied too heavily on {THING}.",
+    "Like Odysseus tossed by the waves, {HERO} was thrown from remedy to remedy. The sacred settings were checked. The ancient cables were unplugged and re-plugged. A sacrifice of patience was offered to the customer service gods. All in vain.",
+    "In desperation, {HERO} turned to the forbidden arts: reading the manual. But even that sacred text offered no salvation. The words swam before their eyes like the prophecies of a drunken oracle. The {THING} would not yield."
+  ],
+  resolution: [
+    "And so {HERO} learned the lesson that all tragic heroes must learn: that {THING} is not a right, but a privilege, granted by fickle gods who delight in reminding us of our mortality. Tomorrow the {THING} may return to its former glory. Or it may not. Such is the human condition. The Chorus weeps. The curtain falls. {HERO} opens a book. It's actually not bad.",
+    "In the end, {HERO} did what all great heroes do in the face of insurmountable adversity: they {COPING}. And in that moment of {COPING}, they found something they didn't expect -- a glimpse of life beyond {THING}. It was terrifying. It was liberating. It lasted about four minutes before they checked again.",
+    "Thus concludes the tale of {HERO} and the {THING}. Let all who hear this story remember: we are but mortals, at the mercy of forces beyond our control. The {THING} will {PROBLEM} again. It always does. The question is not whether we will suffer, but whether we will suffer with dignity. {HERO} did not. But they tried.",
+    "Exhausted, humbled, and slightly dehydrated from the tears, {HERO} finally {RESOLUTION}. The {THING} was restored -- diminished, perhaps, but restored. And though the scars would never fully heal, {HERO} emerged from this trial knowing one truth: they could survive anything. Well, almost anything. If the {THING} goes down again next week, all bets are off.",
+    "The final act brought not triumph but acceptance. {HERO} gazed upon the {THING} -- now partially functional, like a wounded soldier returning from war -- and whispered, 'We shall never speak of this again.' The Chorus nodded solemnly. But they all knew: this wound would reopen. It always does.",
+    "As dawn broke on this new, post-tragedy world, {HERO} emerged forever changed. The {THING} had been restored through means {HERO} would later describe as 'basically a miracle.' The household rejoiced. But in {HERO}'s eyes, the haunted look remained. They had seen the abyss. The abyss had buffered."
+  ]
+};
+
+const stageDirections = [
+  "[Thunder rumbles ominously in the distance]",
+  "[The Chorus weeps and rends their garments]",
+  "[A single dramatic violin plays a mournful note]",
+  "[Lightning illuminates the tragic scene]",
+  "[The audience gasps as one]",
+  "[Dramatic pause. Someone in the audience coughs.]",
+  "[The lights dim. A child in Row 3 asks 'Is it over?']",
+  "[The Chorus exchanges concerned glances]",
+  "[A raven lands on the windowsill. It judges silently.]",
+  "[The orchestra swells with ominous cellos]",
+  "[Stage fog rolls in from stage left]",
+  "[A Greek mask falls from the rafters. No one is hit.]"
+];
+
+const realityChecks = [
+  "In the grand tapestry of human suffering -- famine, war, existential dread -- your complaint about \"{INPUT}\" ranks somewhere between 'stubbed toe' and 'slightly warm lemonade.' But your feelings are valid. Mostly.",
+  "The Oracle of Perspective reminds you: right now, somewhere on Earth, someone is genuinely suffering. Meanwhile, you are upset about \"{INPUT}\". The gods find this hilarious. We hope you do too.",
+  "On a scale of 'actual tragedy' to 'mildly inconvenient', \"{INPUT}\" lands firmly in the territory of 'first world problem that feels devastating for exactly 47 minutes.' You will survive this. Probably.",
+  "Aristotle defined tragedy as something that evokes pity and fear. \"{INPUT}\" evokes... mild sympathy and a slight exhale through the nose. But in your heart, it IS an Aristotelian tragedy, and that's what matters.",
+  "Future historians will not record the day \"{INPUT}\" happened. Your grandchildren will not gather around the fire to hear this tale. But YOU will remember. Oh, you will remember.",
+  "Let us consult the Oracle: Is \"{INPUT}\" truly a tragedy? The Oracle is silent. The Oracle is buffering. The Oracle relates to this more than they'd like to admit."
+];
+
+const scoreLabels = [
+  "Barely a Whimper", "A Minor Inconvenience", "A Noteworthy Nuisance",
+  "A Genuine Bother", "A True Tribulation", "A Significant Suffering",
+  "A Proper Catastrophe", "An Epic Calamity", "A Legendary Disaster",
+  "THE GREATEST TRAGEDY EVER TOLD (it is not)"
+];
+
+// ============================================================
+// NLP-ish: Extract context from complaint
+// ============================================================
+function analyzeComplaint(text) {
+  const t = text.toLowerCase().trim();
+  const ctx = {
+    thing: 'sacred device', benefit: 'comfort and joy', place: 'dwelling',
+    problem: 'falter', catastrophe: 'cease to function entirely',
+    catastrophe_past: 'ceased to function', severity: 'a whisper of malfunction',
+    remedy: 'desperate troubleshooting', desperate_measure: 'calling customer support',
+    coping: 'stared into the void', resolution: 'accepted their fate',
+    time: 'morning hours', adj: 'soul-crushing', suffered: 'known true despair',
+    noun: 'Signal', hero: 'The Sufferer', score: 6
+  };
+
+  // WiFi / Internet
+  if (/wifi|wi-fi|internet|connection|bandwidth|router|signal/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'WiFi', benefit: 'the endless stream of content and connection',
+      problem: 'weaken and sputter', catastrophe: 'drop to a single bar of signal, rendering all streaming impossible',
+      catastrophe_past: 'dropped to speeds not seen since the dial-up age',
+      severity: 'a momentary lag', remedy: 'router-rebooting',
+      desperate_measure: 'using mobile data', coping: 'refreshed the speed test 47 times',
+      resolution: 'moved closer to the router, crouching like a supplicant before a shrine',
+      noun: 'Signal', score: 7, suffered: 'watched a loading spinner'
+    });
+  }
+  // Phone battery
+  else if (/batter|charg|power|percent|%|dying|dead phone/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Phone Battery', benefit: 'connection to all of human knowledge',
+      problem: 'drain with unnatural speed', catastrophe: 'plummet to 1%, activating the dreaded Low Power Mode',
+      catastrophe_past: 'died, plunging the world into silence',
+      severity: 'a worrying percentage drop', remedy: 'low-power mode activation',
+      desperate_measure: 'asking a stranger for a charger', coping: 'watched the percentage tick down like a doomsday clock',
+      resolution: 'found a charger behind the couch cushions',
+      noun: 'Charge', score: 8, suffered: 'watched their battery icon turn red'
+    });
+  }
+  // Coffee / food / drink
+  else if (/coffee|latte|milk|oat|food|hungry|lunch|dinner|order|restaurant|starbucks/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Beverage', benefit: 'caffeine-induced enlightenment',
+      problem: 'become unavailable', catastrophe: 'be declared OUT OF STOCK by the barista, a harbinger of doom',
+      catastrophe_past: 'was denied to them by cruel fate',
+      severity: 'a troubling menu change', remedy: 'ordering something else',
+      desperate_measure: 'making coffee at home like a peasant', coping: 'ordered a regular latte and pretended it was fine',
+      resolution: 'discovered that almond milk exists, and while it is NOT the same, it will suffice',
+      noun: 'Order', score: 5, suffered: 'been told their usual is unavailable'
+    });
+  }
+  // Streaming / Netflix / TV
+  else if (/netflix|stream|buffer|hulu|disney|show|episode|series|youtube|video/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Stream', benefit: 'an endless river of entertainment',
+      problem: 'buffer endlessly', catastrophe: 'freeze at the most critical moment of the episode, mid-revelation',
+      catastrophe_past: 'buffered into oblivion during the season finale',
+      severity: 'a brief quality reduction to 480p', remedy: 'refreshing the page',
+      desperate_measure: 'reading a physical book', coping: 'watched the loading circle spin like a wheel of fate',
+      resolution: 'restarted the app and lost their place in the episode',
+      noun: 'Stream', score: 7, suffered: 'seen the buffering wheel of despair'
+    });
+  }
+  // Uber / rideshare / transit
+  else if (/uber|lyft|ride|taxi|bus|train|late|waiting|commut|traffic|drive/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Chariot', benefit: 'swift passage through the mortal realm',
+      problem: 'take an unconscionably long time', catastrophe: 'show an ETA of 15 minutes, then change to 23, then show the driver going in circles',
+      catastrophe_past: 'cancelled on them, leaving them stranded like Ariadne on Naxos',
+      severity: 'a two-minute delay', remedy: 'checking the app every 4 seconds',
+      desperate_measure: 'walking like some kind of ancient Greek', coping: 'watched the tiny car icon make a wrong turn',
+      resolution: 'finally got picked up, 12 minutes late, with a driver playing questionable music',
+      noun: 'Ride', score: 6, suffered: 'watched their driver miss the turn'
+    });
+  }
+  // Weather / temperature
+  else if (/weather|cold|hot|rain|snow|humid|temperature|thermostat|ac|heat/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Climate', benefit: 'thermal comfort befitting a civilized being',
+      problem: 'turn hostile', catastrophe: 'become so {ADJ} that all productivity ceased and existential questioning began',
+      catastrophe_past: 'became the enemy of all living things',
+      severity: 'a slight discomfort', remedy: 'thermostat adjustment',
+      desperate_measure: 'opening a window like a medieval peasant', coping: 'complained about the weather to anyone within earshot',
+      resolution: 'put on a sweater (or removed one) and muttered about it for the rest of the day',
+      noun: 'Temperature', score: 5, suffered: 'been slightly too warm or cold'
+    });
+  }
+  // Delivery / package / Amazon
+  else if (/deliver|package|amazon|mail|ship|order|tracking|ups|fedex/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Package', benefit: 'material goods arriving at one\'s doorstep like offerings',
+      problem: 'be delayed', catastrophe: 'show a tracking status of "Delayed - In Transit" with no further explanation, as if swallowed by the void',
+      catastrophe_past: 'vanished into the logistics underworld',
+      severity: 'a one-day delay', remedy: 'refreshing the tracking page',
+      desperate_measure: 'going to an actual store', coping: 'refreshed the tracking page 83 times',
+      resolution: 'received the package, one day late, slightly dented, a shadow of its former promised glory',
+      noun: 'Delivery', score: 6, suffered: 'watched a tracking number go dark'
+    });
+  }
+  // Phone / notification / social media
+  else if (/notification|phone|app|instagram|tiktok|social|like|follow|dm|text|message/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Notifications', benefit: 'constant validation from the digital realm',
+      problem: 'cease their flow', catastrophe: 'go completely silent, as if the entire world had forgotten they existed',
+      catastrophe_past: 'stopped, leaving only the void',
+      severity: 'a three-minute silence', remedy: 'posting something provocative',
+      desperate_measure: 'calling someone on the actual telephone', coping: 'posted a story and watched for views',
+      resolution: 'realized the phone was on Do Not Disturb mode the entire time',
+      noun: 'Notification', score: 5, suffered: 'known digital silence'
+    });
+  }
+  // Sleep / alarm / morning
+  else if (/sleep|alarm|wake|morning|tired|insomnia|nap|bed|snooze/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Slumber', benefit: 'the restoration of mortal energy',
+      problem: 'be interrupted', catastrophe: 'be shattered by an alarm that showed no mercy, no compassion, no understanding of how good the dream was',
+      catastrophe_past: 'was stolen by the cruel machinery of obligation',
+      severity: 'a restless tossing', remedy: 'hitting the snooze button',
+      desperate_measure: 'drinking three espressos and hoping for the best', coping: 'hit snooze seven times in a magnificent display of defiance',
+      resolution: 'got up, 45 minutes late, and called it a "wellness morning"',
+      noun: 'Rest', score: 7, suffered: 'been woken before their body was ready'
+    });
+  }
+  // Parking / car
+  else if (/park|car|gas|fuel|flat|tire|key/i.test(t)) {
+    Object.assign(ctx, {
+      thing: 'Sacred Chariot', benefit: 'freedom of movement across the mortal realm',
+      problem: 'betray its master', catastrophe: 'present an obstacle so insurmountable that {HERO} questioned every life choice that led to this moment',
+      catastrophe_past: 'became the instrument of suffering',
+      severity: 'a minor inconvenience', remedy: 'circling the block',
+      desperate_measure: 'parallel parking on a hill', coping: 'drove in circles like a tragic figure in a Greek maze',
+      resolution: 'found a spot, 6 blocks away, and called it exercise',
+      noun: 'Parking', score: 5, suffered: 'circled the lot of despair'
+    });
+  }
+
+  // Extract a "hero name" from context
+  ctx.hero = pickRandom(['The Protagonist', 'The Sufferer', 'Our Hero', 'The Mortal', 'The Victim', 'The Afflicted One']);
+  ctx.place = pickRandom(["the dwelling", "the apartment", "the sacred space", "the domain", "the homestead"]);
+  ctx.time = pickRandom(["morning hours", "twilight", "the witching hour", "midday", "the hour of rest"]);
+  ctx.adj = pickRandom(["soul-crushing", "devastating", "catastrophic", "unprecedented", "unimaginable"]);
+  ctx.suffered = ctx.suffered || "endured true hardship";
+
+  // Adjust score based on dramatic words in input
+  if (/never|worst|always|can't|impossible|hate|dying|dead|broken|ruined/i.test(t)) ctx.score = Math.min(10, ctx.score + 2);
+  if (/kinda|sort of|a little|slightly|minor/i.test(t)) ctx.score = Math.max(1, ctx.score - 2);
+
+  return ctx;
+}
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function fillTemplate(template, ctx, input) {
+  return template
+    .replace(/\{THING\}/g, ctx.thing)
+    .replace(/\{BENEFIT\}/g, ctx.benefit)
+    .replace(/\{PLACE\}/g, ctx.place)
+    .replace(/\{PROBLEM\}/g, ctx.problem)
+    .replace(/\{CATASTROPHE\}/g, ctx.catastrophe)
+    .replace(/\{CATASTROPHE_PAST\}/g, ctx.catastrophe_past)
+    .replace(/\{SEVERITY\}/g, ctx.severity)
+    .replace(/\{REMEDY\}/g, ctx.remedy)
+    .replace(/\{DESPERATE_MEASURE\}/g, ctx.desperate_measure)
+    .replace(/\{COPING\}/g, ctx.coping)
+    .replace(/\{RESOLUTION\}/g, ctx.resolution)
+    .replace(/\{HERO\}/g, ctx.hero)
+    .replace(/\{TIME\}/g, ctx.time)
+    .replace(/\{ADJ\}/g, ctx.adj)
+    .replace(/\{SUFFERED\}/g, ctx.suffered)
+    .replace(/\{NOUN\}/g, ctx.noun)
+    .replace(/\{INPUT\}/g, input)
+    .replace(/\{N\}/g, '5');
+}
+
+function generateTragedy(input) {
+  const ctx = analyzeComplaint(input);
+  const acts = ['exposition', 'risingAction', 'climax', 'fallingAction', 'resolution'];
+  const actNames = [
+    'ACT I: The Golden Age',
+    'ACT II: The First Omen',
+    'ACT III: The Catastrophe',
+    'ACT IV: The Descent',
+    'ACT V: The Aftermath'
+  ];
+
+  const generatedActs = acts.map((act, i) => ({
+    header: actNames[i],
+    body: fillTemplate(pickRandom(actTemplates[act]), ctx, input),
+    stage: pickRandom(stageDirections)
+  }));
+
+  const title = fillTemplate(pickRandom(tragedyTitles), ctx, input);
+  const byline = fillTemplate(pickRandom(bylines), ctx, input);
+  const reality = fillTemplate(pickRandom(realityChecks), ctx, input);
+
+  return { title, byline, acts: generatedActs, score: ctx.score, reality, input };
+}
+
+// ============================================================
+// UI LOGIC
+// ============================================================
+let currentTragedy = null;
+let isSpeaking = false;
+
+function useSuggestion(el) {
+  document.getElementById('complaint').value = el.textContent;
+}
+
+function dramatize() {
+  const input = document.getElementById('complaint').value.trim();
+  if (!input) {
+    document.getElementById('complaint').placeholder = 'The Oracle requires your complaint...';
+    document.getElementById('complaint').classList.add('shake');
+    setTimeout(() => document.getElementById('complaint').classList.remove('shake'), 500);
+    return;
+  }
+
+  const btn = document.getElementById('dramatizeBtn');
+  btn.disabled = true;
+
+  // Sound effects
+  playDramaticStrings(3);
+  setTimeout(() => playThunder(), 800);
+
+  // Curtain effect
+  const curtain = document.getElementById('curtain');
+  curtain.classList.add('opening');
+
+  // Show loading
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('tragedyContainer').style.display = 'none';
+
+  setTimeout(() => {
+    curtain.classList.remove('opening');
+    document.getElementById('loading').style.display = 'none';
+
+    currentTragedy = generateTragedy(input);
+    renderTragedy(currentTragedy);
+
+    btn.disabled = false;
+
+    // Doom chord when tragedy appears
+    playDoomChord();
+    setTimeout(() => playGong(), 1500);
+  }, 2500);
+}
+
+function renderTragedy(tragedy) {
+  const container = document.getElementById('tragedyContainer');
+
+  let html = `
+    <h2 class="tragedy-title">${tragedy.title}</h2>
+    <p class="tragedy-byline">${tragedy.byline}</p>
+    <div class="acts">
+  `;
+
+  tragedy.acts.forEach(act => {
+    html += `
+      <div class="act">
+        <div class="act-header">${act.header}</div>
+        <div class="act-body">${act.body}</div>
+        <div class="act-stage-direction">${act.stage}</div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  // Tragedy score
+  const skulls = '&#128128;'.repeat(tragedy.score) + '<span style="opacity:0.2">' + '&#128128;'.repeat(10 - tragedy.score) + '</span>';
+  html += `
+    <div class="tragedy-score">
+      <h3>TRAGEDY SCORE</h3>
+      <div class="skulls">${skulls}</div>
+      <div class="score-label">${tragedy.score}/10 &mdash; "${scoreLabels[tragedy.score - 1]}"</div>
+    </div>
+  `;
+
+  // Reality check
+  html += `
+    <div class="reality-check">
+      <h3>&#129300; Was It Really That Bad?</h3>
+      <p>${tragedy.reality}</p>
+    </div>
+  `;
+
+  // Controls
+  html += `
+    <div class="controls">
+      <button class="control-btn narrate" onclick="narrateTragedy()">&#127917; Narrate</button>
+      <button class="control-btn" onclick="shareTragedy()">&#128220; Share Thy Tragedy</button>
+      <button class="control-btn" onclick="dramatize()">&#9876; Another Take</button>
+    </div>
+    <div class="share-area" id="shareArea">
+      <h3 style="font-family:'Cinzel',serif; color:var(--blood); margin-bottom:10px;">Share This Tragedy With The World</h3>
+      <textarea id="shareText" readonly></textarea>
+      <br>
+      <button class="control-btn" onclick="copyShare()">Copy to Clipboard</button>
+      <p class="copied-msg" id="copiedMsg">Copied! Go spread the sorrow.</p>
+    </div>
+  `;
+
+  container.innerHTML = html;
+  container.style.display = 'block';
+  container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function narrateTragedy() {
+  if (!currentTragedy) return;
+  if (!('speechSynthesis' in window)) {
+    alert('Thy browser lacks the gift of speech.');
+    return;
+  }
+
+  if (isSpeaking) {
+    speechSynthesis.cancel();
+    isSpeaking = false;
+    document.querySelector('.narrate')?.classList.remove('speaking');
+    return;
+  }
+
+  isSpeaking = true;
+  document.querySelector('.narrate')?.classList.add('speaking');
+
+  // Build full narration text
+  let fullText = currentTragedy.title + '. ' + currentTragedy.byline + '. ';
+  currentTragedy.acts.forEach(act => {
+    fullText += act.header + '. ' + act.body + ' ' + act.stage + ' ';
+  });
+  fullText += 'Tragedy Score: ' + currentTragedy.score + ' out of 10. ' + scoreLabels[currentTragedy.score - 1] + '. ';
+  fullText += 'Was it really that bad? ' + currentTragedy.reality;
+
+  // Split into chunks (SpeechSynthesis has limits)
+  const chunks = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
+
+  let idx = 0;
+  function speakNext() {
+    if (idx >= chunks.length || !isSpeaking) {
+      isSpeaking = false;
+      document.querySelector('.narrate')?.classList.remove('speaking');
+      return;
+    }
+    const utter = new SpeechSynthesisUtterance(chunks[idx]);
+    utter.rate = 0.8;
+    utter.pitch = 0.7;
+    // Try to find a dramatic-sounding voice
+    const voices = speechSynthesis.getVoices();
+    const dramatic = voices.find(v => /daniel|thomas|alex|aaron|male/i.test(v.name)) || voices[0];
+    if (dramatic) utter.voice = dramatic;
+
+    utter.onend = () => { idx++; speakNext(); };
+    utter.onerror = () => { isSpeaking = false; document.querySelector('.narrate')?.classList.remove('speaking'); };
+    speechSynthesis.speak(utter);
+  }
+
+  // Ensure voices are loaded
+  if (speechSynthesis.getVoices().length === 0) {
+    speechSynthesis.onvoiceschanged = () => speakNext();
+  } else {
+    speakNext();
+  }
+}
+
+function shareTragedy() {
+  if (!currentTragedy) return;
+  const shareArea = document.getElementById('shareArea');
+  shareArea.style.display = 'block';
+
+  let text = `🎭 ${currentTragedy.title}\n${currentTragedy.byline}\n\n`;
+  currentTragedy.acts.forEach(act => {
+    text += `${act.header}\n${act.body}\n${act.stage}\n\n`;
+  });
+  text += `Tragedy Score: ${'💀'.repeat(currentTragedy.score)} ${currentTragedy.score}/10\n`;
+  text += `"${scoreLabels[currentTragedy.score - 1]}"\n\n`;
+  text += `Original complaint: "${currentTragedy.input}"\n\n`;
+  text += `— Generated at First World Tragedies 🎭`;
+
+  document.getElementById('shareText').value = text;
+  shareArea.scrollIntoView({ behavior: 'smooth' });
+}
+
+function copyShare() {
+  const text = document.getElementById('shareText').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('copiedMsg');
+    msg.style.display = 'block';
+    setTimeout(() => msg.style.display = 'none', 3000);
+  });
+}
+
+// Handle Enter key
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('complaint').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      dramatize();
+    }
+  });
+});
+</script>
+
+</body>
+</html>

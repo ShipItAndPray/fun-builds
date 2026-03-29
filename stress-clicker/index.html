@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Stress Clicker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --ball-color: #81c784;
+    --ball-shadow: #66bb6a;
+    --bg: #f5f0eb;
+    --text: #4a4a4a;
+    --card-bg: rgba(255,255,255,0.85);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    transition: background 0.8s ease;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  body.calming {
+    background: #e8eaf6;
+  }
+
+  header {
+    text-align: center;
+    padding: 1.5rem 1rem 0.5rem;
+  }
+
+  header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .anxiety-label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 0.3rem;
+    transition: color 0.3s;
+    min-height: 1.5em;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: flex;
+    gap: 1.2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 0.6rem 1rem;
+  }
+
+  .stat {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    border-radius: 12px;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    min-width: 90px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.6;
+  }
+
+  /* Ball area */
+  .ball-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    min-height: 300px;
+  }
+
+  .ball {
+    width: clamp(180px, 45vw, 280px);
+    height: clamp(180px, 45vw, 280px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.4), transparent 60%),
+                radial-gradient(circle at 50% 50%, var(--ball-color), var(--ball-shadow));
+    cursor: pointer;
+    transition: transform 0.08s ease-out, background 0.8s ease, border-radius 0.08s ease-out,
+                box-shadow 0.3s ease;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15),
+                inset 0 -4px 12px rgba(0,0,0,0.1);
+    position: relative;
+    touch-action: manipulation;
+  }
+
+  .ball:active, .ball.pressed {
+    transform: scale(0.88) scaleY(0.82);
+    border-radius: 48% 52% 54% 46% / 56% 44% 56% 44%;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2),
+                inset 0 -2px 8px rgba(0,0,0,0.15);
+  }
+
+  .ball .face {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  /* Squeeze particles */
+  .particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleFly 0.6s ease-out forwards;
+  }
+
+  @keyframes particleFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0); }
+  }
+
+  /* Bottom bar */
+  .bottom-bar {
+    padding: 0.8rem 1rem 1.5rem;
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: var(--card-bg);
+    border: 1.5px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+
+  .btn:active { transform: scale(0.95); }
+
+  /* Modal overlay */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  }
+
+  .modal h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .modal .close-btn {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0.2rem;
+  }
+
+  .report-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .report-row:last-child { border-bottom: none; }
+
+  .report-label { opacity: 0.7; }
+  .report-value { font-weight: 700; }
+
+  .day-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 80px;
+    margin: 1rem 0;
+  }
+
+  .day-bar .bar {
+    flex: 1;
+    background: var(--ball-color);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: background 0.3s;
+    position: relative;
+  }
+
+  .day-bar .bar-label {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.6rem;
+    opacity: 0.5;
+  }
+
+  /* Calming overlay */
+  .calming-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(200, 210, 240, 0.92);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .calming-overlay.active { display: flex; }
+
+  .calming-overlay h2 {
+    font-size: 1.6rem;
+    color: #5c6bc0;
+  }
+
+  .calming-overlay p {
+    font-size: 1.1rem;
+    max-width: 320px;
+    line-height: 1.6;
+    color: #555;
+  }
+
+  .breath-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: rgba(92, 107, 192, 0.15);
+    border: 3px solid #7986cb;
+    animation: breathe 4s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: scale(0.8); opacity: 0.6; }
+    50% { transform: scale(1.2); opacity: 1; }
+  }
+
+  .calming-overlay .btn {
+    background: #7986cb;
+    color: white;
+    border-color: transparent;
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
+  }
+
+  /* Progress bar for anxiety */
+  .anxiety-meter {
+    width: min(85vw, 360px);
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0.3rem auto 0;
+  }
+
+  .anxiety-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.3s ease, background 0.5s ease;
+    background: #81c784;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Stress Clicker</h1>
+  <div class="anxiety-label" id="anxietyLabel">Zen Master</div>
+  <div class="anxiety-meter"><div class="anxiety-fill" id="anxietyFill"></div></div>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="stat-value" id="totalCount">0</div>
+    <div class="stat-label">Squeezes</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="cpsDisplay">0.0</div>
+    <div class="stat-label">Per Sec</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value" id="dailyCount">0</div>
+    <div class="stat-label">Today</div>
+  </div>
+</div>
+
+<div class="ball-container">
+  <div class="ball" id="ball">
+    <span class="face" id="face">&#128522;</span>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="btn" onclick="showReport()">Stress Report</button>
+  <button class="btn" onclick="resetDaily()">Reset Today</button>
+</div>
+
+<!-- Stress Report Modal -->
+<div class="modal-overlay" id="reportModal">
+  <div class="modal">
+    <button class="close-btn" onclick="closeReport()">&times;</button>
+    <h2>Your Stress Report</h2>
+    <div id="reportContent"></div>
+  </div>
+</div>
+
+<!-- Calming Mode Overlay -->
+<div class="calming-overlay" id="calmingOverlay">
+  <h2>Time to breathe.</h2>
+  <div class="breath-circle"></div>
+  <p>You hit 100 squeezes. Follow the circle. Breathe in as it grows, out as it shrinks.</p>
+  <button class="btn" onclick="dismissCalming()">I'm calm now</button>
+</div>
+
+<script>
+  // --- State ---
+  let totalCount = 0;
+  let sessionStart = Date.now();
+  let clickTimestamps = [];
+  let calmingShown = false;
+  let audioCtx = null;
+
+  // --- localStorage helpers ---
+  const STORAGE_KEY = 'stress_clicker_data';
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return { days: {}, allTimeSqueeze: 0, peakCPS: 0, sessions: 0, maxSession: 0 };
+  }
+
+  function saveData(data) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+  }
+
+  function todayKey() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  let data = loadData();
+  data.sessions = (data.sessions || 0) + 1;
+
+  // Init today
+  const today = todayKey();
+  if (!data.days[today]) data.days[today] = 0;
+
+  // --- DOM refs ---
+  const ball = document.getElementById('ball');
+  const face = document.getElementById('face');
+  const totalEl = document.getElementById('totalCount');
+  const cpsEl = document.getElementById('cpsDisplay');
+  const dailyEl = document.getElementById('dailyCount');
+  const anxietyLabel = document.getElementById('anxietyLabel');
+  const anxietyFill = document.getElementById('anxietyFill');
+
+  // Init display
+  dailyEl.textContent = data.days[today];
+
+  // --- Anxiety levels ---
+  const levels = [
+    { name: 'Zen Master',         cps: 0,   color: '#81c784', face: '\u{1F60C}' },
+    { name: 'Slightly Worried',   cps: 1,   color: '#aed581', face: '\u{1F914}' },
+    { name: 'Definitely Stressed', cps: 2.5, color: '#ffd54f', face: '\u{1F613}' },
+    { name: 'Send Help',          cps: 4,   color: '#ffb74d', face: '\u{1F630}' },
+    { name: 'DEFCON 1',           cps: 6,   color: '#e57373', face: '\u{1F631}' },
+  ];
+
+  function getLevel(cps) {
+    let lvl = levels[0];
+    for (const l of levels) {
+      if (cps >= l.cps) lvl = l;
+    }
+    return lvl;
+  }
+
+  // --- CPS tracking ---
+  function calcCPS() {
+    const now = Date.now();
+    const window = 3000; // 3 sec window
+    clickTimestamps = clickTimestamps.filter(t => now - t < window);
+    if (clickTimestamps.length < 2) return clickTimestamps.length > 0 ? clickTimestamps.length / (window/1000) : 0;
+    const span = (now - clickTimestamps[0]) / 1000;
+    return span > 0 ? clickTimestamps.length / span : 0;
+  }
+
+  // --- Audio ---
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function playSquish(intensity) {
+    if (!audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(60 + intensity * 20, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.15);
+    } catch(e) {}
+  }
+
+  // --- Particles ---
+  function spawnParticles(x, y, color) {
+    const container = ball.parentElement;
+    const rect = container.getBoundingClientRect();
+    for (let i = 0; i < 6; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const angle = (Math.PI * 2 * i) / 6 + Math.random() * 0.5;
+      const dist = 40 + Math.random() * 60;
+      p.style.cssText = `
+        left: ${x - rect.left}px;
+        top: ${y - rect.top}px;
+        background: ${color};
+        --dx: ${Math.cos(angle) * dist}px;
+        --dy: ${Math.sin(angle) * dist}px;
+      `;
+      container.style.position = 'relative';
+      container.appendChild(p);
+      setTimeout(() => p.remove(), 600);
+    }
+  }
+
+  // --- Haptic ---
+  function haptic() {
+    if (navigator.vibrate) navigator.vibrate(30);
+  }
+
+  // --- Main squeeze handler ---
+  function squeeze(e) {
+    e.preventDefault();
+    initAudio();
+
+    totalCount++;
+    data.days[today] = (data.days[today] || 0) + 1;
+    data.allTimeSqueeze = (data.allTimeSqueeze || 0) + 1;
+    clickTimestamps.push(Date.now());
+
+    const cps = calcCPS();
+    const lvl = getLevel(cps);
+
+    // Track peak
+    if (cps > (data.peakCPS || 0)) data.peakCPS = cps;
+    if (totalCount > (data.maxSession || 0)) data.maxSession = totalCount;
+
+    // Update display
+    totalEl.textContent = totalCount;
+    cpsEl.textContent = cps.toFixed(1);
+    dailyEl.textContent = data.days[today];
+
+    // Anxiety
+    anxietyLabel.textContent = lvl.name;
+    anxietyLabel.style.color = lvl.color === '#ffd54f' ? '#c49000' : lvl.color;
+    face.textContent = lvl.face;
+
+    // Meter
+    const pct = Math.min(100, (cps / 7) * 100);
+    anxietyFill.style.width = pct + '%';
+    anxietyFill.style.background = lvl.color;
+
+    // Ball color
+    document.documentElement.style.setProperty('--ball-color', lvl.color);
+    const darken = lvl.color.replace(/[0-9a-f]{2}$/i, m => {
+      const v = Math.max(0, parseInt(m, 16) - 40);
+      return v.toString(16).padStart(2, '0');
+    });
+    document.documentElement.style.setProperty('--ball-shadow', darken);
+
+    // Sound + haptic
+    playSquish(cps);
+    haptic();
+
+    // Particles
+    const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : ball.getBoundingClientRect().left + ball.offsetWidth/2);
+    const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : ball.getBoundingClientRect().top + ball.offsetHeight/2);
+    spawnParticles(clientX, clientY, lvl.color);
+
+    // Ball press animation (for touch since :active can be flaky)
+    ball.classList.add('pressed');
+    setTimeout(() => ball.classList.remove('pressed'), 100);
+
+    // Save
+    saveData(data);
+
+    // Calming mode at 100
+    if (totalCount === 100 && !calmingShown) {
+      calmingShown = true;
+      setTimeout(() => {
+        document.getElementById('calmingOverlay').classList.add('active');
+        document.body.classList.add('calming');
+      }, 200);
+    }
+  }
+
+  // Attach events
+  ball.addEventListener('mousedown', squeeze);
+  ball.addEventListener('touchstart', squeeze, { passive: false });
+
+  // CPS decay when not clicking
+  setInterval(() => {
+    const cps = calcCPS();
+    const lvl = getLevel(cps);
+    cpsEl.textContent = cps.toFixed(1);
+    anxietyLabel.textContent = lvl.name;
+    anxietyLabel.style.color = lvl.color === '#ffd54f' ? '#c49000' : lvl.color;
+    face.textContent = lvl.face;
+    const pct = Math.min(100, (cps / 7) * 100);
+    anxietyFill.style.width = pct + '%';
+    anxietyFill.style.background = lvl.color;
+    document.documentElement.style.setProperty('--ball-color', lvl.color);
+  }, 500);
+
+  // --- Stress Report ---
+  function showReport() {
+    const modal = document.getElementById('reportModal');
+    const content = document.getElementById('reportContent');
+
+    const days = data.days || {};
+    const dayKeys = Object.keys(days).sort();
+    const last7 = dayKeys.slice(-7);
+    const totalAll = data.allTimeSqueeze || 0;
+    const avgDaily = dayKeys.length > 0 ? Math.round(totalAll / dayKeys.length) : 0;
+    const peakDay = dayKeys.reduce((best, k) => days[k] > (days[best] || 0) ? k : best, dayKeys[0] || today);
+    const maxInDay = days[peakDay] || 0;
+
+    // Determine personality
+    let personality;
+    if (avgDaily < 10) personality = 'Monk-like serenity. Are you even alive?';
+    else if (avgDaily < 30) personality = 'Healthy stress management. Gold star.';
+    else if (avgDaily < 60) personality = 'You might want to take a walk outside.';
+    else if (avgDaily < 100) personality = 'Your stress ball has filed for workers comp.';
+    else personality = 'You are a force of nature. Seek professional help. Lovingly.';
+
+    let html = `
+      <div class="report-row"><span class="report-label">All-Time Squeezes</span><span class="report-value">${totalAll.toLocaleString()}</span></div>
+      <div class="report-row"><span class="report-label">This Session</span><span class="report-value">${totalCount}</span></div>
+      <div class="report-row"><span class="report-label">Today</span><span class="report-value">${(days[today] || 0).toLocaleString()}</span></div>
+      <div class="report-row"><span class="report-label">Daily Average</span><span class="report-value">${avgDaily}</span></div>
+      <div class="report-row"><span class="report-label">Peak CPS</span><span class="report-value">${(data.peakCPS || 0).toFixed(1)}</span></div>
+      <div class="report-row"><span class="report-label">Peak Day</span><span class="report-value">${peakDay || 'N/A'} (${maxInDay})</span></div>
+      <div class="report-row"><span class="report-label">Sessions</span><span class="report-value">${data.sessions || 1}</span></div>
+      <div class="report-row"><span class="report-label">Best Session</span><span class="report-value">${data.maxSession || totalCount}</span></div>
+      <div class="report-row"><span class="report-label">Diagnosis</span><span class="report-value" style="font-size:0.8rem;text-align:right;max-width:180px">${personality}</span></div>
+    `;
+
+    // 7-day chart
+    if (last7.length > 0) {
+      const maxVal = Math.max(...last7.map(k => days[k]), 1);
+      html += '<h3 style="margin-top:1rem;font-size:0.9rem;opacity:0.7">Last 7 Days</h3>';
+      html += '<div class="day-bar">';
+      for (const k of last7) {
+        const h = Math.max(2, (days[k] / maxVal) * 70);
+        const dayLabel = new Date(k + 'T12:00:00').toLocaleDateString('en', { weekday: 'short' });
+        html += `<div class="bar" style="height:${h}px" title="${k}: ${days[k]}"><span class="bar-label">${dayLabel}</span></div>`;
+      }
+      html += '</div>';
+    }
+
+    content.innerHTML = html;
+    modal.classList.add('open');
+  }
+
+  function closeReport() {
+    document.getElementById('reportModal').classList.remove('open');
+  }
+
+  document.getElementById('reportModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeReport();
+  });
+
+  function resetDaily() {
+    data.days[today] = 0;
+    dailyEl.textContent = 0;
+    saveData(data);
+  }
+
+  function dismissCalming() {
+    document.getElementById('calmingOverlay').classList.remove('active');
+    document.body.classList.remove('calming');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Baby Soother 3000</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --accent: #7b68ee;
+    --accent2: #9b89f5;
+    --text: #e0d8f0;
+    --muted: #8b82a8;
+    --danger: #ff6b6b;
+    --success: #51cf66;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin: 8px 0 4px;
+    background: linear-gradient(135deg, #a78bfa, #7dd3fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 16px;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(123, 104, 238, 0.15);
+  }
+
+  .card-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* Sound mode buttons */
+  .sound-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .sound-btn {
+    background: rgba(123, 104, 238, 0.1);
+    border: 1px solid rgba(123, 104, 238, 0.25);
+    border-radius: 12px;
+    padding: 12px 6px;
+    color: var(--text);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sound-btn .icon { font-size: 1.4rem; }
+  .sound-btn:active { transform: scale(0.95); }
+  .sound-btn.active {
+    background: rgba(123, 104, 238, 0.35);
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(123, 104, 238, 0.3);
+  }
+
+  /* Sliders */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .slider-row:last-child { margin-bottom: 0; }
+
+  .slider-label {
+    font-size: 0.8rem;
+    min-width: 50px;
+    color: var(--muted);
+  }
+
+  .slider-val {
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 36px;
+    text-align: right;
+    color: var(--accent2);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(123, 104, 238, 0.2);
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(123, 104, 238, 0.5);
+  }
+
+  /* Desperation indicator */
+  .desp-indicator {
+    text-align: center;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    min-height: 20px;
+    transition: all 0.3s;
+  }
+
+  .desp-indicator.nuclear {
+    color: var(--danger);
+    font-weight: 700;
+    animation: pulse 0.8s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Big play button */
+  .play-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .play-btn {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #6c5ce7);
+    color: white;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(123, 104, 238, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .play-btn:active { transform: scale(0.92); }
+  .play-btn.playing {
+    background: linear-gradient(135deg, var(--danger), #ee5a24);
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4);
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  @keyframes glow {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 107, 107, 0.4); }
+    50% { box-shadow: 0 4px 30px rgba(255, 107, 107, 0.7); }
+  }
+
+  /* Timer buttons */
+  .timer-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .timer-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(123, 104, 238, 0.25);
+    background: rgba(123, 104, 238, 0.1);
+    color: var(--text);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .timer-btn.active {
+    background: rgba(123, 104, 238, 0.35);
+    border-color: var(--accent);
+  }
+
+  .timer-display {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent2);
+    margin-top: 8px;
+    letter-spacing: 2px;
+  }
+
+  /* Stats */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stat-block {
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Humor message */
+  .humor-msg {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.4;
+    min-height: 40px;
+    padding: 4px 8px;
+    transition: opacity 0.5s;
+  }
+
+  /* Nightstand mode dim overlay */
+  .dim-note {
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 8px;
+    opacity: 0.6;
+  }
+
+  /* Nuclear mode background effect */
+  body.nuclear-mode {
+    background: linear-gradient(135deg, #1a1a2e, #2d1a1a);
+  }
+</style>
+</head>
+<body>
+
+<h1>Baby Soother 3000</h1>
+<p class="subtitle">White noise machine for desperate parents</p>
+
+<!-- Sound Modes -->
+<div class="card">
+  <div class="card-title">Sound Modes</div>
+  <div class="sound-grid">
+    <button class="sound-btn active" data-sound="white" onclick="toggleSound('white')">
+      <span class="icon">~</span>
+      <span>White Noise</span>
+    </button>
+    <button class="sound-btn" data-sound="rain" onclick="toggleSound('rain')">
+      <span class="icon">&darr;</span>
+      <span>Rain</span>
+    </button>
+    <button class="sound-btn" data-sound="ocean" onclick="toggleSound('ocean')">
+      <span class="icon">&sim;</span>
+      <span>Ocean</span>
+    </button>
+    <button class="sound-btn" data-sound="heartbeat" onclick="toggleSound('heartbeat')">
+      <span class="icon">&hearts;</span>
+      <span>Heartbeat</span>
+    </button>
+    <button class="sound-btn" data-sound="shush" onclick="toggleSound('shush')">
+      <span class="icon">sh</span>
+      <span>Shushing</span>
+    </button>
+    <button class="sound-btn" data-sound="vacuum" onclick="toggleSound('vacuum')">
+      <span class="icon">O</span>
+      <span>Vacuum</span>
+    </button>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="card">
+  <div class="card-title">Controls</div>
+  <div class="slider-row">
+    <span class="slider-label">Volume</span>
+    <input type="range" id="volume" min="0" max="100" value="40" oninput="setVolume(this.value)">
+    <span class="slider-val" id="vol-val">40%</span>
+  </div>
+  <div class="slider-row">
+    <span class="slider-label">Desperation</span>
+    <input type="range" id="desperation" min="1" max="5" value="1" step="1" oninput="setDesperation(this.value)">
+    <span class="slider-val" id="desp-val">1</span>
+  </div>
+  <div class="desp-indicator" id="desp-text">Level 1: Gentle. You got this.</div>
+</div>
+
+<!-- Play / Timer -->
+<div class="card">
+  <div class="play-area">
+    <button class="play-btn" id="play-btn" onclick="togglePlay()">&#9654;</button>
+    <div class="timer-row">
+      <button class="timer-btn" data-mins="15" onclick="setTimer(15)">15 min</button>
+      <button class="timer-btn" data-mins="30" onclick="setTimer(30)">30 min</button>
+      <button class="timer-btn" data-mins="60" onclick="setTimer(60)">60 min</button>
+      <button class="timer-btn" data-mins="0" onclick="setTimer(0)">No limit</button>
+    </div>
+    <div class="timer-display" id="timer-display">--:--</div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="card">
+  <div class="card-title">Parent Stats</div>
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-value" id="sanity-hours">0.0</div>
+      <div class="stat-label">Hours of Sanity Saved</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="sessions-count">0</div>
+      <div class="stat-label">Sessions</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-value" id="nuclear-count">0</div>
+      <div class="stat-label">Nuclear Options</div>
+    </div>
+  </div>
+</div>
+
+<!-- Humor -->
+<div class="humor-msg" id="humor-msg">Pro tip: babies can smell fear. Stay calm.</div>
+
+<p class="dim-note">Tap anywhere to dim screen for nightstand mode</p>
+
+<script>
+// ---- Audio Engine (Web Audio API) ----
+let audioCtx = null;
+let masterGain = null;
+let isPlaying = false;
+let activeNodes = {};
+
+// Current state
+let currentSounds = new Set(['white']);
+let currentVolume = 0.4;
+let currentDesperation = 1;
+let timerMinutes = 0;
+let timerRemaining = 0;
+let timerInterval = null;
+let sessionStart = null;
+let sanityInterval = null;
+
+// localStorage stats
+let stats = JSON.parse(localStorage.getItem('babySoother') || '{"sanityHours":0,"sessions":0,"nuclear":0}');
+updateStatsDisplay();
+
+// ---- Sound generators ----
+function createWhiteNoise(ctx, gain) {
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  // Low-pass for gentleness
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = 800 + currentDesperation * 400;
+  const g = ctx.createGain();
+  g.gain.value = gain;
+  source.connect(filter);
+  filter.connect(g);
+  g.connect(masterGain);
+  source.start();
+  return { source, gain: g, filter, stop: () => source.stop() };
+}
+
+function createRain(ctx, gain) {
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+    // Occasional louder drops
+    if (Math.random() < 0.001) data[i] *= 3;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 2500;
+  bp.Q.value = 0.5;
+  const g = ctx.createGain();
+  g.gain.value = gain;
+  source.connect(bp);
+  bp.connect(g);
+  g.connect(masterGain);
+  source.start();
+  return { source, gain: g, stop: () => source.stop() };
+}
+
+function createOcean(ctx, gain) {
+  // Brown noise + LFO for wave rhythm
+  const bufferSize = 4 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + (0.02 * white)) / 1.02;
+    data[i] = last * 3.5;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+  // LFO for wave shape
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 0.12; // ~7 sec wave
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 0.4;
+  lfo.connect(lfoGain);
+  const g = ctx.createGain();
+  g.gain.value = gain;
+  lfoGain.connect(g.gain);
+  source.connect(g);
+  g.connect(masterGain);
+  source.start();
+  lfo.start();
+  return { source, lfo, gain: g, stop: () => { source.stop(); lfo.stop(); } };
+}
+
+function createHeartbeat(ctx, gain) {
+  // Two-tone heartbeat using oscillators
+  const g = ctx.createGain();
+  g.gain.value = 0;
+  g.connect(masterGain);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = 60;
+  osc.connect(g);
+  osc.start();
+
+  // Schedule heartbeat pattern
+  const bpm = 72;
+  const beatInterval = 60 / bpm;
+  let running = true;
+
+  function scheduleBeat() {
+    if (!running) return;
+    const now = ctx.currentTime;
+    // Lub
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(gain, now + 0.04);
+    g.gain.linearRampToValueAtTime(0, now + 0.12);
+    // Dub
+    g.gain.setValueAtTime(0, now + 0.18);
+    g.gain.linearRampToValueAtTime(gain * 0.7, now + 0.22);
+    g.gain.linearRampToValueAtTime(0, now + 0.32);
+
+    setTimeout(scheduleBeat, beatInterval * 1000);
+  }
+  scheduleBeat();
+  return { osc, gain: g, stop: () => { running = false; osc.stop(); } };
+}
+
+function createShush(ctx, gain) {
+  // Bandpass filtered noise with rhythmic envelope
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = 4000;
+  bp.Q.value = 1;
+
+  const g = ctx.createGain();
+  g.gain.value = 0;
+  g.connect(masterGain);
+
+  source.connect(bp);
+  bp.connect(g);
+  source.start();
+
+  let running = true;
+  function scheduleShush() {
+    if (!running) return;
+    const now = ctx.currentTime;
+    const dur = 0.5 + (currentDesperation - 1) * 0.1;
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(gain, now + 0.08);
+    g.gain.setValueAtTime(gain, now + dur * 0.4);
+    g.gain.linearRampToValueAtTime(0, now + dur);
+    const interval = 1.2 - (currentDesperation - 1) * 0.15;
+    setTimeout(scheduleShush, Math.max(interval, 0.4) * 1000);
+  }
+  scheduleShush();
+  return { source, gain: g, stop: () => { running = false; source.stop(); } };
+}
+
+function createVacuum(ctx, gain) {
+  // Low-frequency rumble + mid hiss
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  let last = 0;
+  for (let i = 0; i < bufferSize; i++) {
+    const white = Math.random() * 2 - 1;
+    last = (last + (0.04 * white)) / 1.04;
+    data[i] = last * 5 + (Math.random() * 2 - 1) * 0.3;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.loop = true;
+
+  // Motor drone
+  const drone = ctx.createOscillator();
+  drone.type = 'sawtooth';
+  drone.frequency.value = 55;
+  const droneG = ctx.createGain();
+  droneG.gain.value = gain * 0.15;
+  drone.connect(droneG);
+  droneG.connect(masterGain);
+  drone.start();
+
+  const g = ctx.createGain();
+  g.gain.value = gain;
+  source.connect(g);
+  g.connect(masterGain);
+  source.start();
+  return { source, drone, droneG, gain: g, stop: () => { source.stop(); drone.stop(); } };
+}
+
+const generators = {
+  white: createWhiteNoise,
+  rain: createRain,
+  ocean: createOcean,
+  heartbeat: createHeartbeat,
+  shush: createShush,
+  vacuum: createVacuum,
+};
+
+// ---- Desperation level configs ----
+const despLevels = {
+  1: { label: 'Level 1: Gentle. You got this.', sounds: null, volumeMult: 0.6 },
+  2: { label: 'Level 2: A little louder. Hang in there.', sounds: null, volumeMult: 0.75 },
+  3: { label: 'Level 3: Adding shushing. Stay strong.', sounds: ['shush'], volumeMult: 0.85 },
+  4: { label: 'Level 4: Maximum effort. Almost there.', sounds: ['shush', 'heartbeat'], volumeMult: 0.95 },
+  5: { label: 'NUCLEAR OPTION: ALL SOUNDS. GODSPEED.', sounds: ['white','rain','ocean','heartbeat','shush','vacuum'], volumeMult: 1.0 },
+};
+
+// ---- UI Handlers ----
+function toggleSound(name) {
+  if (currentDesperation === 5) return; // Nuclear locks everything on
+  if (currentSounds.has(name)) {
+    if (currentSounds.size === 1) return; // Keep at least one
+    currentSounds.delete(name);
+  } else {
+    currentSounds.add(name);
+  }
+  updateSoundButtons();
+  if (isPlaying) rebuildAudio();
+}
+
+function updateSoundButtons() {
+  document.querySelectorAll('.sound-btn').forEach(btn => {
+    btn.classList.toggle('active', currentSounds.has(btn.dataset.sound));
+  });
+}
+
+function setVolume(val) {
+  currentVolume = val / 100;
+  document.getElementById('vol-val').textContent = val + '%';
+  if (masterGain) {
+    const despMult = despLevels[currentDesperation].volumeMult;
+    masterGain.gain.setTargetAtTime(currentVolume * despMult, audioCtx.currentTime, 0.05);
+  }
+}
+
+function setDesperation(val) {
+  currentDesperation = parseInt(val);
+  document.getElementById('desp-val').textContent = val;
+  const level = despLevels[currentDesperation];
+  const textEl = document.getElementById('desp-text');
+  textEl.textContent = level.label;
+
+  if (currentDesperation === 5) {
+    textEl.classList.add('nuclear');
+    document.body.classList.add('nuclear-mode');
+    currentSounds = new Set(['white','rain','ocean','heartbeat','shush','vacuum']);
+    stats.nuclear++;
+    saveStats();
+    updateStatsDisplay();
+  } else {
+    textEl.classList.remove('nuclear');
+    document.body.classList.remove('nuclear-mode');
+    // Remove auto-added sounds from desperation
+    if (level.sounds) {
+      level.sounds.forEach(s => currentSounds.add(s));
+    }
+  }
+
+  updateSoundButtons();
+  if (isPlaying) rebuildAudio();
+  if (masterGain) {
+    masterGain.gain.setTargetAtTime(currentVolume * level.volumeMult, audioCtx.currentTime, 0.05);
+  }
+}
+
+function setTimer(mins) {
+  timerMinutes = mins;
+  document.querySelectorAll('.timer-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.mins) === mins);
+  });
+  if (mins > 0) {
+    timerRemaining = mins * 60;
+    updateTimerDisplay();
+  } else {
+    timerRemaining = 0;
+    document.getElementById('timer-display').textContent = '--:--';
+  }
+}
+
+function updateTimerDisplay() {
+  if (timerRemaining <= 0 && timerMinutes === 0) {
+    document.getElementById('timer-display').textContent = '--:--';
+    return;
+  }
+  const m = Math.floor(timerRemaining / 60);
+  const s = timerRemaining % 60;
+  document.getElementById('timer-display').textContent =
+    String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    stopAll();
+  } else {
+    startAll();
+  }
+}
+
+function startAll() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  isPlaying = true;
+  sessionStart = Date.now();
+  document.getElementById('play-btn').classList.add('playing');
+  document.getElementById('play-btn').innerHTML = '&#9724;';
+
+  rebuildAudio();
+
+  // Timer countdown
+  if (timerMinutes > 0) {
+    timerRemaining = timerMinutes * 60;
+    updateTimerDisplay();
+    timerInterval = setInterval(() => {
+      timerRemaining--;
+      updateTimerDisplay();
+      if (timerRemaining <= 0) {
+        stopAll();
+      }
+    }, 1000);
+  }
+
+  // Sanity counter
+  sanityInterval = setInterval(() => {
+    if (sessionStart) {
+      const hrs = (Date.now() - sessionStart) / 3600000;
+      stats.sanityHours += hrs;
+      sessionStart = Date.now();
+      saveStats();
+      updateStatsDisplay();
+    }
+  }, 60000); // Update every minute
+
+  stats.sessions++;
+  saveStats();
+  updateStatsDisplay();
+  updateHumor();
+}
+
+function stopAll() {
+  // Save session time
+  if (sessionStart) {
+    const hrs = (Date.now() - sessionStart) / 3600000;
+    stats.sanityHours += hrs;
+    sessionStart = null;
+    saveStats();
+    updateStatsDisplay();
+  }
+
+  // Stop all audio nodes
+  Object.values(activeNodes).forEach(node => {
+    try { node.stop(); } catch(e) {}
+  });
+  activeNodes = {};
+
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  if (sanityInterval) { clearInterval(sanityInterval); sanityInterval = null; }
+
+  isPlaying = false;
+  document.getElementById('play-btn').classList.remove('playing');
+  document.getElementById('play-btn').innerHTML = '&#9654;';
+}
+
+function rebuildAudio() {
+  // Stop existing
+  Object.values(activeNodes).forEach(node => {
+    try { node.stop(); } catch(e) {}
+  });
+  activeNodes = {};
+
+  if (!isPlaying) return;
+
+  const numSounds = currentSounds.size;
+  const baseGain = 0.6 / Math.sqrt(numSounds); // Normalize
+
+  currentSounds.forEach(name => {
+    if (generators[name]) {
+      activeNodes[name] = generators[name](audioCtx, baseGain);
+    }
+  });
+
+  const despMult = despLevels[currentDesperation].volumeMult;
+  masterGain.gain.setTargetAtTime(currentVolume * despMult, audioCtx.currentTime, 0.05);
+}
+
+// ---- Stats ----
+function saveStats() {
+  localStorage.setItem('babySoother', JSON.stringify(stats));
+}
+
+function updateStatsDisplay() {
+  document.getElementById('sanity-hours').textContent = stats.sanityHours.toFixed(1);
+  document.getElementById('sessions-count').textContent = stats.sessions;
+  document.getElementById('nuclear-count').textContent = stats.nuclear;
+}
+
+// ---- Humor messages ----
+const humorMessages = [
+  "Pro tip: babies can smell fear. Stay calm.",
+  "Remember: this is temporary. Like sleep. Which you won't get.",
+  "You're doing amazing. The baby disagrees, but we see you.",
+  "Fun fact: vacuum cleaners are the #1 baby soother. Science can't explain it.",
+  "This too shall pass. Probably around age 4.",
+  "Shushing burns 0.3 calories per minute. You're basically exercising.",
+  "You've been at this for a while. We see you. You're doing great.",
+  "The baby will not remember this. You, however, will never forget.",
+  "Sleep when the baby sleeps. Also clean when the baby cleans.",
+  "Somewhere, another parent just hit the Nuclear Option too. You're not alone.",
+  "White noise: because silence was never really an option.",
+  "Your neighbors understand. Probably.",
+  "Coffee will be there for you in the morning. Hang on.",
+  "This machine has saved more marriages than therapy.",
+  "Level 5? Respect. You're a warrior.",
+];
+
+const desperationHumor = [
+  null,
+  null,
+  null,
+  "Desperation Mode: Hour 2. The shushing is now reflexive. Your partner is concerned.",
+  "Desperation Mode: You've been at this for 3 hours. We see you. You're doing great.",
+];
+
+function updateHumor() {
+  const el = document.getElementById('humor-msg');
+  if (currentDesperation >= 4 && desperationHumor[currentDesperation - 1]) {
+    el.textContent = desperationHumor[currentDesperation - 1];
+  } else {
+    el.textContent = humorMessages[Math.floor(Math.random() * humorMessages.length)];
+  }
+}
+
+// Rotate humor every 30 seconds while playing
+setInterval(() => {
+  if (isPlaying) updateHumor();
+}, 30000);
+
+// ---- Nightstand dim mode ----
+let dimmed = false;
+document.addEventListener('dblclick', (e) => {
+  if (e.target.closest('button, input')) return;
+  dimmed = !dimmed;
+  document.body.style.opacity = dimmed ? '0.3' : '1';
+});
+
+// Prevent screen lock on mobile (if supported)
+let wakeLock = null;
+async function requestWakeLock() {
+  if ('wakeLock' in navigator) {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch(e) {}
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isPlaying) {
+    requestWakeLock();
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Cosmic Mood Ring - Read Your Aura</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Righteous&family=Permanent+Marker&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Righteous', cursive;
+    min-height: 100vh;
+    overflow-x: hidden;
+    color: #fff;
+    background: #1a0a2e;
+  }
+
+  /* Psychedelic tie-dye background */
+  .bg-psychedelic {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(255, 0, 128, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(0, 200, 255, 0.2) 0%, transparent 50%),
+      radial-gradient(ellipse at 10% 90%, rgba(255, 200, 0, 0.2) 0%, transparent 50%),
+      linear-gradient(135deg, #1a0a2e 0%, #2d1b69 25%, #1a0a2e 50%, #0d0d2b 75%, #1a0a2e 100%);
+    animation: bgShift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes bgShift {
+    0% { filter: hue-rotate(0deg); }
+    50% { filter: hue-rotate(30deg); }
+    100% { filter: hue-rotate(-20deg); }
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  h1 {
+    font-family: 'Pacifico', cursive;
+    font-size: 2.4em;
+    background: linear-gradient(90deg, #ff6ec7, #ffd700, #7fff00, #00ffff, #ff6ec7);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: rainbowText 4s linear infinite;
+    margin-bottom: 5px;
+    text-shadow: none;
+    filter: drop-shadow(0 0 10px rgba(255, 110, 199, 0.5));
+  }
+
+  @keyframes rainbowText {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  .subtitle {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 0.9em;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 20px;
+    letter-spacing: 2px;
+  }
+
+  /* Camera viewport */
+  .camera-wrapper {
+    position: relative;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid rgba(255,255,255,0.2);
+    box-shadow: 0 0 30px rgba(128, 0, 255, 0.4), inset 0 0 20px rgba(0,0,0,0.3);
+  }
+
+  #video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    display: block;
+  }
+
+  #canvas {
+    display: none;
+  }
+
+  /* Aura scan rings overlay */
+  .scan-rings {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .scan-rings.active {
+    opacity: 1;
+  }
+
+  .scan-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    animation: none;
+  }
+
+  .scan-rings.active .scan-ring {
+    animation: ringPulse 2s ease-in-out infinite;
+  }
+
+  .scan-ring:nth-child(1) {
+    inset: 5%; border-color: rgba(255, 0, 0, 0.6);
+    animation-delay: 0s !important;
+  }
+  .scan-ring:nth-child(2) {
+    inset: 12%; border-color: rgba(255, 165, 0, 0.6);
+    animation-delay: 0.15s !important;
+  }
+  .scan-ring:nth-child(3) {
+    inset: 19%; border-color: rgba(255, 255, 0, 0.6);
+    animation-delay: 0.3s !important;
+  }
+  .scan-ring:nth-child(4) {
+    inset: 26%; border-color: rgba(0, 255, 0, 0.6);
+    animation-delay: 0.45s !important;
+  }
+  .scan-ring:nth-child(5) {
+    inset: 33%; border-color: rgba(0, 128, 255, 0.6);
+    animation-delay: 0.6s !important;
+  }
+  .scan-ring:nth-child(6) {
+    inset: 40%; border-color: rgba(128, 0, 255, 0.6);
+    animation-delay: 0.75s !important;
+  }
+  .scan-ring:nth-child(7) {
+    inset: 47%; border-color: rgba(255, 0, 255, 0.6);
+    animation-delay: 0.9s !important;
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* Scan line */
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, rgba(0,255,200,0.8), transparent);
+    box-shadow: 0 0 15px rgba(0,255,200,0.6);
+    opacity: 0;
+    top: 0;
+  }
+
+  .scan-rings.active .scan-line {
+    opacity: 1;
+    animation: scanDown 1.5s ease-in-out infinite;
+  }
+
+  @keyframes scanDown {
+    0% { top: 10%; }
+    100% { top: 90%; }
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-block;
+    padding: 14px 36px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Righteous', cursive;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-scan {
+    background: linear-gradient(135deg, #ff6ec7, #7873f5);
+    color: white;
+    box-shadow: 0 4px 20px rgba(255, 110, 199, 0.4);
+  }
+
+  .btn-scan:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 30px rgba(255, 110, 199, 0.6);
+  }
+
+  .btn-scan:active {
+    transform: translateY(0);
+  }
+
+  .btn-scan:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-scan::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes shimmer {
+    100% { transform: translateX(100%); }
+  }
+
+  /* Status text */
+  .status {
+    font-size: 0.85em;
+    color: rgba(255,255,255,0.5);
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+
+  /* Result card */
+  .result-card {
+    display: none;
+    margin-top: 25px;
+    padding: 30px 20px;
+    border-radius: 24px;
+    background: rgba(255,255,255,0.07);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    animation: fadeInUp 0.6s ease;
+  }
+
+  .result-card.show { display: block; }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .aura-label {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Mood ring animation */
+  .mood-ring-display {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    margin: 10px auto 20px;
+    position: relative;
+    transition: all 1s ease;
+  }
+
+  .mood-ring-display .ring-outer {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 8px solid;
+    animation: ringGlow 2s ease-in-out infinite alternate;
+  }
+
+  .mood-ring-display .ring-inner {
+    position: absolute;
+    inset: 15px;
+    border-radius: 50%;
+    border: 5px solid;
+    animation: ringGlow 2s ease-in-out 0.5s infinite alternate;
+  }
+
+  .mood-ring-display .ring-core {
+    position: absolute;
+    inset: 30px;
+    border-radius: 50%;
+    animation: coreGlow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes ringGlow {
+    0% { opacity: 0.6; filter: brightness(0.8); }
+    100% { opacity: 1; filter: brightness(1.3); }
+  }
+
+  @keyframes coreGlow {
+    0% { opacity: 0.8; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .mood-name {
+    font-family: 'Pacifico', cursive;
+    font-size: 1.8em;
+    margin-bottom: 5px;
+  }
+
+  .mood-meaning {
+    font-size: 0.9em;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+  }
+
+  .prophecy-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 15px 0;
+    border-left: 4px solid;
+    text-align: left;
+  }
+
+  .prophecy-label {
+    font-family: 'Permanent Marker', cursive;
+    font-size: 0.7em;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+
+  .prophecy-text {
+    font-family: 'Righteous', cursive;
+    font-size: 1em;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.9);
+  }
+
+  /* Share button */
+  .btn-share {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 2px solid rgba(255,255,255,0.2);
+    margin-top: 15px;
+    font-size: 0.9em;
+    padding: 10px 28px;
+  }
+
+  .btn-share:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  .btn-retry {
+    background: transparent;
+    color: rgba(255,255,255,0.6);
+    border: 1px solid rgba(255,255,255,0.2);
+    margin-top: 10px;
+    font-size: 0.8em;
+    padding: 8px 24px;
+  }
+
+  .btn-retry:hover { color: white; border-color: rgba(255,255,255,0.4); }
+
+  /* Date display */
+  .date-display {
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.4);
+    margin-top: 15px;
+    letter-spacing: 1px;
+  }
+
+  /* Stars background */
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 3s ease-in-out infinite;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+
+  /* Permission prompt */
+  .permission-prompt {
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .permission-prompt p {
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  /* Scanning progress */
+  .scan-progress {
+    display: none;
+    margin-top: 15px;
+  }
+
+  .scan-progress.active { display: block; }
+
+  .progress-bar {
+    width: 80%;
+    height: 6px;
+    margin: 10px auto;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6ec7, #7873f5, #00ffff);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .scan-step {
+    font-size: 0.8em;
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-family: 'Righteous', cursive;
+    font-size: 0.85em;
+    transition: transform 0.3s ease;
+    z-index: 999;
+  }
+
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* No camera fallback styling */
+  .camera-wrapper.no-camera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(128,0,255,0.2), rgba(0,0,0,0.4));
+  }
+
+  .no-camera-icon {
+    font-size: 4em;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-psychedelic"></div>
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <h1>Mood Ring</h1>
+  <p class="subtitle">Read Your Cosmic Aura</p>
+
+  <div class="camera-wrapper" id="cameraWrapper">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <div class="scan-rings" id="scanRings">
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-ring"></div>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+
+  <button class="btn btn-scan" id="scanBtn" onclick="startScan()">
+    Scan My Aura
+  </button>
+
+  <div class="scan-progress" id="scanProgress">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <p class="scan-step" id="scanStep">Initializing aura sensors...</p>
+  </div>
+
+  <p class="status" id="status"></p>
+
+  <div class="result-card" id="resultCard">
+    <p class="aura-label">Today's Aura</p>
+
+    <div class="mood-ring-display" id="moodRingDisplay">
+      <div class="ring-outer"></div>
+      <div class="ring-inner"></div>
+      <div class="ring-core"></div>
+    </div>
+
+    <p class="mood-name" id="moodName"></p>
+    <p class="mood-meaning" id="moodMeaning"></p>
+
+    <div class="prophecy-box" id="prophecyBox">
+      <p class="prophecy-label">Your Prophecy</p>
+      <p class="prophecy-text" id="prophecyText"></p>
+    </div>
+
+    <p class="date-display" id="dateDisplay"></p>
+
+    <button class="btn btn-share" onclick="shareResult()">Share My Aura</button>
+    <br>
+    <button class="btn btn-retry" onclick="startScan()">Read Again</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- MediaPipe Face Mesh via CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+
+<script>
+// Mood definitions with colors and prophecies
+const MOODS = {
+  blue: {
+    name: 'Serene Blue',
+    hex: '#4fc3f7',
+    hexDark: '#0277bd',
+    meaning: 'Deep calm flows through your spirit',
+    prophecies: [
+      'A peaceful resolution to a long conflict arrives this week.',
+      'Still waters run deep -- your quiet strength will impress someone important.',
+      'The universe is aligning a moment of perfect clarity for you.',
+      'Your calm energy will be contagious. Someone near you desperately needs it.',
+      'A dream you have tonight will contain an important message.',
+      'The answer you seek is not in action, but in stillness.',
+      'An old friendship will be renewed by an unexpected message.',
+      'Your patience will be rewarded in ways you cannot yet imagine.',
+      'A body of water holds significance for you this month.',
+      'Trust the silence between the notes -- that is where your melody lives.',
+      'Something you lost will find its way back to you.',
+      'Your inner peace will become your greatest superpower this season.'
+    ]
+  },
+  red: {
+    name: 'Passionate Red',
+    hex: '#ef5350',
+    hexDark: '#b71c1c',
+    meaning: 'Fire and passion burn within you',
+    prophecies: [
+      'A bold move you have been hesitating on will change everything.',
+      'Romance ignites from an unexpected direction. Keep your heart open.',
+      'Your passion will inspire a movement. Lead without fear.',
+      'The fire inside you is not anger -- it is transformation.',
+      'A creative breakthrough is hours away. Do not sleep on it.',
+      'Someone is drawn to your intensity. The feeling is mutual.',
+      'Channel this energy into your wildest dream. Now is the time.',
+      'A heated conversation will lead to your biggest breakthrough.',
+      'Your courage will be tested and you will pass magnificently.',
+      'The spark you feel is the universe saying YES.',
+      'A rivalry transforms into your most powerful alliance.',
+      'What burns within you refuses to be ignored any longer.'
+    ]
+  },
+  green: {
+    name: 'Balanced Green',
+    hex: '#66bb6a',
+    hexDark: '#2e7d32',
+    meaning: 'Harmony and growth surround you',
+    prophecies: [
+      'Financial growth sprouts from a seed you planted months ago.',
+      'Your body is healing something you did not know was broken.',
+      'Nature has a gift waiting for you. Go outside and receive it.',
+      'Balance is not standing still -- it is dancing with gravity. Dance.',
+      'A new habit you start today will transform your year.',
+      'The growth you cannot see is the most important kind.',
+      'Someone will ask for your wisdom. Share it generously.',
+      'A garden metaphor will literally apply to your life this week.',
+      'Your equilibrium is inspiring envy. Stay centered.',
+      'Abundance approaches from the direction you least expect.',
+      'What is dying in your life is making room for what wants to live.',
+      'Your heart chakra is wide open. Receive the love flowing toward you.'
+    ]
+  },
+  purple: {
+    name: 'Mystic Purple',
+    hex: '#ab47bc',
+    hexDark: '#6a1b9a',
+    meaning: 'Spiritual awakening surrounds you',
+    prophecies: [
+      'A synchronicity so perfect arrives that doubt becomes impossible.',
+      'Your third eye is opening. Pay attention to what you see at 3 AM.',
+      'The veil between worlds is thin for you right now. Listen closely.',
+      'A spiritual teacher appears -- possibly in disguise as a stranger.',
+      'The number you keep seeing everywhere IS a message. Trust it.',
+      'Your intuition is operating at maximum capacity. Follow every hunch.',
+      'A past life connection will make itself known through deja vu.',
+      'Meditation will unlock a door you did not know existed.',
+      'The cosmos has chosen you for a download. Stay open.',
+      'Your dreams are not random -- they are rehearsals for your destiny.',
+      'A purple stone or crystal will find its way to you. Keep it close.',
+      'You are being initiated into a higher frequency. Embrace the buzz.'
+    ]
+  },
+  black: {
+    name: 'Shadow Obsidian',
+    hex: '#546e7a',
+    hexDark: '#263238',
+    meaning: 'Deep transformation is underway',
+    prophecies: [
+      'What feels like an ending is actually a powerful beginning in disguise.',
+      'The pressure you feel is coal becoming diamond. Do not crack.',
+      'Release what no longer serves you. The universe is clearing your path.',
+      'Your shadow self has a gift for you. Face it with courage.',
+      'The darkest hour is just before your most brilliant dawn.',
+      'Stress is energy without direction. Point it at your biggest goal.',
+      'A burden you carry belongs to someone else. Set it down.',
+      'Transformation requires destruction of the old. Let it crumble.',
+      'Your intensity right now is forging something unbreakable.',
+      'The void is not empty -- it is full of potential. Step into it.',
+      'What you resist persists. What you accept transforms.',
+      'A phoenix moment approaches. Prepare for spectacular rebirth.'
+    ]
+  },
+  yellow: {
+    name: 'Radiant Gold',
+    hex: '#ffca28',
+    hexDark: '#f9a825',
+    meaning: 'Joy and optimism radiate from your soul',
+    prophecies: [
+      'Infectious laughter will lead you to your next opportunity.',
+      'A sunny day this week will bring news that changes your trajectory.',
+      'Your optimism is not naive -- it is prophetic. Keep believing.',
+      'Someone will try to dim your light. Shine brighter.',
+      'Creativity pours through you like liquid gold. Capture it.',
+      'A child or young person holds the key to your next revelation.',
+      'Your smile today will set off a chain reaction of joy.',
+      'Gold is coming -- not just metaphorically.',
+      'The project born from pure enthusiasm will be your masterpiece.',
+      'Your joy is not a distraction from purpose. It IS your purpose.',
+      'A celebration you thought was premature turns out to be right on time.',
+      'The sun literally has a message for you today. Step into its light.'
+    ]
+  },
+  orange: {
+    name: 'Electric Amber',
+    hex: '#ff7043',
+    hexDark: '#d84315',
+    meaning: 'Adventure and excitement charge your aura',
+    prophecies: [
+      'An unplanned detour becomes the best part of your story.',
+      'Your courage to try something new unlocks a hidden talent.',
+      'Adventure does not require a plane ticket. It requires a yes.',
+      'The risk you are calculating has better odds than you think.',
+      'Someone from a different culture or background changes your perspective.',
+      'Your sacral chakra is on fire. Create something wild.',
+      'A spontaneous decision leads to your favorite memory of the year.',
+      'Energy like yours is rare. People will pay to be near it.',
+      'The next stranger you meet has a role in your story.',
+      'Movement is medicine for you right now. Dance, run, or leap.',
+      'A sunset holds a personal message for you this week.',
+      'Your restlessness is not a flaw -- it is your compass pointing forward.'
+    ]
+  },
+  pink: {
+    name: 'Rose Quartz',
+    hex: '#f48fb1',
+    hexDark: '#c2185b',
+    meaning: 'Love energy overflows from your heart',
+    prophecies: [
+      'Self-love is not selfish. The universe needs you to fill your cup first.',
+      'A love letter -- written or received -- changes everything this month.',
+      'Your heart knows something your mind has not figured out yet.',
+      'Compassion is your superpower. Wield it without limits.',
+      'Someone you have given up on will surprise you beautifully.',
+      'The love you give freely returns multiplied by seven.',
+      'A rose-colored lens is not delusion when love is real.',
+      'Your tenderness is not weakness. It takes immense strength.',
+      'Forgiveness you offer today sets you free from yesterday.',
+      'A gentle touch or kind word from you will save someone this week.',
+      'Love is arriving. Not the kind you expected -- the kind you deserve.',
+      'Your heart is healing others without you even knowing it.'
+    ]
+  },
+  white: {
+    name: 'Crystal Clear',
+    hex: '#e0e0e0',
+    hexDark: '#9e9e9e',
+    meaning: 'Pure clarity and new beginnings surround you',
+    prophecies: [
+      'A blank page is not empty -- it is full of every possibility.',
+      'Clarity arrives like lightning. Write down what you see.',
+      'Your purity of intention will be recognized and rewarded.',
+      'A fresh start you did not ask for turns out to be exactly right.',
+      'The truth becomes crystal clear. Act on it immediately.',
+      'You are a mirror for others right now. Reflect back their best selves.',
+      'Simplicity is your path to genius. Strip away the unnecessary.',
+      'A white feather appears as confirmation you are on the right path.',
+      'Your clean energy attracts opportunities that match your frequency.',
+      'The noise clears and in the silence, you hear your calling.',
+      'Purity of focus makes you unstoppable. Choose one thing.',
+      'A cleansing -- physical or emotional -- unlocks your next level.'
+    ]
+  },
+  teal: {
+    name: 'Cosmic Teal',
+    hex: '#26c6da',
+    hexDark: '#00838f',
+    meaning: 'Communication and truth flow through you',
+    prophecies: [
+      'Words you speak today carry unusual power. Choose them wisely.',
+      'A conversation you have been avoiding becomes effortless.',
+      'Your throat chakra activates. Speak your truth without apology.',
+      'The message you need to hear comes from an unexpected source.',
+      'Write it down. Whatever just crossed your mind -- write it down.',
+      'Your voice carries healing frequencies right now. Sing or hum.',
+      'A piece of communication -- email, text, letter -- brings a breakthrough.',
+      'Honest words attract honest people. Your tribe is gathering.',
+      'The story you tell yourself about yourself is about to change.',
+      'Listen to the ocean, rain, or running water. It has something to say.',
+      'Your ability to articulate the complex makes you invaluable.',
+      'Truth spoken with love is the most powerful force in your universe.'
+    ]
+  }
+};
+
+const MOOD_KEYS = Object.keys(MOODS);
+let faceMesh = null;
+let camera = null;
+let faceDetected = false;
+let stream = null;
+let currentMood = null;
+
+// Create stars
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDelay = Math.random() * 3 + 's';
+    star.style.animationDuration = (2 + Math.random() * 3) + 's';
+    star.style.width = star.style.height = (1 + Math.random() * 2) + 'px';
+    container.appendChild(star);
+  }
+}
+
+createStars();
+
+// Initialize camera
+async function initCamera() {
+  const video = document.getElementById('video');
+  const status = document.getElementById('status');
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 480 } }
+    });
+    video.srcObject = stream;
+    status.textContent = 'Camera ready. Let the cosmos see you.';
+
+    // Initialize MediaPipe Face Mesh
+    initFaceMesh();
+  } catch (err) {
+    console.log('Camera error:', err);
+    status.textContent = 'No camera? No problem. We will read your digital aura.';
+    const wrapper = document.getElementById('cameraWrapper');
+    wrapper.classList.add('no-camera');
+    wrapper.innerHTML = '<div class="no-camera-icon">&#10024;</div>';
+  }
+}
+
+function initFaceMesh() {
+  try {
+    faceMesh = new FaceMesh({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    faceMesh.onResults(onFaceMeshResults);
+
+    // Use MediaPipe Camera utility
+    const videoEl = document.getElementById('video');
+    camera = new Camera(videoEl, {
+      onFrame: async () => {
+        if (faceMesh) {
+          await faceMesh.send({ image: videoEl });
+        }
+      },
+      width: 480,
+      height: 480
+    });
+    camera.start();
+  } catch (e) {
+    console.log('MediaPipe init error:', e);
+  }
+}
+
+function onFaceMeshResults(results) {
+  faceDetected = results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0;
+}
+
+// Generate mood from face landmarks (pseudo-biometric)
+function generateMoodFromFace() {
+  // Use current timestamp + random for variety, seeded by detection state
+  const now = Date.now();
+  const seed = now ^ (faceDetected ? 42 : 7);
+  const index = Math.abs(seed) % MOOD_KEYS.length;
+  return MOOD_KEYS[index];
+}
+
+// Scan steps for the fake aura scan
+const SCAN_STEPS = [
+  'Calibrating aura sensors...',
+  'Detecting electromagnetic field...',
+  'Reading chakra frequencies...',
+  'Analyzing emotional wavelengths...',
+  'Mapping spiritual resonance...',
+  'Decoding cosmic vibrations...',
+  'Channeling astral energy...',
+  'Consulting the universe...',
+  'Crystallizing your reading...'
+];
+
+async function startScan() {
+  const scanBtn = document.getElementById('scanBtn');
+  const scanRings = document.getElementById('scanRings');
+  const scanProgress = document.getElementById('scanProgress');
+  const progressFill = document.getElementById('progressFill');
+  const scanStep = document.getElementById('scanStep');
+  const resultCard = document.getElementById('resultCard');
+
+  scanBtn.disabled = true;
+  resultCard.classList.remove('show');
+  scanRings.classList.add('active');
+  scanProgress.classList.add('active');
+  progressFill.style.width = '0%';
+
+  // Animate through scan steps
+  for (let i = 0; i < SCAN_STEPS.length; i++) {
+    scanStep.textContent = SCAN_STEPS[i];
+    progressFill.style.width = ((i + 1) / SCAN_STEPS.length * 100) + '%';
+    await sleep(400 + Math.random() * 300);
+  }
+
+  // Final flash
+  scanStep.textContent = 'Aura captured!';
+  progressFill.style.width = '100%';
+  await sleep(500);
+
+  // Determine mood
+  const moodKey = generateMoodFromFace();
+  currentMood = { key: moodKey, ...MOODS[moodKey] };
+  const prophecy = currentMood.prophecies[Math.floor(Math.random() * currentMood.prophecies.length)];
+
+  // Hide scan UI
+  scanRings.classList.remove('active');
+  scanProgress.classList.remove('active');
+  scanBtn.disabled = false;
+
+  // Show result
+  showResult(currentMood, prophecy);
+}
+
+function showResult(mood, prophecy) {
+  const resultCard = document.getElementById('resultCard');
+  const moodRing = document.getElementById('moodRingDisplay');
+  const moodName = document.getElementById('moodName');
+  const moodMeaning = document.getElementById('moodMeaning');
+  const prophecyText = document.getElementById('prophecyText');
+  const prophecyBox = document.getElementById('prophecyBox');
+  const dateDisplay = document.getElementById('dateDisplay');
+
+  // Set ring colors
+  const outer = moodRing.querySelector('.ring-outer');
+  const inner = moodRing.querySelector('.ring-inner');
+  const core = moodRing.querySelector('.ring-core');
+
+  outer.style.borderColor = mood.hex;
+  outer.style.boxShadow = `0 0 20px ${mood.hex}40, inset 0 0 20px ${mood.hex}20`;
+  inner.style.borderColor = mood.hexDark;
+  inner.style.boxShadow = `0 0 15px ${mood.hexDark}40`;
+  core.style.background = `radial-gradient(circle, ${mood.hex}, ${mood.hexDark})`;
+  core.style.boxShadow = `0 0 30px ${mood.hex}60`;
+
+  moodName.textContent = mood.name;
+  moodName.style.color = mood.hex;
+  moodMeaning.textContent = mood.meaning;
+
+  prophecyBox.style.borderLeftColor = mood.hex;
+  prophecyText.textContent = prophecy;
+
+  // Date
+  const now = new Date();
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  dateDisplay.textContent = now.toLocaleDateString('en-US', options);
+
+  resultCard.classList.add('show');
+
+  // Scroll to result
+  setTimeout(() => {
+    resultCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+}
+
+async function shareResult() {
+  if (!currentMood) return;
+
+  const text = `My cosmic aura today is ${currentMood.name}! "${currentMood.meaning}" -- Mood Ring Aura Reader`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'My Mood Ring Reading', text });
+    } catch (e) {
+      fallbackShare(text);
+    }
+  } else {
+    fallbackShare(text);
+  }
+}
+
+function fallbackShare(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Aura copied to clipboard!');
+  }).catch(() => {
+    showToast('Could not copy. Share the vibes manually.');
+  });
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// Init
+initCamera();
+</script>
+</body>
+</html>

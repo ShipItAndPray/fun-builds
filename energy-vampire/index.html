@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Vampire Detector</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0f;
+    color: #c8b8a8;
+    font-family: 'Crimson Text', Georgia, serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(120, 0, 0, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(80, 0, 60, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(100, 0, 0, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    padding: 40px 0 30px;
+  }
+
+  .bat-icon {
+    font-size: 60px;
+    filter: drop-shadow(0 0 20px rgba(180, 0, 0, 0.5));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    color: #c0392b;
+    text-shadow: 0 0 30px rgba(192, 57, 43, 0.4), 0 2px 4px rgba(0,0,0,0.8);
+    margin: 15px 0 5px;
+    letter-spacing: 2px;
+  }
+
+  .subtitle {
+    font-style: italic;
+    color: #8a7a6a;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .name-section {
+    text-align: center;
+    margin: 25px 0 35px;
+  }
+
+  .name-section label {
+    display: block;
+    font-family: 'Cinzel Decorative', serif;
+    color: #a04040;
+    font-size: 1rem;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .name-input {
+    background: rgba(60, 20, 20, 0.3);
+    border: 1px solid rgba(160, 64, 64, 0.4);
+    color: #e8d8c8;
+    padding: 12px 20px;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.15rem;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .name-input:focus {
+    border-color: #c0392b;
+    box-shadow: 0 0 15px rgba(192, 57, 43, 0.3);
+  }
+
+  .name-input::placeholder { color: #6a5a4a; }
+
+  .category {
+    margin-bottom: 30px;
+  }
+
+  .category-title {
+    font-family: 'Cinzel Decorative', serif;
+    color: #a04040;
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(160, 64, 64, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .traits-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .trait-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: rgba(30, 15, 15, 0.5);
+    border: 1px solid rgba(100, 40, 40, 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .trait-item:hover {
+    background: rgba(60, 20, 20, 0.5);
+    border-color: rgba(160, 64, 64, 0.4);
+  }
+
+  .trait-item.checked {
+    background: rgba(120, 20, 20, 0.35);
+    border-color: rgba(192, 57, 43, 0.6);
+    box-shadow: 0 0 10px rgba(192, 57, 43, 0.15);
+  }
+
+  .trait-checkbox {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(160, 64, 64, 0.5);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.25s;
+    font-size: 14px;
+    color: transparent;
+  }
+
+  .trait-item.checked .trait-checkbox {
+    background: rgba(192, 57, 43, 0.6);
+    border-color: #c0392b;
+    color: #fff;
+  }
+
+  .trait-label {
+    font-size: 1rem;
+    line-height: 1.35;
+    flex: 1;
+  }
+
+  .trait-weight {
+    font-size: 0.75rem;
+    color: #6a4a4a;
+    flex-shrink: 0;
+    min-width: 20px;
+    text-align: right;
+  }
+
+  .calculate-btn {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 40px auto;
+    padding: 16px 32px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 1.2rem;
+    color: #f0e0d0;
+    background: linear-gradient(135deg, #7a1a1a, #4a0a0a);
+    border: 2px solid #a03030;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 20px rgba(120, 0, 0, 0.3);
+  }
+
+  .calculate-btn:hover {
+    background: linear-gradient(135deg, #9a2a2a, #6a1a1a);
+    box-shadow: 0 6px 30px rgba(160, 0, 0, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .calculate-btn:active { transform: translateY(0); }
+
+  /* Results */
+  .results {
+    display: none;
+    text-align: center;
+    padding: 30px 0;
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .results.visible { display: block; }
+
+  .evi-meter {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto 30px;
+  }
+
+  .meter-bar-bg {
+    height: 28px;
+    background: rgba(30, 15, 15, 0.6);
+    border-radius: 14px;
+    border: 1px solid rgba(100, 40, 40, 0.3);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .meter-bar-fill {
+    height: 100%;
+    border-radius: 14px;
+    transition: width 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+  }
+
+  .meter-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.1) 50%, transparent 100%);
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+  }
+
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    color: #6a5a4a;
+  }
+
+  .evi-score {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(3rem, 10vw, 5rem);
+    font-weight: 900;
+    margin: 20px 0 5px;
+    text-shadow: 0 0 40px currentColor;
+  }
+
+  .evi-label {
+    font-size: 1rem;
+    color: #8a7a6a;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .classification {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    margin: 15px 0;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .verdict {
+    font-size: 1.15rem;
+    font-style: italic;
+    color: #b0a090;
+    max-width: 600px;
+    margin: 20px auto;
+    line-height: 1.6;
+    padding: 0 20px;
+  }
+
+  .protection-section {
+    margin-top: 35px;
+    padding: 25px 20px;
+    background: rgba(20, 10, 10, 0.6);
+    border: 1px solid rgba(100, 40, 40, 0.3);
+    border-radius: 12px;
+    text-align: left;
+  }
+
+  .protection-title {
+    font-family: 'Cinzel Decorative', serif;
+    color: #a04040;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 18px;
+  }
+
+  .protection-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+
+  .protection-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .protection-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .protection-text strong {
+    color: #c09080;
+  }
+
+  .share-section {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .share-btn {
+    padding: 12px 28px;
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 0.95rem;
+    color: #e0d0c0;
+    background: rgba(60, 20, 20, 0.5);
+    border: 1px solid rgba(160, 64, 64, 0.4);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 1px;
+  }
+
+  .share-btn:hover {
+    background: rgba(100, 30, 30, 0.5);
+    border-color: #c0392b;
+  }
+
+  .share-toast {
+    color: #6a9a6a;
+    font-size: 0.9rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .share-toast.show { opacity: 1; }
+
+  .reset-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 24px;
+    font-family: 'Crimson Text', serif;
+    font-size: 1rem;
+    color: #8a7a6a;
+    background: none;
+    border: 1px solid rgba(100, 80, 60, 0.3);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .reset-btn:hover {
+    color: #c0a090;
+    border-color: rgba(160, 100, 80, 0.4);
+  }
+
+  .checked-count {
+    text-align: center;
+    color: #6a5a4a;
+    font-size: 0.95rem;
+    margin-top: 10px;
+    transition: color 0.3s;
+  }
+
+  .checked-count.warning { color: #a06040; }
+  .checked-count.danger { color: #c04040; }
+
+  /* Blood drip decoration */
+  .blood-drip {
+    position: fixed;
+    top: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, rgba(160, 0, 0, 0.6), transparent);
+    border-radius: 0 0 3px 3px;
+    pointer-events: none;
+    z-index: 0;
+    animation: drip 4s ease-in infinite;
+    opacity: 0;
+  }
+
+  @keyframes drip {
+    0% { height: 0; opacity: 0.6; }
+    80% { height: 120px; opacity: 0.3; }
+    100% { height: 140px; opacity: 0; }
+  }
+
+  footer {
+    text-align: center;
+    padding: 40px 0 20px;
+    color: #4a3a2a;
+    font-size: 0.85rem;
+  }
+
+  footer a { color: #6a4a4a; text-decoration: none; }
+  footer a:hover { color: #a06060; }
+</style>
+</head>
+<body>
+
+<!-- Blood drips -->
+<div class="blood-drip" style="left: 8%; animation-delay: 0s;"></div>
+<div class="blood-drip" style="left: 23%; animation-delay: 1.5s;"></div>
+<div class="blood-drip" style="left: 47%; animation-delay: 0.8s;"></div>
+<div class="blood-drip" style="left: 65%; animation-delay: 2.3s;"></div>
+<div class="blood-drip" style="left: 82%; animation-delay: 3.1s;"></div>
+<div class="blood-drip" style="left: 93%; animation-delay: 1.1s;"></div>
+
+<div class="container">
+  <header>
+    <div class="bat-icon">🦇</div>
+    <h1>Energy Vampire Detector</h1>
+    <p class="subtitle">Identify the undead among your social circle</p>
+  </header>
+
+  <div class="name-section">
+    <label for="vampireName">Name the Suspect</label>
+    <input type="text" id="vampireName" class="name-input" placeholder="Who drains your soul?">
+  </div>
+
+  <div id="checklist"></div>
+
+  <div class="checked-count" id="checkedCount">0 of 35 traits detected</div>
+
+  <button class="calculate-btn" onclick="calculateEVI()">Reveal Their True Nature</button>
+
+  <div class="results" id="results">
+    <div class="evi-meter">
+      <div class="meter-bar-bg">
+        <div class="meter-bar-fill" id="meterFill"></div>
+      </div>
+      <div class="meter-labels">
+        <span>Harmless</span>
+        <span>Mild Drain</span>
+        <span>Leech</span>
+        <span>VAMPIRE</span>
+        <span>RUN</span>
+      </div>
+    </div>
+
+    <div class="evi-score" id="eviScore">0</div>
+    <div class="evi-label">Energy Vampire Index</div>
+    <div class="classification" id="classification"></div>
+    <div class="verdict" id="verdict"></div>
+
+    <div class="protection-section" id="protectionSection">
+      <div class="protection-title">Prescribed Protection</div>
+      <div id="protectionList"></div>
+    </div>
+
+    <div class="share-section">
+      <button class="share-btn" onclick="shareResult()">Share This Diagnosis</button>
+      <div class="share-toast" id="shareToast">Copied to clipboard!</div>
+    </div>
+
+    <button class="reset-btn" onclick="resetAll()">Stake Another Vampire</button>
+  </div>
+</div>
+
+<footer>
+  <p>No actual vampires were harmed in the making of this tool.</p>
+</footer>
+
+<script>
+const traitCategories = [
+  {
+    name: "Conversation Crimes",
+    icon: "💀",
+    traits: [
+      { text: "Always one-ups your stories", weight: 3 },
+      { text: "Says 'no offense but...' before every offense", weight: 3 },
+      { text: "Responds to your texts with phone calls", weight: 2 },
+      { text: "Sends voice notes over 2 minutes long", weight: 2 },
+      { text: "Turns every conversation back to themselves", weight: 4 },
+      { text: "Says 'I'm not being negative, I'm being realistic'", weight: 3 },
+      { text: "Starts sentences with 'Well, actually...'", weight: 2 },
+      { text: "Interrupts you to finish your sentences wrong", weight: 3 },
+    ]
+  },
+  {
+    name: "Time Theft",
+    icon: "🕐",
+    traits: [
+      { text: "Arrives 20 minutes late then asks what they missed", weight: 3 },
+      { text: "Makes plans and cancels at the last possible second", weight: 3 },
+      { text: "Sends 'Can we talk?' with no context and goes silent", weight: 4 },
+      { text: "Calls you during your lunch break every single day", weight: 2 },
+      { text: "Treats your free time as their personal therapy hour", weight: 4 },
+      { text: "Texts 'hey' and waits for you to carry the conversation", weight: 2 },
+    ]
+  },
+  {
+    name: "Emotional Manipulation",
+    icon: "🎭",
+    traits: [
+      { text: "Guilt-trips you for having other friends", weight: 4 },
+      { text: "Gives backhanded compliments disguised as concern", weight: 3 },
+      { text: "Plays the victim in every single conflict", weight: 4 },
+      { text: "Keeps score of every favor they've ever done", weight: 3 },
+      { text: "Brings up your past mistakes in unrelated arguments", weight: 4 },
+      { text: "Weaponizes the silent treatment like a professional", weight: 4 },
+      { text: "Says 'I guess nobody cares about me' to get attention", weight: 3 },
+    ]
+  },
+  {
+    name: "Social Sabotage",
+    icon: "🗡",
+    traits: [
+      { text: "Shares your secrets while claiming 'I thought everyone knew'", weight: 5 },
+      { text: "Competes with you instead of celebrating your wins", weight: 3 },
+      { text: "Posts passive-aggressive quotes clearly about you", weight: 3 },
+      { text: "Befriends your ex just to 'stay neutral'", weight: 4 },
+      { text: "Creates drama then watches from the sidelines", weight: 4 },
+      { text: "Somehow makes your birthday about them", weight: 3 },
+    ]
+  },
+  {
+    name: "Digital Draining",
+    icon: "📱",
+    traits: [
+      { text: "Double-texts when you don't reply within 3 minutes", weight: 2 },
+      { text: "Leaves you on read for days then acts normal", weight: 2 },
+      { text: "Sends memes at 3 AM then asks why you're ignoring them", weight: 3 },
+      { text: "Screenshots your conversations for group chat content", weight: 4 },
+      { text: "Reacts to your stories with the bare minimum emoji", weight: 1 },
+      { text: "Tags you in posts you'd never want to be associated with", weight: 2 },
+      { text: "Watches all your stories but never actually talks to you", weight: 2 },
+      { text: "Leaves dramatic vague posts then says 'I don't wanna talk about it'", weight: 3 },
+    ]
+  }
+];
+
+const verdicts = {
+  harmless: [
+    "Honestly? They're fine. You might be the energy vampire here for even checking.",
+    "This person is basically a golden retriever in human form. Relax.",
+    "They're more 'mildly annoying' than 'drain your life force.' You'll survive.",
+    "Verdict: Not a vampire. Possibly just... a person with minor flaws. Like everyone.",
+    "If this person is a vampire, they're the kind that only drinks vegetable juice.",
+    "Your energy is safe. This is a false alarm. Stand down the garlic.",
+  ],
+  mild: [
+    "They're a mosquito, not a vampire. Annoying but manageable.",
+    "A low-grade energy nibbler. Set a boundary or two and you'll be fine.",
+    "This person drains you like a slightly leaky faucet. Noticeable, not catastrophic.",
+    "Mildly vampiric. Think of them as an energy tax you pay for the friendship.",
+    "They sip your energy like it's a glass of wine at brunch. Slowly. Casually. Persistently.",
+    "Not quite a vampire. More like someone who stands too close in an elevator.",
+    "They're the human equivalent of a phone at 30% battery. Draining, but still functional.",
+    "A minor energy leak. Some emotional caulking should seal this right up.",
+  ],
+  moderate: [
+    "{name} is draining you like a bath with the plug pulled. Time to set some real boundaries.",
+    "This person is an emotional middleweight. They don't mean to drain you, but intent doesn't refill your tank.",
+    "{name} has graduated from 'annoying' to 'actually affecting your mental health.' Time to act.",
+    "You're basically a rechargeable battery and {name} never lets you get past 40%.",
+    "This is giving 'I need a nap after every interaction' energy. Literally.",
+    "They're not a full vampire, but they've definitely got fangs. Watch your neck.",
+    "{name} is the human equivalent of leaving all the lights on. Just... constantly draining.",
+    "Your friendship with {name} should come with a health warning label.",
+    "Not quite an emergency, but definitely time to install some emotional garlic.",
+    "You leave every conversation with {name} feeling like you ran a marathon. In sand. Uphill.",
+  ],
+  leech: [
+    "{name} isn't just draining your energy, they're running a pipeline directly to your soul.",
+    "EMOTIONAL LEECH CONFIRMED. {name} has been feeding off your life force and calling it 'friendship.'",
+    "{name}'s energy drain is so consistent it should have its own utility bill.",
+    "At this point, {name} owes you emotional reparations.",
+    "Being around {name} is like trying to charge your phone with a frayed cable in a thunderstorm.",
+    "If emotional exhaustion were a sport, {name} would be an Olympic gold medalist.",
+    "{name} doesn't just drain the room. They drain the building. The block. The ZIP code.",
+    "You don't have a friend. You have an unpaid emotional support job with no benefits.",
+    "{name} is weaponized neediness with legs and a phone plan.",
+    "Congratulations, {name} is so draining that even reading about them is exhausting.",
+  ],
+  vampire: [
+    "FULL VAMPIRE CONFIRMED. {name} is draining you faster than a phone playing videos at full brightness.",
+    "{name} has transcended normal human draining. They are an apex predator of emotional energy.",
+    "RUN. {name} is not a friend. They are an emotional black hole wearing a human suit.",
+    "Every moment spent with {name} costs you approximately 3 hours of recovery time. The math doesn't lie.",
+    "{name} is the final boss of energy vampires. You need garlic, stakes, AND a restraining order.",
+    "If you drew a Venn diagram of 'people who drain your will to live' and '{name},' it would be a circle.",
+    "DEFCON 1. {name} is a walking emotional extinction event. Evacuate immediately.",
+    "{name} could drain the energy from a nuclear reactor. Your personal batteries don't stand a chance.",
+    "Forget setting boundaries. Set up a perimeter. With barbed wire. And a moat.",
+    "The CDC should classify {name} as an emotional biohazard.",
+    "WARNING: Prolonged exposure to {name} may cause fatigue, irritability, questioning all life choices, and sudden urges to move to a remote island.",
+    "{name} doesn't just suck the energy out of a room. They create a vacuum so powerful that joy from adjacent rooms gets pulled in too.",
+  ]
+};
+
+const protections = {
+  harmless: [
+    { icon: "🧄", text: "<strong>Garlic Bread:</strong> Just share a meal with them. They're fine. You're fine. Everyone's fine." },
+    { icon: "😌", text: "<strong>Deep Breath:</strong> The real vampire might be the anxiety you felt about checking. Let it go." },
+  ],
+  mild: [
+    { icon: "🧄", text: "<strong>Mild Garlic:</strong> Season your boundaries lightly. A simple 'I can't talk right now' works wonders." },
+    { icon: "⏰", text: "<strong>Time Shield:</strong> Limit interactions to 45-minute windows. Vampires can't drain what they can't reach." },
+    { icon: "🪞", text: "<strong>Mirror Defense:</strong> Reflect their energy back. When they one-up you, just say 'Wow, that's great for you' and change the subject." },
+  ],
+  moderate: [
+    { icon: "🧄", text: "<strong>Garlic Necklace:</strong> Wear your boundaries visibly. 'I have 15 minutes' is a complete sentence." },
+    { icon: "🪵", text: "<strong>Wooden Stake:</strong> Drive a stake through guilt-trips immediately. 'I'm not available for that' is not negotiable." },
+    { icon: "💧", text: "<strong>Holy Water:</strong> Cleanse your schedule of obligation hangouts. Only see them when YOUR cup is full." },
+    { icon: "🌅", text: "<strong>Sunlight Protocol:</strong> Bring other people. Vampires weaken in groups where they can't monopolize attention." },
+  ],
+  leech: [
+    { icon: "🧄", text: "<strong>Industrial Garlic:</strong> Major boundary overhaul needed. Write down your limits and enforce them with zero guilt." },
+    { icon: "🪵", text: "<strong>Sharpened Stakes:</strong> End conversations that turn toxic mid-sentence. 'This isn't working for me, let's talk later.'"},
+    { icon: "💧", text: "<strong>Holy Water Bath:</strong> After every interaction, do something that actively recharges you. Non-negotiable." },
+    { icon: "✝️", text: "<strong>Silver Cross:</strong> Reduce contact frequency by 50%. If they guilt-trip you about it, that confirms the diagnosis." },
+    { icon: "🏰", text: "<strong>Castle Walls:</strong> Stop being available on demand. Respond to texts when YOU choose, not when they demand." },
+  ],
+  vampire: [
+    { icon: "🧄", text: "<strong>Weapons-Grade Garlic:</strong> Full boundary lockdown. They get access to you on YOUR terms only, or not at all." },
+    { icon: "🪵", text: "<strong>Consecrated Stake:</strong> Have the hard conversation. 'Our dynamic is not healthy and it needs to change or end.'" },
+    { icon: "💧", text: "<strong>Holy Water Flood:</strong> Surround yourself with people who GIVE energy. Drown out the drain with positive connections." },
+    { icon: "☀️", text: "<strong>Full Sunlight:</strong> Distance. Real, significant, unapologetic distance. You are not a rehabilitation center." },
+    { icon: "🏃", text: "<strong>Emergency Exit:</strong> If they refuse to respect boundaries, it is okay to walk away. Your energy is not an infinite resource." },
+    { icon: "🛡️", text: "<strong>Van Helsing Protocol:</strong> Consider professional help (therapy) to process the drain and rebuild your defenses." },
+  ]
+};
+
+// Build the checklist
+function buildChecklist() {
+  const container = document.getElementById('checklist');
+  let totalTraits = 0;
+
+  traitCategories.forEach((cat, ci) => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'category';
+    catDiv.innerHTML = `<div class="category-title">${cat.icon} ${cat.name}</div>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'traits-grid';
+
+    cat.traits.forEach((trait, ti) => {
+      totalTraits++;
+      const item = document.createElement('div');
+      item.className = 'trait-item';
+      item.dataset.weight = trait.weight;
+      item.dataset.checked = 'false';
+      item.innerHTML = `
+        <div class="trait-checkbox">&#10003;</div>
+        <div class="trait-label">${trait.text}</div>
+        <div class="trait-weight">${'🩸'.repeat(Math.min(trait.weight, 5))}</div>
+      `;
+      item.addEventListener('click', () => toggleTrait(item));
+      grid.appendChild(item);
+    });
+
+    catDiv.appendChild(grid);
+    container.appendChild(catDiv);
+  });
+
+  document.getElementById('checkedCount').textContent = `0 of ${totalTraits} traits detected`;
+}
+
+function toggleTrait(item) {
+  const isChecked = item.dataset.checked === 'true';
+  item.dataset.checked = isChecked ? 'false' : 'true';
+  item.classList.toggle('checked');
+  updateCount();
+}
+
+function updateCount() {
+  const all = document.querySelectorAll('.trait-item');
+  const checked = document.querySelectorAll('.trait-item.checked');
+  const total = all.length;
+  const count = checked.length;
+  const el = document.getElementById('checkedCount');
+  el.textContent = `${count} of ${total} traits detected`;
+  el.className = 'checked-count';
+  if (count > total * 0.6) el.classList.add('danger');
+  else if (count > total * 0.3) el.classList.add('warning');
+}
+
+function calculateEVI() {
+  const checked = document.querySelectorAll('.trait-item.checked');
+  if (checked.length === 0) {
+    alert('Check at least one trait to reveal their true nature!');
+    return;
+  }
+
+  let totalWeight = 0;
+  let maxWeight = 0;
+  document.querySelectorAll('.trait-item').forEach(item => {
+    maxWeight += parseInt(item.dataset.weight);
+  });
+  checked.forEach(item => {
+    totalWeight += parseInt(item.dataset.weight);
+  });
+
+  const rawScore = (totalWeight / maxWeight) * 100;
+  // Apply slight curve to make mid-range more dramatic
+  const evi = Math.min(100, Math.round(rawScore * 1.1));
+
+  const name = document.getElementById('vampireName').value.trim() || 'This person';
+
+  // Determine classification
+  let tier, classification, color, gradient;
+  if (evi <= 15) {
+    tier = 'harmless';
+    classification = 'Basically Human';
+    color = '#5a9a5a';
+    gradient = 'linear-gradient(90deg, #2a5a2a, #4a8a4a)';
+  } else if (evi <= 30) {
+    tier = 'mild';
+    classification = 'Mild Drain';
+    color = '#8a8a3a';
+    gradient = 'linear-gradient(90deg, #5a5a1a, #9a9a4a)';
+  } else if (evi <= 50) {
+    tier = 'moderate';
+    classification = 'Energy Nibbler';
+    color = '#b08030';
+    gradient = 'linear-gradient(90deg, #7a5020, #c09040)';
+  } else if (evi <= 75) {
+    tier = 'leech';
+    classification = 'Emotional Leech';
+    color = '#c04040';
+    gradient = 'linear-gradient(90deg, #8a2020, #d05050)';
+  } else {
+    tier = 'vampire';
+    classification = evi >= 90 ? 'RUN.' : 'Full Vampire';
+    color = '#d02020';
+    gradient = 'linear-gradient(90deg, #6a0000, #d02020, #ff3030)';
+  }
+
+  // Pick verdict
+  const tierVerdicts = verdicts[tier];
+  const verdict = tierVerdicts[Math.floor(Math.random() * tierVerdicts.length)].replace(/{name}/g, name);
+
+  // Show results
+  const results = document.getElementById('results');
+  results.classList.add('visible');
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  // Animate meter
+  const fill = document.getElementById('meterFill');
+  fill.style.width = '0%';
+  fill.style.background = gradient;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      fill.style.width = evi + '%';
+    });
+  });
+
+  // Animate score
+  const scoreEl = document.getElementById('eviScore');
+  scoreEl.style.color = color;
+  animateNumber(scoreEl, 0, evi, 1500);
+
+  // Classification
+  const classEl = document.getElementById('classification');
+  classEl.textContent = classification;
+  classEl.style.color = color;
+  classEl.style.textShadow = `0 0 30px ${color}`;
+
+  // Verdict
+  document.getElementById('verdict').textContent = `"${verdict}"`;
+
+  // Protection
+  const protList = document.getElementById('protectionList');
+  protList.innerHTML = '';
+  const tierProtections = protections[tier];
+  tierProtections.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'protection-item';
+    div.innerHTML = `<div class="protection-icon">${p.icon}</div><div class="protection-text">${p.text}</div>`;
+    protList.appendChild(div);
+  });
+
+  // Store for sharing
+  window._lastResult = { name, evi, classification, verdict, tier };
+}
+
+function animateNumber(el, from, to, duration) {
+  const start = performance.now();
+  function update(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+function shareResult() {
+  if (!window._lastResult) return;
+  const r = window._lastResult;
+  const bat = r.tier === 'vampire' ? '🦇🦇🦇' : r.tier === 'leech' ? '🦇🦇' : '🦇';
+  const text = `${bat} ENERGY VAMPIRE REPORT ${bat}\n\nSubject: ${r.name}\nEnergy Vampire Index: ${r.evi}/100\nClassification: ${r.classification}\n\n"${r.verdict}"\n\nRate YOUR energy vampires: [Energy Vampire Detector]`;
+
+  if (navigator.share) {
+    navigator.share({ title: 'Energy Vampire Report', text }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('shareToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }).catch(() => {
+    // Last resort
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const toast = document.getElementById('shareToast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  });
+}
+
+function resetAll() {
+  document.querySelectorAll('.trait-item.checked').forEach(item => {
+    item.dataset.checked = 'false';
+    item.classList.remove('checked');
+  });
+  document.getElementById('vampireName').value = '';
+  document.getElementById('results').classList.remove('visible');
+  updateCount();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+buildChecklist();
+</script>
+</body>
+</html>

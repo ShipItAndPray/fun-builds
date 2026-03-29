@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Humble Brag Translator</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0d0d0d;color:#e0e0e0;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:2.2rem;color:#d4a847;margin:2rem 0 .3rem;text-align:center}
+  .subtitle{color:#888;font-size:.95rem;margin-bottom:1.5rem;text-align:center}
+  .container{width:100%;max-width:640px;padding:0 1rem}
+  textarea{width:100%;height:120px;background:#1a1a1a;border:1px solid #333;border-radius:12px;color:#e0e0e0;padding:1rem;font-size:1rem;resize:vertical;font-family:inherit}
+  textarea:focus{outline:none;border-color:#d4a847}
+  textarea::placeholder{color:#555}
+  .btn-row{display:flex;gap:.6rem;margin:.8rem 0}
+  button{background:#d4a847;color:#0d0d0d;border:none;padding:.65rem 1.4rem;border-radius:8px;font-size:.95rem;font-weight:600;cursor:pointer;transition:background .2s}
+  button:hover{background:#e6bc5a}
+  button.secondary{background:#222;color:#d4a847;border:1px solid #333}
+  button.secondary:hover{background:#2a2a2a}
+  .result-card{background:#1a1a1a;border:1px solid #333;border-radius:12px;padding:1.2rem;margin-top:1rem;display:none}
+  .result-card.show{display:block;animation:fadeIn .4s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .category-badge{display:inline-block;background:#d4a84722;color:#d4a847;padding:.2rem .7rem;border-radius:20px;font-size:.8rem;font-weight:600;text-transform:uppercase;margin-bottom:.6rem}
+  .translation{font-size:1.15rem;line-height:1.5;margin:.6rem 0}
+  .translation em{color:#d4a847;font-style:normal;font-weight:600}
+  .brag-meter{margin:1rem 0}
+  .brag-meter-label{font-size:.8rem;color:#888;margin-bottom:.3rem}
+  .meter-bar{height:10px;background:#222;border-radius:5px;overflow:hidden;position:relative}
+  .meter-fill{height:100%;border-radius:5px;transition:width .6s ease}
+  .meter-num{font-size:.85rem;color:#d4a847;margin-top:.3rem;font-weight:600}
+  .result-actions{display:flex;gap:.5rem;margin-top:.8rem;flex-wrap:wrap}
+  .result-actions button{font-size:.85rem;padding:.5rem 1rem}
+  h2{color:#d4a847;font-size:1.1rem;margin:2rem 0 .8rem}
+  .history-list{list-style:none;margin-bottom:2rem}
+  .history-list li{background:#1a1a1a;border:1px solid #222;border-radius:8px;padding:.8rem;margin-bottom:.5rem;cursor:pointer;transition:border-color .2s}
+  .history-list li:hover{border-color:#d4a847}
+  .history-list .h-input{font-size:.85rem;color:#999;margin-bottom:.3rem}
+  .history-list .h-output{font-size:.95rem}
+  .history-list .h-meta{font-size:.75rem;color:#555;margin-top:.3rem;display:flex;justify-content:space-between}
+  .examples{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+  .examples button{font-size:.8rem;padding:.4rem .8rem;background:#1a1a1a;color:#aaa;border:1px solid #333;border-radius:20px}
+  .examples button:hover{color:#d4a847;border-color:#d4a847;background:#1a1a1a}
+  .clear-history{font-size:.8rem;color:#666;cursor:pointer;border:none;background:none;float:right}
+  .clear-history:hover{color:#d4a847}
+  footer{text-align:center;color:#333;font-size:.75rem;padding:2rem 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Humble Brag Translator</h1>
+  <p class="subtitle">Paste a humble brag. Get the real meaning.</p>
+
+  <div class="examples">
+    <button onclick="tryExample(this)">Skincare routine</button>
+    <button onclick="tryExample(this)">So tired from Bali</button>
+    <button onclick="tryExample(this)">Too many job offers</button>
+    <button onclick="tryExample(this)">Can't gain weight</button>
+    <button onclick="tryExample(this)">My Tesla problems</button>
+  </div>
+
+  <textarea id="input" placeholder="e.g. Ugh, so annoying being asked for my skincare routine AGAIN"></textarea>
+  <div class="btn-row">
+    <button onclick="translate()">Translate</button>
+    <button class="secondary" onclick="document.getElementById('input').value='';document.querySelector('.result-card').classList.remove('show')">Clear</button>
+  </div>
+
+  <div class="result-card" id="result">
+    <span class="category-badge" id="cat"></span>
+    <div class="translation" id="trans"></div>
+    <div class="brag-meter">
+      <div class="brag-meter-label">Brag Level</div>
+      <div class="meter-bar"><div class="meter-fill" id="meterFill"></div></div>
+      <div class="meter-num" id="meterNum"></div>
+    </div>
+    <div class="result-actions">
+      <button class="secondary" onclick="speak()">Speak It</button>
+      <button class="secondary" onclick="share()">Share</button>
+    </div>
+  </div>
+
+  <div id="historySection" style="display:none">
+    <h2>History <button class="clear-history" onclick="clearHistory()">clear</button></h2>
+    <ul class="history-list" id="historyList"></ul>
+  </div>
+</div>
+<footer>Humble Brag Translator &mdash; because we all know what you really meant.</footer>
+
+<script>
+const EXAMPLES = {
+  'Skincare routine': "Ugh, so annoying being asked for my skincare routine AGAIN",
+  'So tired from Bali': "I'm SO exhausted from my third trip to Bali this year",
+  'Too many job offers': "It's honestly overwhelming getting so many job offers, I just can't decide",
+  "Can't gain weight": "I literally cannot gain weight no matter how much I eat, it's such a problem",
+  'My Tesla problems': "My Tesla's autopilot keeps trying to take me to the office on weekends lol"
+};
+
+const PATTERNS = [
+  // LOOKS (category, patterns, translation template, brag level)
+  ["looks", [/skincare routine/i, /skin\s*(care|regimen)/i, /people ask.*(skin|face)/i], "I want you to know my skin is amazing.", 7],
+  ["looks", [/can'?t gain weight/i, /no matter how much I eat/i, /metabolism/i], "I have the body everyone wishes they had.", 8],
+  ["looks", [/people think I'?m younger/i, /asked for my ID/i, /carded/i, /look younger/i], "I look incredibly young and hot for my age.", 8],
+  ["looks", [/hair (is|gets) so (annoying|unmanageable|thick|long)/i], "I have gorgeous, thick, enviable hair.", 6],
+  ["looks", [/strangers (stare|look|compliment)/i, /random compliment/i, /hit on/i], "People can't stop noticing how attractive I am.", 9],
+  ["looks", [/clothes (don'?t|never) fit/i, /hard to find (clothes|jeans|pants)/i, /nothing fits/i], "My body is so perfect that regular clothes can't contain it.", 7],
+  ["looks", [/modeling/i, /asked to model/i, /agency/i], "I'm so attractive that professionals want to photograph me.", 9],
+  ["looks", [/no makeup/i, /without makeup/i, /bare face/i], "I'm naturally beautiful without even trying.", 8],
+  ["looks", [/look like (my|their) (sister|brother|sibling)/i, /mom.*sister/i], "My family has superior genetics and I want you to know it.", 7],
+  ["looks", [/so pale/i, /too pale/i, /sunburn/i, /burn so easily/i], "I have delicate porcelain skin like a Victorian portrait.", 4],
+
+  // WEALTH
+  ["wealth", [/tesla/i, /my (model\s*[s3xy]|cybertruck)/i], "I drive a Tesla and I need you to know that right now.", 7],
+  ["wealth", [/property tax/i, /mansion/i, /house is too big/i, /so many rooms/i], "I own an enormous, expensive home.", 9],
+  ["wealth", [/first class/i, /business class/i, /lounge/i, /priority boarding/i], "I fly in luxury and I pity the rest of you.", 8],
+  ["wealth", [/accountant/i, /tax (problem|issue|bill|situation)/i, /capital gains/i], "I make so much money it creates tax problems.", 9],
+  ["wealth", [/cleaning (lady|person|service|crew)/i, /housekeeper/i, /maid/i], "I'm rich enough to pay people to clean up after me.", 6],
+  ["wealth", [/vacation home/i, /second (home|house|property)/i, /beach house/i, /cabin/i], "I own multiple properties like it's no big deal.", 9],
+  ["wealth", [/stock (options|grants)/i, /RSU/i, /vesting/i, /equity/i], "My compensation package is enormous.", 8],
+  ["wealth", [/renovation/i, /remodel/i, /contractor/i, /kitchen (remodel|reno)/i], "I'm pouring money into my already-nice home to make it nicer.", 6],
+  ["wealth", [/which car/i, /too many cars/i, /garage.*full/i], "I have so many cars I can't even manage them all.", 9],
+  ["wealth", [/tipping/i, /left.*(big|huge|generous) tip/i, /over.?tip/i], "I throw around money because I have plenty of it.", 6],
+  ["wealth", [/private (jet|plane|charter)/i], "I literally fly private and I want to seem casual about it.", 10],
+  ["wealth", [/nanny/i, /au pair/i, /night nurse/i], "I can afford professional childcare help on demand.", 7],
+
+  // CAREER
+  ["career", [/job offer/i, /recruiter/i, /headhunt/i, /linkedin.*(blow|crazy|message)/i], "Everyone wants to hire me because I'm that good.", 8],
+  ["career", [/promotion/i, /promoted/i, /new (role|title|position)/i], "I just got promoted and I'm pretending to be stressed about it.", 7],
+  ["career", [/work.?life balance/i, /too (busy|much work)/i, /no time off/i], "I'm so important and in-demand that I can't stop working.", 6],
+  ["career", [/keynote/i, /speak(ing|er).*conference/i, /TED\s*talk/i, /panel/i], "I'm such an expert that people pay to hear me talk.", 9],
+  ["career", [/startup/i, /my company/i, /founded/i, /CEO/i, /co-?founder/i], "I run my own company and I want you to know it.", 8],
+  ["career", [/book deal/i, /publisher/i, /manuscript/i, /writing a book/i], "I'm so accomplished that publishers want my life story.", 8],
+  ["career", [/mentor/i, /advise/i, /everyone asks (me|my) (advice|opinion)/i], "I'm so successful that people seek my wisdom.", 7],
+  ["career", [/busy season/i, /slammed at work/i, /back.?to.?back meetings/i], "My time is incredibly valuable and everyone needs a piece of it.", 5],
+  ["career", [/side (hustle|project|gig)/i, /passive income/i], "I make money even when I'm not trying.", 7],
+  ["career", [/Forbes/i, /featured/i, /article about (me|us)/i, /press/i, /media/i], "The media thinks I'm important enough to write about.", 9],
+
+  // TRAVEL
+  ["travel", [/bali/i, /maldives/i, /santorini/i, /amalfi/i, /st\.?\s*barts/i, /mykonos/i, /tulum/i], "I vacation in places you've only seen on Instagram.", 8],
+  ["travel", [/jet\s*lag/i, /time\s*zone/i, /so many flights/i], "I travel so much that my body literally can't keep up.", 7],
+  ["travel", [/passport.*full/i, /stamps/i, /countries.*visited/i, /been to.*countries/i], "I've been everywhere and I need you to count with me.", 8],
+  ["travel", [/another (trip|vacation|holiday)/i, /third (trip|time)/i, /traveling again/i], "I take so many vacations that even I've lost count.", 8],
+  ["travel", [/hotel upgrade/i, /suite/i, /concierge/i, /resort/i], "I stay in luxury accommodations because I deserve it.", 7],
+  ["travel", [/packing/i, /suitcase/i, /what to (pack|bring|wear)/i, /carry.?on/i], "I travel so frequently that packing is my cardio.", 5],
+  ["travel", [/airport/i, /TSA\s*pre/i, /global entry/i, /clear/i], "I fly so often I've optimized every part of the airport experience.", 6],
+  ["travel", [/Europe/i, /Euro\s*trip/i, /backpack.*Europe/i], "I'm worldly and cultured and you should know that.", 6],
+  ["travel", [/sabbatical/i, /gap year/i, /digital nomad/i, /work remote.*beach/i], "I have the freedom to not work and just travel, unlike you.", 9],
+
+  // FITNESS
+  ["fitness", [/marathon/i, /half.?marathon/i, /10k/i, /running/i, /PR/i, /personal record/i], "I run extreme distances and my body is a machine.", 7],
+  ["fitness", [/abs/i, /six.?pack/i, /muscle/i, /shredded/i, /gains/i], "I have an incredible body and I want you to see it.", 8],
+  ["fitness", [/gym/i, /workout/i, /5\s*AM/i, /morning routine/i, /CrossFit/i], "I'm more disciplined than you and it shows.", 6],
+  ["fitness", [/meal prep/i, /macro/i, /protein/i, /clean eating/i, /diet/i], "I have superhuman discipline around food.", 5],
+  ["fitness", [/yoga retreat/i, /yoga/i, /meditation retreat/i, /mindful/i], "I'm spiritually and physically superior to you.", 6],
+  ["fitness", [/Peloton/i, /personal trainer/i, /trainer/i, /PT session/i], "I spend serious money to maintain this body.", 7],
+  ["fitness", [/Ironman/i, /triathlon/i, /ultra/i, /100.?mile/i], "I push my body to superhuman limits as a hobby.", 9],
+  ["fitness", [/hiking/i, /summit/i, /Kilimanjaro/i, /Everest/i, /base camp/i], "I conquer mountains for fun.", 8],
+  ["fitness", [/steps/i, /fitbit/i, /apple watch/i, /30k steps/i], "I track every step because my fitness level is that impressive.", 4],
+  ["fitness", [/sore/i, /leg day/i, /can'?t walk/i, /recovery/i], "I work out so intensely that my body is wrecked, and I love it.", 5],
+
+  // SOCIAL / GENERAL
+  ["social", [/so many (friends|invit)/i, /double.?booked/i, /can'?t (fit|make) everyone/i], "I'm so popular I literally can't fit everyone into my schedule.", 7],
+  ["social", [/follower/i, /viral/i, /blow up/i, /engagement/i, /views/i], "I'm internet famous and I need you to acknowledge it.", 8],
+  ["social", [/DM/i, /inbox/i, /messages/i, /notifications/i], "So many people want my attention that I can't keep up.", 7],
+  ["social", [/wedding/i, /engaged/i, /proposal/i, /ring/i], "Someone loves me so much they want to spend forever with me.", 6],
+  ["social", [/gifted/i, /advanced/i, /smart kid/i, /reading level/i, /IQ/i], "My child is a genius and by extension so am I.", 8],
+  ["social", [/volunteer/i, /charity/i, /giving back/i, /donate/i, /philanthrop/i], "I'm so wealthy AND morally superior that I give back.", 7],
+  ["social", [/humble/i, /blessed/i, /grateful/i, /so lucky/i], "I'm about to brag but I said 'blessed' so it doesn't count.", 6],
+  ["social", [/wine (collection|cellar)/i, /sommelier/i, /vintage/i], "I have expensive taste and the wallet to match.", 8],
+  ["social", [/exhausted.*planning/i, /party.*plan/i, /event.*stressful/i], "I throw parties so lavish that organizing them is a job.", 6],
+];
+
+// Fallback / generic patterns for when nothing specific matches
+const FALLBACK_KEYWORDS = [
+  {words: [/annoying/i, /ugh/i, /hate (it|when|that)/i, /so frustrating/i, /problem/i, /struggle/i, /can'?t deal/i, /exhausted/i, /overwhelm/i, /stress/i, /tired of/i], weight: 1},
+];
+
+function detectCategory(text) {
+  const catScores = {looks:0, wealth:0, career:0, travel:0, fitness:0, social:0};
+  const catKeywords = {
+    looks: /skin|hair|face|weight|body|young|hot|pretty|beautiful|gorgeous|attractive|model|makeup|tall|slim|thin|fit/i,
+    wealth: /money|expensive|car|house|home|price|cost|buy|afford|rich|salary|income|invest|property|luxury/i,
+    career: /job|work|boss|office|meeting|hire|company|business|client|project|team|manage|lead|CEO|title/i,
+    travel: /travel|trip|flight|hotel|vacation|country|city|beach|island|abroad|overseas|airport|passport/i,
+    fitness: /gym|run|workout|exercise|muscle|training|race|marathon|yoga|hike|sport|swim|bike|lift/i,
+    social: /friend|party|invite|follow|popular|event|people|social|wedding|date|DM|message/i,
+  };
+  for (const [cat, rx] of Object.entries(catKeywords)) {
+    const m = text.match(new RegExp(rx.source, 'gi'));
+    if (m) catScores[cat] += m.length;
+  }
+  let best = 'social', bestScore = 0;
+  for (const [cat, score] of Object.entries(catScores)) {
+    if (score > bestScore) { bestScore = score; best = cat; }
+  }
+  return best;
+}
+
+function translate() {
+  const text = document.getElementById('input').value.trim();
+  if (!text) return;
+
+  let bestMatch = null, bestScore = 0;
+
+  for (const [category, patterns, translation, level] of PATTERNS) {
+    for (const rx of patterns) {
+      if (rx.test(text)) {
+        const score = level + (text.match(rx)?.[0]?.length || 0) / 100;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = { category, translation, level };
+        }
+      }
+    }
+  }
+
+  // Fallback: generate a generic translation
+  if (!bestMatch) {
+    const cat = detectCategory(text);
+    let level = 5;
+    // Check for complaint words to bump level
+    for (const fb of FALLBACK_KEYWORDS) {
+      for (const rx of fb.words) {
+        if (rx.test(text)) { level += fb.weight; break; }
+      }
+    }
+    level = Math.min(level, 10);
+    const fallbacks = [
+      `I need you to know how great my life is, but I'm disguising it as a complaint.`,
+      `I'm bragging right now and we both know it.`,
+      `This is actually a flex wrapped in a whine.`,
+      `Translation: my life is better than yours and I want you to notice.`,
+      `I'm pretending this is a problem but it's actually a flex.`,
+    ];
+    bestMatch = {
+      category: cat,
+      translation: fallbacks[Math.floor(Math.random() * fallbacks.length)],
+      level
+    };
+  }
+
+  showResult(text, bestMatch);
+  addToHistory(text, bestMatch);
+}
+
+function showResult(input, match) {
+  const card = document.getElementById('result');
+  document.getElementById('cat').textContent = match.category;
+  document.getElementById('trans').innerHTML = `"<em>${match.translation}</em>"`;
+  const fill = document.getElementById('meterFill');
+  const pct = match.level * 10;
+  fill.style.width = pct + '%';
+  // Color gradient: green(1) -> yellow(5) -> red(10)
+  const r = match.level <= 5 ? Math.round((match.level / 5) * 255) : 255;
+  const g = match.level <= 5 ? 255 : Math.round((1 - (match.level - 5) / 5) * 255);
+  fill.style.background = `rgb(${r},${g},60)`;
+  document.getElementById('meterNum').textContent = `${match.level}/10${match.level >= 8 ? ' — Shameless' : match.level >= 5 ? ' — Classic humble brag' : ' — Subtle flex'}`;
+  card.classList.add('show');
+}
+
+function speak() {
+  const text = document.getElementById('trans').textContent;
+  if (!text) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/["""]/g, ''));
+  u.rate = 0.9;
+  u.pitch = 1.1;
+  window.speechSynthesis.speak(u);
+}
+
+function share() {
+  const input = document.getElementById('input').value.trim();
+  const trans = document.getElementById('trans').textContent.replace(/["""]/g, '');
+  const text = `Humble Brag: "${input}"\nReal meaning: ${trans}\n\nTranslated at Humble Brag Translator`;
+  if (navigator.share) {
+    navigator.share({ title: 'Humble Brag Translation', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.result-actions button:nth-child(2)');
+      const orig = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('hb_history') || '[]'); } catch { return []; }
+}
+
+function addToHistory(input, match) {
+  const h = getHistory();
+  h.unshift({ input, category: match.category, translation: match.translation, level: match.level, time: Date.now() });
+  if (h.length > 50) h.length = 50;
+  localStorage.setItem('hb_history', JSON.stringify(h));
+  renderHistory();
+}
+
+function renderHistory() {
+  const h = getHistory();
+  const section = document.getElementById('historySection');
+  const list = document.getElementById('historyList');
+  if (!h.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  list.innerHTML = h.map(item => `
+    <li onclick="replayHistory('${btoa(encodeURIComponent(item.input))}')">
+      <div class="h-input">${esc(item.input)}</div>
+      <div class="h-output">${esc(item.translation)}</div>
+      <div class="h-meta"><span>${item.category.toUpperCase()} &bull; ${item.level}/10</span><span>${timeAgo(item.time)}</span></div>
+    </li>
+  `).join('');
+}
+
+function replayHistory(b64) {
+  const input = decodeURIComponent(atob(b64));
+  document.getElementById('input').value = input;
+  translate();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function clearHistory() {
+  localStorage.removeItem('hb_history');
+  renderHistory();
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+  return Math.floor(diff/86400000) + 'd ago';
+}
+
+function tryExample(btn) {
+  const key = btn.textContent;
+  document.getElementById('input').value = EXAMPLES[key] || key;
+  translate();
+}
+
+// Load history on start
+renderHistory();
+</script>
+</body>
+</html>

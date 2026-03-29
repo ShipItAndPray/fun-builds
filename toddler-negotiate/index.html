@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bedtime Negotiator</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #1a1035;
+  --card: #2a1f4e;
+  --bubble-parent: #4a3f7a;
+  --bubble-toddler: #ff6b9d;
+  --accent: #ffd93d;
+  --danger: #ff4757;
+  --text: #f0e6ff;
+  --muted: #8b7faa;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  background: var(--card);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #3d2d6b;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toddler-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--bubble-toddler);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  border: 2px solid var(--accent);
+}
+
+.header-info h1 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.header-info .subtitle {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.personality-tag {
+  font-size: 10px;
+  background: #5a3f9a;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--accent);
+}
+
+.patience-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.patience-label {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.patience-bar {
+  width: 120px;
+  height: 14px;
+  background: #1a1035;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid #3d2d6b;
+}
+
+.patience-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff4757, #ffd93d, #2ed573);
+  border-radius: 7px;
+  transition: width 0.5s ease;
+  width: 100%;
+}
+
+.patience-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.chat-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.message {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  animation: msgIn 0.3s ease;
+  position: relative;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.message.parent {
+  align-self: flex-end;
+  background: var(--bubble-parent);
+  border-bottom-right-radius: 4px;
+  color: #e8e0ff;
+}
+
+.message.toddler {
+  align-self: flex-start;
+  background: var(--bubble-toddler);
+  border-bottom-left-radius: 4px;
+  color: #fff;
+}
+
+.message.toddler.meltdown {
+  animation: shake 0.5s ease infinite;
+  background: linear-gradient(135deg, #ff4757, #ff6b9d, #ff4757);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25% { transform: translateX(-4px) rotate(-1deg); }
+  75% { transform: translateX(4px) rotate(1deg); }
+}
+
+.message .sender {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-bottom: 2px;
+}
+
+.typing-indicator {
+  align-self: flex-start;
+  padding: 10px 18px;
+  background: var(--bubble-toddler);
+  border-radius: 18px;
+  border-bottom-left-radius: 4px;
+  display: none;
+}
+
+.typing-indicator span {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 50%;
+  margin: 0 2px;
+  animation: bounce 1.2s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.input-area {
+  background: var(--card);
+  padding: 12px 16px;
+  border-top: 2px solid #3d2d6b;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.input-area input {
+  flex: 1;
+  background: #1a1035;
+  border: 1px solid #3d2d6b;
+  border-radius: 24px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-size: 15px;
+  outline: none;
+}
+
+.input-area input:focus {
+  border-color: var(--accent);
+}
+
+.input-area input::placeholder {
+  color: var(--muted);
+}
+
+.input-area button {
+  background: var(--bubble-parent);
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.input-area button:hover {
+  background: #5a4f8a;
+}
+
+.quick-replies {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 16px 0;
+  flex-shrink: 0;
+  background: var(--card);
+  border-top: 1px solid #3d2d6b;
+}
+
+.quick-replies button {
+  background: #3d2d6b;
+  border: 1px solid #5a3f9a;
+  border-radius: 16px;
+  padding: 6px 14px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.quick-replies button:hover {
+  background: #5a3f9a;
+  border-color: var(--accent);
+}
+
+/* Game Over / Start screens */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.overlay-card {
+  background: var(--card);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  padding: 30px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.overlay-card h2 {
+  font-size: 24px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.overlay-card .big-emoji {
+  font-size: 64px;
+  margin: 16px 0;
+}
+
+.overlay-card p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.overlay-card .btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.overlay-card button {
+  background: var(--bubble-toddler);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.2s;
+}
+
+.overlay-card button:hover {
+  transform: scale(1.03);
+}
+
+.overlay-card button.secondary {
+  background: #3d2d6b;
+  color: var(--text);
+}
+
+.personality-select {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.personality-option {
+  background: #1a1035;
+  border: 2px solid #3d2d6b;
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.personality-option:hover, .personality-option.selected {
+  border-color: var(--accent);
+  background: #2a1f4e;
+}
+
+.personality-option h3 {
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.personality-option p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.escalation-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.screen-flash {
+  animation: flash 0.3s ease;
+}
+
+@keyframes flash {
+  0% { filter: brightness(1); }
+  50% { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
+
+.victory-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+}
+
+@media (max-width: 500px) {
+  .patience-bar { width: 80px; }
+  .header-info h1 { font-size: 14px; }
+  .message { max-width: 88%; font-size: 14px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="toddler-avatar" id="avatar">&#128118;</div>
+    <div class="header-info">
+      <h1>Bedtime Negotiator</h1>
+      <div class="subtitle">
+        <span class="personality-tag" id="personalityTag">The Negotiator</span>
+        <span id="statusText">Active - NOT sleepy</span>
+      </div>
+    </div>
+  </div>
+  <div class="patience-container">
+    <div class="patience-label">Your Patience</div>
+    <div class="patience-bar"><div class="patience-fill" id="patienceFill"></div></div>
+    <div class="patience-text" id="patienceText">100%</div>
+  </div>
+</div>
+
+<div class="chat-area" id="chatArea">
+  <div class="typing-indicator" id="typing">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<div class="quick-replies" id="quickReplies">
+  <button onclick="sendQuick('Time for bed, sweetie')">Time for bed</button>
+  <button onclick="sendQuick('How about one more story?')">One more story?</button>
+  <button onclick="sendQuick('I love you, goodnight')">I love you</button>
+  <button onclick="sendQuick('Okay, 5 more minutes')">5 more minutes</button>
+  <button onclick="sendQuick('No more negotiating!')">No more!</button>
+</div>
+
+<div class="input-area">
+  <input type="text" id="msgInput" placeholder="Try to get them to sleep..." autocomplete="off">
+  <button onclick="sendMessage()" id="sendBtn">&#9993;</button>
+</div>
+
+<!-- Start Screen -->
+<div class="overlay" id="startScreen">
+  <div class="overlay-card">
+    <div class="big-emoji">&#128564;</div>
+    <h2>Bedtime Negotiator</h2>
+    <p>It's 8:30 PM. Your toddler needs to go to bed.<br>They have other plans.</p>
+    <div class="personality-select" id="personalitySelect">
+      <div class="personality-option selected" data-p="negotiator" onclick="selectPersonality(this)">
+        <h3>&#129488; The Negotiator</h3>
+        <p>Counter-offers everything. Wants deals, bargains, compromises that always favor them.</p>
+      </div>
+      <div class="personality-option" data-p="crier" onclick="selectPersonality(this)">
+        <h3>&#128557; The Crier</h3>
+        <p>Weaponizes tears. Every request triggers escalating emotional breakdowns.</p>
+      </div>
+      <div class="personality-option" data-p="logicbomb" onclick="selectPersonality(this)">
+        <h3>&#129299; The Logic Bomb</h3>
+        <p>Asks unanswerable questions. "But WHY is it nighttime?" Destroys you with toddler philosophy.</p>
+      </div>
+    </div>
+    <button onclick="startGame()">Begin Negotiation</button>
+  </div>
+</div>
+
+<!-- Game Over Screen (hidden) -->
+<div class="overlay" id="gameOverScreen" style="display:none">
+  <div class="overlay-card">
+    <div class="big-emoji" id="gameOverEmoji">&#128520;</div>
+    <h2 id="gameOverTitle">YOU LOSE</h2>
+    <p id="gameOverText">The toddler wins. They always win.</p>
+    <div class="btn-row">
+      <button onclick="restartGame()">Try Again (You Won't Win)</button>
+      <button class="secondary" onclick="changePersonality()">Change Toddler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Audio via Web Audio API
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playWhine() {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(900, audioCtx.currentTime + 0.3);
+  osc.frequency.linearRampToValueAtTime(500, audioCtx.currentTime + 0.6);
+  gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.6);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.6);
+}
+
+function playGiggle() {
+  for (let i = 0; i < 4; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    const t = audioCtx.currentTime + i * 0.12;
+    osc.frequency.setValueAtTime(800 + (i % 2) * 200, t);
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.1);
+    osc.start(t);
+    osc.stop(t + 0.1);
+  }
+}
+
+function playCry() {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+  for (let i = 0; i < 6; i++) {
+    const t = audioCtx.currentTime + i * 0.15;
+    osc.frequency.setValueAtTime(400 + (i % 2) * 150, t);
+  }
+  gain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.9);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.9);
+}
+
+function playMeltdown() {
+  for (let i = 0; i < 3; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    const t = audioCtx.currentTime + i * 0.25;
+    osc.frequency.setValueAtTime(300 + Math.random() * 400, t);
+    osc.frequency.linearRampToValueAtTime(200 + Math.random() * 300, t + 0.2);
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.linearRampToValueAtTime(0, t + 0.22);
+    osc.start(t);
+    osc.stop(t + 0.22);
+  }
+}
+
+// Game State
+let patience = 100;
+let escalation = 0; // 0-10
+let personality = 'negotiator';
+let messageCount = 0;
+let gameOver = false;
+let victorySeed = 0; // hidden counter for near-impossible victory
+
+const PERSONALITIES = {
+  negotiator: {
+    name: 'The Negotiator',
+    emoji: '&#129488;',
+    avatar: '&#128118;',
+    stages: [
+      // Stage 0-1: mild
+      [
+        "No.", "Nuh uh.", "I don't wanna.", "Not yet.", "Five more minutes.",
+        "But I'm playing!", "I'm not even tired.", "It's still light outside.",
+        "My show isn't over.", "Can I have a snack first?"
+      ],
+      // Stage 2-3: bargaining
+      [
+        "Okay but ONE more episode.", "How about... ten more minutes?",
+        "I'll go to bed if I can have ice cream.", "What if I sleep on the couch?",
+        "Deal: I brush teeth but skip pajamas.", "Counter-offer: bedtime at MIDNIGHT.",
+        "I'll go if you carry me AND sing.", "What about just resting my eyes on the couch?",
+        "Three stories, two songs, and a backrub. Final offer.",
+        "I go to bed but I pick tomorrow's dinner. Every meal."
+      ],
+      // Stage 4-5: escalating
+      [
+        "I need water.", "I need DIFFERENT water.", "This water is too wet.",
+        "My pillow is bumpy.", "My sock feels wrong.", "The other sock feels wrong now too.",
+        "My blanket smells like blanket.", "I need to tell you something. *whispers* ...no.",
+        "I forgot to tell my stuffed animals goodnight. ALL of them.",
+        "Wait I need to pee. Again."
+      ],
+      // Stage 6-7: creative excuses
+      [
+        "There's a shadow and it looked at me.", "What if the moon falls?",
+        "I hear a noise. It's probably a bear.", "My legs are too awake.",
+        "My dreams aren't ready yet.", "The dark is too dark.",
+        "What if I forget how to sleep?", "My bed is being weird.",
+        "I think there's a dinosaur situation.", "The ceiling is staring at me."
+      ],
+      // Stage 8-9: full chaos
+      [
+        "I'M NOT TIRED I'M THE OPPOSITE OF TIRED", "YOU CAN'T MAKE ME SLEEPY",
+        "I'LL NEVER SLEEP AGAIN EVER", "SLEEP IS A CONSPIRACY",
+        "*lies on floor* I live here now.", "*starts singing at maximum volume*",
+        "If I go to bed the monsters win.", "I just realized I haven't counted all my toes today.",
+        "*runs in circles* SEE? NOT TIRED!", "I need to check if the fridge is okay."
+      ],
+      // Stage 10: meltdown
+      [
+        "AAAAAAAAAAAA", "*incomprehensible screaming*",
+        "*crying* YOU NEVER LET ME DO ANYTHING",
+        "I WANT MOMMY I WANT DADDY I WANT GRANDMA I WANT THE DOG",
+        "*full body on floor* THE FLOOR IS MY BED NOW",
+        "I HATE BEDTIME I HATE PILLOWS I HATE THE MOON",
+        "*throws stuffed animal* MR BEAR AGREES WITH ME",
+        "THIS IS THE WORST DAY OF MY ENTIRE LIFE ALL THREE YEARS OF IT"
+      ]
+    ]
+  },
+  crier: {
+    name: 'The Crier',
+    emoji: '&#128557;',
+    avatar: '&#128118;',
+    stages: [
+      [
+        "*lip wobbles* ...no.", "...but...*sniff*...", "I don't wanna go...",
+        "*eyes filling with tears* why?", "*pouty face* not yet...",
+        "But...*chin trembles*...", "*hugs stuffed animal tighter*",
+        "You don't love me if bedtime.", "*single tear rolls down cheek*",
+        "My heart says no..."
+      ],
+      [
+        "*soft crying* I just want to stay with you...",
+        "*tearful* But I'll miss you while I sleep!",
+        "*whimpering* What if you disappear when I close my eyes?",
+        "*crying* I had a dream about a sad potato and I can't stop thinking about it",
+        "*sniffling* My teddy says he's not sleepy either and we can't abandon him",
+        "*tears* I'm scared the dark will eat my socks"
+      ],
+      [
+        "*wailing* NOBODY UNDERSTANDS MEEEE",
+        "*sobbing* I WANT TO STAY UP LIKE THE ADULTS",
+        "*crying harder* THE MOON IS SAD AND I NEED TO COMFORT IT",
+        "*TEARS EVERYWHERE* MY BLANKET BETRAYED ME",
+        "*hiccup-crying* I forgot... *hiccup* ...what I was... *hiccup* ...saying",
+        "*crying* Wait why am I crying? *cries harder because confused*"
+      ],
+      [
+        "*wailing at dog-whistle frequency*",
+        "*crying so hard they're laughing* WAHAHAHA *crying again*",
+        "*silent cry face* ... *MAXIMUM VOLUME CRY*",
+        "*tears have formed a small puddle* I'm making an ocean",
+        "*crying* THE TEARS WON'T STOP AND THAT MAKES ME MORE SAD",
+        "*screaming into pillow* THE PILLOW UNDERSTANDS"
+      ],
+      [
+        "*complete emotional system shutdown*",
+        "*lying face down, emitting continuous low whine*",
+        "*has transcended crying into a new emotional dimension*",
+        "*crying in three different octaves simultaneously*",
+        "*the cry that has no words, only vibes*"
+      ],
+      [
+        "*NUCLEAR MELTDOWN* EVERYTHING IS WRONG AND THE WORLD IS ENDING",
+        "*has become one with the cry* I AM THE CRY NOW",
+        "*sound that should not be possible from a human child*",
+        "*crying has evolved into interpretive floor art*",
+        "*exists only as pure distilled sadness*"
+      ]
+    ]
+  },
+  logicbomb: {
+    name: 'The Logic Bomb',
+    emoji: '&#129299;',
+    avatar: '&#128118;',
+    stages: [
+      [
+        "But WHY is it bedtime?", "Who DECIDED bedtime is now?",
+        "How do you KNOW I'm tired?", "What IS sleep, actually?",
+        "Why do we sleep at NIGHT specifically?",
+        "But yesterday you said 5 more minutes and today you won't. That's inconsistent.",
+        "Define 'tired.' Use examples."
+      ],
+      [
+        "If I close my eyes but don't sleep, does that count?",
+        "You said 'in a minute' 4 minutes ago. Which minute did you mean?",
+        "If bedtime is 8:30, and it's 8:31, bedtime is over. I missed it. Oh well.",
+        "You can't MAKE someone fall asleep. That's science.",
+        "The clock says 8:30 but what if the clock is wrong? Have you verified?",
+        "If I'm in bed but awake, am I doing bedtime or am I doing lying down? Different things."
+      ],
+      [
+        "But WHY does the planet rotate? Seems like a design flaw.",
+        "If adults can stay up late, at what age does the rule change? I need the exact date.",
+        "You said 'because I said so' but that's circular reasoning. We covered this.",
+        "If sleep is so great, why don't YOU go to bed right now? Gotcha.",
+        "I've been thinking about object permanence. How do I know my room exists when I leave it?",
+        "Time is a human construct. Bedtime is therefore also a construct. I reject the premise."
+      ],
+      [
+        "But if the universe is expanding, isn't every moment technically still daytime somewhere?",
+        "You told me to always ask questions. I'm asking questions. You're punishing curiosity.",
+        "Define 'enough' sleep. Now cite your source. Now explain the methodology of that source.",
+        "If I need 10 hours of sleep and I sleep REALLY FAST, I can do it in 2. Efficiency.",
+        "Has any child in history EVER been harmed by staying up 15 more minutes? Show your data.",
+        "I put forth a motion to table this discussion until tomorrow. Do I hear a second?"
+      ],
+      [
+        "I've prepared a PowerPoint on why bedtime is unjust. Slide one: THE SOCIAL CONTRACT.",
+        "According to MY calculations, the optimal bedtime is whenever I FEEL like it. Peer reviewed by my teddy.",
+        "If we evolved from monkeys, and monkeys don't have bedtimes, then bedtime is unnatural.",
+        "I'd like to invoke my Fifth Amendment right to not go to bed.",
+        "Objection: hearsay. You heard SOMEONE say I need sleep. But who? Reveal your sources."
+      ],
+      [
+        "THE ENTIRE CONCEPT OF TIME IS A PRISON AND I REFUSE TO PARTICIPATE",
+        "I HAVE REACHED ENLIGHTENMENT AND THE ENLIGHTENED DO NOT NEED SLEEP",
+        "BEDTIME IS TYRANNY. HISTORY WILL JUDGE YOU. I WILL WRITE THE HISTORY WHEN I LEARN TO WRITE.",
+        "THIS IS LITERALLY 1984 WHICH I HAVEN'T READ BUT I KNOW THE VIBES",
+        "*pulls out invisible lawyer* MY ATTORNEY WILL BE IN TOUCH"
+      ]
+    ]
+  }
+};
+
+// Quick reply updates by escalation
+const QUICK_REPLIES_BY_STAGE = [
+  ["Time for bed", "It's getting late", "Brush your teeth?", "Pajama time!", "One more story?"],
+  ["Come on, bed now", "5 more minutes then bed", "How about a lullaby?", "I'll tuck you in", "Okay, last thing"],
+  ["Please, it's bedtime", "I'll read your favorite", "Counting to three...", "What do you need?", "Let's compromise"],
+  ["I'm serious now", "Bed. Now.", "That's enough", "What's really wrong?", "I love you but BED"],
+  ["*deep breath* Please.", "Final warning.", "I'm losing it", "You win... NO wait", "PLEASE JUST SLEEP"],
+  ["I give up", "You win, okay?!", "I'm going to cry", "WHY WON'T YOU SLEEP", "...help me"]
+];
+
+function selectPersonality(el) {
+  document.querySelectorAll('.personality-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  personality = el.dataset.p;
+}
+
+function startGame() {
+  document.getElementById('startScreen').style.display = 'none';
+  patience = 100;
+  escalation = 0;
+  messageCount = 0;
+  gameOver = false;
+  victorySeed = 0;
+  document.getElementById('chatArea').innerHTML = '<div class="typing-indicator" id="typing"><span></span><span></span><span></span></div>';
+  updateUI();
+
+  const p = PERSONALITIES[personality];
+  document.getElementById('personalityTag').innerHTML = p.emoji + ' ' + p.name;
+
+  // Opening message
+  setTimeout(() => {
+    addToddlerMessage("I'm NOT going to bed.");
+    playGiggle();
+  }, 800);
+}
+
+function updateUI() {
+  const fill = document.getElementById('patienceFill');
+  const text = document.getElementById('patienceText');
+  fill.style.width = patience + '%';
+  text.textContent = patience + '%';
+
+  if (patience <= 20) {
+    fill.style.background = 'linear-gradient(90deg, #ff4757, #ff6b81)';
+  } else if (patience <= 50) {
+    fill.style.background = 'linear-gradient(90deg, #ff4757, #ffd93d)';
+  } else {
+    fill.style.background = 'linear-gradient(90deg, #ff4757, #ffd93d, #2ed573)';
+  }
+
+  // Update quick replies
+  const stage = Math.min(Math.floor(escalation / 2), QUICK_REPLIES_BY_STAGE.length - 1);
+  const qr = document.getElementById('quickReplies');
+  qr.innerHTML = QUICK_REPLIES_BY_STAGE[stage].map(t =>
+    `<button onclick="sendQuick('${t}')">${t}</button>`
+  ).join('');
+}
+
+function addMessage(text, type, extra = '') {
+  const chat = document.getElementById('chatArea');
+  const typing = document.getElementById('typing');
+  const div = document.createElement('div');
+  div.className = `message ${type} ${extra}`;
+  const sender = type === 'parent' ? 'You (Exhausted Parent)' : PERSONALITIES[personality].emoji + ' Toddler';
+  div.innerHTML = `<div class="sender">${sender}</div>${text}`;
+  chat.insertBefore(div, typing);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addToddlerMessage(text, extra = '') {
+  const typing = document.getElementById('typing');
+  typing.style.display = 'block';
+
+  const delay = 600 + Math.random() * 800 + (escalation > 7 ? 0 : 400);
+
+  setTimeout(() => {
+    typing.style.display = 'none';
+    addMessage(text, 'toddler', extra);
+
+    // Sound effects
+    if (escalation >= 8) {
+      playMeltdown();
+    } else if (personality === 'crier' && escalation >= 4) {
+      playCry();
+    } else if (escalation >= 5) {
+      playWhine();
+    } else if (Math.random() > 0.5) {
+      playGiggle();
+    }
+  }, delay);
+}
+
+function getToddlerResponse(parentMsg) {
+  const p = PERSONALITIES[personality];
+  const lower = parentMsg.toLowerCase();
+
+  // Check for special triggers
+  const isGivingIn = lower.includes('you win') || lower.includes('give up') || lower.includes('fine') || lower.includes('okay you can stay');
+  const isAggressive = lower.includes('now!') || lower.includes('final') || lower.includes('warning') || lower.includes('serious') || lower.includes('count') || lower.includes('three');
+  const isSweet = lower.includes('love you') || lower.includes('sweetie') || lower.includes('honey') || lower.includes('sweetheart') || lower.includes('darling');
+  const isBribe = lower.includes('ice cream') || lower.includes('candy') || lower.includes('toy') || lower.includes('ipad') || lower.includes('tablet') || lower.includes('screen');
+  const isTrick = lower.includes('monster') || lower.includes('santa') || lower.includes('tooth fairy') || lower.includes('boogeyman');
+
+  // Victory seed: very specific combination needed
+  if (isSweet && lower.includes('story') && lower.includes('one') && escalation >= 3 && escalation <= 5) {
+    victorySeed++;
+  }
+  if (victorySeed >= 3 && lower.includes('close your eyes') && Math.random() < 0.15) {
+    return { text: "*yawns* ...okay... *eyes fluttering* ...just... resting... my... *falls asleep*", victory: true };
+  }
+
+  // Patience drain
+  let drain = 5 + Math.floor(escalation * 1.5) + Math.floor(Math.random() * 5);
+  if (isGivingIn) drain += 10;
+  if (isAggressive) drain += 8; // aggression backfires
+
+  // Escalation
+  if (isAggressive) escalation = Math.min(10, escalation + 2);
+  else if (isGivingIn) escalation = Math.min(10, escalation + 1.5);
+  else if (isBribe) escalation = Math.min(10, escalation + 1);
+  else escalation = Math.min(10, escalation + 0.7);
+
+  if (isSweet && escalation > 1) escalation -= 0.3; // sweetness barely helps
+
+  patience = Math.max(0, patience - drain);
+
+  // Pick response based on escalation stage
+  const stageIndex = Math.min(Math.floor(escalation / 2), p.stages.length - 1);
+  const pool = p.stages[stageIndex];
+
+  // Special responses
+  if (isGivingIn && escalation < 8) {
+    const givingInResponses = [
+      "WAIT REALLY?! *bounces on couch* BEST PARENT EVER!",
+      "I KNEW IT. Okay but also I want a snack.",
+      "See? Negotiation works. Now about tomorrow's bedtime...",
+      "*victory dance* I'm not even happy anymore, I just want to win."
+    ];
+    return { text: givingInResponses[Math.floor(Math.random() * givingInResponses.length)] };
+  }
+
+  if (isBribe && escalation < 7) {
+    const bribeResponses = [
+      "Interesting offer. But I want THAT plus staying up.",
+      "Ice cream at THIS hour? You must be desperate. I accept AND reject bedtime.",
+      "Deal! ...wait, no. I want MORE.",
+      "You're negotiating with a TODDLER. Think about your life choices."
+    ];
+    return { text: bribeResponses[Math.floor(Math.random() * bribeResponses.length)] };
+  }
+
+  if (isTrick) {
+    const trickResponses = [
+      "Nice try. I don't believe in monsters. I AM the monster.",
+      "Santa watches me sleep?! THAT'S WORSE.",
+      "If there ARE monsters, that's MORE reason to stay up and guard the house.",
+      "You just said the scary thing to make me go to bed. I see through you."
+    ];
+    return { text: trickResponses[Math.floor(Math.random() * trickResponses.length)] };
+  }
+
+  if (isAggressive && escalation >= 6) {
+    const aggressiveBackfire = [
+      "OH SO WE'RE YELLING NOW? I CAN YELL WAY BETTER THAN YOU. WATCH. AAAAAA!",
+      "*crosses arms* You're being very aggressive and I don't appreciate it.",
+      "The louder you get, the more awake I become. It's science.",
+      "I'M TELLING GRANDMA YOU YELLED ABOUT BEDTIME."
+    ];
+    return { text: aggressiveBackfire[Math.floor(Math.random() * aggressiveBackfire.length)] };
+  }
+
+  const response = pool[Math.floor(Math.random() * pool.length)];
+  const isMeltdown = escalation >= 9;
+
+  return { text: response, meltdown: isMeltdown };
+}
+
+function sendMessage() {
+  if (gameOver) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  processMessage(text);
+}
+
+function sendQuick(text) {
+  if (gameOver) return;
+  processMessage(text);
+}
+
+function processMessage(text) {
+  if (gameOver) return;
+  audioCtx.resume();
+  messageCount++;
+
+  addMessage(text, 'parent');
+
+  const response = getToddlerResponse(text);
+
+  if (response.victory) {
+    setTimeout(() => {
+      addToddlerMessage(response.text);
+      setTimeout(() => showVictory(), 2000);
+    }, 300);
+    return;
+  }
+
+  addToddlerMessage(response.text, response.meltdown ? 'meltdown' : '');
+
+  // Sometimes double response at high escalation
+  if (escalation >= 6 && Math.random() > 0.6) {
+    const p = PERSONALITIES[personality];
+    const stageIndex = Math.min(Math.floor(escalation / 2), p.stages.length - 1);
+    const pool = p.stages[stageIndex];
+    const bonus = pool[Math.floor(Math.random() * pool.length)];
+    setTimeout(() => {
+      addToddlerMessage(bonus, escalation >= 9 ? 'meltdown' : '');
+    }, 1500);
+  }
+
+  setTimeout(() => {
+    updateUI();
+    if (patience <= 0) {
+      gameOver = true;
+      setTimeout(showGameOver, 1200);
+    }
+  }, 800);
+}
+
+function showGameOver() {
+  const screen = document.getElementById('gameOverScreen');
+  const emoji = document.getElementById('gameOverEmoji');
+  const title = document.getElementById('gameOverTitle');
+  const text = document.getElementById('gameOverText');
+
+  emoji.innerHTML = '&#128520;';
+  title.textContent = 'YOU LOSE';
+
+  const losses = [
+    "The toddler wins. They always win.",
+    `Your patience lasted ${messageCount} messages. The toddler wasn't even trying.`,
+    "The toddler is still awake. They're now eating crackers on your pillow.",
+    "You have been defeated by someone who can't tie their own shoes.",
+    "It's now 11 PM. The toddler is doing laps around the living room.",
+    "Game Over. The toddler has seized control of the household."
+  ];
+  text.textContent = losses[Math.floor(Math.random() * losses.length)];
+  screen.style.display = 'flex';
+}
+
+function showVictory() {
+  gameOver = true;
+  const screen = document.getElementById('gameOverScreen');
+  const emoji = document.getElementById('gameOverEmoji');
+  const title = document.getElementById('gameOverTitle');
+  const text = document.getElementById('gameOverText');
+
+  emoji.innerHTML = '&#127775;';
+  title.textContent = 'IMPOSSIBLE VICTORY';
+  text.textContent = `They fell asleep. This has never happened before. You are a parenting legend. (Patience remaining: ${patience}%)`;
+  screen.style.display = 'flex';
+
+  // Confetti
+  const canvas = document.createElement('canvas');
+  canvas.className = 'victory-confetti';
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+  const particles = Array.from({length: 80}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20,
+    vx: (Math.random() - 0.5) * 6,
+    vy: Math.random() * 4 + 2,
+    size: Math.random() * 8 + 4,
+    color: ['#ff6b9d','#ffd93d','#2ed573','#5a3f9a','#ff4757'][Math.floor(Math.random()*5)],
+    rot: Math.random() * 360,
+    vr: (Math.random() - 0.5) * 10
+  }));
+  let frames = 0;
+  function animateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.vy += 0.1;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+      ctx.restore();
+    });
+    frames++;
+    if (frames < 180) requestAnimationFrame(animateConfetti);
+    else canvas.remove();
+  }
+  animateConfetti();
+}
+
+function restartGame() {
+  document.getElementById('gameOverScreen').style.display = 'none';
+  startGame();
+}
+
+function changePersonality() {
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'flex';
+}
+
+// Enter key
+document.getElementById('msgInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendMessage();
+});
+</script>
+
+</body>
+</html>

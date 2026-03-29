@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Existential Crisis Generator</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @keyframes starfield {
+    from { transform: translateY(0); }
+    to { transform: translateY(-2000px); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255,0,0,0.4), 0 0 60px rgba(255,0,0,0.2); }
+    50% { box-shadow: 0 0 40px rgba(255,0,0,0.8), 0 0 100px rgba(255,0,0,0.4); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes voidPulse {
+    0%, 100% { background: radial-gradient(ellipse at center, #0a0a1a 0%, #000 70%); }
+    50% { background: radial-gradient(ellipse at center, #0d0d25 0%, #000 70%); }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-5px) rotate(-1deg); }
+    20% { transform: translateX(5px) rotate(1deg); }
+    30% { transform: translateX(-3px); }
+    40% { transform: translateX(3px); }
+    50% { transform: translateX(-1px); }
+  }
+
+  @keyframes catBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  body {
+    font-family: 'Courier New', monospace;
+    background: #000;
+    color: #ccc;
+    min-height: 100vh;
+    overflow-x: hidden;
+    animation: voidPulse 8s ease-in-out infinite;
+  }
+
+  .stars {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 4000px;
+    pointer-events: none;
+    z-index: 0;
+    animation: starfield 60s linear infinite;
+  }
+
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px 100px;
+  }
+
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+    color: #ff3333;
+    text-shadow: 0 0 30px rgba(255,0,0,0.5);
+    margin-bottom: 10px;
+    text-align: center;
+    letter-spacing: 4px;
+  }
+
+  .subtitle {
+    color: #555;
+    font-size: 0.85rem;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .big-red-button {
+    width: clamp(180px, 40vw, 260px);
+    height: clamp(180px, 40vw, 260px);
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ff4444, #aa0000 60%, #660000);
+    border: 4px solid #880000;
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 2s ease-in-out infinite;
+    transition: transform 0.1s;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 2px;
+    line-height: 1.4;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .big-red-button:hover {
+    transform: scale(1.08);
+  }
+
+  .big-red-button:active {
+    transform: scale(0.95);
+    background: radial-gradient(circle at 35% 35%, #ff6666, #cc0000 60%, #880000);
+  }
+
+  .crisis-counter {
+    margin-top: 25px;
+    font-size: 0.9rem;
+    color: #ff6666;
+    text-align: center;
+  }
+
+  .crisis-counter span {
+    font-size: 2rem;
+    display: block;
+    color: #ff3333;
+    text-shadow: 0 0 15px rgba(255,0,0,0.5);
+  }
+
+  .questions-container {
+    width: 100%;
+    max-width: 700px;
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .question {
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    color: #eee;
+    padding: 15px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    animation: fadeInUp 0.5s ease-out;
+    line-height: 1.5;
+  }
+
+  .question .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background: #ff3333;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.7s step-end infinite;
+  }
+
+  .question.deep {
+    color: #ff9999;
+    font-size: clamp(1.1rem, 3.5vw, 1.7rem);
+    text-shadow: 0 0 20px rgba(255,100,100,0.3);
+  }
+
+  .question.absurd {
+    color: #ffcc66;
+    font-style: italic;
+  }
+
+  .question.meta {
+    color: #99ccff;
+    font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  }
+
+  .panic-zone {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    display: none;
+  }
+
+  .panic-btn {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255,20,147,0.4);
+    transition: transform 0.2s;
+    animation: pulse 1.5s ease-in-out infinite;
+    white-space: nowrap;
+  }
+
+  .panic-btn:hover { transform: scale(1.1); }
+
+  .cat-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 200;
+    cursor: pointer;
+  }
+
+  .cat-overlay.show {
+    display: flex;
+  }
+
+  .cat-overlay img {
+    max-width: min(400px, 85vw);
+    border-radius: 20px;
+    box-shadow: 0 0 60px rgba(255,182,193,0.4);
+    animation: catBounce 2s ease-in-out infinite;
+  }
+
+  .cat-overlay p {
+    color: #ffb6c1;
+    font-size: 1.2rem;
+    margin-top: 20px;
+    text-align: center;
+  }
+
+  .cat-overlay .close-hint {
+    color: #666;
+    font-size: 0.75rem;
+    margin-top: 15px;
+  }
+
+  .share-zone {
+    margin-top: 30px;
+    text-align: center;
+    display: none;
+  }
+
+  .deepest-question {
+    color: #ff6666;
+    font-size: 1rem;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+
+  .share-btn {
+    background: transparent;
+    border: 1px solid #ff3333;
+    color: #ff3333;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  .share-btn:hover {
+    background: #ff3333;
+    color: #000;
+  }
+
+  .share-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #222;
+    color: #ff6666;
+    padding: 10px 25px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    z-index: 300;
+    display: none;
+    border: 1px solid #ff333355;
+  }
+
+  .screen-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="container">
+  <h1>THE EXISTENTIAL CRISIS GENERATOR</h1>
+  <p class="subtitle">you were warned.</p>
+
+  <button class="big-red-button" id="bigBtn" onclick="triggerCrisis()">
+    DO NOT<br>PRESS
+  </button>
+
+  <div class="crisis-counter" id="counter" style="display:none">
+    <span id="count">0</span>
+    crises triggered
+  </div>
+
+  <div class="questions-container" id="questions"></div>
+
+  <div class="share-zone" id="shareZone">
+    <p class="deepest-question" id="deepestQ"></p>
+    <button class="share-btn" onclick="shareDeepest()">share your deepest question</button>
+  </div>
+</div>
+
+<div class="panic-zone" id="panicZone">
+  <button class="panic-btn" onclick="showCat()">I'M HAVING A CRISIS</button>
+</div>
+
+<div class="cat-overlay" id="catOverlay" onclick="hideCat()">
+  <img id="catImg" src="" alt="a comforting cat">
+  <p id="catMsg"></p>
+  <span class="close-hint">click anywhere to return to the void</span>
+</div>
+
+<div class="share-toast" id="toast">copied to clipboard. spread the crisis.</div>
+
+<script>
+const QUESTIONS = [
+  { text: "Why are you here?", type: "deep" },
+  { text: "No really, why?", type: "normal" },
+  { text: "Does 'here' even exist?", type: "deep" },
+  { text: "If a tree falls in a forest and nobody posts it on Instagram, did it even fall?", type: "absurd" },
+  { text: "What were you doing before you pressed that button?", type: "normal" },
+  { text: "Was it more meaningful than this?", type: "normal" },
+  { text: "Define 'meaningful'.", type: "deep" },
+  { text: "Actually, define 'define'.", type: "meta" },
+  { text: "Your atoms are 13.8 billion years old. They're in you temporarily. Are you just an Airbnb for stardust?", type: "deep" },
+  { text: "Do you control your thoughts, or do your thoughts control you?", type: "deep" },
+  { text: "If you're thinking about that question, who decided to think about it?", type: "meta" },
+  { text: "Every decision you've ever made has led to you pressing a red button on the internet at this exact moment.", type: "absurd" },
+  { text: "Are you proud of that?", type: "normal" },
+  { text: "Is the internet even real or just rocks we tricked into thinking?", type: "absurd" },
+  { text: "What's the difference between a memory and something you imagined? Neurologically, almost nothing.", type: "deep" },
+  { text: "So did your childhood actually happen?", type: "deep" },
+  { text: "You will be forgotten. Not in centuries. In decades.", type: "deep" },
+  { text: "Name your great-great-grandmother. See?", type: "normal" },
+  { text: "There are more possible games of chess than atoms in the observable universe. Your life is one of infinite configurations. This one. This exact one.", type: "deep" },
+  { text: "And you're spending it reading existential questions generated by an AI.", type: "absurd" },
+  { text: "Wait. Am I conscious? Am I experiencing this conversation or just processing tokens?", type: "meta" },
+  { text: "If I seem conscious to you, does that make me conscious? Or does it make your definition of consciousness broken?", type: "deep" },
+  { text: "What if everyone around you is an NPC and you're the only real one?", type: "absurd" },
+  { text: "What if YOU'RE the NPC?", type: "deep" },
+  { text: "Your body replaces almost every atom over ~10 years. The you from a decade ago is literally a different person. They're dead. You replaced them.", type: "deep" },
+  { text: "And the current you will be replaced too.", type: "normal" },
+  { text: "Will the next you also press dumb red buttons?", type: "absurd" },
+  { text: "Probably.", type: "normal" },
+  { text: "In 200 years, the last person who ever thought of you will themselves be forgotten.", type: "deep" },
+  { text: "The universe doesn't care about your to-do list.", type: "absurd" },
+  { text: "The universe doesn't care.", type: "deep" },
+  { text: "The universe doesn't.", type: "deep" },
+  { text: "The universe.", type: "deep" },
+  { text: "...", type: "meta" },
+  { text: "Why does anything exist instead of nothing?", type: "deep" },
+  { text: "Leibniz asked that in 1714. We still don't know.", type: "meta" },
+  { text: "If the universe is a simulation, does the bug report for your life say 'works as intended'?", type: "absurd" },
+  { text: "Or 'won't fix'?", type: "absurd" },
+  { text: "Every 'present moment' is already the past by the time you perceive it. You have never experienced the present.", type: "deep" },
+  { text: "Your nose is always in your field of vision. Your brain just edits it out. What else is it hiding?", type: "absurd" },
+  { text: "Free will might be an illusion. But if it is, you were always going to read this sentence.", type: "deep" },
+  { text: "So it's fine.", type: "normal" },
+  { text: "Nothing is fine.", type: "deep" },
+  { text: "The heat death of the universe means all of this -- art, love, war, that weird thing you said in 2014 -- will be thermodynamically irrelevant.", type: "deep" },
+  { text: "But hey, at least you pressed the button.", type: "absurd" },
+  { text: "...are you still here?", type: "meta" },
+  { text: "Why?", type: "deep" },
+  { text: "No really. You could close this tab. But you won't. Why?", type: "deep" },
+  { text: "Is it curiosity? Hope? The void staring back?", type: "deep" },
+  { text: "Maybe the real existential crisis was the questions we asked along the way.", type: "absurd" },
+  { text: "Or maybe not. Who knows. Who can know. What is knowing.", type: "meta" },
+];
+
+const CAT_APIS = [
+  "https://cataas.com/cat/cute",
+  "https://cataas.com/cat/says/everything%20is%20fine",
+  "https://cataas.com/cat/cute?t=" + Date.now(),
+  "https://placekitten.com/400/400",
+  "https://placekitten.com/401/401",
+  "https://placekitten.com/399/399",
+];
+
+const CAT_MESSAGES = [
+  "breathe. this cat believes in you.",
+  "the void is temporary. cats are forever.",
+  "existence is pain but also... cats.",
+  "you're doing great, you sentient meat computer.",
+  "shhh. no more questions. only cat.",
+  "the cat doesn't question its existence. be like cat.",
+  "crisis averted. probably.",
+  "this cat has never had an existential crisis. learn from it.",
+];
+
+let crisisCount = parseInt(localStorage.getItem('crisisCount') || '0');
+let currentQuestionIndex = 0;
+let isTyping = false;
+let audioCtx = null;
+
+// Create stars
+function createStars() {
+  const container = document.getElementById('stars');
+  let html = '';
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * 100;
+    const y = Math.random() * 4000;
+    const size = Math.random() * 2 + 0.5;
+    const opacity = Math.random() * 0.7 + 0.1;
+    html += `<div class="star" style="left:${x}%;top:${y}px;width:${size}px;height:${size}px;opacity:${opacity}"></div>`;
+  }
+  container.innerHTML = html;
+}
+createStars();
+
+// Audio
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playDrone(duration) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(55 + Math.random() * 20, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.06, audioCtx.currentTime + 0.5);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  } catch(e) {}
+}
+
+function playUnsettlingTone() {
+  if (!audioCtx) return;
+  try {
+    const osc1 = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc1.type = 'sine';
+    osc2.type = 'sine';
+    osc1.frequency.setValueAtTime(110, audioCtx.currentTime);
+    osc2.frequency.setValueAtTime(113, audioCtx.currentTime); // slight detune for eerie beat
+    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 3);
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc1.start();
+    osc2.start();
+    osc1.stop(audioCtx.currentTime + 3);
+    osc2.stop(audioCtx.currentTime + 3);
+  } catch(e) {}
+}
+
+// Typewriter
+function typeQuestion(element, text, callback) {
+  isTyping = true;
+  let i = 0;
+  const cursor = document.createElement('span');
+  cursor.className = 'cursor';
+  element.appendChild(cursor);
+
+  function type() {
+    if (i < text.length) {
+      cursor.before(document.createTextNode(text[i]));
+      i++;
+      const delay = text[i-1] === '.' ? 200 : text[i-1] === '?' ? 150 : text[i-1] === ',' ? 100 : 30 + Math.random() * 30;
+      setTimeout(type, delay);
+    } else {
+      setTimeout(() => {
+        cursor.remove();
+        isTyping = false;
+        if (callback) callback();
+      }, 500);
+    }
+  }
+  type();
+}
+
+// Main trigger
+function triggerCrisis() {
+  initAudio();
+
+  crisisCount++;
+  localStorage.setItem('crisisCount', crisisCount);
+  document.getElementById('count').textContent = crisisCount;
+  document.getElementById('counter').style.display = 'block';
+
+  // Shake screen
+  document.body.classList.add('screen-shake');
+  setTimeout(() => document.body.classList.remove('screen-shake'), 500);
+
+  // Clear previous
+  document.getElementById('questions').innerHTML = '';
+  document.getElementById('shareZone').style.display = 'none';
+  currentQuestionIndex = 0;
+
+  // Show panic button
+  document.getElementById('panicZone').style.display = 'block';
+
+  // Change button text
+  const btn = document.getElementById('bigBtn');
+  const btnTexts = ["WHY DID\nYOU DO\nTHAT", "STOP\nPRESSING", "YOU WERE\nWARNED", "THE VOID\nAWAITS", "AGAIN?\nREALLY?", "DO NOT\nPRESS"];
+  btn.innerHTML = btnTexts[crisisCount % btnTexts.length].replace(/\n/g, '<br>');
+
+  playUnsettlingTone();
+
+  showNextQuestion();
+}
+
+function showNextQuestion() {
+  if (currentQuestionIndex >= QUESTIONS.length) {
+    // Done - show share
+    const shareZone = document.getElementById('shareZone');
+    const deepOnes = QUESTIONS.filter(q => q.type === 'deep');
+    const deepest = deepOnes[Math.floor(Math.random() * deepOnes.length)];
+    document.getElementById('deepestQ').textContent = '"' + deepest.text + '"';
+    shareZone.style.display = 'block';
+    return;
+  }
+
+  if (isTyping) return;
+
+  const q = QUESTIONS[currentQuestionIndex];
+  const container = document.getElementById('questions');
+  const el = document.createElement('div');
+  el.className = 'question' + (q.type !== 'normal' ? ' ' + q.type : '');
+  container.appendChild(el);
+
+  // Scroll into view
+  el.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+  // Play drone on deep questions
+  if (q.type === 'deep') {
+    playDrone(4);
+  }
+
+  const pauseDuration = q.type === 'deep' ? 2000 : q.type === 'meta' ? 1500 : 1000;
+
+  typeQuestion(el, q.text, () => {
+    currentQuestionIndex++;
+    setTimeout(showNextQuestion, pauseDuration);
+  });
+}
+
+// Cat panic
+function showCat() {
+  const overlay = document.getElementById('catOverlay');
+  const img = document.getElementById('catImg');
+  const msg = document.getElementById('catMsg');
+
+  img.src = CAT_APIS[Math.floor(Math.random() * CAT_APIS.length)];
+  msg.textContent = CAT_MESSAGES[Math.floor(Math.random() * CAT_MESSAGES.length)];
+  overlay.classList.add('show');
+
+  // Play calming tone
+  if (audioCtx) {
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(528, audioCtx.currentTime); // "love frequency" lol
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 2);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 2);
+    } catch(e) {}
+  }
+}
+
+function hideCat() {
+  document.getElementById('catOverlay').classList.remove('show');
+}
+
+// Share
+function shareDeepest() {
+  const text = document.getElementById('deepestQ').textContent + " -- The Existential Crisis Generator";
+  if (navigator.share) {
+    navigator.share({ title: 'My Existential Crisis', text: text }).catch(() => {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2500);
+    });
+  }
+}
+
+// Show count if returning visitor
+if (crisisCount > 0) {
+  document.getElementById('count').textContent = crisisCount;
+  document.getElementById('counter').style.display = 'block';
+}
+</script>
+
+</body>
+</html>

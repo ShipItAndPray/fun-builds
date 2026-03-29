@@ -1,0 +1,100 @@
+1. **Hype Man** | hype-man | Explodes with claps and screams "LET'S GO!" every time you finish typing a sentence | audio
+2. **Swear Jar 2.0** | swear-jar | Mic listens for profanity and charges your digital swear jar with coin sounds | mic
+3. **Karaoke Judge** | karaoke-judge | Rate your singing with a panel of brutally animated judges | mic/audio
+4. **Fake Phone Call** | fake-call | Generates a convincing "I gotta take this" escape call on demand | audio/timer
+5. **Resume Roaster** | resume-roaster | Paste your resume, get destroyed by a burned-out career counselor | text
+6. **Drunk Text Simulator** | drunk-text | Slider scrambles your typing progressively as drunk level rises | text
+7. **Villain Origin Story** | villain-origin | Tell it what annoyed you today, get your full villain backstory | text
+8. **Eye Contact Trainer** | eye-contact | Camera detects if you're looking at the screen and judges your confidence | camera
+9. **Sigh Counter** | sigh-counter | Mic detects sighs all day and tallies your suffering score | mic
+10. **Meeting Salary Burner** | meeting-salary | Real-time counter of money incinerated while your meeting continues | timer
+11. **Procrastination Escalator** | procrastinate | Tracks how long you've avoided a task, guilt messages escalate every 5 min | timer
+12. **Achievement Unlocked** | achievement | Describe mundane tasks, unlock absurd gamer achievements with fanfare | text/audio
+13. **Passive Aggressive Note Writer** | passive-aggressive | Converts your angry rant into perfectly passive-aggressive office prose | text
+14. **Whisper Challenge** | whisper-challenge | Speech synthesis whispers a phrase, you type what you think you heard | text/audio
+15. **Voice Crack Detector** | voice-crack | Mic listens for voice cracks during speaking and logs your cringe score | mic
+16. **Terrible Dancer Rater** | dance-rater | Phone accelerometer judges your dancing with devastating precision | motion
+17. **Relationship Red Flag Finder** | red-flag | Describe a situation, app identifies every red flag with citations | text
+18. **Dad Joke Dispenser** | dad-joke | Press button for dad joke, mandatory groan sound plays 3 seconds after | touch/audio
+19. **Overthinking Simulator** | overthink | Type a simple decision, watch it spiral into 47 nested what-ifs live | text
+20. **First World Problem Dramatizer** | first-world | Enter minor inconvenience, receive a full Greek tragedy | text
+21. **Humble Brag Translator** | humble-brag | Converts humble brags into their naked unfiltered meaning | text
+22. **Mood Ring Camera** | mood-ring | Camera reads your face and assigns a 70s mood ring color with prophecy | camera
+23. **Flinch Counter** | flinch-counter | Camera tracks face movements during horror films and rates your bravery | camera
+24. **Fake IQ Test** | fake-iq | Nonsense questions, maximum false-precision scoring, certificate at end | text
+25. **Hot Takes Machine** | hot-takes | Enter a topic, generate increasingly unhinged unpopular opinions | text
+26. **Stress Clicker** | stress-clicker | Virtual stress ball counts your squeezes and rates your anxiety level | touch
+27. **Existential Crisis Button** | exist-crisis | One red button triggers a cascade of unanswerable existential questions | touch/text
+28. **Crying Baby Soother** | baby-soother | White noise machine with escalating desperation modes named after sleep stages | audio
+29. **Toddler Negotiation Simulator** | toddler-negotiate | Simulate negotiating bedtime with a toddler who will always say no | text
+30. **Energy Vampire Detector** | energy-vampire | Describe a person's behaviors, calculate their energy vampire index | text
+31. **Life Regret-O-Meter** | regret-meter | Rate past decisions on a slider, accumulate your total regret score | text
+32. **Clap Rhythm Grader** | clap-grade | Mic records your clapping rhythm and grades your coordination | mic/audio
+33. **Fortune Cookie Truth Teller** | fortune-truth | Generates fortune cookies that say uncomfortably specific real truths | text
+34. **Villain Name Generator** | villain-name | Enter your real name, receive your supervillain alter ego with full lore | text
+35. **Oversharer Simulator** | oversharer | Ask an innocent question, receive disturbing levels of personal detail | text
+36. **Sarcasm Probability Meter** | sarcasm-meter | Paste any text, get a sarcasm percentage with confidence interval | text
+37. **Cringe Memory Vault** | cringe-vault | Log embarrassing memories, app surfaces them at random worst moments | text/timer
+38. **Awkward Silence Soundtrack** | awkward-silence | Button plays increasingly uncomfortable music that gets worse the longer you wait | touch/audio
+39. **Ghost Detector** | ghost-detector | Uses phone motion sensors to detect and visualize "paranormal activity" | motion
+40. **Shoulder Devil & Angel** | shoulder-devil | Split-screen devil vs. angel argue your moral dilemma in real time | text
+41. **Dramatic Reading Machine** | dramatic-read | Text-to-speech with maximum theatrical overdramatization and pauses | text/audio
+42. **Office Politics Decoder** | office-politics | Enter corporate speak, get the brutal real meaning decoded word by word | text
+43. **Breakup Song Matcher** | breakup-song | Describe your breakup in 3 words, get matched to your healing anthem | text
+44. **Career Crisis Calculator** | career-crisis | Answer 10 questions, get your probability of quitting within 90 days | text
+45. **Parking Ticket Defense Lawyer** | parking-lawyer | Generate legally-flavored but completely absurd parking ticket defenses | text
+46. **Ego Deflator** | ego-deflate | Enter your proudest achievement, get put in humbling cosmic perspective | text
+47. **Grammar Court** | grammar-court | Argue punctuation disputes before a dramatic judge with gavel sounds | text/audio
+48. **Plot Armor Calculator** | plot-armor | Enter a character description, calculate their statistical survival odds | text
+49. **Nightmare Ingredient Combiner** | nightmare-combo | Combines random innocent things into genuinely terrifying horror scenarios | text
+50. **Terrible Poet Laureate** | terrible-poet | Generates deliberately awful poetry about any subject on demand | text
+51. **Nerd Translator** | nerd-translate | Converts casual sentences into maximum nerd speak with footnotes | text
+52. **Bored Meeting Bingo** | meeting-bingo | Customizable corporate buzzword bingo card with airhorn win sound | text/audio
+53. **Tabloid Headliner** | tabloid-head | Converts boring real news into sensational tabloid front pages | text
+54. **Social Anxiety Inner Voice** | inner-voice | Narrates the anxious internal monologue for any social situation you describe | text/audio
+55. **Villain Redemption Arc** | redemption-arc | Give any villain a full heartwarming redemption story in 60 seconds | text
+56. **Lifetime Time Waster Calc** | time-wasted | Enter daily habits, calculate total years lost over your lifetime | text
+57. **Cliffhanger Adder** | cliffhanger | Adds a shocking cliffhanger ending to any boring story you tell it | text
+58. **Hot Mic Confessional** | hot-mic | Pretend your mic is accidentally on, generates things you'd never admit | text
+59. **Applause Button** | applause-btn | Giant button plays thunderous applause for any mediocre personal win | touch/audio
+60. **Typing Personality Profiler** | typing-profiler | Analyzes typing speed and pause patterns, delivers a harsh personality verdict | text/timer
+61. **Speed Dating Desperation Timer** | speed-dating | Round timer with music that gets increasingly desperate as the buzzer nears | timer/audio
+62. **Demotivational Poster Maker** | demotivator | Snap a selfie, auto-generate a perfectly demotivational poster | camera
+63. **Unsatisfying Ending Machine** | unsatisfy | Adds a deliberately anticlimactic ending to any story you write | text
+64. **Overly Specific Horoscope** | specific-scope | Horoscopes with eerily hyper-specific predictions that somehow still apply | text
+65. **Telephone Distortion Game** | telephone | Pass a message through 5 fake telephone filters and watch it transform | text/audio
+66. **Bad Advice Machine** | bad-advice | Enter your life problem, receive the absolute worst advice possible | text
+67. **LinkedIn Overclocker** | linkedin-boost | Rewrites your bland job history in maximum buzzword glorification mode | text
+68. **Karate Belt of Life** | life-belt | Track real-life skills and rank yourself from white to black belt | text
+69. **Dramatic Soliloquy-ifier** | soliloquy | Converts your boring Tuesday into a powerful Hamlet-style soliloquy | text
+70. **Gaslighting Rebuttal Generator** | gaslight | Enter a true statement, receive a convincing gaslighting counter-argument | text
+71. **Celebrity Impression Grader** | impression-grade | Do a celebrity impression into the mic, get brutally rated | mic
+72. **Procrastibaking Excuse List** | procrastibake | Generates elaborate reasons why baking RIGHT NOW is more important than work | text
+73. **Overspin Translator** | overspin | Enter what you actually did, get the maximum spin-doctored version | text
+74. **Superpower Auditor** | superpower-audit | Enter a superpower, receive a full audit of its real-world inconveniences | text
+75. **Villain Lair Ambience** | lair-music | Generates moody villain lair soundscapes with adjustable menace level | audio
+76. **Life Trailer Generator** | life-trailer | Enter your day's events, get a Hollywood blockbuster trailer treatment | text/audio
+77. **Therapy Bot Who Needs Therapy** | therapy-sim | Talk to a therapist who keeps redirecting to their own personal problems | text
+78. **Interview Panic Meter** | interview-panic | Real-time panic level tracker with breathing coach for job interview practice | timer/text
+79. **Secret Identity Builder** | secret-id | Create your complete secret identity with backstory, cover story, and weaknesses | text
+80. **Passive Income BS Detector** | passive-bs | Enter a get-rich-quick scheme, get told exactly why it won't work | text
+81. **Motivational Overdrive** | overdrive | Generates hilariously overblown motivational speeches for tiny mundane tasks | text/audio
+82. **Group Chat Chaos Predictor** | group-chaos | Describe your group chat members, predict when and how it'll explode | text
+83. **Compliment Sandwich Machine** | comp-sandwich | Every compliment is surgically flanked by devastating critiques | text
+84. **Midlife Crisis Action Plan** | midlife | Answer 10 questions, get your personalized midlife crisis roadmap | text
+85. **Ghosting Excuse Generator** | ghost-excuse | Generate increasingly thin excuses for not texting back for three weeks | text
+86. **Power Nap Alarm** | power-nap | 20-minute timer with alarms that escalate from gentle to nuclear | timer/audio
+87. **Terrible Manager Translator** | bad-manager | Convert normal feedback into passive-aggressive terrible manager speak | text
+88. **Overly Needy Notification** | needy-notify | Timer sends increasingly clingy "why haven't you responded?" alerts | timer/audio
+89. **Plot Hole Finder** | plot-hole | Enter a movie plot summary, get all logical inconsistencies exposed | text
+90. **Terms of Service Tragedy** | tos-drama | Paste any ToS, receive a full Shakespearean dramatic reading | text/audio
+91. **Phone Shame Timer** | phone-shame | Tracks phone usage time, escalates shame messages every 10 minutes | timer
+92. **Apology Non-Translator** | apology | Decodes hollow non-apologies into their true meaning | text
+93. **Paranoia Amplifier** | paranoia | Enter a neutral everyday event, get maximum sinister interpretation | text
+94. **Dramatic Resignation Letter** | resign-letter | Generate a legendary over-the-top resignation letter for any workplace | text
+95. **Conspiracy Theory Connector** | conspire | Connect any two unrelated things into a detailed illustrated conspiracy | text
+96. **Fake Fluency Grader** | fake-fluency | Paste text in any language, get your actual vocabulary honestly judged | text
+97. **Motivational Poster Remixer** | poster-remix | Scrambles classic motivational posters into accidentally nihilistic ones | text
+98. **Handshake Strength Rater** | handshake | Shake the phone to simulate a handshake, get rated on your power level | motion
+99. **Chaos Gremlin Button** | chaos-gremlin | Giant button randomly scrambles and distorts your browser page in funny ways | touch
+100. **Villain Speech Generator** | villain-speech | Enter a mundane complaint, receive a full Bond-villain monologue about it | text
