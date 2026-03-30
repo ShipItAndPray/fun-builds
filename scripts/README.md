@@ -9,13 +9,14 @@ What it does:
 - loads ideas from a source file
 - runs the approval gate across repeated perturbation rounds
 - writes durable artifacts into `autoresearch-runs/`
-- produces `results.tsv`, `changelog.md`, `run_config.json`, and a preview queue file
+- produces `results.tsv`, `shortlist.tsv`, `changelog.md`, `run_config.json`, and a preview queue file
 
 Default behavior:
 
 - `100` iterations per idea
 - `95%` per-eval pass threshold
 - conservative rejection if an idea is unstable across perturbations
+- second-stage build-readiness score for survivor ranking
 
 Example:
 
@@ -31,3 +32,4 @@ Important:
 - this script approves or rejects ideas
 - it does **not** build apps automatically
 - app generation should only happen for ideas that remain stable under the runner
+- among approved ideas, prefer the top of `shortlist.tsv` instead of building every survivor blindly

@@ -2,13 +2,15 @@
 """
 Autoresearch idea runner for Fun Builds.
 
-This script evaluates candidate ideas against the repo's approval gate and
-repeats the evaluation across multiple perturbation rounds to test stability.
+This script evaluates candidate ideas against the repo's approval gate,
+repeats the evaluation across multiple perturbation rounds to test stability,
+and then ranks surviving ideas for build readiness.
 
 It is intentionally conservative:
 - it prefers rejecting blurry ideas over approving weak ones
 - it writes durable artifacts for every run
 - it can update idea_queue.json, but does not build apps itself
+- it adds a second-stage build-readiness score for survivor ranking
 """
 
 from __future__ import annotations
@@ -105,6 +107,20 @@ SHAREABLE_HINTS = {
     "artifact",
     "bingo",
     "dashboard",
+}
+
+BUILD_ARTIFACT_HINTS = {
+    "receipt",
+    "report",
+    "score",
+    "meter",
+    "verdict",
+    "forecast",
+    "dashboard",
+    "card",
+    "judge",
+    "calculator",
+    "artifact",
 }
 
 
@@ -242,6 +258,26 @@ def eval_distinct(title: str, slug: str, built_titles: Dict[str, str], known_tit
     return True
 
 
+def build_readiness_score(idea: Idea) -> Tuple[int, Dict[str, int]]:
+    """
+    Second-stage scorer after stability approval.
+
+    Scores are intentionally simple and explainable. Higher is better.
+    """
+    norm_title = normalize_text(idea.title)
+    norm_line = normalize_text(idea.one_liner)
+    combined = f"{norm_title} {norm_line}"
+
+    score_breakdown = {
+        "instant_hook": 25 if len(idea.title.split()) <= 5 else 15 if len(idea.title.split()) <= 7 else 0,
+        "artifact_strength": 20 if any(term in combined for term in BUILD_ARTIFACT_HINTS) else 8,
+        "brevity": 20 if len(idea.one_liner.split()) <= 14 else 12 if len(idea.one_liner.split()) <= 20 else 0,
+        "browser_fit": 20 if eval_single_file_browser(idea.title, idea.one_liner) else 0,
+        "build_cost": 15 if eval_low_build_cost(idea.title, idea.one_liner) else 0,
+    }
+    return sum(score_breakdown.values()), score_breakdown
+
+
 def evaluate_once(
     idea: Idea,
     title: str,
@@ -288,6 +324,7 @@ def run_autoresearch(
     rng = random.Random(seed)
 
     summary_rows = []
+    shortlist_rows = []
     changelog_lines = ["# Changelog", ""]
     queue = json.loads(QUEUE_PATH.read_text())
     existing_items = {item["slug"]: item for item in queue["items"]}
@@ -306,6 +343,7 @@ def run_autoresearch(
         score = sum(totals.values())
         max_score = len(totals) * iterations
         pass_rate = (score / max_score) * 100.0
+        readiness, breakdown = build_readiness_score(idea)
 
         notes = []
         for key, total in totals.items():
@@ -322,9 +360,23 @@ def run_autoresearch(
                 "max_score": max_score,
                 "pass_rate": f"{pass_rate:.1f}%",
                 "status": status,
+                "build_readiness": readiness,
                 "notes": "; ".join(notes),
             }
         )
+        if approved:
+            shortlist_rows.append(
+                {
+                    "slug": idea.slug,
+                    "title": idea.title,
+                    "build_readiness": readiness,
+                    "instant_hook": breakdown["instant_hook"],
+                    "artifact_strength": breakdown["artifact_strength"],
+                    "brevity": breakdown["brevity"],
+                    "browser_fit": breakdown["browser_fit"],
+                    "build_cost": breakdown["build_cost"],
+                }
+            )
 
         existing_items[idea.slug] = {
             "slug": idea.slug,
@@ -352,6 +404,8 @@ def run_autoresearch(
                 f"Threshold per eval: {min_passes}/{iterations}",
                 f"Totals: {json.dumps(totals, sort_keys=True)}",
                 f"Notes: {'; '.join(notes)}",
+                f"Build readiness: {readiness}/100",
+                f"Breakdown: {json.dumps(breakdown, sort_keys=True)}",
                 "",
             ]
         )
@@ -362,11 +416,30 @@ def run_autoresearch(
     with (run_dir / "results.tsv").open("w", newline="") as handle:
         writer = csv.DictWriter(
             handle,
-            fieldnames=["slug", "title", "score", "max_score", "pass_rate", "status", "notes"],
+            fieldnames=["slug", "title", "score", "max_score", "pass_rate", "status", "build_readiness", "notes"],
             delimiter="\t",
         )
         writer.writeheader()
         writer.writerows(summary_rows)
+
+    shortlist_rows.sort(key=lambda row: (-row["build_readiness"], row["slug"]))
+    with (run_dir / "shortlist.tsv").open("w", newline="") as handle:
+        writer = csv.DictWriter(
+            handle,
+            fieldnames=[
+                "slug",
+                "title",
+                "build_readiness",
+                "instant_hook",
+                "artifact_strength",
+                "brevity",
+                "browser_fit",
+                "build_cost",
+            ],
+            delimiter="\t",
+        )
+        writer.writeheader()
+        writer.writerows(shortlist_rows)
 
     (run_dir / "changelog.md").write_text("\n".join(changelog_lines))
     (run_dir / "run_config.json").write_text(
