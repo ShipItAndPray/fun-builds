@@ -1773,6 +1773,96 @@
         "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
       },
       {
+        "slug": "official-loitering-license",
+        "title": "Official Loitering License",
+        "one_liner": "Generate a formal license for standing around with no obvious mission.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "mildly-haunted-appliance-index",
+        "title": "Mildly Haunted Appliance Index",
+        "one_liner": "Decide whether an appliance is malfunctioning or simply expressing an eldritch personality.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "snack-geometry-tribunal",
+        "title": "Snack Geometry Tribunal",
+        "one_liner": "Decide whether a snack was broken, sliced, shattered, or spiritually fragmented with legal seriousness.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "microwave-diplomacy",
+        "title": "Microwave Diplomacy",
+        "one_liner": "Broker peace between leftovers with a fake treaty generator for reheating conflicts.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "elevator-button-ethics-board",
+        "title": "Elevator Button Ethics Board",
+        "one_liner": "Analyze whether pressing the close-door button was helpful, symbolic, or morally compromised.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "fridge-light-performance-review",
+        "title": "Fridge Light Performance Review",
+        "one_liner": "Write a brutally formal performance review for your refrigerator light's consistency and aura.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "nap-permit-office",
+        "title": "Nap Permit Office",
+        "one_liner": "Issue official permits for naps with justification codes, duration limits, and risk warnings.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "bottle-cap-destiny-wheel",
+        "title": "Bottle Cap Destiny Wheel",
+        "one_liner": "Turn opening a drink into a prophecy engine with tiny rewards and warnings.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "puddle-crossing-strategy-board",
+        "title": "Puddle Crossing Strategy Board",
+        "one_liner": "Recommend a crossing doctrine based on shoe risk, leap confidence, and public dignity.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
+        "slug": "silence-length-standards-board",
+        "title": "Silence Length Standards Board",
+        "one_liner": "Decide when a pause becomes awkward, meaningful, or spiritually advanced.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
+      },
+      {
         "slug": "workout-excuse-bingo",
         "title": "Workout Excuse Bingo",
         "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
