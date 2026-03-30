@@ -1592,25 +1592,40 @@
       "approved_by": "autoresearch",
       "notes": "Approved and built in the next 50 browser-only batch."
     },
-    {
-      "slug": "weekend-recovery-form",
-      "title": "Weekend Recovery Form",
-      "one_liner": "File a formal recovery request after choices that felt fun at the time.",
-      "status": "built",
+      {
+        "slug": "weekend-recovery-form",
+        "title": "Weekend Recovery Form",
+        "one_liner": "File a formal recovery request after choices that felt fun at the time.",
+        "status": "built",
       "evals": {
         "hook_15s": true,
         "single_file_browser": true,
         "distinct_from_existing": true,
         "shareable_output": true,
         "low_build_cost": true
+        },
+        "approved_by": "autoresearch",
+        "notes": "Approved and built in the next 50 browser-only batch."
       },
-      "approved_by": "autoresearch",
-      "notes": "Approved and built in the next 50 browser-only batch."
-    },
-    {
-      "slug": "workout-excuse-bingo",
-      "title": "Workout Excuse Bingo",
-      "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
+      {
+        "slug": "quiet-exit-script",
+        "title": "Quiet Exit Script",
+        "one_liner": "Generate graceful ways to leave a call, party, or conversation without making it weird.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "autoresearch-100x",
+        "notes": "Only survivor from the fresh 20-idea batch after a 100-iteration stability pass and build-readiness shortlist."
+      },
+      {
+        "slug": "workout-excuse-bingo",
+        "title": "Workout Excuse Bingo",
+        "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
       "status": "built",
       "evals": {
         "hook_15s": true,

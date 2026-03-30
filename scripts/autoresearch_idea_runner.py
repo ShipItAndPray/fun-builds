@@ -39,6 +39,7 @@ TWO_HUNDRED_PATTERN = re.compile(
 )
 
 MARKDOWN_IDEA_PATTERN = re.compile(r"^\*\*(.*?)\*\*\s+[—-]\s+(.*)$", re.M)
+PIPE_IDEA_PATTERN = re.compile(r"^\*\*(.*?)\*\*\s+\|\s+([a-z0-9-]+)\s+\|\s+(.*?)\s+\|\s+([a-z0-9-]+)\s*$", re.M)
 
 
 BLACKLIST_FEASIBILITY = {
@@ -157,6 +158,15 @@ def parse_markdown_ideas(path: Path) -> List[Idea]:
     text = path.read_text()
     ideas: List[Idea] = []
     seen = set()
+
+    for title, slug, desc, category in PIPE_IDEA_PATTERN.findall(text):
+        title = title.strip()
+        slug = slug.strip()
+        if slug in seen:
+            continue
+        seen.add(slug)
+        ideas.append(Idea(title=title, slug=slug, one_liner=desc.strip(), source=path.name, category=category.strip()))
+
     for title, desc in MARKDOWN_IDEA_PATTERN.findall(text):
         title = title.strip()
         if title.lower() in {"hardware:", "software:", "the magic moment:"}:

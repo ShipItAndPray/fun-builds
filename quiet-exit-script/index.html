@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiet Exit Script</title>
+  <meta name="description" content="Generate graceful exit lines for calls, parties, chats, and conversations without making it weird.">
+  <style>
+    :root {
+      --bg: #fff8ee;
+      --panel: rgba(255, 255, 255, 0.82);
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --accent: #f97316;
+      --accent-2: #fb7185;
+      --line: rgba(31, 41, 55, 0.12);
+      --shadow: 0 22px 60px rgba(249, 115, 22, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(251, 113, 133, 0.28), transparent 32%),
+        radial-gradient(circle at 80% 20%, rgba(249, 115, 22, 0.25), transparent 30%),
+        linear-gradient(180deg, #fff8ee 0%, #ffe5cf 100%);
+      padding: 28px 18px 56px;
+    }
+
+    .shell {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--ink);
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-copy {
+      padding: 30px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.8);
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 5vw, 4.7rem);
+      line-height: 0.95;
+      margin: 18px 0 14px;
+      letter-spacing: -0.05em;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      max-width: 42rem;
+      color: var(--muted);
+      font-size: 1.03rem;
+      line-height: 1.65;
+    }
+
+    .hero-notes {
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+      align-content: center;
+    }
+
+    .note {
+      padding: 16px 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+    }
+
+    .note strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 0.95fr 1.05fr;
+      gap: 20px;
+    }
+
+    .composer,
+    .results {
+      padding: 24px;
+    }
+
+    label {
+      display: block;
+      font-weight: 800;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 16px;
+      font: inherit;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.88);
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .chip {
+      border: 1px solid rgba(249, 115, 22, 0.24);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .chip.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      border-color: transparent;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button.primary,
+    button.secondary,
+    .copy-btn {
+      border: none;
+      cursor: pointer;
+      font: inherit;
+      border-radius: 999px;
+      padding: 13px 18px;
+      font-weight: 800;
+    }
+
+    button.primary {
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 14px 30px rgba(249, 115, 22, 0.28);
+    }
+
+    button.secondary,
+    .copy-btn {
+      background: rgba(31, 41, 55, 0.08);
+      color: var(--ink);
+    }
+
+    .results-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .results-head p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .script-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .script {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 18px;
+    }
+
+    .script-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      background: rgba(249, 115, 22, 0.12);
+      color: #9a3412;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .script p {
+      margin: 0 0 12px;
+      line-height: 1.55;
+    }
+
+    .delivery {
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .workspace,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back-link" href="../">← Back to Fun Builds</a>
+
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Quiet Exit Script</div>
+        <h1>Leave without creating a subplot.</h1>
+        <p>
+          Describe the awkward situation, pick a tone, and get graceful exit lines that sound human,
+          calm, and just specific enough to close the loop.
+        </p>
+      </div>
+      <div class="panel hero-notes">
+        <div class="note">
+          <strong>Works For</strong>
+          Calls that ran long, parties that peaked early, chats you need to escape, and meetings that should have been emails.
+        </div>
+        <div class="note">
+          <strong>Built To Share</strong>
+          Every result comes as three usable lines, so it works as both a joke and a real social utility.
+        </div>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <div class="panel composer">
+        <label for="scenario">What are you trying to leave?</label>
+        <textarea id="scenario" placeholder="Example: I'm on a group call that has drifted into random side quests, I already said 'one last thing' twice, and I need to get out without sounding annoyed."></textarea>
+
+        <div class="grid">
+          <div>
+            <label for="setting">Setting</label>
+            <select id="setting">
+              <option value="call">Call</option>
+              <option value="party">Party</option>
+              <option value="chat">Chat thread</option>
+              <option value="meeting">Meeting</option>
+              <option value="date">Date</option>
+              <option value="visit">In-person visit</option>
+            </select>
+          </div>
+          <div>
+            <label for="tone">Tone</label>
+            <select id="tone">
+              <option value="warm">Warm</option>
+              <option value="crisp">Crisp</option>
+              <option value="playful">Playful</option>
+              <option value="professional">Professional</option>
+              <option value="dramatic">Mildly dramatic</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Quick prompts</label>
+        <div class="chips" id="presetChips"></div>
+
+        <div class="actions">
+          <button class="primary" id="generateBtn">Generate exit scripts</button>
+          <button class="secondary" id="shuffleBtn">Surprise me</button>
+        </div>
+      </div>
+
+      <div class="panel results">
+        <div class="results-head">
+          <div>
+            <h2 style="margin:0 0 6px;">Your clean exits</h2>
+            <p>Three levels: safe, smooth, and slightly iconic.</p>
+          </div>
+        </div>
+        <div class="script-list" id="scriptList"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const presets = [
+      "A dinner party is still going but my social battery flatlined 40 minutes ago.",
+      "A work call ended, then somehow restarted itself with new topics.",
+      "I need to leave a date kindly without promising a sequel.",
+      "A friend keeps voice-noting and I need to disappear gracefully.",
+      "I'm at a family visit and need a believable but gentle exit line."
+    ];
+
+    const openers = {
+      warm: [
+        "This has genuinely been lovely,",
+        "I've had a really good time,",
+        "I'm glad we got this moment,"
+      ],
+      crisp: [
+        "I'm going to jump off here,",
+        "I need to head out now,",
+        "I'm going to wrap on my side,"
+      ],
+      playful: [
+        "Before I become a decorative background extra,",
+        "I'm going to make a graceful little escape,",
+        "This is my cue to vanish while I'm still charming,"
+      ],
+      professional: [
+        "I'm going to drop here and pick this up later,",
+        "I'm going to step away now,",
+        "I need to transition to the next thing,"
+      ],
+      dramatic: [
+        "With impeccable timing, I must now depart,",
+        "The hour has come for me to disappear elegantly,",
+        "I leave this scene with gratitude and excellent posture,"
+      ]
+    };
+
+    const middles = {
+      call: [
+        "I want to give myself a clean stop before my brain starts buffering.",
+        "I'm at the point where one more topic becomes five more topics.",
+        "I need to get ahead of the rest of my evening."
+      ],
+      party: [
+        "If I stay longer I'll cross from present into ornamental.",
+        "I want to leave while the night still feels good.",
+        "My social battery is sending me a legally binding notice."
+      ],
+      chat: [
+        "I'm going to step out of the thread before I start replying in fragments.",
+        "I need to put my phone down and return with a functioning brain.",
+        "I'm going to leave this here and circle back when I can answer like a person."
+      ],
+      meeting: [
+        "I think this is the cleanest stopping point for me.",
+        "I'm going to protect the next block on my calendar before it disappears.",
+        "I have what I need and should hand the time back."
+      ],
+      date: [
+        "I want to leave this on a good note instead of stretching it thin.",
+        "I'm going to call it here and keep the evening tidy.",
+        "I'd rather end this kindly than drift into awkward overtime."
+      ],
+      visit: [
+        "I should make my move before the exit gets harder.",
+        "This is the right moment for me to head out.",
+        "If I don't leave now I'll somehow still be here at dessert."
+      ]
+    };
+
+    const closers = {
+      warm: [
+        "Thanks again for this. I'll talk to you soon.",
+        "Really appreciate the time. Catch you soon.",
+        "This was good for me. Let's leave it here."
+      ],
+      crisp: [
+        "Thanks, I'm heading out.",
+        "Appreciate it. I'm off.",
+        "All good on my side. Talk soon."
+      ],
+      playful: [
+        "Sending myself off into the night with dignity.",
+        "I'm exiting before the plot thickens.",
+        "I'll leave while my reputation is intact."
+      ],
+      professional: [
+        "Thanks, everyone. I'll follow up if needed.",
+        "Appreciate the time. I'll reconnect on the next step.",
+        "Thanks all. I'm stepping away here."
+      ],
+      dramatic: [
+        "Remember me kindly and with minimal follow-up questions.",
+        "I now fade from the scene, respectfully.",
+        "May this ending remain graceful and uncontested."
+      ]
+    };
+
+    const deliveryNotes = {
+      warm: "Best when you want to sound caring without inviting a second round.",
+      crisp: "Best when the main goal is clarity and zero loopholes.",
+      playful: "Best when the room can handle a little style on the way out.",
+      professional: "Best for work contexts and vague calendar violence.",
+      dramatic: "Best when you want the exit to be memorable but still usable."
+    };
+
+    const scenarioEl = document.getElementById("scenario");
+    const settingEl = document.getElementById("setting");
+    const toneEl = document.getElementById("tone");
+    const scriptListEl = document.getElementById("scriptList");
+    const presetChipsEl = document.getElementById("presetChips");
+
+    function sentenceCase(text) {
+      if (!text) return "";
+      return text.charAt(0).toUpperCase() + text.slice(1);
+    }
+
+    function hash(text) {
+      return [...text].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+    }
+
+    function pick(list, seed, offset = 0) {
+      return list[(seed + offset) % list.length];
+    }
+
+    function buildScripts() {
+      const scenario = scenarioEl.value.trim() || presets[0];
+      const setting = settingEl.value;
+      const tone = toneEl.value;
+      const seed = hash(`${scenario}-${setting}-${tone}`);
+      const context = sentenceCase(scenario.replace(/[.?!]+$/, ""));
+
+      const variants = [
+        { label: "Safe", emoji: "🫶", offset: 0 },
+        { label: "Smooth", emoji: "✨", offset: 1 },
+        { label: "Iconic", emoji: "🎬", offset: 2 }
+      ];
+
+      scriptListEl.innerHTML = "";
+
+      variants.forEach((variant) => {
+        const opener = pick(openers[tone], seed, variant.offset);
+        const middle = pick(middles[setting], seed, variant.offset);
+        const closer = pick(closers[tone], seed, variant.offset);
+        const script = `${opener} ${middle} ${closer}`;
+
+        const card = document.createElement("article");
+        card.className = "script";
+        card.innerHTML = `
+          <div class="script-top">
+            <div class="pill">${variant.emoji} ${variant.label}</div>
+            <button class="copy-btn" type="button">Copy</button>
+          </div>
+          <p>${script}</p>
+          <div class="delivery"><strong>Use when:</strong> ${context}. ${deliveryNotes[tone]}</div>
+        `;
+        const copyBtn = card.querySelector(".copy-btn");
+        copyBtn.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(script);
+          copyBtn.textContent = "Copied";
+          window.setTimeout(() => {
+            copyBtn.textContent = "Copy";
+          }, 1200);
+        });
+        scriptListEl.appendChild(card);
+      });
+    }
+
+    function renderPresets() {
+      presetChipsEl.innerHTML = "";
+      presets.forEach((preset, index) => {
+        const btn = document.createElement("button");
+        btn.className = `chip${index === 0 ? " active" : ""}`;
+        btn.type = "button";
+        btn.textContent = preset;
+        btn.addEventListener("click", () => {
+          [...presetChipsEl.children].forEach((chip) => chip.classList.remove("active"));
+          btn.classList.add("active");
+          scenarioEl.value = preset;
+          buildScripts();
+        });
+        presetChipsEl.appendChild(btn);
+      });
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", buildScripts);
+    document.getElementById("shuffleBtn").addEventListener("click", () => {
+      const next = presets[Math.floor(Math.random() * presets.length)];
+      scenarioEl.value = next;
+      [...presetChipsEl.children].forEach((chip) => {
+        chip.classList.toggle("active", chip.textContent === next);
+      });
+      buildScripts();
+    });
+    settingEl.addEventListener("change", buildScripts);
+    toneEl.addEventListener("change", buildScripts);
+
+    renderPresets();
+    scenarioEl.value = presets[0];
+    buildScripts();
+  </script>
+</body>
+</html>
