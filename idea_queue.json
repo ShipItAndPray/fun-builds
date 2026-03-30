@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "policy": "Only ideas with status=approved should be built.",
+  "items": [
+    {
+      "slug": "bad-idea-vc",
+      "title": "Bad Idea VC",
+      "one_liner": "Pitch a terrible startup and get a dead-serious VC memo.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Strong artifact output and clean browser-only implementation."
+    },
+    {
+      "slug": "apology-generator",
+      "title": "Apology Generator",
+      "one_liner": "Paste what you said and get the apology you should have sent instead.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Immediate premise, useful result, cheap to ship."
+    },
+    {
+      "slug": "petty-translator",
+      "title": "Petty Translator",
+      "one_liner": "Translate one bitter thought into therapist, HR, villain, and petty modes.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Strong comparison mechanic and screenshot-friendly output."
+    },
+    {
+      "slug": "ghosted-response-simulator",
+      "title": "Ghosted Response Simulator",
+      "one_liner": "Paste a dead chat and get five dramatic fake reasons you got ghosted.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Clear social hook and low implementation cost."
+    },
+    {
+      "slug": "meeting-tax-ledger",
+      "title": "Meeting Tax Ledger",
+      "one_liner": "Track how much salary and soul a meeting is burning in real time.",
+      "status": "proposed",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": false,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Borderline duplicate of existing meeting-themed builds. Needs differentiation before approval."
+    },
+    {
+      "slug": "excuse-printer",
+      "title": "Excuse Printer",
+      "one_liner": "Generate a polished excuse receipt for being late, flaky, or suspiciously unavailable.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Receipt mechanic makes it visually distinct and easy to share."
+    }
+  ]
+}
