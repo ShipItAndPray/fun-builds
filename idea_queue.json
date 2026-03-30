@@ -3,21 +3,6 @@
   "policy": "Only ideas with status=approved should be built.",
   "items": [
     {
-      "slug": "bad-idea-vc",
-      "title": "Bad Idea VC",
-      "one_liner": "Pitch a terrible startup and get a dead-serious VC memo.",
-      "status": "built",
-      "evals": {
-        "hook_15s": true,
-        "single_file_browser": true,
-        "distinct_from_existing": true,
-        "shareable_output": true,
-        "low_build_cost": true
-      },
-      "approved_by": "autoresearch",
-      "notes": "Strong artifact output and clean browser-only implementation."
-    },
-    {
       "slug": "apology-generator",
       "title": "Apology Generator",
       "one_liner": "Paste what you said and get the apology you should have sent instead.",
@@ -33,9 +18,9 @@
       "notes": "Immediate premise, useful result, cheap to ship."
     },
     {
-      "slug": "petty-translator",
-      "title": "Petty Translator",
-      "one_liner": "Translate one bitter thought into therapist, HR, villain, and petty modes.",
+      "slug": "bad-idea-vc",
+      "title": "Bad Idea VC",
+      "one_liner": "Pitch a terrible startup and get a dead-serious VC memo.",
       "status": "built",
       "evals": {
         "hook_15s": true,
@@ -45,7 +30,247 @@
         "low_build_cost": true
       },
       "approved_by": "autoresearch",
-      "notes": "Strong comparison mechanic and screenshot-friendly output."
+      "notes": "Strong artifact output and clean browser-only implementation."
+    },
+    {
+      "slug": "book-club-bluffer",
+      "title": "Book Club Bluffer",
+      "one_liner": "Generates convincing opinions about books you definitely didn't finish",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "breathing-critic",
+      "title": "Breathing Critic",
+      "one_liner": "Overbearing coach who judges the quality of every breath you take",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "cleaning-hype-coach",
+      "title": "Cleaning Hype Coach",
+      "one_liner": "Delivers increasingly unhinged motivational speeches to make you clean your room",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "crush-calculator",
+      "title": "Crush Probability Calculator",
+      "one_liner": "Computes with fake scientific precision whether your crush likes you back",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "cursed-substituter",
+      "title": "Cursed Ingredient Substituter",
+      "one_liner": "Suggests technically valid but deeply questionable cooking substitutions",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "deadline-dread",
+      "title": "Deadline Dread Timer",
+      "one_liner": "Countdown to your deadline with escalating panic animations and denial phases",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "desk-stretch-sergeant",
+      "title": "Desk Stretch Sergeant",
+      "one_liner": "Barks stretch commands at you with military intensity every hour",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "diy-disaster-predictor",
+      "title": "DIY Disaster Predictor",
+      "one_liner": "Input your DIY project details and get a probability of catastrophic failure",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "ex-photo-audit",
+      "title": "Ex Photo Folder Audit",
+      "one_liner": "Judges how many photos of your ex you're still holding onto",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "exam-panic-sim",
+      "title": "Exam Panic Simulator",
+      "one_liner": "Recreates test anxiety with questions from subjects you clearly didn't study",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "excuse-printer",
+      "title": "Excuse Printer",
+      "one_liner": "Generate a polished excuse receipt for being late, flaky, or suspiciously unavailable.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Receipt mechanic makes it visually distinct and easy to share."
+    },
+    {
+      "slug": "filler-word-counter",
+      "title": "Filler Word Counter",
+      "one_liner": "Counts your \"um\"s, \"uh\"s, and \"like\"s during presentation practice",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "final-grade-crier",
+      "title": "Final Exam Grade Calculator",
+      "one_liner": "Calculates the score you need on the final then reacts with appropriate despair",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "flirt-style-decoder",
+      "title": "Flirt Style Decoder",
+      "one_liner": "Translates someone's flirting behavior into what they actually want",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "friendzone-gps",
+      "title": "Friendzone GPS",
+      "one_liner": "Maps your exact location in the relationship zone spectrum with coordinates",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "game-rage-counselor",
+      "title": "Game Rage Counselor",
+      "one_liner": "Provides therapy after you lose to someone much younger than you online",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
     },
     {
       "slug": "ghosted-response-simulator",
@@ -63,6 +288,216 @@
       "notes": "Clear social hook and low implementation cost."
     },
     {
+      "slug": "group-blame-allocator",
+      "title": "Group Project Blame Allocator",
+      "one_liner": "Scientifically distributes blame across group members when the project fails",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "heart-rate-dramatist",
+      "title": "Heart Rate Dramatist",
+      "one_liner": "You input your heart rate and it narrates what that means about your life",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "highlight-overkill",
+      "title": "Highlight Overkill Analyzer",
+      "one_liner": "Camera scans a textbook page and judges your highlight-everything strategy",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "homework-procras-timer",
+      "title": "Homework Procrastination Timer",
+      "one_liner": "Tracks how long you've been \"about to start\" homework with guilt accumulation",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "hydration-bully",
+      "title": "Hydration Bully",
+      "one_liner": "Progressively threatening water reminders that escalate from gentle to unhinged",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "interior-design-roast",
+      "title": "Interior Design Roast",
+      "one_liner": "Camera scan of your room produces scathing designer commentary",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "interview-anxiety",
+      "title": "Interview Anxiety Meter",
+      "one_liner": "Analyzes your voice for stress tells during mock interview practice",
+      "status": "rejected",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": false,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Too close to existing interview-panic build."
+    },
+    {
+      "slug": "jet-lag-drill",
+      "title": "Jet Lag Drill Sergeant",
+      "one_liner": "Aggressively shouts recovery orders at you to fix your body clock",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "junk-drawer-oracle",
+      "title": "Junk Drawer Oracle",
+      "one_liner": "You describe items in your junk drawer and it reveals your true personality",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "late-class-navigator",
+      "title": "Late for Class Navigator",
+      "one_liner": "Emergency routing advisor when you're lost and already three minutes late",
+      "status": "rejected",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": false,
+        "shareable_output": false,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Weak shareable output and mixed feasibility for a routing-style concept."
+    },
+    {
+      "slug": "laundry-delay",
+      "title": "Laundry Delay Justifier",
+      "one_liner": "Generates airtight logical reasons why laundry can definitely wait one more day",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "lecture-time-translator",
+      "title": "Lecture Time Translator",
+      "one_liner": "Converts \"five more minutes\" professor-time to actual real-world clock minutes",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "love-language-diagnostic",
+      "title": "Love Language Diagnostic",
+      "one_liner": "Identifies your love language from surprisingly specific behavioral quirks",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "meeting-escape",
+      "title": "Meeting Escape Artist",
+      "one_liner": "Generates legitimate-sounding excuses to exit any type of meeting immediately",
+      "status": "rejected",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": false,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Too close to existing meeting-hostage-negotiator and awkward-exit patterns."
+    },
+    {
       "slug": "meeting-tax-ledger",
       "title": "Meeting Tax Ledger",
       "one_liner": "Track how much salary and soul a meeting is burning in real time.",
@@ -78,9 +513,9 @@
       "notes": "Borderline duplicate of existing meeting-themed builds. Needs differentiation before approval."
     },
     {
-      "slug": "excuse-printer",
-      "title": "Excuse Printer",
-      "one_liner": "Generate a polished excuse receipt for being late, flaky, or suspiciously unavailable.",
+      "slug": "meme-expiration",
+      "title": "Meme Expiration Detector",
+      "one_liner": "Determines if the meme you're about to send is still fresh or embarrassingly stale",
       "status": "built",
       "evals": {
         "hook_15s": true,
@@ -90,7 +525,352 @@
         "low_build_cost": true
       },
       "approved_by": "autoresearch",
-      "notes": "Receipt mechanic makes it visually distinct and easy to share."
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "moving-day-trauma",
+      "title": "Moving Day Trauma Log",
+      "one_liner": "Documents your moving day emotional breakdown milestones in real-time",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "neighbor-noise-court",
+      "title": "Neighbor Noise Court",
+      "one_liner": "Records upstairs neighbor noise and classifies it on a legal disturbance scale",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "one-more-episode",
+      "title": "One More Episode Enabler",
+      "one_liner": "Generates progressively weaker justifications for why you should watch just one more",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "overconfidence-gap",
+      "title": "Overconfidence Gap Meter",
+      "one_liner": "Measures the chasm between how certain you were and how wrong you actually were",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "petty-translator",
+      "title": "Petty Translator",
+      "one_liner": "Translate one bitter thought into therapist, HR, villain, and petty modes.",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Strong comparison mechanic and screenshot-friendly output."
+    },
+    {
+      "slug": "podcast-speed-shamer",
+      "title": "Podcast Speed Shamer",
+      "one_liner": "Judges your podcast playback speed and what it says about your relationship with time",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "posture-police",
+      "title": "Posture Police",
+      "one_liner": "Camera watches your posture in real-time and issues citations",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "puzzle-iq-timer",
+      "title": "Puzzle IQ Timer",
+      "one_liner": "Times your puzzle solving and delivers an unsolicited intelligence verdict",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "rent-rationalization",
+      "title": "Rent Rationalization Engine",
+      "one_liner": "Helps you convince yourself your rent is actually a bargain",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "roommate-formalizer",
+      "title": "Roommate Complaint Formalizer",
+      "one_liner": "Converts passive-aggressive sticky notes into formal legal-sounding grievances",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "screen-time-confessional",
+      "title": "Screen Time Confessional",
+      "one_liner": "Confess your daily screen time to a horrified virtual priest",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "slack-subtext",
+      "title": "Slack Subtext Decoder",
+      "one_liner": "Translates what your coworkers' Slack messages actually mean",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "sleep-shame-spiral",
+      "title": "Sleep Schedule Shame Spiral",
+      "one_liner": "Judges your sleep times against science with escalating disapproval",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "smart-question-faker",
+      "title": "Smart Question Faker",
+      "one_liner": "Generates impressive-sounding class participation questions about topics you don't know",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "spoiler-roulette",
+      "title": "Spoiler Roulette",
+      "one_liner": "Randomly decides to spoil or protect any movie or show you mention",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "step-honesty",
+      "title": "Step Honesty Counter",
+      "one_liner": "Converts your daily step count into how embarrassingly little ground you covered",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "streaming-paralysis",
+      "title": "Streaming Paralysis Timer",
+      "one_liner": "Counts how long you've been scrolling without picking anything to watch",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "stress-face-scanner",
+      "title": "Stress Face Scanner",
+      "one_liner": "Analyzes your face and reports your visible stress level back to you",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "teachers-pet-id",
+      "title": "Teacher's Pet Identifier",
+      "one_liner": "Diagnoses which students in a described class are obvious favorites",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "thriving-single",
+      "title": "Thriving Single Score",
+      "one_liner": "Honest assessment of how well you're actually handling being single",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "watch-history-roaster",
+      "title": "Watch History Roaster",
+      "one_liner": "Roasts your taste based on your described streaming history",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "wedding-budget-grief",
+      "title": "Wedding Budget Grief Counselor",
+      "one_liner": "Shows real wedding costs then guides you through financial mourning",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
+    },
+    {
+      "slug": "workout-excuse-bingo",
+      "title": "Workout Excuse Bingo",
+      "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
+      "status": "built",
+      "evals": {
+        "hook_15s": true,
+        "single_file_browser": true,
+        "distinct_from_existing": true,
+        "shareable_output": true,
+        "low_build_cost": true
+      },
+      "approved_by": "autoresearch",
+      "notes": "Approved in bulk autoresearch pass and built in single-file browser form."
     }
   ]
 }
