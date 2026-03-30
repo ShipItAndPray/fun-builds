@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Late Text Laundromat</title><meta name="description" content="Wash a very late reply until it comes out socially wearable."><style>
+  :root { --accent: #f97316; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, sans-serif; color:#eef2ff; background: radial-gradient(circle at 14% 18%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 24%), linear-gradient(180deg,#09111d,#050914); min-height:100vh; }
+  .shell{ width:min(1040px,calc(100vw - 28px)); margin:0 auto; padding:28px 0 44px; }
+  .back{ color:#b7c5e5; text-decoration:none; font-weight:700; }
+  .hero,.panel{ background:rgba(15,22,38,.92); border:1px solid rgba(140,164,205,.14); border-radius:24px; box-shadow:0 22px 60px rgba(0,0,0,.34); }
+  .hero{ padding:28px; margin-top:18px; border-top:4px solid var(--accent); }
+  h1{ margin:0; font-size:clamp(2.4rem,5vw,4.2rem); line-height:.96; letter-spacing:-.04em; }
+  .sub{ color:#b7c5e5; line-height:1.62; font-size:18px; margin-top:14px; max-width:760px; }
+  .layout{ display:grid; grid-template-columns:.92fr 1.08fr; gap:18px; margin-top:18px; }
+  .panel{ padding:22px; }
+  .label{ margin:14px 0 8px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:#9fb1d7; font-weight:800; }
+  textarea,button{ font:inherit; }
+  textarea{ width:100%; min-height:132px; border:1px solid rgba(132,153,191,.18); background:rgba(7,10,18,.72); color:#eef2ff; border-radius:14px; padding:12px 14px; resize:vertical; }
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+  .chip{ border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.04); color:#eef2ff; border-radius:999px; padding:9px 14px; cursor:pointer; }
+  button.primary{ border:none; border-radius:14px; padding:12px 16px; font-weight:800; cursor:pointer; background:var(--accent); color:#081120; margin-top:14px; }
+  .cards{ display:grid; gap:12px; }
+  .card{ background:rgba(255,255,255,.035); border:1px solid rgba(255,255,255,.08); border-radius:18px; padding:16px; line-height:1.62; }
+  .card small{ display:block; color:var(--accent); text-transform:uppercase; letter-spacing:.14em; font-weight:800; margin-bottom:8px; }
+  @media (max-width: 860px){ .layout{ grid-template-columns:1fr; } }
+</style></head>
+<body><div class="shell"><a class="back" href="../">← Back to Fun Builds</a><section class="hero"><h1>🛠️ Late Text Laundromat</h1><p class="sub">Wash a very late reply until it comes out socially wearable.</p><div class="chips"><span class="chip">repair</span><span class="chip">text</span><span class="chip">social</span></div></section><div class="layout"><section class="panel"><div class="label">Scenario</div><textarea id="input">I need help with this situation.</textarea><div class="chips"><button class="chip" data-value="I need help with this situation.">I need help with this situation.</button><button class="chip" data-value="Make sense of this without making it longer.">Make sense of this without making it longer.</button><button class="chip" data-value="Tell me the useful version.">Tell me the useful version.</button></div><button class="primary" id="go">Generate</button></section><section class="panel"><div class="cards" id="cards"></div></section></div></div><script>
+const baseTitle = 'Late Text Laundromat';
+const desc = 'Wash a very late reply until it comes out socially wearable.';
+const slug = 'late-text-laundromat';
+function score(seed, offset) { return (seed * (offset + 5)) % 83 + 17; }
+function render() {
+  const input = document.getElementById('input').value.trim() || 'I need help with this situation.';
+  const seed = [...input].reduce((a, c, i) => a + c.charCodeAt(0) * (i + 11), slug.length * 37);
+  const blocks = [
+    {label:'Primary Read', text:`${baseTitle} classifies this as a ${score(seed,1)}/100 situation. The visible issue matters less than the tone, timing, and stories you are attaching to it.`},
+    {label:'Shareable Artifact', text:`Official output: ${desc}\n\nScenario: "${input}"\n\nConfidence: ${score(seed,2)}%`},
+    {label:'Next Move', text:`Use the shortest honest sentence that still protects your dignity. Lower the drama by ${(seed % 4) + 2} notches and keep one clean action.`}
+  ];
+  document.getElementById('cards').innerHTML = blocks.map(item => `<div class="card"><small>${item.label}</small>${item.text.replace(/\n/g,'<br>')}</div>`).join('');
+}
+document.getElementById('go').addEventListener('click', render);
+document.querySelectorAll('.chip').forEach(chip => chip.addEventListener('click', () => { document.getElementById('input').value = chip.dataset.value; render(); }));
+render();
+</script></body></html>
