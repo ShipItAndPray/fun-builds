@@ -119,6 +119,39 @@ Each entry records:
 
 This is the durable record that lets Claude or Codex pick up where the last approval pass left off.
 
+## Iterative Autoresearch
+
+For higher-quality idea screening, the repo now has a repeatable runner:
+
+- [scripts/autoresearch_idea_runner.py](/Users/somepalli/claude/dangerous/fun-builds/scripts/autoresearch_idea_runner.py)
+- [scripts/README.md](/Users/somepalli/claude/dangerous/fun-builds/scripts/README.md)
+
+This runner is designed for stability testing rather than a single yes/no pass.
+
+Default settings:
+
+- `100` iterations per idea
+- `95%` minimum pass rate on each binary eval
+- artifacts written to `autoresearch-runs/`
+
+Example:
+
+```bash
+python3 scripts/autoresearch_idea_runner.py \
+  --source /Users/somepalli/claude/dangerous/fun-builds/100_ideas.txt \
+  --iterations 100 \
+  --min-pass-rate 0.95
+```
+
+Produced artifacts:
+
+- `results.tsv`
+- `changelog.md`
+- `run_config.json`
+- `idea_queue.preview.json`
+
+This is the truthful path to “100 iterations per idea.” It should be used before any future bulk build pass.
+
 ## How To Add A New App
 
 1. Add the idea to `idea_queue.json` as `proposed`.
