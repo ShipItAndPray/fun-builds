@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Blame Wheel</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#140c0b;color:#fff6f2}main{max-width:860px;margin:auto;padding:28px}a{color:#fdba74;text-decoration:none}.card{background:#2a1711;border:1px solid #5b2d1d;border-radius:22px;padding:22px;margin-top:18px}.spin{font-size:2rem;font-weight:900;margin:18px 0}.out{background:#1d100d;border-radius:16px;padding:18px;line-height:1.6}textarea,button{font:inherit}textarea{width:100%;min-height:110px;background:#1d100d;border:1px solid #6b3c27;color:#fff6f2;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#f97316;color:#2a1005;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Blame Wheel</h1><p>Describe the situation. The wheel decides what absolutely did this to you.</p><textarea id="input">I missed the deadline.</textarea><button id="go">Spin Blame Wheel</button><div class="spin" id="spin">Atmospheric conditions</div><div class="out" id="out"></div></div></main>
+<script>
+const targets=["Mercury in retrograde","the group chat","calendar drift","a cursed tab","ambient capitalism","late-stage vibes","Bluetooth instability","someone saying 'quick call'","your own optimism","the invisible admin tax"];
+function render(){const t=input.value.trim();const blame=targets[Math.floor(Math.random()*targets.length)];spin.textContent=blame;out.innerHTML=`Official finding: <strong>${blame}</strong> materially contributed to the event described as "${t}". Personal responsibility remains under review.`}
+go.onclick=render;render();
+</script></body></html>

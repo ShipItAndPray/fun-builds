@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Moral Support Hotline</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0a1410;color:#f0fdf4}main{max-width:900px;margin:auto;padding:28px}a{color:#86efac;text-decoration:none}.card{background:#102019;border:1px solid #25543a;border-radius:22px;padding:22px;margin-top:18px}.out{display:grid;gap:12px;margin-top:12px}.line{background:#0b1711;border-radius:16px;padding:14px;line-height:1.6}input,button{font:inherit}input{width:100%;background:#0b1711;border:1px solid #2f6a47;color:#f0fdf4;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#4ade80;color:#0d2215;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Moral Support Hotline</h1><p>State your problem. Receive support in coach, friend, and dramatic narrator modes.</p><input id="input" value="I have to present in 20 minutes and I hate every slide."><button id="go">Call Hotline</button><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim();out.innerHTML=[
+`<div class="line"><strong>Coach</strong><br>You do not need perfect. You need clear, calm, and one good sentence at a time.</div>`,
+`<div class="line"><strong>Friend</strong><br>${t} sounds terrible, but you are absolutely more coherent than your panic is claiming.</div>`,
+`<div class="line"><strong>Narrator</strong><br>Against the odds, and with vibes only partially secured, they advanced anyway.</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Answer Later Simulator</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0d1321;color:#eff6ff}main{max-width:880px;margin:auto;padding:28px}a{color:#93c5fd;text-decoration:none}.card{background:#151e32;border:1px solid #334155;border-radius:22px;padding:22px;margin-top:18px}.out{background:#0e1525;border-radius:16px;padding:16px;line-height:1.65;margin-top:12px}textarea,button{font:inherit}textarea{width:100%;min-height:120px;background:#0e1525;border:1px solid #475569;color:#eff6ff;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#60a5fa;color:#0d1430;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Answer Later Simulator</h1><p>Paste the message you are avoiding. The simulator predicts your future apology timeline.</p><textarea id="input">“Hey, just checking if you saw my last email.”</textarea><button id="go">Simulate Delay</button><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim();const hrs=12+(t.length%68);out.innerHTML=`Projected reply delay: <strong>${hrs} hours</strong><br>Likely excuse: “Sorry, things got away from me.”<br>Actual cause: the message felt small enough to defer and important enough to dread.`}go.onclick=render;render();
+</script></body></html>

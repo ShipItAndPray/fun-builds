@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Crisis Rebrand</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#101012;color:#fafaf9}main{max-width:860px;margin:auto;padding:28px}a{color:#fde68a;text-decoration:none}.card{background:#1c1c20;border:1px solid #57534e;border-radius:22px;padding:22px;margin-top:18px}.out{display:grid;gap:12px;margin-top:12px}.line{background:#121215;border-radius:16px;padding:14px;line-height:1.6}input,button{font:inherit}input{width:100%;background:#121215;border:1px solid #78716c;color:#fafaf9;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#facc15;color:#292200;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Crisis Rebrand</h1><p>Rename any problem until it sounds strategic.</p><input id="input" value="I got laid off."><button id="go">Rebrand</button><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim();out.innerHTML=[
+`<div class="line"><strong>Board version</strong><br>${t} is now a high-voltage transition event.</div>`,
+`<div class="line"><strong>Founder version</strong><br>We're entering an aggressive focus phase.</div>`,
+`<div class="line"><strong>Self-preservation version</strong><br>This is not collapse. It is narrative reallocation.</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

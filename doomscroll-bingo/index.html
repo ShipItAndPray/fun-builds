@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Doomscroll Bingo</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#090909;color:#f5f5f5}main{max-width:940px;margin:auto;padding:28px}a{color:#fca5a5;text-decoration:none}.card{background:#161616;border:1px solid #3a3a3a;border-radius:22px;padding:22px;margin-top:18px}.board{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px}.cell{aspect-ratio:1;border-radius:14px;background:#111;padding:10px;font-size:13px;line-height:1.3;border:1px solid #333;display:flex;align-items:center;justify-content:center;text-align:center}input,button{font:inherit}input{width:100%;background:#111;border:1px solid #444;color:#f5f5f5;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#ef4444;color:#fff;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Doomscroll Bingo</h1><p>Type your algorithm. It generates a fresh 5x5 card of content fatigue.</p><input id="input" value="tech twitter"><button id="go">Generate Bingo</button><div class="board" id="board"></div></div></main>
+<script>
+const bits=["AI thread","fake outrage","side hustle guru","unwanted discourse","someone ratioed","study says something bleak","nostalgia bait","productivity shame","celebrity nonsense","conspiracy drift","three ads in a row","unverified breaking news","low-res screenshot","doom with infographic","moral grandstanding","brand trying humor","rage engagement","thread too long","someone leaving platform","reply guy swarm","mysterious chart","recycled take","'thoughts?' post","parasocial meltdown","FREE SPACE"];
+function render(){const seed=input.value.length;board.innerHTML=bits.map((b,i)=>`<div class="cell">${bits[(i+seed)%bits.length]}</div>`).join('')}go.onclick=render;render();
+</script></body></html>

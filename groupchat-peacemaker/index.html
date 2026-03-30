@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Groupchat Peacemaker</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0a1310;color:#f0fdf4}main{max-width:920px;margin:auto;padding:28px}a{color:#86efac;text-decoration:none}.card{background:#102019;border:1px solid #25543a;border-radius:22px;padding:22px;margin-top:18px}.grid{display:grid;gap:12px}.out{background:#0b1711;border-radius:16px;padding:14px;line-height:1.6}textarea,button{font:inherit}textarea{width:100%;min-height:120px;background:#0b1711;border:1px solid #2f6a47;color:#f0fdf4;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#4ade80;color:#0d2215;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Groupchat Peacemaker</h1><p>Describe the conflict. Get calm, neutral, and chaos-managed replies.</p><textarea id="input">Two friends are fighting about splitting the Airbnb costs.</textarea><button id="go">Defuse</button></div><div class="card grid" id="out"></div></main>
+<script>
+function render(){const t=input.value.trim();out.innerHTML=[
+`<div class="out"><strong>Calm reply</strong><br>Can we reset for a second? It sounds like ${t.toLowerCase()}, and we probably all want a cleaner answer than this thread is currently producing.</div>`,
+`<div class="out"><strong>Neutral reply</strong><br>Before this gets longer, can someone summarize the exact disagreement in one sentence and one number?</div>`,
+`<div class="out"><strong>Firm reply</strong><br>We are now spending more emotional energy on this than the original problem cost. Let's pick the least annoying fix and move on.</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

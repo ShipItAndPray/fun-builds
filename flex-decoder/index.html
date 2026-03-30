@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Flex Decoder</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#11120a;color:#fffef2}main{max-width:900px;margin:auto;padding:28px}a{color:#fcd34d;text-decoration:none}.card{background:#1d1f11;border:1px solid #5b5f24;border-radius:22px;padding:22px;margin-top:18px}.out{display:grid;gap:12px;margin-top:12px}.line{background:#13150b;border-radius:16px;padding:14px;line-height:1.6}textarea,button{font:inherit}textarea{width:100%;min-height:120px;background:#13150b;border:1px solid #6c712d;color:#fffef2;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#facc15;color:#2c2200;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Flex Decoder</h1><p>Paste a humblebrag. Get the translation underneath the performance.</p><textarea id="input">“Still can’t believe they asked me to lead this. Wild.”</textarea><button id="go">Decode Flex</button><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim();out.innerHTML=[
+`<div class="line"><strong>Literal</strong><br>${t}</div>`,
+`<div class="line"><strong>Translation</strong><br>I would like recognition, but in a way that still lets me seem surprised by my own excellence.</div>`,
+`<div class="line"><strong>Flex intensity</strong><br>${Math.min(97,40+t.length%55)}%</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Text Tone Autopsy</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0d1117;color:#f8fafc}main{max-width:900px;margin:auto;padding:28px}a{color:#93c5fd;text-decoration:none}.card{background:#161b22;border:1px solid #30363d;border-radius:22px;padding:22px;margin-top:18px}.grid{display:grid;gap:12px}.out{background:#0d1117;border-radius:16px;padding:14px;line-height:1.6}textarea,button{font:inherit}textarea{width:100%;min-height:120px;background:#0d1117;border:1px solid #4b5563;color:#f8fafc;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#94a3b8;color:#111827;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Text Tone Autopsy</h1><p>Paste a message. Get the emotional pathology report.</p><textarea id="input">“sure.”</textarea><button id="go">Run Autopsy</button></div><div class="card grid" id="out"></div></main>
+<script>
+function render(){const t=input.value.trim();const len=t.length;out.innerHTML=[
+`<div class="out"><strong>Warmth</strong><br>${Math.max(4,70-len*4)}%</div>`,
+`<div class="out"><strong>Passive aggression</strong><br>${Math.min(96,20+len*7)}%</div>`,
+`<div class="out"><strong>Punctuation suspicion</strong><br>${/[.!?]/.test(t)?78:34}%</div>`,
+`<div class="out"><strong>Cause of death</strong><br>Ambiguity with traces of restraint.</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overexplainer Bot</title>
+<style>
+  body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0b1020;color:#eef2ff}main{max-width:900px;margin:auto;padding:28px}a{color:#93c5fd;text-decoration:none}.card{background:#111831;border:1px solid #24304f;border-radius:20px;padding:22px;margin-top:18px}.grid{display:grid;gap:12px}.out{background:#0f1530;border-radius:16px;padding:14px;line-height:1.55}.controls{display:grid;gap:12px}.row{display:flex;gap:12px;flex-wrap:wrap}textarea,select,button{font:inherit}textarea,select{width:100%;background:#0a1124;border:1px solid #30406a;color:#eef2ff;border-radius:14px;padding:12px}textarea{min-height:120px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;background:#60a5fa;color:#081120}
+  </style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Overexplainer Bot</h1><p>Turn one simple statement into five increasingly unnecessary explanations.</p><div class="controls"><textarea id="input">I am going to be five minutes late.</textarea><select id="mode"><option>Professional</option><option>Defensive</option><option>Chaotic</option></select><div class="row"><button id="go">Overexplain</button></div></div></div><div class="card grid" id="out"></div></main>
+<script>
+const extras={Professional:["for visibility","to avoid confusion","for completeness"],Defensive:["which is not ideal","through no fault of geometry","despite my best intentions"],Chaotic:["because time dissolved","after a brief systems failure","in a way that became philosophical"]};
+function render(){const t=input.value.trim();const mode=document.getElementById('mode').value;out.innerHTML=Array.from({length:5},(_,i)=>`<div class="out"><strong>Version ${i+1}</strong><br>${t} ${extras[mode][i%3]}, and I wanted to clarify that the delay is minor, temporary, and currently being managed with more detail than this situation deserves.</div>`).join('')}
+go.onclick=render;render();
+</script></body></html>

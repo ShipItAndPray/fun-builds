@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Flake Forecast</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0a1220;color:#f8fbff}main{max-width:900px;margin:auto;padding:28px}a{color:#93c5fd;text-decoration:none}.card{background:#101b30;border:1px solid #2a4673;border-radius:22px;padding:22px;margin-top:18px}.meter{height:18px;background:#0a1322;border-radius:999px;overflow:hidden;margin-top:10px}.fill{height:100%;background:linear-gradient(90deg,#38bdf8,#f97316)}textarea,button{font:inherit}textarea{width:100%;min-height:120px;background:#0a1322;border:1px solid #35598c;color:#f8fbff;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#38bdf8;color:#082034;cursor:pointer;margin-top:12px}.out{background:#0a1322;border-radius:16px;padding:14px;margin-top:12px;line-height:1.6}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Flake Forecast</h1><p>Paste their text. Estimate the probability they cancel, vanish, or arrive with chaos.</p><textarea id="input">“Should be there! Just wrapping a few things up first.”</textarea><button id="go">Forecast</button><div class="meter"><div class="fill" id="fill"></div></div><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim().toLowerCase();let v=35+t.length%20;if(t.includes("should"))v+=18;if(t.includes("wrapping"))v+=14;if(t.includes("probably"))v+=22;if(t.includes("few things"))v+=11;v=Math.min(96,v);fill.style.width=v+"%";out.innerHTML=`Flake probability: <strong>${v}%</strong><br>Primary warning sign: vague optimism with no timestamp discipline.`}go.onclick=render;render();
+</script></body></html>

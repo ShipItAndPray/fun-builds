@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Meeting Hostage Negotiator</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#07121a;color:#ecfeff}main{max-width:920px;margin:auto;padding:28px}a{color:#67e8f9;text-decoration:none}.card{background:#0f2027;border:1px solid #155e75;border-radius:22px;padding:22px;margin-top:18px}.out{display:grid;gap:12px;margin-top:12px}.line{background:#0a171d;border-radius:16px;padding:14px;line-height:1.6}input,button{font:inherit}input{width:100%;background:#0a171d;border:1px solid #0e7490;color:#ecfeff;border-radius:14px;padding:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#22d3ee;color:#082028;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Meeting Hostage Negotiator</h1><p>Describe the meeting. Get escape lines with plausible deniability.</p><input id="input" value="a weekly sync that already ran 23 minutes over"><button id="go">Negotiate Release</button><div class="out" id="out"></div></div></main>
+<script>
+function render(){const t=input.value.trim();out.innerHTML=[
+`<div class="line"><strong>Gentle exit</strong><br>I need to drop for another commitment, but I trust the remaining details can be captured asynchronously.</div>`,
+`<div class="line"><strong>Assertive exit</strong><br>We've reached the point where another 15 minutes will not improve the answer.</div>`,
+`<div class="line"><strong>Specific to ${t}</strong><br>Let's end here, write down the actual next action, and spare everyone the ceremonial circling.</div>`
+].join('')}go.onclick=render;render();
+</script></body></html>

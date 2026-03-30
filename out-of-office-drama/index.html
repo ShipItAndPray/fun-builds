@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Out of Office Drama</title>
+<style>body{margin:0;font-family:Inter,system-ui,sans-serif;background:#0f0a14;color:#faf5ff}main{max-width:920px;margin:auto;padding:28px}a{color:#d8b4fe;text-decoration:none}.card{background:#1b1124;border:1px solid #46245f;border-radius:22px;padding:22px;margin-top:18px}.out{background:#120a18;border-radius:16px;padding:16px;line-height:1.65;white-space:pre-wrap}input,select,button{font:inherit}input,select{width:100%;background:#120a18;border:1px solid #5a2d7a;color:#faf5ff;border-radius:14px;padding:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}button{border:none;border-radius:14px;padding:12px 16px;font-weight:800;background:#c084fc;color:#210a30;cursor:pointer;margin-top:12px}</style>
+</head>
+<body><main><a href="../">← Back</a><div class="card"><h1>Out of Office Drama</h1><p>Create a dramatic automatic reply for your temporary disappearance.</p><div class="grid"><input id="reason" value="seeking peace"><select id="tone"><option>Elegant</option><option>Petty</option><option>Mythic</option></select></div><button id="go">Generate OOO</button><div class="out" id="out"></div></div></main>
+<script>
+const tone={Elegant:"Thank you for your message. I am currently away",Petty:"I am away, which for all involved is probably healthiest",Mythic:"I have departed briefly into the mists"};function render(){const r=reason.value.trim();const t=tone[document.getElementById('tone').value];out.textContent=`${t} in pursuit of ${r}.\n\nI will return when my inbox and spirit are once again negotiable.\n\nIf urgent, please locate someone with fresher optimism.`}go.onclick=render;render();
+</script></body></html>
