@@ -6,7 +6,7 @@ No accounts, no backend, no tracking, and no install step. Each build is intende
 
 ## Live Site
 
-- Main gallery: `https://shipitandpray.github.io/fun-builds/`
+- Main gallery: [shipitandpray.github.io/fun-builds](https://shipitandpray.github.io/fun-builds/)
 
 ## What This Repo Contains
 
@@ -27,34 +27,34 @@ No accounts, no backend, no tracking, and no install step. Each build is intende
 
 ### Recently Added
 
-- Bad Idea VC: `https://shipitandpray.github.io/fun-builds/bad-idea-vc/`
-- Apology Generator: `https://shipitandpray.github.io/fun-builds/apology-generator/`
-- Excuse Printer: `https://shipitandpray.github.io/fun-builds/excuse-printer/`
-- Petty Translator: `https://shipitandpray.github.io/fun-builds/petty-translator/`
-- Ghosted Response Simulator: `https://shipitandpray.github.io/fun-builds/ghosted-response-simulator/`
+- [Bad Idea VC](https://shipitandpray.github.io/fun-builds/bad-idea-vc/)
+- [Apology Generator](https://shipitandpray.github.io/fun-builds/apology-generator/)
+- [Excuse Printer](https://shipitandpray.github.io/fun-builds/excuse-printer/)
+- [Petty Translator](https://shipitandpray.github.io/fun-builds/petty-translator/)
+- [Ghosted Response Simulator](https://shipitandpray.github.io/fun-builds/ghosted-response-simulator/)
 
 ### New Batch
 
-- Overexplainer Bot: `https://shipitandpray.github.io/fun-builds/overexplainer-bot/`
-- Blame Wheel: `https://shipitandpray.github.io/fun-builds/blame-wheel/`
-- Vibe Last Seen: `https://shipitandpray.github.io/fun-builds/vibe-last-seen/`
-- Excuse Escalator: `https://shipitandpray.github.io/fun-builds/excuse-escalator/`
-- Out of Office Drama: `https://shipitandpray.github.io/fun-builds/out-of-office-drama/`
-- Niche Hater: `https://shipitandpray.github.io/fun-builds/niche-hater/`
-- Groupchat Peacemaker: `https://shipitandpray.github.io/fun-builds/groupchat-peacemaker/`
-- Overthink Optimizer: `https://shipitandpray.github.io/fun-builds/overthink-optimizer/`
-- Flex Decoder: `https://shipitandpray.github.io/fun-builds/flex-decoder/`
-- Flake Forecast: `https://shipitandpray.github.io/fun-builds/flake-forecast/`
-- Awkward Exit Script: `https://shipitandpray.github.io/fun-builds/awkward-exit-script/`
-- Doomscroll Bingo: `https://shipitandpray.github.io/fun-builds/doomscroll-bingo/`
-- Deadline Dice: `https://shipitandpray.github.io/fun-builds/deadline-dice/`
-- Complaint Remix Studio: `https://shipitandpray.github.io/fun-builds/complaint-remix-studio/`
-- Unhinged LinkedIn Post: `https://shipitandpray.github.io/fun-builds/unhinged-linkedin-post/`
-- Text Tone Autopsy: `https://shipitandpray.github.io/fun-builds/text-tone-autopsy/`
-- Crisis Rebrand: `https://shipitandpray.github.io/fun-builds/crisis-rebrand/`
-- Meeting Hostage Negotiator: `https://shipitandpray.github.io/fun-builds/meeting-hostage-negotiator/`
-- Answer Later Simulator: `https://shipitandpray.github.io/fun-builds/answer-later-simulator/`
-- Moral Support Hotline: `https://shipitandpray.github.io/fun-builds/moral-support-hotline/`
+- [Overexplainer Bot](https://shipitandpray.github.io/fun-builds/overexplainer-bot/)
+- [Blame Wheel](https://shipitandpray.github.io/fun-builds/blame-wheel/)
+- [Vibe Last Seen](https://shipitandpray.github.io/fun-builds/vibe-last-seen/)
+- [Excuse Escalator](https://shipitandpray.github.io/fun-builds/excuse-escalator/)
+- [Out of Office Drama](https://shipitandpray.github.io/fun-builds/out-of-office-drama/)
+- [Niche Hater](https://shipitandpray.github.io/fun-builds/niche-hater/)
+- [Groupchat Peacemaker](https://shipitandpray.github.io/fun-builds/groupchat-peacemaker/)
+- [Overthink Optimizer](https://shipitandpray.github.io/fun-builds/overthink-optimizer/)
+- [Flex Decoder](https://shipitandpray.github.io/fun-builds/flex-decoder/)
+- [Flake Forecast](https://shipitandpray.github.io/fun-builds/flake-forecast/)
+- [Awkward Exit Script](https://shipitandpray.github.io/fun-builds/awkward-exit-script/)
+- [Doomscroll Bingo](https://shipitandpray.github.io/fun-builds/doomscroll-bingo/)
+- [Deadline Dice](https://shipitandpray.github.io/fun-builds/deadline-dice/)
+- [Complaint Remix Studio](https://shipitandpray.github.io/fun-builds/complaint-remix-studio/)
+- [Unhinged LinkedIn Post](https://shipitandpray.github.io/fun-builds/unhinged-linkedin-post/)
+- [Text Tone Autopsy](https://shipitandpray.github.io/fun-builds/text-tone-autopsy/)
+- [Crisis Rebrand](https://shipitandpray.github.io/fun-builds/crisis-rebrand/)
+- [Meeting Hostage Negotiator](https://shipitandpray.github.io/fun-builds/meeting-hostage-negotiator/)
+- [Answer Later Simulator](https://shipitandpray.github.io/fun-builds/answer-later-simulator/)
+- [Moral Support Hotline](https://shipitandpray.github.io/fun-builds/moral-support-hotline/)
 
 ## Build Principles
 
@@ -132,8 +132,8 @@ This is the durable record that lets Claude or Codex pick up where the last appr
 
 This repo is published via GitHub Pages from:
 
-- GitHub repo: `https://github.com/ShipItAndPray/fun-builds`
-- Pages base URL: `https://shipitandpray.github.io/fun-builds/`
+- GitHub repo: [github.com/ShipItAndPray/fun-builds](https://github.com/ShipItAndPray/fun-builds)
+- Pages base URL: [shipitandpray.github.io/fun-builds](https://shipitandpray.github.io/fun-builds/)
 
 When `main` is pushed, GitHub Pages may take a short time to refresh.
 
