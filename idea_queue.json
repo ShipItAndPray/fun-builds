@@ -1863,6 +1863,96 @@
         "notes": "Built in survivor batch 2A after LLM review of the remaining candidate pool."
       },
       {
+        "slug": "pantry-weather",
+        "title": "Pantry Weather",
+        "one_liner": "Forecast snack pressure, shelf instability, and emergency toast probability.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "receipt-oracle",
+        "title": "Receipt Oracle",
+        "one_liner": "Turn any receipt into a fake domestic prophecy about your week.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "crumb-tribunal",
+        "title": "Crumb Tribunal",
+        "one_liner": "Judge the moral history of crumbs found on your desk or couch.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "stamp-bureau",
+        "title": "Stamp Bureau",
+        "one_liner": "Generate absurd approval stamps for ordinary life paperwork.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "tea-time-tribunal",
+        "title": "Tea Time Tribunal",
+        "one_liner": "A fake courtroom that rules on whether your pause for tea was justified.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "parking-spot-mythology",
+        "title": "Parking Spot Mythology",
+        "one_liner": "Convert a lucky or cursed parking spot into a full civic legend with omens and folklore.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "fan-speed-negotiator",
+        "title": "Fan Speed Negotiator",
+        "one_liner": "Resolve the nightly conflict between too cold, too loud, and just enough wind noise.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "desk-crumb-cartographer",
+        "title": "Desk Crumb Cartographer",
+        "one_liner": "Map the tiny civilization of crumbs on your desk and classify its dominant provinces.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "soup-temperature-court",
+        "title": "Soup Temperature Court",
+        "one_liner": "Hold a hearing on whether your soup is ready, reckless, or actively plotting against your tongue.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
+        "slug": "pillow-rotation-scheduler",
+        "title": "Pillow Rotation Scheduler",
+        "one_liner": "Generate a highly unnecessary but satisfying rotation calendar for peak bedtime symmetry.",
+        "status": "built",
+        "evals": {"hook_15s": true, "single_file_browser": true, "distinct_from_existing": true, "shareable_output": true, "low_build_cost": true},
+        "approved_by": "llm-autoresearch",
+        "notes": "Built in survivor batch 2B after LLM review plus heuristic shortlist confirmation."
+      },
+      {
         "slug": "workout-excuse-bingo",
         "title": "Workout Excuse Bingo",
         "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
