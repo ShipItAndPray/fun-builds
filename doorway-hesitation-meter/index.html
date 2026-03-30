@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doorway Hesitation Meter</title>
+  <meta name="description" content="Measure how awkward a doorway standoff is before everyone starts apologizing.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#db2777; --accent2:#f97316; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(219,39,119,.2), transparent 24%), radial-gradient(circle at 82% 18%, rgba(249,115,22,.18), transparent 28%), linear-gradient(180deg,#fdf2f8,#fff7ed);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{text-decoration:none;color:var(--ink);font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.06fr .94fr;margin-bottom:18px;} .grid{grid-template-columns:.95fr 1.05fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.82);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(219,39,119,.12);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.4rem,5vw,4.3rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} select,input{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(219,39,119,.12);color:#be185d;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;} .headline{font-size:1.28rem;font-weight:900;margin-bottom:8px;}
+    .meter{height:22px;border-radius:999px;background:rgba(31,41,55,.08);overflow:hidden;margin-bottom:12px;} .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:40%;}
+    @media (max-width:900px){ .hero,.grid,.row{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Doorway Hesitation Meter</div>
+        <h1>Who goes first is now measurable.</h1>
+        <p>Model the doorway standoff and get a formal awkwardness score, apology forecast, and etiquette intervention plan.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Classic scenario:</strong> both people gesture, both retreat, both say “no, you,” and the air changes permanently.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <div class="row">
+          <div><label for="people">People in conflict</label><select id="people"><option value="2">two</option><option value="3">three</option><option value="4">too many</option></select></div>
+          <div><label for="width">Door width</label><select id="width"><option value="1">comfortably wide</option><option value="3">normal</option><option value="5">narrow enough to create character</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="polite">Politeness level</label><select id="polite"><option value="1">functional</option><option value="3">Midwestern</option><option value="5">catastrophically considerate</option></select></div>
+          <div><label for="bags">Carrying objects?</label><select id="bags"><option value="0">empty-handed</option><option value="2">one bag</option><option value="4">multiple unstable objects</option></select></div>
+        </div>
+        <label for="setting">Setting</label>
+        <select id="setting"><option>office hallway</option><option>coffee shop entrance</option><option>apartment elevator lobby</option><option>family gathering doorway</option></select>
+        <div style="margin-top:16px;"><button class="primary" id="measure">Measure awkwardness</button><button class="secondary" id="freeze">Maximum politeness</button></div>
+      </div>
+      <div class="panel results">
+        <div class="meter"><div class="fill" id="fill"></div></div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const score = Number(document.getElementById("people").value) * 10 + Number(document.getElementById("width").value) * 6 + Number(document.getElementById("polite").value) * 8 + Number(document.getElementById("bags").value) * 5;
+      const awkward = Math.max(8, Math.min(99, score));
+      document.getElementById("fill").style.width = `${awkward}%`;
+      const classif = awkward >= 82 ? "full courtesy deadlock" : awkward >= 58 ? "active hesitation loop" : awkward >= 36 ? "mild doorway ripple" : "clean passage";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Meter reading</div><div class="headline">${awkward}/100</div><p>Status: ${classif} in an ${document.getElementById("setting").value}.</p></div>
+        <div class="card"><div class="badge">Likely dialogue</div><p>${awkward >= 70 ? '"No, sorry, you go." repeated until time folds.' : awkward >= 45 ? '"Oh, sorry." followed by one contradictory hand gesture.' : 'One small nod. Society survives.'}</p></div>
+        <div class="card"><div class="badge">Intervention</div><p>Choose one person, commit to motion, and stop offering the doorway like a ceremonial gift basket.</p></div>`;
+    }
+    document.getElementById("measure").onclick = render;
+    document.getElementById("freeze").onclick = () => { ["people","width","polite","bags"].forEach((id)=>{ const el=document.getElementById(id); el.selectedIndex=el.options.length-1;}); render(); };
+    render();
+  </script>
+</body>
+</html>

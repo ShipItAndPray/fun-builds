@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart Wheel Wobble Bureau</title>
+  <meta name="description" content="File an official report on a grocery cart wheel that has lost the social contract.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#059669; --accent2:#84cc16; }
+    * { box-sizing:border-box; } body { margin:0; font-family:"Avenir Next","Trebuchet MS",sans-serif; color:var(--ink); background:radial-gradient(circle at top left, rgba(132,204,22,.24), transparent 26%), radial-gradient(circle at 80% 20%, rgba(5,150,105,.18), transparent 30%), linear-gradient(180deg,#ecfccb,#f8fafc); padding:24px 18px 48px; }
+    .shell { max-width:1080px; margin:0 auto; } .back { color:var(--ink); text-decoration:none; font-weight:800; display:inline-block; margin-bottom:16px; }
+    .hero,.grid,.row { display:grid; gap:18px; } .hero { grid-template-columns:1.05fr .95fr; margin-bottom:18px; } .grid { grid-template-columns:.9fr 1.1fr; } .row { grid-template-columns:1fr 1fr; gap:12px; }
+    .panel { background:rgba(255,255,255,.84); border:1px solid rgba(255,255,255,.8); border-radius:28px; backdrop-filter:blur(16px); box-shadow:0 22px 60px rgba(5,150,105,.15); } .hero-copy,.controls,.results { padding:26px; }
+    .eyebrow { display:inline-block; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.88); text-transform:uppercase; letter-spacing:.08em; font-size:.74rem; font-weight:800; color:var(--muted); }
+    h1 { font-size:clamp(2.5rem,5vw,4.4rem); line-height:.95; margin:16px 0 12px; letter-spacing:-.05em; } p { color:var(--muted); line-height:1.6; }
+    label { display:block; font-weight:800; margin:14px 0 8px; } input[type="range"], select { width:100%; } select { border:1px solid var(--line); border-radius:16px; padding:12px 14px; font:inherit; background:rgba(255,255,255,.88); color:var(--ink); }
+    .meter { font-weight:800; color:var(--muted); margin-top:6px; } button { border:none; border-radius:999px; padding:12px 18px; font:inherit; font-weight:800; cursor:pointer; } .primary { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); } .secondary { background:rgba(31,41,55,.08); color:var(--ink); margin-left:10px; }
+    .card { background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:22px; padding:18px; margin-bottom:12px; } .badge { display:inline-block; margin-bottom:10px; padding:7px 10px; border-radius:999px; background:rgba(5,150,105,.12); color:#047857; text-transform:uppercase; font-size:.78rem; font-weight:800; letter-spacing:.06em; }
+    .headline { font-weight:900; font-size:1.28rem; margin-bottom:8px; } @media (max-width:900px){ .hero,.grid,.row { grid-template-columns:1fr; } .secondary { margin-left:0; margin-top:10px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Cart Wheel Wobble Bureau</div>
+        <h1>Escalate your cart incident properly.</h1>
+        <p>Measure the wobble, assess aisle damage, and generate a formal report on the rogue wheel that turned your shopping trip into infrastructure drama.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>What counts:</strong> wheel chaos, public embarrassment, and whether produce survived the event.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <label for="wobble">Wobble intensity</label>
+        <input id="wobble" type="range" min="0" max="10" value="7">
+        <div class="meter" id="wobbleValue"></div>
+        <label for="noise">Noise profile</label>
+        <select id="noise">
+          <option value="1">minor click</option>
+          <option value="3">rattling complaint</option>
+          <option value="5">full metallic protest</option>
+        </select>
+        <div class="row">
+          <div>
+            <label for="aisle">Aisle width</label>
+            <select id="aisle">
+              <option value="1">roomy</option>
+              <option value="3">normal</option>
+              <option value="5">claustrophobic</option>
+            </select>
+          </div>
+          <div>
+            <label for="cargo">Cart load</label>
+            <select id="cargo">
+              <option value="1">light mission</option>
+              <option value="3">respectable haul</option>
+              <option value="5">bulk panic</option>
+            </select>
+          </div>
+        </div>
+        <label for="victim">Collateral damage</label>
+        <select id="victim">
+          <option>none, only pride</option>
+          <option>a lopsided baguette</option>
+          <option>one dramatic avocado roll</option>
+          <option>multiple audience members noticed</option>
+        </select>
+        <div style="margin-top:16px;">
+          <button class="primary" id="inspect">File inspection</button>
+          <button class="secondary" id="rerun">Different cart</button>
+        </div>
+      </div>
+      <div class="panel results"><div id="out"></div></div>
+    </section>
+  </div>
+  <script>
+    const wobble = document.getElementById("wobble");
+    const wobbleValue = document.getElementById("wobbleValue");
+    function sync() { wobbleValue.textContent = `${wobble.value}/10 wheel instability`; }
+    sync(); wobble.oninput = sync;
+    function render() {
+      const score = Number(wobble.value) * 7 + Number(document.getElementById("noise").value) * 5 + Number(document.getElementById("aisle").value) * 3 + Number(document.getElementById("cargo").value) * 4;
+      const classif = score >= 95 ? "aisle emergency" : score >= 70 ? "serious rolling misconduct" : score >= 46 ? "bureau-monitored wobble" : "routine wheel delinquency";
+      const victim = document.getElementById("victim").value;
+      const fines = ["one free sigh", "a diplomatic cart swap", "full checkout sympathy", "hazard pay for your wrists"];
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Inspection class</div><div class="headline">${classif}</div><p>The bureau has concluded that this cart displayed ${document.getElementById("noise").selectedOptions[0].text} behavior under ${document.getElementById("cargo").selectedOptions[0].text} conditions.</p></div>
+        <div class="card"><div class="badge">Disruption score</div><div class="headline">${Math.min(100, score)}/100</div><p>Documented collateral damage: ${victim}. This qualifies for ${fines[score % fines.length]}.</p></div>
+        <div class="card"><div class="badge">Recommended action</div><p>Stop pretending it will improve on aisle six. Rehome the cart immediately, salvage dignity, and notify any produce that experienced emotional acceleration.</p></div>`;
+    }
+    document.getElementById("inspect").onclick = render;
+    document.getElementById("rerun").onclick = () => { wobble.value = String(2 + Math.floor(Math.random() * 9)); sync(); render(); };
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toast Darkness Accord</title>
+  <meta name="description" content="Negotiate a peace treaty between your desired toast level and what the toaster actually did.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#92400e; --accent2:#f59e0b; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(245,158,11,.24), transparent 25%), radial-gradient(circle at 82% 18%, rgba(146,64,14,.16), transparent 28%), linear-gradient(180deg,#fffbeb,#fff7ed);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{text-decoration:none;color:var(--ink);font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.06fr .94fr;margin-bottom:18px;} .grid{grid-template-columns:.94fr 1.06fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.82);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(146,64,14,.12);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.4rem,5vw,4.4rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} input[type=range], select{width:100%;} select{border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);}
+    .toast{height:220px;border-radius:26px;margin-bottom:12px;display:grid;place-items:center;font-weight:900;font-size:2rem;color:#fff5e6;border:1px solid rgba(146,64,14,.2);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(146,64,14,.12);color:#92400e;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;} .headline{font-size:1.28rem;font-weight:900;margin-bottom:8px;}
+    @media (max-width:900px){ .hero,.grid,.row{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Toast Darkness Accord</div>
+        <h1>Bring peace to the bread.</h1>
+        <p>Set your ideal toast, the toaster's actual behavior, and the emotional stakes. Then issue a formal breakfast treaty.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Promise:</strong> you will leave with a diplomatic ruling instead of another domestic toast argument.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <label for="ideal">Your ideal darkness</label>
+        <input id="ideal" type="range" min="0" max="10" value="4">
+        <label for="actual">Actual darkness achieved</label>
+        <input id="actual" type="range" min="0" max="10" value="7">
+        <div class="row">
+          <div><label for="bread">Bread type</label><select id="bread"><option>sourdough</option><option>soft sandwich bread</option><option>bagel half</option><option>mysterious freezer slice</option></select></div>
+          <div><label for="stakes">Breakfast stakes</label><select id="stakes"><option value="1">casual</option><option value="3">time-sensitive</option><option value="5">this mattered</option></select></div>
+        </div>
+        <div style="margin-top:16px;"><button class="primary" id="negotiate">Draft accord</button><button class="secondary" id="chaos">Escalate toaster</button></div>
+      </div>
+      <div class="panel results">
+        <div class="toast" id="toastView">Article I</div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const ideal = Number(document.getElementById("ideal").value);
+      const actual = Number(document.getElementById("actual").value);
+      const delta = actual - ideal;
+      const tone = Math.max(30, 92 - actual * 6);
+      document.getElementById("toastView").style.background = `linear-gradient(180deg, hsl(30 70% ${tone+8}%), hsl(28 72% ${tone}%))`;
+      document.getElementById("toastView").textContent = delta > 2 ? "Overtoasted" : delta < -2 ? "Underdeveloped" : "Acceptable";
+      const verdict = Math.abs(delta) <= 1 ? "mutual satisfaction" : Math.abs(delta) <= 3 ? "tense compromise" : "breakfast sanctions";
+      const terms = delta > 1 ? "Butter deployment is approved to soften the ruling." : delta < -1 ? "A return-to-toaster clause may be invoked with caution." : "No reparations required.";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Accord status</div><div class="headline">${verdict}</div><p>The ${document.getElementById("bread").value} session concluded with actual darkness at ${actual}/10 against a requested ${ideal}/10.</p></div>
+        <div class="card"><div class="badge">Article II</div><p>${terms} Breakfast stakes were rated ${document.getElementById("stakes").selectedOptions[0].text}, which increases diplomatic sensitivity.</p></div>
+        <div class="card"><div class="badge">Closing language</div><p>The parties agree that future toasting should involve less optimism, more supervision, and a realistic understanding of the appliance's agenda.</p></div>`;
+    }
+    document.getElementById("negotiate").onclick = render;
+    document.getElementById("chaos").onclick = () => { document.getElementById("actual").value = 10; render(); };
+    render();
+  </script>
+</body>
+</html>

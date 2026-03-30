@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umbrella Loss Probability Office</title>
+  <meta name="description" content="Estimate how likely your umbrella is to disappear under current human conditions.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#0f766e; --accent2:#38bdf8; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(56,189,248,.22), transparent 25%), radial-gradient(circle at 82% 18%, rgba(15,118,110,.18), transparent 30%), linear-gradient(180deg,#ecfeff,#f8fafc);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{text-decoration:none;color:var(--ink);font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.06fr .94fr;margin-bottom:18px;} .grid{grid-template-columns:.95fr 1.05fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.82);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(15,118,110,.12);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.4rem,5vw,4.3rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} select,input{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(15,118,110,.12);color:#0f766e;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;} .headline{font-size:1.28rem;font-weight:900;margin-bottom:8px;}
+    .seal{height:200px;border-radius:26px;border:1px dashed rgba(15,118,110,.22);display:grid;place-items:center;background:linear-gradient(180deg, rgba(186,230,253,.7), rgba(240,253,250,.85));margin-bottom:12px;font-size:2rem;font-weight:900;color:#0f766e;}
+    @media (max-width:900px){ .hero,.grid,.row{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Umbrella Loss Probability Office</div>
+        <h1>Some umbrellas were never coming back.</h1>
+        <p>Declare the umbrella, venue, weather, and your level of false confidence, then receive an official disappearance forecast.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Use case:</strong> trains, restaurants, friend apartments, and any place where umbrellas quietly become public property.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <div class="row">
+          <div><label for="type">Umbrella type</label><select id="type"><option value="1">cheap and anonymous</option><option value="3">pretty respectable</option><option value="5">one you actually like</option></select></div>
+          <div><label for="venue">Venue risk</label><select id="venue"><option value="1">office</option><option value="3">restaurant</option><option value="5">friend's place with hallway pile</option><option value="6">train / transit blur</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="rain">Weather drama</label><select id="rain"><option value="1">light rain</option><option value="3">real rain</option><option value="5">umbrella destiny weather</option></select></div>
+          <div><label for="confidence">Your confidence</label><select id="confidence"><option value="1">carefully tracking it</option><option value="3">it'll be fine</option><option value="5">already spiritually lost</option></select></div>
+        </div>
+        <label for="mark">Distinctive marker</label>
+        <input id="mark" value="a bent spoke and false hope">
+        <div style="margin-top:16px;"><button class="primary" id="file">File forecast</button><button class="secondary" id="doom">Assume the worst</button></div>
+      </div>
+      <div class="panel results">
+        <div class="seal" id="percent">61%</div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const score = Number(document.getElementById("type").value) * 6 + Number(document.getElementById("venue").value) * 9 + Number(document.getElementById("rain").value) * 5 + Number(document.getElementById("confidence").value) * 7;
+      const risk = Math.max(5, Math.min(97, score));
+      document.getElementById("percent").textContent = `${risk}%`;
+      const classif = risk >= 80 ? "high disappearance risk" : risk >= 58 ? "probable separation" : risk >= 34 ? "recoverable if alert" : "temporary custody only";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Office ruling</div><div class="headline">${classif}</div><p>The office has reviewed this ${document.getElementById("type").selectedOptions[0].text} umbrella under ${document.getElementById("venue").selectedOptions[0].text} conditions.</p></div>
+        <div class="card"><div class="badge">Claim details</div><p>Distinctive marker: ${document.getElementById("mark").value}. In cases like this, memory fades rapidly once coats enter the same social radius.</p></div>
+        <div class="card"><div class="badge">Advice</div><p>If you value this umbrella, attach it to your body, narrate its existence aloud twice, and do not trust any exit involving a stand by the door.</p></div>`;
+    }
+    document.getElementById("file").onclick = render;
+    document.getElementById("doom").onclick = () => { ["type","venue","rain","confidence"].forEach((id)=>{ const el=document.getElementById(id); el.selectedIndex=el.options.length-1;}); render(); };
+    render();
+  </script>
+</body>
+</html>

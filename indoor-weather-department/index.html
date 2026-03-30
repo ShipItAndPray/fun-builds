@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indoor Weather Department</title>
+  <meta name="description" content="Issue an official weather forecast for one weird room in your life.">
+  <style>
+    :root { --ink:#0f172a; --muted:#64748b; --line:rgba(15,23,42,.12); --bg:#e0f2fe; --panel:rgba(255,255,255,.82); --accent:#0284c7; --accent2:#22d3ee; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Avenir Next","Trebuchet MS",sans-serif; color:var(--ink); background:radial-gradient(circle at top right, rgba(34,211,238,.35), transparent 28%), radial-gradient(circle at left, rgba(14,165,233,.2), transparent 34%), linear-gradient(180deg,#e0f2fe,#f8fafc); padding:24px 18px 48px; }
+    .shell { max-width:1100px; margin:0 auto; }
+    .back { color:var(--ink); text-decoration:none; font-weight:800; display:inline-block; margin-bottom:16px; }
+    .hero, .grid { display:grid; gap:18px; }
+    .hero { grid-template-columns:1.1fr .9fr; margin-bottom:18px; }
+    .grid { grid-template-columns:.95fr 1.05fr; }
+    .panel { background:var(--panel); border:1px solid rgba(255,255,255,.75); border-radius:28px; box-shadow:0 22px 60px rgba(14,165,233,.16); backdrop-filter:blur(16px); }
+    .hero-copy, .inspector, .forecast { padding:26px; }
+    .eyebrow { display:inline-block; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.8); text-transform:uppercase; letter-spacing:.08em; font-size:.74rem; font-weight:800; color:var(--muted); }
+    h1 { font-size:clamp(2.5rem,5vw,4.6rem); line-height:.95; margin:16px 0 12px; letter-spacing:-.05em; }
+    p { color:var(--muted); line-height:1.6; }
+    .stat { padding:16px 18px; border-radius:20px; border:1px solid var(--line); background:rgba(255,255,255,.88); margin-bottom:12px; }
+    label { display:block; font-weight:800; margin:14px 0 8px; }
+    input, select { width:100%; border:1px solid var(--line); border-radius:16px; padding:12px 14px; font:inherit; background:rgba(255,255,255,.88); color:var(--ink); }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .chips { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+    .chip, button { border:none; border-radius:999px; font:inherit; font-weight:800; cursor:pointer; }
+    .chip { padding:10px 14px; border:1px solid rgba(2,132,199,.2); background:rgba(255,255,255,.8); }
+    .chip.active, .primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; }
+    .primary, .secondary { padding:12px 18px; }
+    .secondary { background:rgba(15,23,42,.08); color:var(--ink); }
+    .actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+    .report { display:grid; gap:12px; }
+    .card { border:1px solid var(--line); border-radius:22px; padding:18px; background:rgba(255,255,255,.9); }
+    .badge { display:inline-block; margin-bottom:10px; border-radius:999px; background:rgba(2,132,199,.12); color:#075985; padding:7px 10px; font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+    .headline { font-size:1.35rem; font-weight:900; margin-bottom:8px; }
+    @media (max-width: 900px) { .hero, .grid, .row { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Indoor Weather Department</div>
+        <h1>Forecast the climate of one suspicious room.</h1>
+        <p>Set the room conditions and get an official domestic weather bulletin, hazard level, and civic recommendation for surviving the atmosphere.</p>
+      </div>
+      <div class="panel hero-copy">
+        <div class="stat"><strong>Best for:</strong><br>drafty offices, overconfident bedrooms, and kitchens with a political relationship to humidity.</div>
+        <div class="stat"><strong>Output:</strong><br>a screenshotable room forecast with warnings, mood pressure, and department advice.</div>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel inspector">
+        <label for="room">Room name</label>
+        <input id="room" value="My bedroom with the dramatic window">
+        <div class="row">
+          <div>
+            <label for="temp">Temperature feeling</label>
+            <select id="temp">
+              <option value="4">suspiciously warm</option>
+              <option value="2">mildly pleasant</option>
+              <option value="0">neutral and beige</option>
+              <option value="-2">cool in a rude way</option>
+              <option value="-4">arctic for no reason</option>
+            </select>
+          </div>
+          <div>
+            <label for="light">Lighting</label>
+            <select id="light">
+              <option value="3">golden and forgiving</option>
+              <option value="1">normal daylight</option>
+              <option value="-1">gloomy overhead</option>
+              <option value="-3">villain lamp energy</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="draft">Draft</label>
+            <select id="draft">
+              <option value="0">air is calm</option>
+              <option value="2">slight breeze of betrayal</option>
+              <option value="4">window politics</option>
+            </select>
+          </div>
+          <div>
+            <label for="clutter">Clutter pressure</label>
+            <select id="clutter">
+              <option value="0">controlled</option>
+              <option value="2">active surfaces</option>
+              <option value="4">object weather event</option>
+            </select>
+          </div>
+        </div>
+        <label>Special conditions</label>
+        <div class="chips" id="chips"></div>
+        <div class="actions">
+          <button class="primary" id="make">Issue forecast</button>
+          <button class="secondary" id="spin">Random room</button>
+        </div>
+      </div>
+      <div class="panel forecast">
+        <div class="report" id="report"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    const chipData = ["humid tension", "mystery smell", "heater lies", "productive delusion", "blanket dependency"];
+    const chipsEl = document.getElementById("chips");
+    const reportEl = document.getElementById("report");
+    const selected = new Set(["blanket dependency"]);
+    chipData.forEach((label) => {
+      const btn = document.createElement("button");
+      btn.className = "chip" + (selected.has(label) ? " active" : "");
+      btn.textContent = label;
+      btn.type = "button";
+      btn.onclick = () => {
+        if (selected.has(label)) selected.delete(label); else selected.add(label);
+        btn.classList.toggle("active");
+      };
+      chipsEl.appendChild(btn);
+    });
+    const outlooks = ["cozy pressure front", "domestic uncertainty", "interior microclimate alert", "mildly ceremonial gloom", "surprisingly livable turbulence"];
+    function value(id) { return Number(document.getElementById(id).value); }
+    function render() {
+      const room = document.getElementById("room").value.trim() || "Unnamed room";
+      const score = 50 + value("temp") * 6 + value("light") * 5 - value("draft") * 4 - value("clutter") * 3 + selected.size * 2;
+      const severity = score >= 68 ? "stable and blessed" : score >= 52 ? "livable with caveats" : score >= 38 ? "civil concern" : "indoor incident";
+      const conditions = [...selected];
+      const hazard = [
+        "Low risk of mood collapse.",
+        "Bring a drink and one tiny plan.",
+        "Expect erratic comfort pockets.",
+        "Proceed with a hoodie and realistic expectations."
+      ][Math.abs(score) % 4];
+      const bulletin = `The department has issued a ${outlooks[Math.abs(score + room.length) % outlooks.length]} for ${room}. Current status is ${severity}, driven by ${document.getElementById("light").selectedOptions[0].text}, ${document.getElementById("temp").selectedOptions[0].text} air, and ${document.getElementById("draft").selectedOptions[0].text}.`;
+      reportEl.innerHTML = `
+        <div class="card">
+          <div class="badge">Official bulletin</div>
+          <div class="headline">${room}</div>
+          <p>${bulletin}</p>
+        </div>
+        <div class="card">
+          <div class="badge">Comfort index</div>
+          <div class="headline">${Math.max(7, Math.min(97, score))}/100</div>
+          <p>${hazard}</p>
+        </div>
+        <div class="card">
+          <div class="badge">Field notes</div>
+          <p>${conditions.length ? `Special conditions include ${conditions.join(", ")}.` : "No unusual room politics detected."} Recommended response: open one curtain, adjust one object, and stop pretending this room is neutral.</p>
+        </div>`;
+    }
+    document.getElementById("make").onclick = render;
+    document.getElementById("spin").onclick = () => {
+      const rooms = ["hallway with opinions", "kitchen of floating steam", "office with one punishing chair", "living room under lamp surveillance"];
+      document.getElementById("room").value = rooms[Math.floor(Math.random() * rooms.length)];
+      render();
+    };
+    render();
+  </script>
+</body>
+</html>

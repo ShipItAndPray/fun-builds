@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queue Karma Oracle</title>
+  <meta name="description" content="Judge your line behavior and receive a cosmic queue verdict.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#7c3aed; --accent2:#ec4899; }
+    * { box-sizing:border-box; } body { margin:0; font-family:"Avenir Next","Trebuchet MS",sans-serif; color:var(--ink); background:radial-gradient(circle at top left, rgba(236,72,153,.25), transparent 25%), radial-gradient(circle at 80% 15%, rgba(124,58,237,.22), transparent 28%), linear-gradient(180deg,#fdf4ff,#fff7ed); padding:24px 18px 48px; }
+    .shell { max-width:1080px; margin:0 auto; } .back { text-decoration:none; color:var(--ink); font-weight:800; display:inline-block; margin-bottom:16px; }
+    .hero,.grid { display:grid; gap:18px; } .hero { grid-template-columns:1.1fr .9fr; margin-bottom:18px; } .grid { grid-template-columns:.92fr 1.08fr; }
+    .panel { background:rgba(255,255,255,.84); border:1px solid rgba(255,255,255,.8); border-radius:28px; backdrop-filter:blur(16px); box-shadow:0 22px 60px rgba(124,58,237,.16); }
+    .hero-copy,.controls,.results { padding:26px; } .eyebrow { display:inline-block; padding:8px 12px; border-radius:999px; background:rgba(255,255,255,.86); font-size:.74rem; letter-spacing:.08em; text-transform:uppercase; font-weight:800; color:var(--muted); }
+    h1 { font-size:clamp(2.5rem,5vw,4.4rem); line-height:.95; margin:16px 0 12px; letter-spacing:-.05em; } p { color:var(--muted); line-height:1.6; }
+    label { display:block; font-weight:800; margin:14px 0 8px; } input, select { width:100%; border:1px solid var(--line); border-radius:16px; padding:12px 14px; font:inherit; background:rgba(255,255,255,.9); }
+    .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; } .chips { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+    .chip,button { border:none; border-radius:999px; font:inherit; font-weight:800; cursor:pointer; } .chip { padding:10px 14px; background:rgba(255,255,255,.85); border:1px solid rgba(124,58,237,.18); } .chip.active,.primary { color:#fff; background:linear-gradient(135deg,var(--accent),var(--accent2)); }
+    .actions { display:flex; gap:12px; flex-wrap:wrap; } .primary,.secondary { padding:12px 18px; } .secondary { background:rgba(31,41,55,.08); color:var(--ink); }
+    .card { background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:22px; padding:18px; margin-bottom:12px; } .badge { display:inline-block; margin-bottom:10px; padding:7px 10px; border-radius:999px; background:rgba(124,58,237,.12); color:#6d28d9; text-transform:uppercase; font-size:.78rem; font-weight:800; letter-spacing:.06em; }
+    .headline { font-weight:900; font-size:1.3rem; margin-bottom:8px; } @media (max-width:900px){ .hero,.grid,.row { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Queue Karma Oracle</div>
+        <h1>Your line behavior has been observed.</h1>
+        <p>Describe the queue, confess your conduct, and receive a cosmic verdict about whether the line gods owe you mercy or retaliation.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>What you get:</strong> a queue karma grade, a prophecy for the rest of the outing, and corrective action from the oracle.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <label for="place">Queue type</label>
+        <select id="place">
+          <option>coffee shop</option>
+          <option>airport security</option>
+          <option>grocery checkout</option>
+          <option>concert merch line</option>
+        </select>
+        <div class="row">
+          <div>
+            <label for="length">Line length</label>
+            <select id="length">
+              <option value="1">manageable</option>
+              <option value="3">annoying</option>
+              <option value="5">morally difficult</option>
+            </select>
+          </div>
+          <div>
+            <label for="patience">Your patience</label>
+            <select id="patience">
+              <option value="4">saintly</option>
+              <option value="1">performatively okay</option>
+              <option value="-3">fading fast</option>
+            </select>
+          </div>
+        </div>
+        <label>Behavior confession</label>
+        <div class="chips" id="chips"></div>
+        <div class="actions">
+          <button class="primary" id="read">Read my karma</button>
+          <button class="secondary" id="randomize">New queue</button>
+        </div>
+      </div>
+      <div class="panel results">
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    const sins = ["checked your phone too often", "judged someone's basket", "considered line-cutting spiritually", "sighed theatrically", "let someone merge kindly"];
+    const good = new Set(["let someone merge kindly"]);
+    const chips = document.getElementById("chips");
+    const active = new Set(["checked your phone too often"]);
+    sins.forEach((s) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (active.has(s) ? " active" : "");
+      b.textContent = s;
+      b.onclick = () => { active.has(s) ? active.delete(s) : active.add(s); b.classList.toggle("active"); };
+      chips.appendChild(b);
+    });
+    function render() {
+      const place = document.getElementById("place").value;
+      const score = 60 - Number(document.getElementById("length").value) * 6 + Number(document.getElementById("patience").value) * 5 + [...active].reduce((n, s) => n + (good.has(s) ? 10 : -8), 0);
+      const verdict = score >= 72 ? "queue blessed" : score >= 55 ? "ethically passable" : score >= 38 ? "under observation" : "line curse active";
+      const prophecy = score >= 72 ? "A surprise speedup approaches." : score >= 55 ? "You will get through this with dignity." : score >= 38 ? "Expect one absurd delay." : "Your chosen line will look wrong immediately after commitment.";
+      const remedy = score >= 55 ? "Hold the line. Offer silent grace to the cashier." : "Reset your spirit: shoulders down, no dramatic exhale, no item-count judgment.";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Oracle verdict</div><div class="headline">${verdict}</div><p>Your behavior in the ${place} queue has been weighed against cosmic standards and recent public patience law.</p></div>
+        <div class="card"><div class="badge">Karma score</div><div class="headline">${Math.max(4, Math.min(98, score))}/100</div><p>${prophecy}</p></div>
+        <div class="card"><div class="badge">Correction</div><p>${[...active].length ? `Noted actions: ${[...active].join(", ")}.` : "No behavior flags logged."} ${remedy}</p></div>`;
+    }
+    document.getElementById("read").onclick = render;
+    document.getElementById("randomize").onclick = () => {
+      document.getElementById("place").selectedIndex = Math.floor(Math.random() * document.getElementById("place").options.length);
+      render();
+    };
+    render();
+  </script>
+</body>
+</html>

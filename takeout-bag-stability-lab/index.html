@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Takeout Bag Stability Lab</title>
+  <meta name="description" content="Test whether your takeout bag setup ends in triumph or noodle catastrophe.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#ef4444; --accent2:#f59e0b; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(239,68,68,.23), transparent 26%), radial-gradient(circle at 78% 18%, rgba(245,158,11,.2), transparent 28%), linear-gradient(180deg,#fff7ed,#fffafc);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{color:var(--ink);text-decoration:none;font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.05fr .95fr;margin-bottom:18px;} .grid{grid-template-columns:.94fr 1.06fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.82);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(239,68,68,.12);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.5rem,5vw,4.4rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} select,input{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(239,68,68,.12);color:#b91c1c;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;} .headline{font-size:1.3rem;font-weight:900;margin-bottom:8px;}
+    .bag{height:200px;border-radius:24px;border:1px dashed rgba(185,28,28,.2);display:grid;place-items:center;background:linear-gradient(180deg, rgba(255,237,213,.9), rgba(254,215,170,.75));margin-bottom:12px;font-size:1.9rem;font-weight:900;color:#9a3412;}
+    @media (max-width:900px){ .hero,.grid,.row{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Takeout Bag Stability Lab</div>
+        <h1>Will the bag make it home intact?</h1>
+        <p>Model your takeout stack, route, and sauce volatility, then get a stability report before gravity makes editorial choices.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Best use:</strong> noodles, containers with false confidence, and bags that look calm but know something.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <div class="row">
+          <div><label for="containers">Containers</label><select id="containers"><option value="1">one trustworthy box</option><option value="3">a respectable stack</option><option value="5">too many conflicting shapes</option></select></div>
+          <div><label for="sauce">Sauce leakage risk</label><select id="sauce"><option value="1">dry and lawful</option><option value="3">some liquid politics</option><option value="5">active slosh zone</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="route">Travel route</label><select id="route"><option value="1">short and stable</option><option value="3">stairs involved</option><option value="5">bike, wind, and faith</option></select></div>
+          <div><label for="grip">Carrying technique</label><select id="grip"><option value="1">two-hand respect</option><option value="3">one heroic hand</option><option value="5">finger-hook gamble</option></select></div>
+        </div>
+        <label for="wildcard">Wildcard variable</label>
+        <select id="wildcard"><option>garlic knots shifting morale</option><option>soup behaving politically</option><option>drink inserted without negotiation</option><option>bag handles showing age</option></select>
+        <div style="margin-top:16px;"><button class="primary" id="test">Run stress test</button><button class="secondary" id="chaos">Make it worse</button></div>
+      </div>
+      <div class="panel results">
+        <div class="bag" id="bagScore">73%</div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const score = 100 - Number(document.getElementById("containers").value) * 8 - Number(document.getElementById("sauce").value) * 10 - Number(document.getElementById("route").value) * 7 - Number(document.getElementById("grip").value) * 8;
+      const stable = Math.max(6, Math.min(97, score));
+      document.getElementById("bagScore").textContent = `${stable}%`;
+      const state = stable >= 78 ? "high integrity" : stable >= 55 ? "conditionally transportable" : stable >= 32 ? "bag event pending" : "catastrophe-adjacent";
+      const advisory = stable >= 78 ? "You may proceed with confidence and one cautious turn." : stable >= 55 ? "Keep the bag upright and do not improvise shortcuts." : "Re-balance now or accept public noodle consequences.";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Stability class</div><div class="headline">${state}</div><p>The load is being carried with ${document.getElementById("grip").selectedOptions[0].text} under ${document.getElementById("route").selectedOptions[0].text} travel conditions.</p></div>
+        <div class="card"><div class="badge">Critical note</div><p>Wildcard pressure: ${document.getElementById("wildcard").value}. Most likely failure mode is sidewall collapse followed by sauce diplomacy.</p></div>
+        <div class="card"><div class="badge">Lab advice</div><p>${advisory}</p></div>`;
+    }
+    document.getElementById("test").onclick = render;
+    document.getElementById("chaos").onclick = () => { ["containers","sauce","route","grip"].forEach((id)=>{ const el=document.getElementById(id); el.selectedIndex=el.options.length-1;}); render(); };
+    render();
+  </script>
+</body>
+</html>

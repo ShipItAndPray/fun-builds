@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cereal Splash Radius</title>
+  <meta name="description" content="Run a breakfast lab test on your cereal pour and milk damage perimeter.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#f59e0b; --accent2:#fb7185; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(251,191,36,.28), transparent 25%), radial-gradient(circle at 82% 16%, rgba(251,113,133,.22), transparent 28%), linear-gradient(180deg,#fff7ed,#fffaf5);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{color:var(--ink);text-decoration:none;font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.05fr .95fr;margin-bottom:18px;} .grid{grid-template-columns:.94fr 1.06fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.84);border:1px solid rgba(255,255,255,.8);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(245,158,11,.14);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.5rem,5vw,4.4rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} input,select{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);color:var(--ink);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(245,158,11,.14);color:#b45309;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;}
+    .headline{font-size:1.3rem;font-weight:900;margin-bottom:8px;} .radius{height:210px;border-radius:24px;background:radial-gradient(circle at center, rgba(251,191,36,.6) 0 12%, rgba(245,158,11,.35) 13% 30%, rgba(251,113,133,.22) 31% 55%, rgba(15,23,42,.04) 56% 100%);display:grid;place-items:center;border:1px dashed rgba(180,83,9,.25);font-weight:900;font-size:2rem;color:#9a3412;margin-bottom:12px;}
+    @media (max-width:900px){ .hero,.grid,.row{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Cereal Splash Radius</div>
+        <h1>Breakfast physics deserves oversight.</h1>
+        <p>Configure the bowl, cereal, and pour attitude, then get a breakfast lab report on expected splash damage and spoon safety.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Key output:</strong> visual splash zone, counter-risk rating, and a report that makes your cereal choices sound federally interesting.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <div class="row">
+          <div><label for="bowl">Bowl depth</label><select id="bowl"><option value="1">deep and calm</option><option value="3">normal bowl energy</option><option value="5">shallow optimism</option></select></div>
+          <div><label for="milk">Milk amount</label><select id="milk"><option value="1">disciplined</option><option value="3">confident</option><option value="5">recklessly generous</option></select></div>
+        </div>
+        <div class="row">
+          <div><label for="pour">Pour height</label><select id="pour"><option value="1">low and respectful</option><option value="3">casual drop</option><option value="5">cinematic arc</option></select></div>
+          <div><label for="cereal">Cereal shape</label><select id="cereal"><option value="2">flakes</option><option value="3">loops</option><option value="4">sharp clusters</option><option value="5">crunch boulders</option></select></div>
+        </div>
+        <label for="surface">Nearby collateral surface</label>
+        <select id="surface"><option>clean counter</option><option>dark shirt sleeve</option><option>open laptop danger zone</option><option>emotionally fragile placemat</option></select>
+        <div style="margin-top:16px;"><button class="primary" id="calc">Run lab test</button><button class="secondary" id="wild">Cause incident</button></div>
+      </div>
+      <div class="panel results">
+        <div class="radius" id="radius">42 cm</div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const score = Number(document.getElementById("bowl").value) * 4 + Number(document.getElementById("milk").value) * 5 + Number(document.getElementById("pour").value) * 6 + Number(document.getElementById("cereal").value) * 4;
+      const cm = 8 + score;
+      document.getElementById("radius").textContent = `${cm} cm`;
+      const band = score >= 72 ? "counter event" : score >= 54 ? "breakfast turbulence" : score >= 34 ? "manageable splash" : "low-risk pour";
+      const note = ["Spoon remains inside treaty limits.", "Sleeve exposure is no longer theoretical.", "Counter cleanup is pre-authorized.", "The cereal has achieved hostile momentum."][score % 4];
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Splash class</div><div class="headline">${band}</div><p>Your ${document.getElementById("cereal").selectedOptions[0].text} under ${document.getElementById("milk").selectedOptions[0].text} milk conditions produced a projected ${cm} cm perimeter.</p></div>
+        <div class="card"><div class="badge">Collateral forecast</div><p>Most likely impact site: ${document.getElementById("surface").value}. ${note}</p></div>
+        <div class="card"><div class="badge">Lab recommendation</div><p>Lower the pour arc, respect bowl geometry, and stop treating cereal like a stunt category.</p></div>`;
+    }
+    document.getElementById("calc").onclick = render;
+    document.getElementById("wild").onclick = () => {
+      ["bowl","milk","pour","cereal"].forEach((id) => { const el = document.getElementById(id); el.selectedIndex = el.options.length - 1; });
+      render();
+    };
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sock Drawer Census</title>
+  <meta name="description" content="Run a bureaucratic population survey on your sock drawer.">
+  <style>
+    :root { --ink:#1f2937; --muted:#6b7280; --line:rgba(31,41,55,.12); --accent:#2563eb; --accent2:#7c3aed; }
+    *{box-sizing:border-box;} body{margin:0;font-family:"Avenir Next","Trebuchet MS",sans-serif;color:var(--ink);background:radial-gradient(circle at top left, rgba(37,99,235,.2), transparent 24%), radial-gradient(circle at 82% 16%, rgba(124,58,237,.18), transparent 28%), linear-gradient(180deg,#eff6ff,#faf5ff);padding:24px 18px 48px;}
+    .shell{max-width:1080px;margin:0 auto;} .back{text-decoration:none;color:var(--ink);font-weight:800;display:inline-block;margin-bottom:16px;}
+    .hero,.grid,.row{display:grid;gap:18px;} .hero{grid-template-columns:1.06fr .94fr;margin-bottom:18px;} .grid{grid-template-columns:.95fr 1.05fr;} .row{grid-template-columns:1fr 1fr;gap:12px;}
+    .panel{background:rgba(255,255,255,.85);border:1px solid rgba(255,255,255,.82);border-radius:28px;backdrop-filter:blur(16px);box-shadow:0 22px 60px rgba(37,99,235,.12);} .hero-copy,.controls,.results{padding:26px;}
+    .eyebrow{display:inline-block;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.88);text-transform:uppercase;letter-spacing:.08em;font-size:.74rem;font-weight:800;color:var(--muted);}
+    h1{font-size:clamp(2.4rem,5vw,4.3rem);line-height:.95;margin:16px 0 12px;letter-spacing:-.05em;} p{color:var(--muted);line-height:1.6;}
+    label{display:block;font-weight:800;margin:14px 0 8px;} input,select{width:100%;border:1px solid var(--line);border-radius:16px;padding:12px 14px;font:inherit;background:rgba(255,255,255,.9);}
+    button{border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:800;cursor:pointer;} .primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));} .secondary{background:rgba(31,41,55,.08);color:var(--ink);margin-left:10px;}
+    .card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;} .badge{display:inline-block;margin-bottom:10px;padding:7px 10px;border-radius:999px;background:rgba(37,99,235,.12);color:#1d4ed8;text-transform:uppercase;font-size:.78rem;font-weight:800;letter-spacing:.06em;} .headline{font-size:1.28rem;font-weight:900;margin-bottom:8px;}
+    .chart{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;} .bar{border-radius:18px;padding:18px 10px;text-align:center;background:rgba(37,99,235,.08);font-weight:800;}
+    @media (max-width:900px){ .hero,.grid,.row,.chart{grid-template-columns:1fr;} .secondary{margin-left:0;margin-top:10px;} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <a class="back" href="../">← Back to Fun Builds</a>
+    <section class="hero">
+      <div class="panel hero-copy">
+        <div class="eyebrow">Sock Drawer Census</div>
+        <h1>Count the population. Respect the chaos.</h1>
+        <p>Submit your drawer numbers and receive an official census bulletin on pair stability, orphan migration, and pattern governance.</p>
+      </div>
+      <div class="panel hero-copy">
+        <p><strong>Outputs:</strong> demographic breakdown, mismatch warning, and one deeply unnecessary policy recommendation.</p>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="panel controls">
+        <div class="row">
+          <div><label for="pairs">Matched pairs</label><input id="pairs" type="number" min="0" value="12"></div>
+          <div><label for="singles">Single socks</label><input id="singles" type="number" min="0" value="5"></div>
+        </div>
+        <div class="row">
+          <div><label for="wild">Mystery socks</label><input id="wild" type="number" min="0" value="2"></div>
+          <div><label for="pattern">Pattern climate</label><select id="pattern"><option value="1">mostly plain</option><option value="3">healthy variety</option><option value="5">visual rebellion</option></select></div>
+        </div>
+        <label for="drawer">Drawer mood</label>
+        <select id="drawer"><option>tightly managed</option><option>optimistically folded</option><option>active sock weather</option><option>collapsed state structure</option></select>
+        <div style="margin-top:16px;"><button class="primary" id="count">Run census</button><button class="secondary" id="panic">Drawer event</button></div>
+      </div>
+      <div class="panel results">
+        <div class="chart" id="chart"></div>
+        <div id="out"></div>
+      </div>
+    </section>
+  </div>
+  <script>
+    function render() {
+      const pairs = Number(document.getElementById("pairs").value);
+      const singles = Number(document.getElementById("singles").value);
+      const wild = Number(document.getElementById("wild").value);
+      const total = pairs * 2 + singles + wild;
+      const stability = Math.max(0, Math.min(100, Math.round((pairs * 2) / Math.max(1, total) * 100 - Number(document.getElementById("pattern").value) * 2)));
+      document.getElementById("chart").innerHTML = `
+        <div class="bar">Paired<br><strong>${pairs * 2}</strong></div>
+        <div class="bar">Singles<br><strong>${singles}</strong></div>
+        <div class="bar">Mystery<br><strong>${wild}</strong></div>`;
+      const classif = stability >= 74 ? "orderly republic" : stability >= 52 ? "fragile union" : stability >= 30 ? "drawer unrest" : "sock diaspora";
+      document.getElementById("out").innerHTML = `
+        <div class="card"><div class="badge">Census result</div><div class="headline">${classif}</div><p>Total sock population: ${total}. Drawer condition recorded as ${document.getElementById("drawer").value}.</p></div>
+        <div class="card"><div class="badge">Pair stability</div><div class="headline">${stability}%</div><p>Orphan migration is ${singles > pairs ? "out of control" : "within treaty limits"} and mystery-sock sovereignty remains unresolved.</p></div>
+        <div class="card"><div class="badge">Policy note</div><p>Immediate action: establish one amnesty basket, stop folding for appearances alone, and negotiate pattern coexistence honestly.</p></div>`;
+    }
+    document.getElementById("count").onclick = render;
+    document.getElementById("panic").onclick = () => { document.getElementById("singles").value = Number(document.getElementById("singles").value) + 4; document.getElementById("wild").value = Number(document.getElementById("wild").value) + 2; render(); };
+    render();
+  </script>
+</body>
+</html>

@@ -1623,6 +1623,156 @@
         "notes": "Only survivor from the fresh 20-idea batch after a 100-iteration stability pass and build-readiness shortlist."
       },
       {
+        "slug": "indoor-weather-department",
+        "title": "Indoor Weather Department",
+        "one_liner": "Issue an official weather forecast for one weird room in your life.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "queue-karma-oracle",
+        "title": "Queue Karma Oracle",
+        "one_liner": "Judge your line behavior and receive a cosmic queue verdict.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "cart-wheel-wobble-bureau",
+        "title": "Cart Wheel Wobble Bureau",
+        "one_liner": "File an official report on a grocery cart wheel that has lost the social contract.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "cereal-splash-radius",
+        "title": "Cereal Splash Radius",
+        "one_liner": "Run a breakfast lab test on your cereal pour and milk damage perimeter.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "takeout-bag-stability-lab",
+        "title": "Takeout Bag Stability Lab",
+        "one_liner": "Test whether your takeout bag setup ends in triumph or noodle catastrophe.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "toast-darkness-accord",
+        "title": "Toast Darkness Accord",
+        "one_liner": "Negotiate a peace treaty between your desired toast level and what the toaster actually did.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "sock-drawer-census",
+        "title": "Sock Drawer Census",
+        "one_liner": "Run a bureaucratic population survey on your sock drawer.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "umbrella-loss-probability-office",
+        "title": "Umbrella Loss Probability Office",
+        "one_liner": "Estimate how likely your umbrella is to disappear under current human conditions.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "doorway-hesitation-meter",
+        "title": "Doorway Hesitation Meter",
+        "one_liner": "Measure how awkward a doorway standoff is before everyone starts apologizing.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
+        "slug": "grocery-bag-load-balancer",
+        "title": "Grocery Bag Load Balancer",
+        "one_liner": "Score whether your grocery carrying strategy looked athletic, doomed, or deeply unserious.",
+        "status": "built",
+        "evals": {
+          "hook_15s": true,
+          "single_file_browser": true,
+          "distinct_from_existing": true,
+          "shareable_output": true,
+          "low_build_cost": true
+        },
+        "approved_by": "llm-autoresearch",
+        "notes": "Built from the LLM-reviewed top 10 survivor list after heuristic prefilter and semantic red-team review."
+      },
+      {
         "slug": "workout-excuse-bingo",
         "title": "Workout Excuse Bingo",
         "one_liner": "Bingo card that fills itself as you give reasons to skip exercise",
