@@ -29,7 +29,8 @@ python3 scripts/autoresearch_idea_runner.py \
 
 Important:
 
-- this script approves or rejects ideas
+- this script is a prefilter, not the final semantic judge
 - it does **not** build apps automatically
 - app generation should only happen for ideas that remain stable under the runner
+- after the runner, use an LLM review pass to red-team the survivors and pick the real top batch
 - among approved ideas, prefer the top of `shortlist.tsv` instead of building every survivor blindly

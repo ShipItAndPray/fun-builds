@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Tone Sanitizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a12;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#3498db;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:20px;text-align:center}
+textarea{width:100%;max-width:550px;height:180px;background:#12121f;border:1px solid #2a2a3f;border-radius:10px;padding:15px;color:#ddd;font-size:0.95em;resize:vertical;font-family:inherit}
+button{background:#3498db;color:#fff;border:none;padding:14px 40px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer;margin-top:15px}
+.results{max-width:550px;width:100%;margin-top:25px}
+.detection{background:#12121f;border-radius:10px;padding:15px;margin-bottom:10px;border-left:4px solid #e74c3c}
+.found{color:#e74c3c;font-weight:bold;font-size:0.9em;margin-bottom:4px}
+.decoded{color:#f39c12;font-size:0.9em;margin-bottom:6px;font-style:italic}
+.rewrite{color:#2ecc71;font-size:0.9em}
+.label{color:#666;font-size:0.75em;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.sanitized{background:#0a1a0a;border:1px solid #1a3a1a;border-radius:10px;padding:20px;margin-top:20px}
+.sanitized h3{color:#2ecc71;margin-bottom:10px}
+.sanitized-text{color:#ddd;line-height:1.6;white-space:pre-wrap}
+.meter{display:flex;align-items:center;gap:10px;margin:15px 0;padding:15px;background:#12121f;border-radius:10px}
+.meter-label{color:#888;font-size:0.85em;width:120px}
+.meter-bar{flex:1;height:8px;background:#1a1a2a;border-radius:4px;overflow:hidden}
+.meter-fill{height:100%;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>Email Tone Sanitizer</h1>
+<p class="subtitle">Detects passive aggression. Rewrites nicely.</p>
+<textarea id="email" placeholder="Paste your draft email here...&#10;&#10;Example: Per my last email, I wanted to circle back on this. As previously discussed, the deadline was yesterday. Please advise."></textarea>
+<button onclick="sanitize()">SANITIZE MY EMAIL</button>
+<div class="results" id="results"></div>
+<script>
+const patterns=[
+{regex:/per my last email/i,decoded:"I already told you this. Can you not read?",rewrite:"I wanted to follow up on my previous message"},
+{regex:/as (previously |I )?(discussed|mentioned|noted|stated)/i,decoded:"We literally JUST talked about this. Pay attention.",rewrite:"Building on our earlier conversation"},
+{regex:/just to clarify/i,decoded:"You clearly misunderstood everything I said.",rewrite:"To make sure we are aligned"},
+{regex:/going forward/i,decoded:"Stop doing what you have been doing. Immediately.",rewrite:"For our next steps"},
+{regex:/please advise/i,decoded:"Fix this. I am done trying.",rewrite:"I would appreciate your thoughts on this"},
+{regex:/correct me if I.?m wrong/i,decoded:"I am absolutely right and we both know it.",rewrite:"From my understanding"},
+{regex:/friendly reminder/i,decoded:"This is not friendly. This is a WARNING.",rewrite:"Quick reminder"},
+{regex:/not sure if you saw/i,decoded:"I KNOW you saw it. You are ignoring me.",rewrite:"Following up on"},
+{regex:/hope(fully)? this (helps|clarifies|makes sense)/i,decoded:"It should. I explained it like you are five.",rewrite:"Let me know if you have any questions"},
+{regex:/with all due respect/i,decoded:"I have zero respect for what you just said.",rewrite:"I see it differently"},
+{regex:/I.?ll let you take it from here/i,decoded:"I am DONE. This is your problem now.",rewrite:"I think you are best positioned to handle the next steps"},
+{regex:/thanks (for|in advance)/i,decoded:"You do not have a choice. Do it.",rewrite:"I would really appreciate your help with this"},
+{regex:/any update(s)? on/i,decoded:"WHY have you not done this yet?!",rewrite:"When you get a chance, could you share progress on"},
+{regex:/circle back/i,decoded:"I will haunt you until this is done.",rewrite:"Let us revisit this"},
+{regex:/moving forward/i,decoded:"I am pretending the disaster you caused did not happen.",rewrite:"For our next steps"},
+{regex:/wanted to flag/i,decoded:"You messed up and I have proof.",rewrite:"I noticed something that might need attention"},
+{regex:/no worries(!|\.| if)/i,decoded:"There ARE worries. Many worries.",rewrite:"That is completely fine"},
+{regex:/as per (the |my )?/i,decoded:"Read. The. Document. I. Sent. You.",rewrite:"According to"},
+{regex:/I.?m confused/i,decoded:"YOUR work makes no sense.",rewrite:"Could you help me understand"},
+{regex:/gentle reminder/i,decoded:"This is my THIRD time asking. It is not gentle anymore.",rewrite:"Just a reminder"},
+{regex:/at your earliest convenience/i,decoded:"Do it NOW.",rewrite:"When you have a moment"},
+{regex:/let me know( if you have any questions)?/i,decoded:"I dare you to question this.",rewrite:"Happy to discuss further"},
+{regex:/apologies for the delay/i,decoded:"I was not sorry enough to reply faster.",rewrite:"Thank you for your patience"},
+{regex:/regards/i,decoded:"This conversation is OVER.",rewrite:"Best wishes"},
+{regex:/duly noted/i,decoded:"I have heard you and will be ignoring this completely.",rewrite:"Thank you for sharing that perspective"},
+{regex:/that.?s (certainly )?(one|an) (way|approach|option)/i,decoded:"It is a terrible way. The worst way.",rewrite:"That is an interesting perspective. Have we also considered"},
+{regex:/I.?d love to (understand|know|hear)/i,decoded:"Explain yourself. Now.",rewrite:"Could you share more about"},
+{regex:/for future reference/i,decoded:"Do not EVER do this again.",rewrite:"Here is a helpful note for next time"},
+{regex:/happy to discuss/i,decoded:"I have a LOT of opinions about how wrong you are.",rewrite:"I am available to chat about this anytime"},
+{regex:/bumping this/i,decoded:"ANSWER ME.",rewrite:"Following up on this thread"},
+{regex:/just checking in/i,decoded:"I do not trust you to do this without supervision.",rewrite:"Wanted to touch base about"},
+{regex:/to be transparent/i,decoded:"I am about to say something you will not like.",rewrite:"I want to share openly that"},
+{regex:/I think there may be some confusion/i,decoded:"YOU are confused. Not me. YOU.",rewrite:"Let me provide some additional context"},
+{regex:/in the interest of time/i,decoded:"You are wasting everyone's time.",rewrite:"To keep us on track"},
+{regex:/respectfully/i,decoded:"Disrespectfully.",rewrite:"I understand your view, and"},
+{regex:/looping in/i,decoded:"I need a witness for when this goes wrong.",rewrite:"Adding [name] for visibility"},
+{regex:/just to be clear/i,decoded:"Since you CLEARLY did not understand the first time.",rewrite:"To summarize"},
+{regex:/kind regards/i,decoded:"My regards are not kind. At all.",rewrite:"Warm regards"},
+{regex:/as discussed/i,decoded:"I have receipts. Do not try me.",rewrite:"Following our conversation"},
+{regex:/would (love|appreciate) (your |some )?(input|feedback|thoughts)/i,decoded:"I need you to validate what I already decided.",rewrite:"Your perspective would be really valuable here"},
+{regex:/please( do)? let me know/i,decoded:"Respond or face consequences.",rewrite:"I look forward to hearing from you"}
+];
+function sanitize(){
+const text=document.getElementById('email').value.trim();
+if(!text){alert('Paste an email first!');return}
+const found=[];
+patterns.forEach(p=>{if(p.regex.test(text)){found.push(p)}});
+const res=document.getElementById('results');
+const aggression=Math.min(100,found.length*12);
+const color=aggression>60?'#e74c3c':aggression>30?'#f39c12':'#2ecc71';
+let html='<div class="meter"><span class="meter-label">Passive Aggression</span><div class="meter-bar"><div class="meter-fill" style="width:'+aggression+'%;background:'+color+'"></div></div><span style="color:'+color+';font-weight:bold">'+aggression+'%</span></div>';
+if(found.length===0){
+html+='<div style="text-align:center;color:#2ecc71;padding:20px">Your email appears genuinely civil. Either you are a saint or the passive aggression is too advanced for detection.</div>';
+}else{
+found.forEach(f=>{
+html+='<div class="detection"><div class="label">Detected</div><div class="found">"'+text.match(f.regex)[0]+'"</div><div class="label">What it really means</div><div class="decoded">'+f.decoded+'</div><div class="label">Nicer version</div><div class="rewrite">'+f.rewrite+'</div></div>';
+});
+let sanitized=text;
+found.forEach(f=>{sanitized=sanitized.replace(f.regex,f.rewrite)});
+html+='<div class="sanitized"><h3>Sanitized Version</h3><div class="sanitized-text">'+sanitized+'</div></div>';
+}
+res.innerHTML=html;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anniversary Emergency</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#fd79a8,#e84393);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.container{max-width:520px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+label{display:block;color:#aaa;font-size:.9rem;margin-bottom:6px}
+input[type=date]{width:100%;padding:12px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:1rem;color-scheme:dark}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#fd79a8,#e84393);color:#fff;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;margin-top:12px}
+#result{margin-top:20px;display:none}
+.countdown{text-align:center;margin:16px 0}
+.countdown-num{font-size:3.5rem;font-weight:900}
+.countdown-label{color:#888;font-size:.9rem}
+.panic{text-align:center;padding:12px;border-radius:8px;margin:12px 0;font-weight:700;font-size:1.1rem}
+.gift-section{margin-top:16px}
+.gift-title{font-weight:700;color:#fd79a8;margin-bottom:10px;font-size:1rem}
+.gift{background:#16213e;border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:background .2s;border-left:4px solid #e84393}
+.gift:hover{background:#1e2a4a}
+.gift-name{font-weight:600;font-size:.95rem}
+.gift-desc{color:#888;font-size:.82rem;margin-top:4px}
+.gift-tags{margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;margin-right:4px;background:#222;color:#aaa}
+.refresh{background:linear-gradient(135deg,#6c5ce7,#a29bfe);margin-top:12px;font-size:.95rem;padding:10px}
+</style>
+</head>
+<body>
+<h1>Anniversary Emergency</h1>
+<div class="container">
+<label>When is your anniversary?</label>
+<input type="date" id="annDate">
+<button onclick="check()">Check Panic Level</button>
+<div id="result"></div>
+</div>
+<script>
+const gifts=[
+{name:"Handwritten Letter",desc:"Costs nothing. Takes 30 minutes. Will be kept forever. The ROI is insane.",tags:["free","emotional","classic"],time:0},
+{name:"Cook Their Favorite Meal",desc:"Even if you burn it, the effort counts. Probably. Maybe set a fire extinguisher nearby.",tags:["cheap","effort","risky"],time:0},
+{name:"Star Map of Your First Date",desc:"Print a map of the night sky from when you met. Order online. Looks way more expensive than it is.",tags:["budget","romantic","printable"],time:1},
+{name:"Photo Book of Your Relationship",desc:"Chatbooks or Shutterfly. Takes 2 hours. Will induce happy tears.",tags:["budget","sentimental","2hrs"],time:2},
+{name:"Spotify Playlist of Our Songs",desc:"Free. Personal. Shows you remember things. Even if you use AI to help pick songs.",tags:["free","musical","easy"],time:0},
+{name:"Surprise Picnic",desc:"Blanket plus food plus wine plus a view. Simple. Devastating in its romance.",tags:["cheap","outdoors","effort"],time:1},
+{name:"Framed Concert or Movie Tickets",desc:"Frame a ticket from a date you went on. Instant sentimental wall art.",tags:["cheap","sentimental","craft"],time:1},
+{name:"Jar of Reasons You Love Them",desc:"OK this takes time. But even 52 reasons (one per week) works in a pinch.",tags:["cheap","effort","adorable"],time:3},
+{name:"Book a Massage for Them",desc:"Professional. Luxurious. Says I care about your wellbeing without words.",tags:["splurge","luxe","easy"],time:0},
+{name:"Custom Illustration of You Two",desc:"Fiverr artists can do this in 24-48 hours. Unique and frameable.",tags:["budget","unique","48hrs"],time:2},
+{name:"Recreate Your First Date",desc:"Same restaurant, same activity. The nostalgia factor is unbeatable.",tags:["varies","effort","romantic"],time:1},
+{name:"Love Coupon Book",desc:"Good for one breakfast in bed. Cheesy? Yes. Effective? Also yes.",tags:["free","cheesy","classic"],time:0},
+{name:"Engraved Jewelry",desc:"A bracelet or necklace with coordinates of where you met. Same-day options exist online.",tags:["budget","lasting","quick ship"],time:1},
+{name:"Sunrise or Sunset Watching Date",desc:"Free. Romantic. Instagram-worthy. Wake up early or stay up late.",tags:["free","romantic","simple"],time:0},
+{name:"Plant a Tree Together",desc:"Symbolic of growing together. Also: good for the planet. Double points.",tags:["cheap","symbolic","eco"],time:1},
+{name:"Custom Phone Case with Your Photo",desc:"They will see your face every time they check their phone. Power move.",tags:["budget","daily","2-3 days"],time:2},
+{name:"Dance Lesson for Two",desc:"Salsa, swing, whatever. Terrible dancing equals great memories.",tags:["moderate","experience","fun"],time:1},
+{name:"Write a Song (Even a Bad One)",desc:"Three chords and the truth. If it is terrible, that is even more endearing.",tags:["free","brave","memorable"],time:0},
+{name:"Blanket Fort Plus Movie Marathon",desc:"Build a fort. Order takeout. Watch your movies. Be twelve years old again.",tags:["free","cozy","easy"],time:0},
+{name:"Commission a Pet Portrait",desc:"If you have pets, this is gold. Etsy artists deliver fast.",tags:["budget","pet-lovers","2-3 days"],time:2},
+{name:"Subscription Box in Their Interest",desc:"Coffee, books, snacks, skincare. The gift that keeps giving monthly.",tags:["moderate","ongoing","thoughtful"],time:0},
+{name:"Map Art of Places You Have Been Together",desc:"Custom print with pins on your travel spots. Fast options online.",tags:["budget","travel","decorative"],time:2},
+{name:"Breakfast in Bed",desc:"The easiest grand gesture. Pancakes fix everything.",tags:["cheap","morning","classic"],time:0},
+{name:"Scrapbook of Text Screenshots",desc:"Print your funniest and sweetest texts. Modern love language.",tags:["cheap","personal","effort"],time:1},
+{name:"Donate to Their Favorite Cause",desc:"Make a donation in their name to something they care about. Actually meaningful.",tags:["varies","meaningful","easy"],time:0},
+{name:"Name a Star After Them",desc:"It is not real. They will love it anyway. The certificate looks fancy.",tags:["budget","cheesy","romantic"],time:0},
+{name:"Make a TikTok or Reel Montage",desc:"Their favorite song plus photos of you two. The algorithm of love.",tags:["free","modern","viral"],time:0},
+{name:"Set Up a Treasure Hunt",desc:"Clues around the house or city leading to the gift. The journey IS the gift.",tags:["varies","creative","effort"],time:1},
+{name:"Fill Their Car with Balloons",desc:"Chaotic. Delightful. Will definitely make them late for work. Worth it.",tags:["cheap","chaotic","surprise"],time:0},
+{name:"Bake Something Terrible Together",desc:"The failure IS the fun. Laugh at your disaster cake. Bond over burned cookies.",tags:["cheap","funny","together"],time:0},
+{name:"Write Future Letters",desc:"Each of you writes a letter to open on your next anniversary. Emotional time bomb.",tags:["free","deep","future"],time:0},
+{name:"Learn to Make Their Favorite Cocktail",desc:"YouTube tutorial plus ingredients. Instant bartender. Instant romance.",tags:["cheap","skill","classy"],time:0},
+{name:"Build a Time Capsule Together",desc:"Fill a box with items from this year. Open in 5 years. Future you will cry.",tags:["free","creative","lasting"],time:0},
+{name:"Project Old Photos on the Wall",desc:"Laptop plus TV. Slideshow of your relationship. Add music. Guaranteed tears.",tags:["free","nostalgic","easy"],time:0},
+{name:"Spa Night at Home",desc:"Face masks, candles, relaxing music. Costs almost nothing. Feels luxurious.",tags:["cheap","relaxing","easy"],time:0},
+{name:"Custom Crossword Puzzle",desc:"Free generators online. Fill it with inside jokes and memories.",tags:["free","clever","personal"],time:0},
+{name:"Matching Anything",desc:"Matching PJs, mugs, phone cases. Corny? Absolutely. Adorable? Undeniably.",tags:["budget","cute","corny"],time:1},
+{name:"Sunrise Hike Plus Thermos of Coffee",desc:"Adventure plus caffeine. The combination that sustains all relationships.",tags:["free","adventure","early"],time:0},
+{name:"Emergency Flowers Plus Apology Card",desc:"I did not forget, I was planning something EVEN BIGGER for next week. Buy yourself time.",tags:["budget","emergency","stalling"],time:0},
+{name:"Video Message Compilation",desc:"Ask friends and family to record short messages. Edit together. Nuclear-grade sentimentality.",tags:["free","effort","emotional"],time:2},
+{name:"A Really Good Cheese Board",desc:"Fancy cheese fixes everything. Add crackers, fruit, and honey. Look like a food blogger.",tags:["moderate","classy","edible"],time:0},
+];
+const panicLevels=[
+{days:365,level:"Zen",color:"#4CAF50",emoji:"&#128524;",msg:"You have a YEAR. You could learn to paint, sculpt their face in marble, or actually remember this time."},
+{days:180,level:"Relaxed",color:"#8BC34A",emoji:"&#128522;",msg:"Six months out. Plenty of time to plan something amazing. You will not, but you could."},
+{days:90,level:"Comfortable",color:"#CDDC39",emoji:"&#128578;",msg:"Three months. Enough time to order something custom. Set a reminder. Seriously, SET A REMINDER."},
+{days:60,level:"Alert",color:"#FFC107",emoji:"&#128528;",msg:"Two months. The window for custom anything is closing. Start shopping."},
+{days:30,level:"Concerned",color:"#FF9800",emoji:"&#128543;",msg:"One month. Express shipping is your friend. Your creativity better be ready too."},
+{days:14,level:"Sweating",color:"#FF5722",emoji:"&#128552;",msg:"Two weeks. Express shipping only. Your creativity better be on point."},
+{days:7,level:"PANIC",color:"#f44336",emoji:"&#128561;",msg:"ONE WEEK. This is a CODE RED. Overnight shipping. Same-day delivery. MOVE."},
+{days:3,level:"DEFCON 2",color:"#d32f2f",emoji:"&#128565;",msg:"THREE DAYS. Physical stores only. Run to the mall. DO NOT come home empty-handed."},
+{days:1,level:"DEFCON 1",color:"#b71c1c",emoji:"&#129327;",msg:"TOMORROW?! Handwritten letter. Cook dinner. Buy flowers on the way home. ACTIVATE EMERGENCY PROTOCOL."},
+{days:0,level:"IT IS TODAY",color:"#880E4F",emoji:"&#128680;",msg:"IT IS TODAY. Stop reading this. GO. Flowers, card, dinner reservation. Text I have a surprise for you tonight to buy time."},
+{days:-1,level:"YOU MISSED IT",color:"#4a0020",emoji:"&#128128;",msg:"It was yesterday. Or before. You are in the danger zone. Grand gesture required IMMEDIATELY. Consider skywriting an apology."},
+];
+function check(){
+const input=document.getElementById('annDate').value;
+if(!input){alert('Pick a date!');return;}
+const now=new Date();now.setHours(0,0,0,0);
+const ann=new Date(input+'T00:00:00');
+let next=new Date(now.getFullYear(),ann.getMonth(),ann.getDate());
+if(next<now)next=new Date(now.getFullYear()+1,ann.getMonth(),ann.getDate());
+const diff=Math.ceil((next-now)/(1000*60*60*24));
+const isToday=diff===0||diff===365;
+const pl=panicLevels.find(p=>diff<=p.days)||(diff>365?panicLevels[0]:panicLevels[panicLevels.length-1]);
+const maxTime=diff>14?3:diff>3?2:diff>1?1:0;
+const available=gifts.filter(g=>g.time<=maxTime);
+const shuffled=[...available].sort(()=>Math.random()-.5).slice(0,5);
+const res=document.getElementById('result');
+res.innerHTML=`
+<div class="countdown">
+<div class="countdown-num" style="color:${pl.color}">${isToday?'TODAY':diff}</div>
+<div class="countdown-label">${isToday?'IT IS YOUR ANNIVERSARY':'days until anniversary'}</div>
+</div>
+<div class="panic" style="background:${pl.color}22;color:${pl.color};border:1px solid ${pl.color}44">
+${pl.emoji} Panic Level: ${pl.level} ${pl.emoji}
+</div>
+<div style="color:#999;text-align:center;font-size:.9rem;margin:8px 0">${pl.msg}</div>
+<div class="gift-section">
+<div class="gift-title">Emergency Gift Ideas (${diff<=1?'LAST RESORT':'time-appropriate'}):</div>
+${shuffled.map(g=>`<div class="gift">
+<div class="gift-name">${g.name}</div>
+<div class="gift-desc">${g.desc}</div>
+<div class="gift-tags">${g.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+</div>`).join('')}
+</div>
+<button class="refresh" onclick="check()">Shuffle Gift Ideas</button>`;
+res.style.display='block';
+}
+</script>
+</body>
+</html>

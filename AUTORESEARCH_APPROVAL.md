@@ -22,6 +22,17 @@ An idea is only `approved` if it passes at least `4/5` binary evals below.
 
 If it fails `2` or more evals, do not build it.
 
+The binary gate is only a prefilter.
+
+Final approval must come from an LLM review pass that tries to reject weak ideas on semantic grounds:
+
+- Is the premise still strong when read by a model without the repo context?
+- Does it feel genuinely distinct, not just mechanically different?
+- Would the finished app feel worth clicking in the gallery?
+- Does the output artifact feel screenshotable, funny, or useful enough to share?
+
+If the LLM review disagrees with the binary gate, the LLM review wins.
+
 ## Binary Evals
 
 EVAL 1: Hook In 15 Seconds
@@ -93,13 +104,14 @@ Example:
 When running an autoresearch pass over ideas:
 
 1. Score each idea against the 5 binary evals.
-2. Keep only ideas that pass at least 4.
-3. Prefer ideas with:
+2. Keep only ideas that pass at least 4 as the candidate pool.
+3. Run an LLM red-team pass over the survivor pool before building anything.
+4. Prefer ideas with:
    - instant premise
    - clear visual artifact
    - low code surface area
    - no backend dependency
-4. Reject duplicate or blurry concepts even if they are funny.
+5. Reject duplicate or blurry concepts even if they are funny.
 
 ## Practical Rule
 

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Road Trip Vibe Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a10;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#ff6b9d;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:25px}
+.form{max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
+label{color:#888;font-size:0.85em}
+input,select{background:#14141f;border:1px solid #2a2a3f;border-radius:8px;padding:12px;color:#ddd;font-size:1em;width:100%}
+button{background:linear-gradient(135deg,#ff6b9d,#c44dff);color:#fff;border:none;padding:14px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer}
+.plan{max-width:500px;width:100%;margin-top:25px;display:none}
+.plan.show{display:block}
+.section{background:#14141f;border-radius:12px;padding:20px;margin-bottom:15px}
+.section h2{color:#ff6b9d;font-size:1.1em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.track{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a2a}
+.track:last-child{border:none}
+.track-num{color:#555;font-size:0.8em;width:20px}
+.track-name{flex:1}
+.track-vibe{color:#888;font-size:0.8em}
+.snack-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.snack{background:#1a1a2a;padding:10px;border-radius:8px;text-align:center;font-size:0.9em}
+.snack-icon{font-size:1.5em;display:block;margin-bottom:4px}
+.rule{padding:8px 12px;background:#1a1a2a;border-radius:8px;margin-bottom:6px;font-size:0.9em;display:flex;align-items:center;gap:8px}
+.rule-icon{font-size:1.2em}
+.phase{margin-bottom:15px}
+.phase-title{color:#c44dff;font-size:0.9em;font-weight:bold;margin-bottom:8px}
+</style>
+</head>
+<body>
+<h1>Road Trip Vibe</h1>
+<p class="subtitle">Playlist + snack strategy for any road trip</p>
+<div class="form">
+<div><label>Trip Distance</label>
+<select id="dist"><option value="1">Short (under 2 hours)</option><option value="2">Medium (2-5 hours)</option><option value="3">Long (5-10 hours)</option><option value="4">Epic (10+ hours)</option></select></div>
+<div><label>Number of Passengers</label>
+<select id="pax"><option value="1">Solo (just me)</option><option value="2">2 people</option><option value="3">3-4 people</option><option value="4">5+ people (full car)</option></select></div>
+<div><label>Vibe</label>
+<select id="vibe"><option value="chill">Chill / Scenic</option><option value="party">Party / Hype</option><option value="road">Classic Road Trip</option><option value="night">Late Night Drive</option><option value="family">Family Trip</option></select></div>
+<button onclick="generate()">GENERATE TRIP PLAN</button>
+</div>
+<div class="plan" id="plan"></div>
+<script>
+const playlists={
+chill:[
+{name:"Sunset Lover - Petit Biscuit",vibe:"Golden hour driving"},
+{name:"Electric Feel - MGMT",vibe:"Windows down moment"},
+{name:"Dreams - Fleetwood Mac",vibe:"Open highway vibes"},
+{name:"Redbone - Childish Gambino",vibe:"Smooth cruising"},
+{name:"Let It Happen - Tame Impala",vibe:"Zone out"},
+{name:"Pink + White - Frank Ocean",vibe:"Cloud watching"},
+{name:"Skinny Love - Bon Iver",vibe:"Misty morning"},
+{name:"Intro - The xx",vibe:"Scenic overlook"},
+{name:"Breathe - Pink Floyd",vibe:"Open road meditation"},
+{name:"Holocene - Bon Iver",vibe:"Mountain pass"}
+],
+party:[
+{name:"Mr. Brightside - The Killers",vibe:"EVERYONE sings"},
+{name:"Bohemian Rhapsody - Queen",vibe:"Mandatory head bang section"},
+{name:"Uptown Funk - Bruno Mars",vibe:"Dashboard drumming"},
+{name:"Shut Up and Dance - WALK THE MOON",vibe:"Seat dancing"},
+{name:"Don't Stop Me Now - Queen",vibe:"Speed limit? What speed limit?"},
+{name:"Yeah! - Usher",vibe:"Gas station parking lot energy"},
+{name:"Levels - Avicii",vibe:"Drop the windows at the drop"},
+{name:"Livin' on a Prayer - Bon Jovi",vibe:"WOOOAH WE'RE HALFWAY THERE"},
+{name:"Sweet Caroline - Neil Diamond",vibe:"BAH BAH BAH mandatory"},
+{name:"I Gotta Feeling - Black Eyed Peas",vibe:"Tonight's gonna be a good night"}
+],
+road:[
+{name:"Life Is A Highway - Tom Cochrane",vibe:"The road trip anthem"},
+{name:"Take It Easy - Eagles",vibe:"Classic cruising"},
+{name:"Born to Run - Bruce Springsteen",vibe:"American highway"},
+{name:"On The Road Again - Willie Nelson",vibe:"Country mile vibes"},
+{name:"Radar Love - Golden Earring",vibe:"Driving all night"},
+{name:"Runnin Down A Dream - Tom Petty",vibe:"Pedal to the metal"},
+{name:"Free Bird - Lynyrd Skynyrd",vibe:"Solo during guitar solo"},
+{name:"Hotel California - Eagles",vibe:"Desert highway"},
+{name:"Go Your Own Way - Fleetwood Mac",vibe:"Breaking free"},
+{name:"Fast Car - Tracy Chapman",vibe:"Escape the city"}
+],
+night:[
+{name:"Nightcall - Kavinsky",vibe:"Neon city vibes"},
+{name:"Midnight City - M83",vibe:"City lights approaching"},
+{name:"The Less I Know The Better - Tame Impala",vibe:"Late night thoughts"},
+{name:"After Dark - Mr.Kitty",vibe:"Highway hypnosis"},
+{name:"Blinding Lights - The Weeknd",vibe:"80s night drive"},
+{name:"Under Cover of Darkness - The Strokes",vibe:"2 AM energy"},
+{name:"A Real Hero - College",vibe:"Drive soundtrack"},
+{name:"Teardrop - Massive Attack",vibe:"Rain on windshield"},
+{name:"Somebody That I Used to Know - Gotye",vibe:"Emotional 3 AM"},
+{name:"Ribs - Lorde",vibe:"Melancholy highway"}
+],
+family:[
+{name:"Happy - Pharrell",vibe:"Everyone smiles"},
+{name:"Shake It Off - Taylor Swift",vibe:"Kids go wild"},
+{name:"Can't Stop The Feeling - JT",vibe:"Car seat dancing"},
+{name:"We Will Rock You - Queen",vibe:"Stomping the floorboards"},
+{name:"Eye of the Tiger - Survivor",vibe:"Rest stop approaching"},
+{name:"Walking On Sunshine - Katrina",vibe:"Snack break energy"},
+{name:"ABC - Jackson 5",vibe:"Educational AND fun"},
+{name:"Wannabe - Spice Girls",vibe:"Karaoke time"},
+{name:"We Are The Champions - Queen",vibe:"Arrival anthem"},
+{name:"Country Roads - John Denver",vibe:"Everyone knows the words"}
+]};
+const snacks=[
+{icon:"\ud83c\udf6a",name:"Trail mix",desc:"The responsible choice"},
+{icon:"\ud83c\udf6b",name:"Chocolate",desc:"Mood regulator"},
+{icon:"\ud83c\udf4e",name:"Apples",desc:"Crunch therapy"},
+{icon:"\ud83e\udd64",name:"Iced coffee",desc:"Consciousness maintenance"},
+{icon:"\ud83c\udf7f",name:"Popcorn",desc:"Guaranteed mess"},
+{icon:"\ud83e\uddc0",name:"Cheese sticks",desc:"Protein for the soul"},
+{icon:"\ud83c\udf6c",name:"Gummy bears",desc:"Driver bribery"},
+{icon:"\ud83e\udd64",name:"Energy drinks",desc:"Emergency only"},
+{icon:"\ud83c\udf2e",name:"Gas station burrito",desc:"Living dangerously"},
+{icon:"\ud83c\udf5e",name:"Sandwiches",desc:"Prepared adult choice"},
+{icon:"\ud83c\udf4c",name:"Bananas",desc:"No crumbs champion"},
+{icon:"\ud83e\uddc3",name:"Beef jerky",desc:"Primal road energy"},
+{icon:"\ud83c\udf69",name:"Donuts",desc:"Morale booster"},
+{icon:"\ud83e\udd5c",name:"Peanut butter cups",desc:"Sweet + salty perfect"},
+{icon:"\ud83e\uddc1",name:"Chips",desc:"Crunch the boredom away"},
+{icon:"\ud83c\udf4a",name:"Oranges",desc:"Fresh but messy"},
+{icon:"\ud83c\udf6e",name:"Pudding cups",desc:"Spoon required (risky)"},
+{icon:"\ud83e\udd64",name:"Smoothie",desc:"Health-conscious alibi"}
+];
+const rules=[
+{icon:"\ud83c\udfa4",text:"Driver controls the skip button. No exceptions."},
+{icon:"\ud83d\udeab",text:"No phone calls on speaker during bangers."},
+{icon:"\ud83d\udca4",text:"Sleeping passengers lose voting rights on music."},
+{icon:"\u26fd",text:"Gas station stops: 10 min max or you get left."},
+{icon:"\ud83d\udcf1",text:"Navigator must actually navigate, not just scroll."},
+{icon:"\ud83c\udf55",text:"Food must be shareable or eaten in secret shame."},
+{icon:"\ud83c\udfa7",text:"Headphones mean 'I am done socializing.' Respect it."},
+{icon:"\ud83d\udcaa",text:"Shotgun must stay awake. It is the LAW."},
+{icon:"\ud83d\ude97",text:"Car karaoke is mandatory during designated songs."},
+{icon:"\ud83d\udcf7",text:"At least one terrible group photo at a rest stop."},
+{icon:"\ud83c\udfb5",text:"If the whole car knows the words, volume goes to MAX."},
+{icon:"\ud83e\udd71",text:"'Are we there yet' is banned after the first hour."},
+{icon:"\ud83c\udf1f",text:"Best view spotted earns naming rights for the trip."},
+{icon:"\ud83e\udd2b",text:"What happens in the car stays in the car."},
+{icon:"\ud83d\udcb0",text:"Whoever rides shotgun controls AC. Power corrupts."}
+];
+function generate(){
+const dist=parseInt(document.getElementById('dist').value);
+const pax=parseInt(document.getElementById('pax').value);
+const vibe=document.getElementById('vibe').value;
+const songs=playlists[vibe];
+const numSongs=Math.min(songs.length,4+dist*2);
+const shuffled=[...songs].sort(()=>Math.random()-0.5).slice(0,numSongs);
+const numSnacks=2+dist+Math.floor(pax/2);
+const tripSnacks=[...snacks].sort(()=>Math.random()-0.5).slice(0,Math.min(8,numSnacks));
+const tripRules=[...rules].sort(()=>Math.random()-0.5).slice(0,4+pax);
+let html='<div class="section"><h2>&#127925; Playlist ('+numSongs+' tracks)</h2>';
+shuffled.forEach((s,i)=>{html+='<div class="track"><span class="track-num">'+(i+1)+'</span><span class="track-name">'+s.name+'</span><span class="track-vibe">'+s.vibe+'</span></div>'});
+html+='</div><div class="section"><h2>&#127871; Snack Strategy</h2><div class="snack-grid">';
+tripSnacks.forEach(s=>{html+='<div class="snack"><span class="snack-icon">'+s.icon+'</span>'+s.name+'<br><span style="color:#888;font-size:0.8em">'+s.desc+'</span></div>'});
+html+='</div></div><div class="section"><h2>&#128220; Car Rules</h2>';
+tripRules.forEach(r=>{html+='<div class="rule"><span class="rule-icon">'+r.icon+'</span>'+r.text+'</div>'});
+html+='</div>';
+const p=document.getElementById('plan');p.innerHTML=html;p.classList.add('show');
+}
+</script>
+</body>
+</html>

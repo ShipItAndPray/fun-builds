@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resume Lie Spotter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#0a0a10;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#e74c3c;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:20px;text-align:center}
+textarea{width:100%;max-width:550px;height:200px;background:#14141f;border:1px solid #2a2a3f;border-radius:10px;padding:15px;color:#ddd;font-size:0.95em;resize:vertical;font-family:inherit}
+button{background:#e74c3c;color:#fff;border:none;padding:14px 40px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer;margin-top:15px}
+.results{max-width:550px;width:100%;margin-top:25px}
+.lie-card{background:#14141f;border-radius:10px;padding:15px;margin-bottom:10px;border-left:4px solid #e74c3c}
+.original{color:#e74c3c;font-weight:bold;margin-bottom:6px}
+.translation{color:#2ecc71;font-size:0.95em}
+.arrow{color:#555;margin:0 8px}
+.lie-level{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;font-weight:bold;margin-left:8px}
+.ll-high{background:#4a1020;color:#ff4466}
+.ll-med{background:#4a3a10;color:#ffcc44}
+.ll-low{background:#1a3a2a;color:#44cc88}
+.summary{background:#1a1525;border-radius:12px;padding:20px;margin-top:20px;text-align:center}
+.score{font-size:3em;font-weight:bold}
+.no-results{color:#555;text-align:center;padding:30px;font-style:italic}
+</style>
+</head>
+<body>
+<h1>Resume Lie Spotter</h1>
+<p class="subtitle">Paste your resume. We translate the exaggerations.</p>
+<textarea id="resume" placeholder="Paste your resume text here...&#10;&#10;Example: Led a cross-functional team of 5 to deliver a mission-critical platform that drove 200% growth in user engagement..."></textarea>
+<button onclick="analyze()">SPOT THE LIES</button>
+<div class="results" id="results"></div>
+<script>
+const patterns=[
+{regex:/\bled\b.*\bteam\b/i,original:"Led a team",translation:"Was in a group chat that sometimes discussed work",level:"high"},
+{regex:/\bcross[- ]?functional\b/i,original:"Cross-functional collaboration",translation:"Sent emails to people in other departments",level:"med"},
+{regex:/\bspearhead/i,original:"Spearheaded initiative",translation:"Suggested something in a meeting once",level:"high"},
+{regex:/\bdrove\b.*\bgrowth\b/i,original:"Drove growth",translation:"Was employed during a period when numbers went up",level:"high"},
+{regex:/\bpassionate\b/i,original:"Passionate about",translation:"Can tolerate for 8 hours a day",level:"med"},
+{regex:/\bself[- ]?starter\b/i,original:"Self-starter",translation:"Manager stopped checking in and I did not die",level:"med"},
+{regex:/\bdetail[- ]?oriented\b/i,original:"Detail-oriented",translation:"Once caught a typo",level:"low"},
+{regex:/\bfast[- ]?paced\b/i,original:"Thrives in fast-paced environments",translation:"Has survived chaos without quitting (yet)",level:"med"},
+{regex:/\bproficient\b/i,original:"Proficient in",translation:"Has googled this at least twice",level:"med"},
+{regex:/\bexpert\b/i,original:"Expert in",translation:"Can open the application without help",level:"high"},
+{regex:/\bstrategic\b/i,original:"Strategic thinking",translation:"Made a PowerPoint with arrows connecting boxes",level:"high"},
+{regex:/\bstakeholder/i,original:"Managed stakeholders",translation:"Attended meetings with people who had opinions",level:"med"},
+{regex:/\bsynerg/i,original:"Created synergies",translation:"Made two people talk to each other",level:"high"},
+{regex:/\bleverag/i,original:"Leveraged resources",translation:"Used things that already existed",level:"med"},
+{regex:/\boptimiz/i,original:"Optimized processes",translation:"Changed one setting in a spreadsheet",level:"med"},
+{regex:/\bscal/i,original:"Scalable solutions",translation:"It worked once and probably works twice",level:"med"},
+{regex:/\binnovati/i,original:"Innovative approach",translation:"Did something slightly different from the manual",level:"high"},
+{regex:/\bmentor/i,original:"Mentored junior staff",translation:"Showed a new hire where the bathroom is",level:"med"},
+{regex:/\bpipeline\b/i,original:"Built a pipeline",translation:"Made a to-do list with stages",level:"med"},
+{regex:/\bdata[- ]?driven\b/i,original:"Data-driven decisions",translation:"Looked at a number before saying yes",level:"med"},
+{regex:/\bthought leader/i,original:"Thought leader",translation:"Has a LinkedIn account and posts occasionally",level:"high"},
+{regex:/\bresult/i,original:"Results-oriented",translation:"Aware that work is supposed to produce outcomes",level:"low"},
+{regex:/\bproactive\b/i,original:"Proactive approach",translation:"Did something before being asked exactly once. Still dining out on it.",level:"med"},
+{regex:/\btrack record\b/i,original:"Proven track record",translation:"Has been employed before without being fired",level:"med"},
+{regex:/\bimpact/i,original:"High-impact contributions",translation:"Something I touched did not immediately break",level:"high"},
+{regex:/\bagile\b/i,original:"Agile methodology",translation:"Had standups. Hated standups. Called them agile.",level:"low"},
+{regex:/\bpivot/i,original:"Pivoted strategy",translation:"The first plan failed so we tried something else",level:"med"},
+{regex:/\bowner/i,original:"Took ownership",translation:"Nobody else wanted to do it",level:"low"},
+{regex:/\bvisionar/i,original:"Visionary leadership",translation:"Made a prediction that was vaguely right once",level:"high"},
+{regex:/\bstream ?lin/i,original:"Streamlined operations",translation:"Deleted a step nobody was doing anyway",level:"med"},
+{regex:/\brobust\b/i,original:"Built robust systems",translation:"It has not crashed today",level:"med"},
+{regex:/\bculture\b/i,original:"Built team culture",translation:"Organized one happy hour",level:"low"},
+{regex:/\bexceeded\b.*\btarget/i,original:"Exceeded targets",translation:"The targets were set very, very low",level:"high"},
+{regex:/\bmill?ion/i,original:"Multi-million dollar impact",translation:"Was in the room when large numbers were discussed",level:"high"},
+{regex:/\b200%|300%|400%|500%/i,original:"Achieved X00% improvement",translation:"Changed how we measured the metric",level:"high"},
+{regex:/\bfull[- ]?stack\b/i,original:"Full-stack developer",translation:"Can write both bad frontend AND bad backend code",level:"med"},
+{regex:/\b10x\b/i,original:"10x improvement",translation:"Compared a good week to the worst week ever and called it growth",level:"high"},
+{regex:/\bwear many hats\b/i,original:"Wears many hats",translation:"Understaffed team, doing three jobs for one salary",level:"low"},
+{regex:/\bgo[- ]?to person\b/i,original:"Go-to person for",translation:"Everyone dumps work on me because I cannot say no",level:"med"},
+{regex:/\befficiency\b/i,original:"Improved efficiency",translation:"Found a keyboard shortcut",level:"low"},
+{regex:/\bimplement/i,original:"Implemented solutions",translation:"Followed a Stack Overflow answer successfully",level:"med"},
+{regex:/\barchitect/i,original:"Architected the system",translation:"Drew boxes and arrows on a whiteboard",level:"high"},
+{regex:/\bai\b|machine learning|deep learning/i,original:"AI/ML experience",translation:"Used ChatGPT at work and called it AI integration",level:"high"}
+];
+function analyze(){
+const text=document.getElementById('resume').value.trim();
+if(!text){alert('Paste your resume first!');return}
+const found=[];
+patterns.forEach(p=>{if(p.regex.test(text))found.push(p)});
+const res=document.getElementById('results');
+if(found.length===0){
+res.innerHTML='<div class="no-results">No obvious exaggerations detected. Either this resume is genuinely honest, or the lies are too sophisticated for our detector.</div>';
+return;
+}
+const honesty=Math.max(5,100-found.length*8-found.filter(f=>f.level==='high').length*5);
+const color=honesty>60?'#2ecc71':honesty>30?'#ffcc44':'#e74c3c';
+let html='<div class="summary"><div class="score" style="color:'+color+'">'+honesty+'%</div><div style="color:#888">Estimated Honesty Score</div><div style="color:#555;font-size:0.85em;margin-top:5px">'+found.length+' exaggerations detected</div></div>';
+found.forEach(f=>{
+html+='<div class="lie-card"><div class="original">'+f.original+' <span class="lie-level ll-'+f.level+'">'+(f.level==='high'?'BIG LIE':f.level==='med'?'STRETCH':'MILD')+'</span></div><div class="translation"><span class="arrow">&#10142;</span> '+f.translation+'</div></div>';
+});
+res.innerHTML=html;
+}
+</script>
+</body>
+</html>

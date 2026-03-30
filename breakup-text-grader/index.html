@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breakup Text Grader</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:1.8rem;margin:20px 0;background:linear-gradient(135deg,#6c5ce7,#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:#666;text-align:center;margin-bottom:16px;font-size:.9rem}
+.container{max-width:550px;width:100%;background:#1a1a2e;border-radius:16px;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+textarea{width:100%;padding:12px;background:#16213e;color:#e0e0e0;border:1px solid #333;border-radius:8px;font-size:1rem;min-height:120px;resize:vertical;font-family:inherit}
+button{width:100%;padding:14px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;border:none;border-radius:10px;font-size:1.1rem;cursor:pointer;font-weight:700;margin-top:12px}
+#result{margin-top:20px;display:none}
+.scores{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:16px 0}
+.score-card{background:#16213e;border-radius:10px;padding:14px;text-align:center}
+.score-label{font-size:.8rem;color:#888;text-transform:uppercase;letter-spacing:1px}
+.score-num{font-size:2.5rem;font-weight:900;margin:6px 0}
+.score-bar{height:6px;background:#222;border-radius:3px;margin-top:6px;overflow:hidden}
+.score-bar-fill{height:100%;border-radius:3px}
+.overall{text-align:center;margin:20px 0}
+.overall-grade{font-size:4rem;font-weight:900}
+.overall-label{color:#888;font-size:.9rem}
+.verdict{background:#16213e;border-radius:8px;padding:16px;margin:12px 0;line-height:1.6;color:#bbb;font-size:.95rem;border-left:4px solid #6c5ce7}
+.verdict-title{font-weight:700;color:#a29bfe;margin-bottom:8px}
+.tag{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.75rem;margin:3px;background:#222;color:#aaa}
+</style>
+</head>
+<body>
+<h1>Breakup Text Grader</h1>
+<p class="sub">Paste the breakup text. We'll grade it on cruelty, cowardice, and clarity.</p>
+<div class="container">
+<textarea id="text" placeholder="Paste the breakup text here...&#10;&#10;e.g. 'Hey, I think we should talk. I've been doing a lot of thinking and I just don't see this working out...'"></textarea>
+<button onclick="grade()">Grade This Breakup</button>
+<div id="result"></div>
+</div>
+<script>
+const crueltySignals=[
+{p:/never loved/i,s:3,t:"Nuclear option deployed"},{p:/you('re| are) (the )?(problem|issue|reason)/i,s:2,t:"Blame cannon fired"},
+{p:/your (mom|mother|dad|father|family)/i,s:2,t:"Family dragged in"},{p:/always knew/i,s:2,t:"Retroactive invalidation"},
+{p:/waste.{0,10}(time|years)/i,s:3,t:"Time audit cruelty"},{p:/do(n'?t| not) (even )?care/i,s:2,t:"Apathy weapon"},
+{p:/never (really )?liked/i,s:3,t:"Retrospective demolition"},{p:/you.{0,15}(boring|ugly|fat|annoying)/i,s:3,t:"Personal attack"},
+{p:/my (ex|friend).{0,10}(better|more|hotter)/i,s:3,t:"Comparison cruelty"},{p:/deserve.{0,10}better/i,s:1,t:"Patronizing dismissal"},
+{p:/you('ll| will) (never|always)/i,s:2,t:"Fortune teller cruelty"},{p:/can('t| not) stand/i,s:2,t:"Disgust expressed"},
+{p:/\bhate\b/i,s:2,t:"H-word dropped"},{p:/regret/i,s:2,t:"Regret weaponized"},
+{p:/settle/i,s:2,t:"'Settled for you' implied"},
+];
+const cowardiceSignals=[
+{p:/i think (maybe|perhaps)/i,s:2,t:"Hedge detected"},{p:/it's not you/i,s:3,t:"Classic deflection"},
+{p:/i (just )?need (some )?space/i,s:2,t:"Space euphemism"},{p:/maybe we (should|could|can)/i,s:1,t:"Weak opener"},
+{p:/i('m| am) not ready/i,s:2,t:"Readiness excuse"},{p:/take a break/i,s:3,t:"Ross & Rachel maneuver"},
+{p:/\bsorry\b/i,s:1,t:"Sorry shield deployed"},{p:/right now/i,s:2,t:"'Right now' false hope"},
+{p:/i hope (we|you)/i,s:1,t:"Future-friends fantasy"},{p:/timing/i,s:2,t:"Timing excuse"},
+{p:/complicated/i,s:1,t:"Complexity smokescreen"},{p:/i (don't|do not) know/i,s:2,t:"Confusion shield"},
+{p:/figure.{0,10}out/i,s:1,t:"Vagueness armor"},{p:/text|message/i,s:2,t:"Doing this by TEXT"},
+{p:/\bum+\b|\buh+\b/i,s:1,t:"Verbal filler in text form"},
+];
+const claritySignals=[
+{p:/breaking up|break up|it's over|we're done|ending (this|things)/i,s:3,t:"Clear declaration"},{p:/\bbecause\b/i,s:2,t:"Reason given"},
+{p:/i (want|need) to end/i,s:3,t:"Direct statement"},{p:/no longer/i,s:2,t:"Clear boundary"},
+{p:/final|decided|decision/i,s:2,t:"Finality expressed"},{p:/moving on/i,s:2,t:"Direction stated"},
+{p:/specific/i,s:1,t:"Specificity attempt"},{p:/honestly|truthfully/i,s:1,t:"Honesty signal"},
+];
+const verdicts=[
+{cruelty:[0,3],cowardice:[0,3],clarity:[7,10],v:"The Respectful Exit. Clean, clear, minimal damage. Almost suspiciously mature."},
+{cruelty:[0,3],cowardice:[7,10],clarity:[0,3],v:"The Vanishing Act. So vague and cowardly that the recipient may not realize they've been dumped."},
+{cruelty:[7,10],cowardice:[0,3],clarity:[7,10],v:"The Surgical Strike. Crystal clear AND devastating. This person has no chill but excellent communication skills."},
+{cruelty:[7,10],cowardice:[7,10],clarity:[0,3],v:"The Passive-Aggressive Masterpiece. Cruel but too cowardly to own it. Maximum confusion, maximum pain."},
+{cruelty:[4,6],cowardice:[4,6],clarity:[4,6],v:"The Mediocre Breakup. Average in every dimension. Not brave enough to be clear, not mean enough to be memorable."},
+{cruelty:[0,3],cowardice:[0,3],clarity:[0,3],v:"The 'Was That a Breakup?' Somehow managed to be nice, brave, AND unclear. Recipient will need a decoder ring."},
+{cruelty:[7,10],cowardice:[0,3],clarity:[0,3],v:"The Emotional Grenade. Cruel and brave but incoherent. Like getting yelled at in a language you don't speak."},
+{cruelty:[0,3],cowardice:[7,10],clarity:[7,10],v:"The Formal Notice. Clear but spineless. This reads like an HR termination letter. Professional yet pathetic."},
+{cruelty:[4,6],cowardice:[7,10],clarity:[0,3],v:"The Mumbler. Kind of mean, very cowardly, totally unclear. The worst combo. Nobody knows what happened."},
+{cruelty:[7,10],cowardice:[4,6],clarity:[4,6],v:"The Scorched Earth Attempt. Tried to be devastating but lost nerve halfway. Like a villain monologue that trails off."},
+];
+function scoreCategory(text,signals){
+let s=0,tags=[];
+signals.forEach(sig=>{if(sig.p.test(text)){s+=sig.s;tags.push(sig.t);}});
+return{score:Math.min(10,Math.max(1,Math.round(s*10/signals.length/2)+1)),tags};
+}
+function grade(){
+const text=document.getElementById('text').value.trim();
+if(!text){alert('Paste a breakup text first!');return;}
+const cr=scoreCategory(text,crueltySignals);
+const co=scoreCategory(text,cowardiceSignals);
+const cl=scoreCategory(text,claritySignals);
+// Adjust: short texts are more cowardly, long texts get clarity bump
+const words=text.split(/\s+/).length;
+if(words<15){co.score=Math.min(10,co.score+2);co.tags.push("Brutally short");}
+if(words>100){cl.score=Math.min(10,cl.score+1);cl.tags.push("At least it's thorough");}
+if(/text|dm|message/i.test(text)){co.score=Math.min(10,co.score+1);}
+const avg=((cr.score+co.score+(10-cl.score))/3);
+let letterGrade,gradeColor;
+if(avg<=3){letterGrade='A';gradeColor='#4CAF50';}
+else if(avg<=4){letterGrade='B';gradeColor='#8BC34A';}
+else if(avg<=5){letterGrade='C';gradeColor='#FFC107';}
+else if(avg<=6.5){letterGrade='D';gradeColor='#FF9800';}
+else{letterGrade='F';gradeColor='#f44336';}
+let verdict=verdicts.find(v=>cr.score>=v.cruelty[0]&&cr.score<=v.cruelty[1]&&co.score>=v.cowardice[0]&&co.score<=v.cowardice[1]&&cl.score>=v.clarity[0]&&cl.score<=v.clarity[1]);
+if(!verdict)verdict={v:"The Unclassifiable. This breakup text defies categorization. Frame it. Show it to your therapist. Write a memoir."};
+const res=document.getElementById('result');
+res.innerHTML=`
+<div class="scores">
+<div class="score-card">
+<div class="score-label">Cruelty</div>
+<div class="score-num" style="color:${cr.score>6?'#f44336':cr.score>3?'#FFC107':'#4CAF50'}">${cr.score}</div>
+<div class="score-bar"><div class="score-bar-fill" style="width:${cr.score*10}%;background:#f44336"></div></div>
+</div>
+<div class="score-card">
+<div class="score-label">Cowardice</div>
+<div class="score-num" style="color:${co.score>6?'#f44336':co.score>3?'#FFC107':'#4CAF50'}">${co.score}</div>
+<div class="score-bar"><div class="score-bar-fill" style="width:${co.score*10}%;background:#e17055"></div></div>
+</div>
+<div class="score-card">
+<div class="score-label">Clarity</div>
+<div class="score-num" style="color:${cl.score>6?'#4CAF50':cl.score>3?'#FFC107':'#f44336'}">${cl.score}</div>
+<div class="score-bar"><div class="score-bar-fill" style="width:${cl.score*10}%;background:#4CAF50"></div></div>
+</div>
+</div>
+<div class="overall">
+<div class="overall-label">OVERALL BREAKUP GRADE</div>
+<div class="overall-grade" style="color:${gradeColor}">${letterGrade}</div>
+<div class="overall-label">${letterGrade==='A'?'Handled with grace':letterGrade==='B'?'Decent effort':'Emotional damage detected'}</div>
+</div>
+<div class="verdict">
+<div class="verdict-title">The Verdict</div>
+${verdict.v}
+</div>
+<div class="verdict">
+<div class="verdict-title">Detected Patterns</div>
+${[...cr.tags,...co.tags,...cl.tags].map(t=>`<span class="tag">${t}</span>`).join('')}
+${![...cr.tags,...co.tags,...cl.tags].length?'<span class="tag">Remarkably pattern-free. Either very good or very bad.</span>':''}
+</div>`;
+res.style.display='block';
+}
+</script>
+</body>
+</html>

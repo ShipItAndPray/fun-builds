@@ -3,563 +3,627 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Legendary Resignation Letter Generator</title>
+<title>The Resignation Letter Generator</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --parchment:#faf6f0;--ink:#2c1810;--gold:#c9a84c;--red:#8b2500;
-  --seal:#6b1c0a;--shadow:rgba(44,24,16,0.15);
+  --bg:#0a0a0f;--card:#13131f;--border:#2a2a3d;--text:#e8e8f0;--muted:#8888aa;
+  --accent:#ff4d6a;--accent2:#ff7849;--gold:#ffd700;--glow:rgba(255,77,106,.15);
 }
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Special+Elite&display=swap');
-
-body{
-  font-family:'EB Garamond',Georgia,serif;
-  background:#e8e0d4;
-  color:var(--ink);
-  min-height:100vh;
-}
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&family=Special+Elite&display=swap');
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
 .warning-banner{
-  background:linear-gradient(135deg,#c0392b,#e74c3c);
-  color:#fff;padding:12px 20px;text-align:center;
-  font-family:'Special Elite',monospace;font-size:1.1rem;
-  letter-spacing:2px;position:sticky;top:0;z-index:100;
-  box-shadow:0 3px 10px rgba(0,0,0,0.3);
-  animation:pulse-warn 2s infinite;
+  background:repeating-linear-gradient(45deg,#1a1a00,#1a1a00 10px,#222200 10px,#222200 20px);
+  border-bottom:3px solid var(--gold);padding:12px 20px;text-align:center;
+  font-weight:700;color:var(--gold);font-size:14px;position:sticky;top:0;z-index:100;
+  animation:warningPulse 2s ease-in-out infinite;
 }
-@keyframes pulse-warn{
-  0%,100%{opacity:1}50%{opacity:0.85}
-}
-.warning-banner span{font-size:1.3em}
+@keyframes warningPulse{0%,100%{opacity:1}50%{opacity:.7}}
+.warning-banner span{font-size:18px;margin:0 8px}
 
-header{
-  text-align:center;padding:40px 20px 20px;
-  background:linear-gradient(180deg,var(--parchment) 0%,#e8e0d4 100%);
-}
-header h1{
+.header{text-align:center;padding:50px 20px 30px}
+.header h1{
   font-family:'Playfair Display',serif;font-size:clamp(2rem,5vw,3.5rem);
-  color:var(--ink);margin-bottom:8px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  margin-bottom:8px;
 }
-header h1 .accent{color:var(--red)}
-header p.subtitle{
-  font-style:italic;font-size:1.15rem;color:#6b5b4f;max-width:600px;margin:0 auto;
-}
+.header p{color:var(--muted);font-size:16px;font-style:italic}
 
 .container{max-width:900px;margin:0 auto;padding:20px}
 
-/* Input Section */
 .input-section{
-  background:var(--parchment);border-radius:12px;padding:30px;
-  box-shadow:0 4px 20px var(--shadow);margin-bottom:30px;
-  border:1px solid #d4c8b8;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:32px;margin-bottom:30px;
 }
-.input-section h2{
-  font-family:'Playfair Display',serif;font-size:1.6rem;
-  margin-bottom:20px;color:var(--seal);
-}
-.form-row{display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.input-section h2{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:20px;color:var(--accent)}
+.form-row{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
 .form-group{flex:1;min-width:200px}
-.form-group label{
-  display:block;font-weight:600;margin-bottom:6px;
-  font-size:0.95rem;color:#4a3c32;
+.form-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.form-group input,.form-group select{
+  width:100%;padding:12px 16px;background:#1a1a2e;border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:15px;font-family:'Inter',sans-serif;
+  transition:border-color .2s;
 }
-.form-group input,.form-group select,.form-group textarea{
-  width:100%;padding:12px 14px;border:2px solid #d4c8b8;border-radius:8px;
-  font-family:'EB Garamond',serif;font-size:1.05rem;
-  background:#fff;color:var(--ink);transition:border-color 0.3s;
-}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{
-  outline:none;border-color:var(--gold);
-}
-.form-group textarea{resize:vertical;min-height:60px}
+.form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
 
-/* Style Selector */
-.style-grid{
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:10px;margin-bottom:20px;
-}
+.style-selector{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
 .style-btn{
-  padding:14px 10px;border:2px solid #d4c8b8;border-radius:10px;
-  background:#fff;cursor:pointer;text-align:center;
-  transition:all 0.3s;font-family:'EB Garamond',serif;
+  padding:10px 20px;border-radius:25px;border:2px solid var(--border);
+  background:transparent;color:var(--text);cursor:pointer;font-size:14px;
+  font-weight:600;transition:all .3s;font-family:'Inter',sans-serif;
 }
-.style-btn:hover{border-color:var(--gold);transform:translateY(-2px);box-shadow:0 4px 12px var(--shadow)}
-.style-btn.active{
-  border-color:var(--red);background:linear-gradient(135deg,#fdf2f0,#fff);
-  box-shadow:0 4px 12px rgba(139,37,0,0.2);
-}
-.style-btn .icon{font-size:1.8rem;display:block;margin-bottom:4px}
-.style-btn .label{font-weight:600;font-size:0.95rem}
-
-/* Chaos Meter */
-.chaos-section{margin-bottom:20px}
-.chaos-section label{font-weight:600;font-size:0.95rem;color:#4a3c32;display:block;margin-bottom:8px}
-.chaos-meter{display:flex;align-items:center;gap:12px}
-.chaos-meter input[type=range]{
-  flex:1;-webkit-appearance:none;height:8px;border-radius:4px;
-  background:linear-gradient(90deg,#27ae60,#f1c40f,#e67e22,#e74c3c,#8e44ad);
-  outline:none;
-}
-.chaos-meter input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
-  background:var(--parchment);border:3px solid var(--ink);cursor:pointer;
-  box-shadow:0 2px 6px rgba(0,0,0,0.3);
-}
-.chaos-value{
-  font-family:'Special Elite',monospace;font-size:1.1rem;
-  min-width:100px;text-align:center;padding:6px 12px;
-  border-radius:6px;font-weight:700;
-}
+.style-btn:hover{border-color:var(--accent);color:var(--accent)}
+.style-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.style-btn .icon{margin-right:6px}
 
 .generate-btn{
-  display:block;width:100%;padding:16px;border:none;border-radius:10px;
-  background:linear-gradient(135deg,var(--seal),var(--red));
-  color:#fff;font-family:'Playfair Display',serif;font-size:1.3rem;
-  cursor:pointer;letter-spacing:1px;
-  transition:all 0.3s;box-shadow:0 4px 15px rgba(107,28,10,0.4);
+  display:block;width:100%;padding:16px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-size:18px;font-weight:700;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:transform .2s,box-shadow .2s;
+  margin-top:20px;
 }
-.generate-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(107,28,10,0.5)}
+.generate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px var(--glow)}
 .generate-btn:active{transform:translateY(0)}
 
-/* Letter Output */
-.letter-wrapper{
-  display:none;margin-top:30px;
+.stationery-selector{margin:16px 0}
+.stationery-selector label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.stationery-btns{display:flex;gap:8px;flex-wrap:wrap}
+.stationery-btn{
+  padding:8px 16px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);cursor:pointer;font-size:13px;
+  font-family:'Inter',sans-serif;transition:all .2s;
 }
-.letter-wrapper.visible{display:block}
+.stationery-btn:hover{border-color:var(--accent)}
+.stationery-btn.active{background:var(--border);color:var(--text);border-color:var(--accent)}
 
-.letter-actions{
-  display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;
-}
+.letter-container{display:none;margin-top:20px}
+.letter-container.visible{display:block}
+
+.action-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
 .action-btn{
-  padding:10px 20px;border:2px solid var(--ink);border-radius:8px;
-  background:var(--parchment);font-family:'EB Garamond',serif;
-  font-size:1rem;cursor:pointer;transition:all 0.3s;
+  padding:10px 20px;border-radius:10px;border:1px solid var(--border);
+  background:var(--card);color:var(--text);cursor:pointer;font-size:14px;
+  font-weight:600;font-family:'Inter',sans-serif;transition:all .2s;
   display:flex;align-items:center;gap:6px;
 }
-.action-btn:hover{background:var(--ink);color:var(--parchment)}
-.action-btn.reading{background:var(--red);color:#fff;border-color:var(--red)}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.action-btn.copied{background:#22c55e;border-color:#22c55e;color:#fff}
 
-.letter-container{
-  background:var(--parchment);
-  border-radius:4px;padding:50px 60px;
-  box-shadow:0 2px 8px var(--shadow),inset 0 0 80px rgba(210,190,160,0.5);
-  position:relative;
-  border:1px solid #c8b89a;
-  min-height:400px;
-  /* Stationery watermark */
-  background-image:
-    repeating-linear-gradient(0deg,transparent,transparent 31px,rgba(180,160,140,0.15) 31px,rgba(180,160,140,0.15) 32px);
-}
-.letter-container::before{
-  content:'';position:absolute;top:0;left:60px;right:60px;
-  height:3px;background:linear-gradient(90deg,transparent,var(--red),transparent);
-}
-.letter-container::after{
-  content:'';position:absolute;bottom:0;left:60px;right:60px;
-  height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+.letter{
+  background:#faf8f2;color:#2a2a2e;border-radius:4px;padding:60px;
+  font-family:'Special Elite',monospace;font-size:16px;line-height:1.8;
+  box-shadow:0 4px 40px rgba(0,0,0,.5);position:relative;min-height:400px;
 }
 
-.letter-header{text-align:center;margin-bottom:30px;padding-bottom:20px;border-bottom:1px solid #d4c8b8}
-.letter-date{font-style:italic;color:#7a6b5f;margin-bottom:8px}
-.letter-from{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--seal)}
-.letter-title-line{font-style:italic;color:#6b5b4f;margin-top:4px}
-
-.letter-body{
-  font-size:1.1rem;line-height:1.8;color:var(--ink);
-  white-space:pre-wrap;
+.letter.theme-classic{
+  background:#faf8f2;font-family:'Special Elite',monospace;
+  border-top:4px solid #333;border-bottom:4px solid #333;
 }
-.letter-body p{margin-bottom:16px;text-indent:2em}
-.letter-body p:first-child{text-indent:0}
-.letter-body .salutation{text-indent:0;font-weight:600}
-.letter-body .closing{text-indent:0;margin-top:24px}
-.letter-body .signature{
-  text-indent:0;font-family:'Playfair Display',serif;
-  font-size:1.3rem;font-style:italic;margin-top:8px;color:var(--seal);
+.letter.theme-executive{
+  background:linear-gradient(180deg,#fff 0%,#f8f6f0 100%);
+  font-family:'Playfair Display',serif;
+  border-left:6px solid #1a365d;padding-left:50px;
+}
+.letter.theme-kraft{
+  background:#d4a574;color:#3a2a1a;
+  font-family:'Special Elite',monospace;
+  background-image:url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.7' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='.1'/%3E%3C/svg%3E");
+}
+.letter.theme-legal{
+  background:#fff;font-family:'Courier New',monospace;font-size:14px;
+  border:2px solid #000;line-height:2;
+  background-image:repeating-linear-gradient(transparent,transparent 31px,#ddd 31px,#ddd 32px);
+  background-position-y:28px;
+}
+.letter.theme-love{
+  background:#fff0f5;color:#8b1a4a;
+  font-family:'Playfair Display',serif;font-style:italic;
+  border:3px double #d4618c;
+}
+.letter.theme-ransom{
+  background:#f5f0e0;color:#222;font-family:sans-serif;
 }
 
-.chaos-badge{
-  position:absolute;top:20px;right:20px;
-  padding:8px 16px;border-radius:20px;
-  font-family:'Special Elite',monospace;font-size:0.85rem;
-  font-weight:700;letter-spacing:1px;
-  transform:rotate(3deg);
+.letter .date{text-align:right;margin-bottom:30px;font-size:14px;opacity:.7}
+.letter .letter-body{margin-bottom:30px;white-space:pre-wrap}
+
+.letter::after{
+  content:'DRAFT - DO NOT SEND';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%) rotate(-30deg);font-size:48px;
+  opacity:.06;font-weight:900;pointer-events:none;white-space:nowrap;
 }
 
-/* Print styles */
+@keyframes shuffleIn{
+  0%{opacity:0;transform:translateY(20px) rotate(-1deg)}
+  100%{opacity:1;transform:translateY(0) rotate(0)}
+}
+.letter.shuffling{animation:shuffleIn .4s ease-out}
+
 @media print{
-  .warning-banner,header,.input-section,.letter-actions,.chaos-badge{display:none!important}
-  .letter-wrapper{display:block!important}
-  .letter-container{box-shadow:none;border:none;padding:40px}
+  .warning-banner,.header,.input-section,.action-bar,.footer,.stationery-selector,.stats{display:none!important}
   body{background:#fff}
-  .container{max-width:100%}
+  .letter{box-shadow:none;border-radius:0;padding:40px;margin:0}
+  .letter::after{display:none}
+  .letter-container{display:block!important;margin:0}
 }
 
-/* Mobile */
-@media(max-width:600px){
-  .letter-container{padding:30px 24px}
-  .letter-container::before,.letter-container::after{left:20px;right:20px}
-  .form-row{flex-direction:column;gap:12px}
-  .style-grid{grid-template-columns:repeat(3,1fr)}
-  header h1{font-size:1.8rem}
+.share-modal{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;
+}
+.share-modal.open{display:flex}
+.share-modal-content{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:32px;max-width:500px;width:90%;
+}
+.share-modal-content h3{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px}
+.share-options{display:flex;flex-direction:column;gap:10px}
+.share-option{
+  padding:14px 20px;border:1px solid var(--border);border-radius:10px;
+  background:transparent;color:var(--text);cursor:pointer;font-size:15px;
+  font-family:'Inter',sans-serif;text-align:left;transition:all .2s;
+  display:flex;align-items:center;gap:12px;
+}
+.share-option:hover{border-color:var(--accent);background:var(--glow)}
+.share-close{
+  margin-top:16px;padding:10px;border:none;background:transparent;
+  color:var(--muted);cursor:pointer;font-size:14px;width:100%;
+  font-family:'Inter',sans-serif;
 }
 
-/* Share toast */
 .toast{
   position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);
-  background:var(--ink);color:var(--parchment);padding:14px 28px;border-radius:10px;
-  font-family:'EB Garamond',serif;font-size:1.05rem;
-  box-shadow:0 6px 20px rgba(0,0,0,0.3);transition:transform 0.4s;z-index:200;
+  background:#22c55e;color:#fff;padding:14px 28px;border-radius:10px;
+  font-weight:600;font-size:15px;z-index:300;transition:transform .3s ease;
+  box-shadow:0 4px 20px rgba(34,197,94,.3);
 }
 .toast.show{transform:translateX(-50%) translateY(0)}
 
-/* Seal stamp animation */
-@keyframes stamp{
-  0%{transform:scale(3) rotate(-15deg);opacity:0}
-  60%{transform:scale(0.9) rotate(2deg);opacity:1}
-  100%{transform:scale(1) rotate(0deg);opacity:1}
-}
-.seal-stamp{
-  width:80px;height:80px;margin:20px auto 0;
-  border:4px solid var(--seal);border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-family:'Playfair Display',serif;font-size:0.7rem;
-  color:var(--seal);text-align:center;font-weight:700;
-  letter-spacing:1px;text-transform:uppercase;
-  opacity:0;animation:stamp 0.6s ease-out 0.3s forwards;
+.stats{display:flex;gap:20px;justify-content:center;margin:30px 0;flex-wrap:wrap}
+.stat{text-align:center}
+.stat .num{font-size:28px;font-weight:700;color:var(--accent)}
+.stat .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+
+.footer{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px}
+
+@media(max-width:600px){
+  .letter{padding:30px 20px;font-size:14px}
+  .form-row{flex-direction:column}
+  .style-selector{justify-content:center}
+  .action-bar{justify-content:center}
+  .container{padding:12px}
+  .input-section{padding:20px}
+  .header{padding:30px 15px 20px}
 }
 </style>
 </head>
 <body>
 
 <div class="warning-banner">
-  <span>&#9888;</span> FOR ENTERTAINMENT ONLY &mdash; DON'T ACTUALLY SEND THIS <span>&#9888;</span>
+  <span>&#9888;</span> FOR ENTERTAINMENT ONLY <span>&#8212;</span> DON'T ACTUALLY SEND THIS <span>&#9888;</span>
 </div>
 
-<header>
-  <h1>The <span class="accent">Legendary</span> Resignation Letter</h1>
-  <p class="subtitle">"I came, I saw, I updated my LinkedIn."</p>
-</header>
+<div class="header">
+  <h1>The Resignation Letter Generator</h1>
+  <p>Because quitting should be an art form</p>
+</div>
 
 <div class="container">
-  <div class="input-section">
-    <h2>Compose Your Departure</h2>
 
+  <div class="stats">
+    <div class="stat"><div class="num">200+</div><div class="label">Templates</div></div>
+    <div class="stat"><div class="num">5</div><div class="label">Styles</div></div>
+    <div class="stat"><div class="num">6</div><div class="label">Stationery</div></div>
+    <div class="stat"><div class="num">0</div><div class="label">Letters Sent (Hopefully)</div></div>
+  </div>
+
+  <div class="input-section">
+    <h2>Your Exit Details</h2>
     <div class="form-row">
       <div class="form-group">
-        <label for="jobTitle">Your Job Title</label>
-        <input type="text" id="jobTitle" placeholder="e.g. Senior Synergy Architect">
+        <label>Your Name</label>
+        <input type="text" id="userName" placeholder="e.g. Alex Johnson">
       </div>
       <div class="form-group">
-        <label for="bossName">Boss's Name (optional)</label>
+        <label>Job Title</label>
+        <input type="text" id="jobTitle" placeholder="e.g. Senior Software Engineer">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Reason for Leaving</label>
+        <input type="text" id="reason" placeholder="e.g. toxic management, better offer, pursuing dreams">
+      </div>
+      <div class="form-group">
+        <label>Boss's Name (optional)</label>
         <input type="text" id="bossName" placeholder="e.g. Karen from HR">
       </div>
     </div>
-
     <div class="form-row">
       <div class="form-group">
-        <label for="company">Company Name</label>
-        <input type="text" id="company" placeholder="e.g. Initech Corp">
+        <label>Company Name (optional)</label>
+        <input type="text" id="companyName" placeholder="e.g. Initech">
       </div>
       <div class="form-group">
-        <label for="yourName">Your Name</label>
-        <input type="text" id="yourName" placeholder="e.g. A Free Spirit">
+        <label>Years at Company (optional)</label>
+        <input type="number" id="yearsWorked" placeholder="e.g. 3" min="0" max="50">
       </div>
     </div>
 
-    <div class="form-group" style="margin-bottom:20px">
-      <label for="reason">Reason for Leaving</label>
-      <textarea id="reason" placeholder="e.g. The free snacks stopped being free"></textarea>
+    <div class="form-group"><label>Select Your Style</label></div>
+    <div class="style-selector">
+      <button class="style-btn active" data-style="professional"><span class="icon">&#128084;</span>Professional</button>
+      <button class="style-btn" data-style="dramatic"><span class="icon">&#127917;</span>Dramatic</button>
+      <button class="style-btn" data-style="passive-aggressive"><span class="icon">&#128578;</span>Passive-Aggressive</button>
+      <button class="style-btn" data-style="heroic"><span class="icon">&#9876;</span>Heroic</button>
+      <button class="style-btn" data-style="haiku"><span class="icon">&#127800;</span>Haiku</button>
     </div>
 
-    <label style="font-weight:600;font-size:0.95rem;color:#4a3c32;display:block;margin-bottom:10px">Choose Your Style</label>
-    <div class="style-grid">
-      <button class="style-btn active" data-style="professional" onclick="selectStyle(this)">
-        <span class="icon">&#128084;</span><span class="label">Professional</span>
-      </button>
-      <button class="style-btn" data-style="dramatic" onclick="selectStyle(this)">
-        <span class="icon">&#127917;</span><span class="label">Dramatic</span>
-      </button>
-      <button class="style-btn" data-style="passive" onclick="selectStyle(this)">
-        <span class="icon">&#128578;</span><span class="label">Passive-Aggressive</span>
-      </button>
-      <button class="style-btn" data-style="heroic" onclick="selectStyle(this)">
-        <span class="icon">&#9876;&#65039;</span><span class="label">Heroic</span>
-      </button>
-      <button class="style-btn" data-style="burn" onclick="selectStyle(this)">
-        <span class="icon">&#128293;</span><span class="label">Burn Bridges</span>
-      </button>
-      <button class="style-btn" data-style="haiku" onclick="selectStyle(this)">
-        <span class="icon">&#127800;</span><span class="label">Haiku</span>
-      </button>
-    </div>
-
-    <div class="chaos-section">
-      <label>Chaos Level</label>
-      <div class="chaos-meter">
-        <span>Mild</span>
-        <input type="range" id="chaosLevel" min="1" max="10" value="5" oninput="updateChaos()">
-        <span>Unhinged</span>
-        <div class="chaos-value" id="chaosDisplay">5 - Spicy</div>
+    <div class="stationery-selector">
+      <label>Stationery Theme</label>
+      <div class="stationery-btns">
+        <button class="stationery-btn active" data-theme="classic">Classic</button>
+        <button class="stationery-btn" data-theme="executive">Executive</button>
+        <button class="stationery-btn" data-theme="kraft">Kraft Paper</button>
+        <button class="stationery-btn" data-theme="legal">Legal Pad</button>
+        <button class="stationery-btn" data-theme="love">Love Letter</button>
+        <button class="stationery-btn" data-theme="ransom">Ransom Note</button>
       </div>
     </div>
 
-    <button class="generate-btn" onclick="generateLetter()">&#9998; Generate My Legendary Letter</button>
+    <button class="generate-btn" onclick="generateLetter()">&#9997; Generate My Resignation</button>
   </div>
 
-  <div class="letter-wrapper" id="letterWrapper">
-    <div class="letter-actions">
-      <button class="action-btn" onclick="copyLetter()">&#128203; Copy</button>
+  <div class="letter-container" id="letterContainer">
+    <div class="action-bar">
+      <button class="action-btn" id="copyBtn" onclick="copyLetter()">&#128203; Copy</button>
       <button class="action-btn" onclick="printLetter()">&#128424; Print</button>
-      <button class="action-btn" id="readBtn" onclick="readLetter()">&#127908; Read Aloud</button>
-      <button class="action-btn" onclick="shareLetter()">&#128228; Share</button>
-      <button class="action-btn" onclick="generateLetter()">&#127922; Regenerate</button>
+      <button class="action-btn" onclick="readAloud()">&#128266; Read Aloud</button>
+      <button class="action-btn" onclick="stopReading()">&#9209; Stop</button>
+      <button class="action-btn" onclick="shuffleLetter()">&#127922; Shuffle</button>
+      <button class="action-btn" onclick="openShareModal()">&#128228; Share</button>
     </div>
-    <div class="letter-container" id="letterContainer">
-      <div class="chaos-badge" id="chaosBadge"></div>
-      <div class="letter-header">
-        <div class="letter-date" id="letterDate"></div>
-        <div class="letter-from" id="letterFrom"></div>
-        <div class="letter-title-line" id="letterTitleLine"></div>
-      </div>
-      <div class="letter-body" id="letterBody"></div>
-      <div class="seal-stamp" id="sealStamp">OFFICIALLY DONE</div>
+    <div class="letter theme-classic" id="letterOutput"></div>
+  </div>
+
+</div>
+
+<div class="share-modal" id="shareModal">
+  <div class="share-modal-content">
+    <h3>Share This Masterpiece</h3>
+    <p style="color:var(--muted);margin-bottom:16px;font-size:14px">(Remember: for laughs only!)</p>
+    <div class="share-options">
+      <button class="share-option" onclick="shareTwitter()">&#128038; Share on X / Twitter</button>
+      <button class="share-option" onclick="shareEmail()">&#128231; Share via Email</button>
+      <button class="share-option" onclick="copyShareLink()">&#128279; Copy as Text</button>
     </div>
+    <button class="share-close" onclick="closeShareModal()">Close</button>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<div class="footer">
+  <p>Made for laughs, not lawsuits. <strong>Please don't actually send these.</strong></p>
+  <p style="margin-top:8px">If you're genuinely unhappy at work, talk to someone you trust.</p>
+</div>
+
 <script>
-let currentStyle = 'professional';
-let speaking = false;
-let utterance = null;
+let currentStyle='professional',currentTheme='classic',currentLetterText='',speechUtterance=null;
 
-const chaosLabels = [
-  '1 - Polite','2 - Hints','3 - Pointed','4 - Sassy','5 - Spicy',
-  '6 - Scorching','7 - Savage','8 - Nuclear','9 - Apocalyptic','10 - Unhinged'
-];
-const chaosColors = [
-  '#27ae60','#2ecc71','#f1c40f','#f39c12','#e67e22',
-  '#e74c3c','#c0392b','#8e44ad','#6c3483','#1a1a2e'
-];
+document.querySelectorAll('.style-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');currentStyle=btn.dataset.style;
+  });
+});
+document.querySelectorAll('.stationery-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.stationery-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');currentTheme=btn.dataset.theme;
+    const letter=document.getElementById('letterOutput');
+    letter.className='letter theme-'+currentTheme;
+    if(currentTheme==='ransom'&&currentLetterText)applyRansomStyle();
+  });
+});
 
-function updateChaos(){
-  const v = document.getElementById('chaosLevel').value;
-  const d = document.getElementById('chaosDisplay');
-  d.textContent = chaosLabels[v-1];
-  d.style.background = chaosColors[v-1];
-  d.style.color = v > 5 ? '#fff' : '#2c1810';
-}
-updateChaos();
-
-function selectStyle(btn){
-  document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  currentStyle = btn.dataset.style;
-}
-
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)] }
-
-// ---- TEMPLATES (40+ per style) ----
-const templates = {
-professional: [
-  (d)=>`Dear ${d.boss},\n\nAfter considerable reflection and ${d.chaos>5?'approximately 347 sleepless nights':'careful deliberation'}, I am writing to formally tender my resignation from my position as ${d.title} at ${d.company}, effective two weeks from today.\n\n${d.reason?`The primary catalyst for this decision is: ${d.reason}. `:''}While my tenure here has been ${pick(['educational','character-building','an experience I will carry with me','certainly something'])}${ d.chaos>7?', much like a prison sentence that builds character':''}, I believe it is time to pursue opportunities more aligned with my ${d.chaos>5?'desire to actually enjoy Mondays':'professional aspirations'}.\n\nI am committed to ensuring a smooth transition and will ${d.chaos>7?'leave detailed sticky notes on my monitor':'prepare comprehensive documentation'} during my remaining time.\n\nWith ${d.chaos>5?'the last remaining shred of my':'sincere'} professional regards,`,
-  (d)=>`To Whom It May Concern,\n\nThis letter serves as formal notification of my resignation from ${d.company}, where I have served as ${d.title}.\n\n${d.reason?`My departure is motivated by the following: ${d.reason}. `:''}I have ${pick(['thoroughly','carefully','extensively'])} evaluated my career trajectory and concluded that ${d.chaos>6?'continuing here would require a level of delusion I can no longer maintain':'my skills would be better utilized elsewhere'}.\n\nI wish ${d.company} ${d.chaos>7?'all the luck it will desperately need':'continued success'} in its future endeavors.\n\nProfessionally yours,`,
-  (d)=>`Dear ${d.boss},\n\nPlease accept this letter as formal notice of my resignation from the role of ${d.title} at ${d.company}.\n\n${d.reason?`This decision stems from: ${d.reason}. `:''}I want to express my ${d.chaos>6?'complicated':'sincere'} gratitude for the ${pick(['opportunities','experiences','life lessons','survival skills'])} gained during my time here. ${d.chaos>7?'Particularly the ability to smile through meetings that should have been emails.':''}\n\nI am prepared to ${d.chaos>6?'train my replacement, assuming you can find someone willing':'assist in the transition process'}.\n\nRespectfully,`,
-  (d)=>`Dear ${d.boss},\n\nI am writing to inform you of my decision to resign from my position as ${d.title}, effective at the conclusion of the standard notice period.\n\n${d.reason?`The driving factor: ${d.reason}. `:''}The ${pick(['skills','patience','conflict resolution abilities','stress tolerance'])} I have developed at ${d.company} will ${d.chaos>5?'serve me well in therapy':'undoubtedly benefit me in future roles'}.\n\nThank you for ${d.chaos>7?'the memories, both the ones I cherish and the ones I am actively repressing':'this chapter of my career'}.\n\nWith professional courtesy,`,
-  (d)=>`Dear Human Resources,\n\nKindly process my resignation from ${d.title} at ${d.company}.\n\n${d.reason?`Reason for departure: ${d.reason}. `:''}${d.chaos>5?'I have included all necessary forms, because unlike this organization, I believe in following processes.':'I trust this satisfies all administrative requirements.'}\n\nI will ${d.chaos>7?'be available for questions, but not for guilt trips':'remain reachable during the transition period'}.\n\nRegards,`,
-  (d)=>`Dear ${d.boss},\n\nAfter ${pick(['extensive soul-searching','a long conversation with my ceiling fan at 3am','reviewing my life choices'])} I have decided to resign from ${d.title} at ${d.company}.\n\n${d.reason?`The catalyst was simple: ${d.reason}. `:''}I ${d.chaos>6?'will miss the free coffee, though not enough to stay':'leave with fond memories'}.\n\nI am happy to ${d.chaos>7?'pretend to care during my notice period':'ensure a seamless handover'}.\n\nWarmly,`,
-  (d)=>`Dear ${d.boss},\n\nThis letter constitutes my official resignation from ${d.company} as ${d.title}.\n\n${d.reason?`My rationale: ${d.reason}. `:''}I have learned ${d.chaos>6?'exactly what I do not want in a career':'many valuable lessons here'}. ${d.chaos>7?'Chief among them: always have an exit strategy.':''}\n\nI commit to a professional departure and wish everyone ${d.chaos>5?'the emotional resilience they will need':'the very best'}.\n\nSincerely,`,
-  (d)=>`Dear ${d.boss},\n\nI resign. ${d.chaos>3?'Wait, let me be more formal.':''}\n\nI, the undersigned ${d.title}, do hereby formally and irrevocably tender my resignation from ${d.company}.\n\n${d.reason?`The precipitating factor: ${d.reason}. `:''}I shall remember my time here ${d.chaos>6?'the way one remembers a root canal: with relief that it is over':'with appreciation'}.\n\n${d.chaos>7?'My badge is on my desk. My spirit left months ago.':'Please advise on next steps.'}\n\nWith finality,`,
+const T={
+professional:[
+(d)=>`Dear ${d.boss},\n\nAfter ${d.years?d.years+' years of':'careful'} reflection on my tenure as ${d.title} at ${d.company}, I have decided to pursue new opportunities that better align with my professional trajectory.\n\nMy last day will be two weeks from today. I am committed to ensuring a seamless transition and will prepare comprehensive documentation of my current responsibilities.\n\nI appreciate the growth opportunities provided during my time here${d.reason?', though '+d.reason+' has been a significant factor in my decision':''}.\n\nSincerely,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease accept this letter as formal notification that I am resigning from my position as ${d.title}, effective two weeks from today's date.\n\n${d.reason?'Due to '+d.reason+', I':'I'} have made the decision to move forward with the next chapter of my career. ${d.years?'The '+d.years+' years I have spent at '+d.company+' have been invaluable.':''}\n\nThank you for the opportunity to contribute to ${d.company}'s mission. I wish the team continued success.\n\nBest regards,\n${d.name}`,
+(d)=>`To ${d.boss} and the Leadership Team,\n\nI am writing to inform you of my resignation from ${d.company}, where I have served as ${d.title}. My final working day will be [date].\n\n${d.reason?'While I have valued my time here, '+d.reason+' has led me to this decision.':'This was not an easy decision.'} I am grateful for the professional development and relationships built during my tenure${d.years?' of '+d.years+' years':''}.\n\nI am prepared to assist with the transition in any way that is helpful.\n\nWarm regards,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nIt is with mixed emotions that I submit my resignation as ${d.title} at ${d.company}.\n\nI have accepted a position that will challenge me in new ways${d.reason?' and addresses my concerns regarding '+d.reason:''}. ${d.years?'My '+d.years+' years here have shaped me professionally in ways I deeply appreciate.':''}\n\nI propose a transition period of two weeks to ensure minimal disruption to ongoing projects.\n\nThank you for your understanding.\n\nRespectfully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAfter thoughtful deliberation, I have decided to resign from my role as ${d.title}.\n\nThis decision was not made lightly. ${d.reason?'Ultimately, '+d.reason+' has been the primary catalyst for this change.':'I believe this is the right move for my career at this juncture.'}\n\n${d.years?'I want to express my sincere gratitude for the '+d.years+' years of collaboration and growth at '+d.company+'.':'I am thankful for the experience gained at '+d.company+'.'}\n\nI will ensure all deliverables are in order before my departure.\n\nWith appreciation,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI hereby tender my resignation from ${d.company} as ${d.title}, to take effect in fourteen business days.\n\nI will prepare a detailed handover document covering all ongoing initiatives, key contacts, and pending items. ${d.reason?'While '+d.reason+' has factored into my decision, I':'I'} leave with nothing but respect for the work we have accomplished together.\n\nPlease let me know how I can make this transition as smooth as possible.\n\nProfessionally yours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease consider this my formal two weeks' notice. I am resigning as ${d.title} effective [date].\n\nI have enjoyed working with the team at ${d.company}${d.years?' for the past '+d.years+' years':''}. ${d.reason?'However, '+d.reason+' has prompted me to seek new horizons.':'I am excited about the opportunities ahead.'}\n\nI remain available to support the transition and answer any questions after my departure.\n\nKind regards,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI want to personally inform you that I have decided to resign from my position as ${d.title} at ${d.company}.\n\nThis has been one of the most difficult decisions of my career. ${d.years?'Over '+d.years+' years, I have learned and grown tremendously.':''} ${d.reason?'Ultimately, '+d.reason+' has led me to conclude that a change is necessary.':''}\n\nI commit to making this a clean, professional transition.\n\nWith sincere thanks,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nEffective two weeks from today, I will be stepping down from my role as ${d.title}.\n\n${d.company} has been ${d.years?'my professional home for '+d.years+' years':'a significant part of my career'}. ${d.reason?'My decision stems from '+d.reason+', which I have considered at length.':'I have given this careful thought.'}\n\nI wish ${d.company} and the entire team every success.\n\nFaithfully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am tendering my resignation as ${d.title} at ${d.company}. My last day will be in two weeks.\n\nI want to thank you for the mentorship and opportunities${d.years?' over the past '+d.years+' years':''}. ${d.reason?'While '+d.reason+' has influenced this decision, ':''}I leave with gratitude and positive memories.\n\nI will complete all outstanding work before my departure.\n\nBest wishes,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am writing to notify you of my intention to resign as ${d.title}, with my last day being two weeks from today.\n\nI appreciate ${d.company}'s investment in my professional development${d.years?' over these '+d.years+' years':''}. ${d.reason?'However, after much consideration, '+d.reason+' is guiding me toward a new path.':''}\n\nI am happy to train my replacement and ensure continuity.\n\nGratefully,\n${d.name}`,
+(d)=>`To Whom It May Concern,\n\nI formally resign from ${d.title} at ${d.company}, effective in two weeks.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' has been a defining factor in this decision.':'I believe this is the right time for a change.'} ${d.years?'After '+d.years+' years of dedicated service, ':''}I am confident in this decision.\n\nPlease confirm receipt of this letter.\n\nYours truly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nWith this letter, I am officially resigning from ${d.company} as ${d.title}.\n\nI have been offered an opportunity that aligns more closely with my long-term goals${d.reason?', particularly given '+d.reason:''}. ${d.years?'The '+d.years+' years here have been meaningful and productive.':''}\n\nI propose we schedule time this week to discuss transition logistics.\n\nBest,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAfter extensive soul-searching, I've arrived at the decision to leave ${d.company} and my role as ${d.title}.\n\nThis company has given me ${d.years?d.years+' years of':''} incredible experiences and learning. ${d.reason?'That said, '+d.reason+' has made it clear that my next chapter lies elsewhere.':'I am ready for a new challenge.'}\n\nI'll ensure everything is buttoned up before I go.\n\nSincerely,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease accept my formal resignation from the role of ${d.title} at ${d.company}.\n\nI am grateful for the trust placed in me${d.years?' over '+d.years+' years':''} and for the chance to work alongside such talented colleagues. ${d.reason?'As '+d.reason+' has become increasingly important to me, I must pursue a different path.':''}\n\nMy last day will be two weeks from today.\n\nThank you,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm resigning from ${d.title} at ${d.company}, with two weeks' notice starting today.\n\n${d.years?'In my '+d.years+' years here, I have':'I have'} grown both personally and professionally. ${d.reason?'Nevertheless, '+d.reason+' has pointed me toward new opportunities.':'I look forward to what comes next.'}\n\nI will prepare thorough handover notes for my successor.\n\nAll the best,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am notifying you of my decision to resign as ${d.title} at ${d.company}, effective in 14 days.\n\n${d.reason?'The primary driver of this decision is '+d.reason+'. ':''}I have valued the collaborative environment and the lessons learned${d.years?' during my '+d.years+'-year tenure':''}.\n\nI will ensure a comprehensive knowledge transfer.\n\nRegards,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis letter serves as notice of my resignation from the position of ${d.title}.\n\nI have decided to pursue opportunities that better suit my evolving career objectives${d.reason?', particularly in light of '+d.reason:''}. ${d.years?'My '+d.years+' years at '+d.company+' have been a chapter I look back on with pride.':''}\n\nThank you for everything.\n\nCordially,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI write to confirm my resignation from ${d.company}, effective two weeks from today. My role as ${d.title} has been rewarding${d.years?' across '+d.years+' years':''}.\n\n${d.reason?'Given '+d.reason+', I believe this change is both timely and necessary.':'This feels like the right time for a transition.'}\n\nI will do everything in my power to ensure a seamless handoff.\n\nThank you for your guidance,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAfter considerable thought, I've chosen to submit my resignation as ${d.title} at ${d.company}.\n\n${d.years?'These '+d.years+' years have been transformative.':'My time here has been meaningful.'} ${d.reason?'Ultimately, '+d.reason+' requires me to chart a new course.':'I am ready for new challenges.'}\n\nI'd like to leave things in the best possible state. Let's coordinate on next steps.\n\nWith deep respect,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI regret to inform you that I must resign from my position as ${d.title}${d.company?' at '+d.company:''}.\n\n${d.reason?'This decision is driven by '+d.reason+'. ':''}${d.years?'After '+d.years+' years, ':''}I feel it is time to explore new directions. I remain proud of what we accomplished together.\n\nMy last day will be two weeks from today.\n\nGratefully yours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease accept this as my formal resignation, effective two weeks from today. I am leaving my role as ${d.title} at ${d.company}.\n\n${d.reason?'While '+d.reason+' has contributed to this decision, I':'I'} want to emphasize that I have nothing but respect for this organization${d.years?' after '+d.years+' fulfilling years':''}.\n\nI am committed to an orderly transition.\n\nThank you and farewell,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm formally resigning as ${d.title}, effective in two weeks.\n\n${d.company} has been an exceptional place to grow${d.years?' for the last '+d.years+' years':''}. ${d.reason?'But '+d.reason+' has brought me to a crossroads, and I must take the other path.':'It is simply time.'}\n\nI'll leave things in good hands.\n\nWarmly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am giving my two weeks' notice and resigning from ${d.title} at ${d.company}.\n\n${d.reason?'I have thought long and hard about this. '+d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' has made it clear that I need to move on.':'I have decided to pursue a new direction.'} ${d.years?'I will always remember my '+d.years+' years here fondly.':''}\n\nLet me know how I can help during the transition.\n\nWith gratitude,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nConsider this my notice of resignation from the ${d.title} position at ${d.company}.\n\n${d.years?'My '+d.years+'-year journey here has been one of growth and learning. ':''}${d.reason?'However, '+d.reason+' demands that I redirect my efforts.':'A new opportunity has presented itself that I cannot pass up.'}\n\nI will tie up all loose ends before my departure in two weeks.\n\nMost sincerely,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis letter confirms my resignation from ${d.company} as ${d.title}. My final day will be two weeks from the date of this letter.\n\n${d.reason?'I want to be transparent: '+d.reason+' is the reason I am leaving.':'I am pursuing an opportunity more aligned with my goals.'} ${d.years?'These '+d.years+' years have equipped me well for what lies ahead.':''}\n\nThank you for the experience.\n\nFondly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI submit my resignation from ${d.title} at ${d.company}, with today beginning my two-week notice period.\n\nI am proud of the work I contributed here${d.years?' over '+d.years+' years':''}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' has ultimately guided this choice.':'I am enthusiastic about the road ahead.'}\n\nI will prepare a transition plan by end of week.\n\nYours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAfter much deliberation, I've reached the decision to resign as ${d.title}.\n\n${d.company} and the team have meant a great deal to me${d.years?' over these '+d.years+' years':''}. ${d.reason?'That said, '+d.reason+' is something I can no longer overlook.':'A chapter ends so a new one can begin.'}\n\nI pledge a clean, professional handover.\n\nWith highest regards,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm writing to tender my resignation as ${d.title}.\n\nThe skills and experience gained at ${d.company}${d.years?' over the past '+d.years+' years':''} have been invaluable to my career. ${d.reason?'My departure is motivated by '+d.reason+', and I wish things were different.':''}\n\nI'll work diligently through my final two weeks.\n\nThank you once more,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am resigning from my position as ${d.title}. My employment at ${d.company} will end in two weeks.\n\n${d.reason?'I feel compelled to be candid: '+d.reason+' is at the heart of this decision.':'I believe this is the right next step for me.'} ${d.years?'Still, the '+d.years+' years here represent some of the best of my career.':''}\n\nThank you for the opportunity.\n\nBest,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis letter is to inform you of my resignation from ${d.company} as ${d.title}.\n\n${d.years?'After '+d.years+' years, ':''}I have decided to pursue new challenges that align more closely with my professional aspirations${d.reason?', especially considering '+d.reason:''}.\n\nI am available to discuss transition details at your convenience.\n\nRespectfully submitted,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm providing my official notice of resignation from ${d.title} at ${d.company}.\n\nI want to express my genuine appreciation for the opportunities, mentorship, and camaraderie${d.years?' over '+d.years+' rewarding years':''}. ${d.reason?'However, '+d.reason+' requires that I make this difficult change.':''}\n\nMy last working day will be two weeks from today.\n\nSincerely grateful,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI wish to formally resign from my role as ${d.title} at ${d.company}. Please consider this letter as my two weeks' notice.\n\n${d.reason?'Having reflected on '+d.reason+', I':'I'} am confident this is the right decision for my career trajectory. ${d.years?'I am thankful for the '+d.years+' years of professional growth.':''}\n\nI will ensure all projects are properly transitioned.\n\nWith warm regards,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am resigning as ${d.title} at ${d.company}.\n\n${d.years?'In '+d.years+' years, I have':'I have'} had the privilege of working with extraordinary colleagues on meaningful projects. ${d.reason?'Yet '+d.reason+' has made staying untenable.':'A new chapter calls.'}\n\nI will honor my two-week notice in full.\n\nRespectfully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am writing to announce my departure from ${d.company} and the ${d.title} role.\n\nThis decision follows careful consideration of my career goals${d.reason?' and the reality of '+d.reason:''}. ${d.years?'My '+d.years+' years of service reflect a commitment I am proud of.':''}\n\nI look forward to staying in touch and will ensure a thorough transition.\n\nAll my best,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI hereby resign from ${d.title} at ${d.company}.\n\nThe decision did not come easily. ${d.years?d.years+' years is a significant investment, and I do not take it lightly. ':''}${d.reason?'But '+d.reason+' has tipped the scales.':'New opportunities await.'}\n\nI'll do everything to leave on the best possible terms.\n\nThank you,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nEffective in two weeks, I resign from ${d.title}.\n\nI am relocating my professional efforts toward opportunities that better match my ambitions${d.reason?', driven in part by '+d.reason:''}. ${d.company} has been${d.years?' my home for '+d.years+' years and':''} a place of significant growth.\n\nI will leave things in excellent shape.\n\nVery best,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAfter a great deal of thought, I've decided to move on from ${d.company}. I am resigning as ${d.title} with two weeks' notice.\n\n${d.reason?'The catalyst for this change is '+d.reason+'. ':''}${d.years?'My '+d.years+' years here have been a privilege.':'Working here has been a privilege.'}\n\nThank you for everything. I wish you and the team every success.\n\nGratefully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI am giving formal notice of my resignation as ${d.title}. My last day at ${d.company} will be two weeks from today.\n\nI have grown immensely in this role${d.years?' over '+d.years+' years':''}, and I am thankful. ${d.reason?'However, '+d.reason+' has prompted a necessary change of direction.':''}\n\nI will complete a full handover.\n\nWith thanks,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease accept this letter as my resignation from ${d.title} at ${d.company}.\n\nI cherish the relationships built and the skills honed during my time here${d.years?' ('+d.years+' years that flew by)':''}. ${d.reason?'Ultimately, '+d.reason+' has led me to seek change.':''}\n\nI am at your disposal for transition planning.\n\nRespectfully yours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI resign from ${d.title} at ${d.company}. Consider this the start of my two-week notice.\n\nI've weighed this carefully against the positives: great colleagues, meaningful work${d.years?', '+d.years+' years of memories':''}. ${d.reason?'In the end, '+d.reason+' tipped my decision.':'Ultimately, growth requires change.'}\n\nI will leave my desk cleaner than I found it.\n\nAll the best,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nConsider this my notice. I am resigning from ${d.company} as ${d.title}.\n\n${d.years?d.years+' years. ':''}That is how long I have had the pleasure of contributing to this organization. ${d.reason?'But now, '+d.reason+' has set a new course for me.':'It is time for a new adventure.'}\n\nTwo weeks remain. Let us make them count.\n\nYours truly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI wish to inform you that I am resigning from my role as ${d.title}, effective in two weeks.\n\nMy time at ${d.company}${d.years?' spanning '+d.years+' years':''} has been enriching. ${d.reason?'However, '+d.reason+' means I must look elsewhere for fulfillment.':'I am ready for the next challenge.'}\n\nI am happy to assist in finding and training my replacement.\n\nThank you sincerely,\n${d.name}`,
 ],
 
-dramatic: [
-  (d)=>`${d.boss}, hear me now.\n\nThe curtain falls. The final act of my tenure as ${d.title} at ${d.company} has reached its ${pick(['devastating','thunderous','inevitable'])} conclusion.\n\n${d.reason?`What drove me to this precipice? ${d.reason}. `:''}Like Icarus, I flew too close to the fluorescent lights of this office, and my wings of ambition have ${d.chaos>5?'melted into a puddle of corporate disillusionment':'carried me as far as they can'}.\n\n${d.chaos>7?'I shall exit through the front door, but my legend shall haunt these cubicles for generations.':'I depart with the gravity this moment deserves.'}\n\nThe world awaits. I answer its call.\n\n*drops mic*`,
-  (d)=>`*A spotlight appears. A single figure steps forward.*\n\nFriends, colleagues, ${d.boss}... lend me your ears.\n\nI come not to praise ${d.company}, but to leave it. ${d.reason?`For ${d.reason} has shown me the truth.`:''} What is a ${d.title} but a ${pick(['vessel of unfulfilled potential','prisoner with a lanyard','soul trapped in a Slack channel'])}?\n\n${d.chaos>7?'Let the record show: I gave this company the best minutes of my day, right after lunch and before 3pm.':'My contributions here speak for themselves.'}\n\nAnd so, with ${d.chaos>6?'the dramatic flair this moment demands':'heavy heart'}, I bid you... adieu.\n\n*exits stage left, cape billowing*`,
-  (d)=>`TO THE HALLS OF ${d.company.toUpperCase()}, I SPEAK MY FINAL WORDS.\n\nI, ${d.title} no more, cast off these chains of ${pick(['mediocrity','endless standups','mandatory fun','corporate synergy'])}.\n\n${d.reason?`The universe whispered: "${d.reason}." And I listened.`:''}\n\n${d.chaos>7?'Like a phoenix, I rise from the ashes of my cubicle. Unlike a phoenix, I will not be returning.':'This ending is but a new beginning.'}\n\nMay future generations of employees find the strength I now summon. May the break room microwave finally be cleaned.\n\nForever changed,`,
-  (d)=>`*thunder rumbles*\n\n${d.boss}...\n\nThere comes a moment in every ${d.title}'s life when the weight of ${pick(['pointless meetings','corporate jargon','that one coworker who microwaves fish'])} becomes too great to bear.\n\n${d.reason?`And that moment was crystallized when ${d.reason}.`:''}\n\nI have ${d.chaos>6?'performed my role with Oscar-worthy dedication':'given my all'}. But even the greatest actors must ${d.chaos>7?'stop pretending they care about Q3 targets':'take their final bow'}.\n\n*single tear rolls down cheek*\n\nThis is that bow.`,
-  (d)=>`PROLOGUE: A ${d.title} walks into ${d.company}.\nEPILOGUE: A ${d.title} walks out, forever changed.\n\n${d.reason?`ACT II, Scene 3: "${d.reason}" - the turning point.\n\n`:''}${d.boss}, you were ${d.chaos>7?'simultaneously the best and worst character in this tragicomedy':'a notable part of this journey'}. The supporting cast of coworkers played their parts ${pick(['adequately','with varying degrees of enthusiasm','memorably'])}.\n\nBut every epic must end. Mine ends now.\n\n*orchestral swell*\n\nFIN.`,
-  (d)=>`Dear ${d.boss},\n\nIf you are reading this, it means I have finally found the courage to do what I should have done ${d.chaos>7?'the moment I saw the parking situation':'long ago'}.\n\n${d.reason?`${d.reason} was merely the final straw on a camel already in traction.`:''}\n\nAs ${d.title}, I have witnessed things. ${pick(['The budget meetings.','The "quick syncs" that lasted hours.','The motivational posters masking existential dread.','The printer. Oh, the printer.'])} I carry these scars with ${d.chaos>6?'a therapist on speed dial':'dignity'}.\n\nI go now, into the light.\n\nDramatically yours,`,
-  (d)=>`[NARRATOR VOICE]\n\nAnd so it was, in the ${pick(['twilight','autumn','final hours'])} of their career at ${d.company}, the ${d.title} made a decision that would echo through the ages.\n\n${d.reason?`"${d.reason}," they whispered to the void. The void whispered back: "Yeah, that tracks."\n\n`:''}"${d.boss}," they declared, rising from their ${pick(['ergonomic','slowly disintegrating','spiritually draining'])} office chair, "I resign."\n\n${d.chaos>7?'The office plants wept. The printer jammed one final time in solidarity.':'A respectful silence fell over the office.'}\n\nTHE END.`,
-  (d)=>`My dearest ${d.boss},\n\nBy the time you read these words, I will have already ${pick(['updated my LinkedIn','cleared my browser history','returned my badge with theatrical slowness'])}.\n\n${d.reason?`It was ${d.reason} that finally broke the spell.`:''} I awoke from the dream of being ${d.title} at ${d.company} and found myself ${d.chaos>7?'questioning every life choice that led me to this fluorescent purgatory':'ready for a new chapter'}.\n\nRemember me not as I was in those 9am meetings, but as the person I was on ${pick(['Casual Friday','the days I worked from home','the company retreat where I truly shone'])}.\n\nEternally,`,
+dramatic:[
+(d)=>`${d.boss},\n\nThe curtain falls. The final act draws to a close.\n\nI, ${d.name}, once a proud ${d.title} of ${d.company}, hereby declare my EMANCIPATION from this gilded cage.\n\n${d.reason?'For too long, '+d.reason+' has been the dark cloud over my cubicle.':'For too long, I have smiled through the pain of mandatory fun.'} ${d.years?'For '+d.years+' years, I have given this company my blood, my sweat, and my lunch breaks.':'I have given everything.'}\n\nToday, I choose FREEDOM.\n\nThe legend exits stage left,\n${d.name}`,
+(d)=>`To ${d.boss} and all who bear witness,\n\nLet it be known across all departments, floors, and Slack channels:\n\nI, ${d.name}, ${d.title}, DO HEREBY RESIGN from ${d.company}.\n\n${d.reason?'*Thunder crashes* '+d.reason+'! THAT is what brought me to this moment!':'*Thunder crashes* This moment has been building for eons!'} ${d.years?'For '+d.years+' years I endured!':''}\n\nI go now to a land beyond quarterly reviews and KPIs. Do not follow me. Do not email me. Especially do not add me to any more group chats.\n\nForever and dramatically,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nIf you are reading this, I have already updated my LinkedIn.\n\nMy time as ${d.title} at ${d.company} is over. Not with a whimper, but with the THUNDERING CRESCENDO of someone who has FINALLY learned to say NO to unpaid overtime.\n\n${d.reason?d.reason.toUpperCase()+'. There. I said it.':'THE TRUTH HAS SET ME FREE.'} ${d.years?'After '+d.years+' years, the truth deserves to be spoken.':''}\n\nI leave behind my badge, my parking pass, and the shattered remains of my ergonomic chair.\n\nDramatically yours,\n${d.name}`,
+(d)=>`${d.boss}.\n\nSit down. You're going to want to be sitting for this.\n\nI. AM. LEAVING.\n\nNot tomorrow. Not next quarter. In two weeks, ${d.name} - the ${d.title} who held this place together with duct tape and sheer willpower - will walk out those doors for the LAST TIME.\n\n${d.reason?'Why? Because '+d.reason+'. You know exactly what I mean.':'Why? BECAUSE I DESERVE MORE THAN THIS.'} ${d.years?d.years+' years. '+d.years+' YEARS of my one precious life.':''}\n\nRemember my name.\n\n${d.name}`,
+(d)=>`[DRAMATIC MUSIC INTENSIFIES]\n\nDear ${d.boss},\n\nSome say a resignation letter should be brief and professional. Those people have never been a ${d.title} at ${d.company}.\n\n${d.reason?'They have never experienced '+d.reason+' and lived to tell the tale.':'They have never known what I have known.'} ${d.years?'They have not survived '+d.years+' years in the trenches.':''}\n\nSo no. This will not be brief. But it WILL be final.\n\nI resign. I RESIGN. I REEEESIGN.\n\nScene.\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n*slowly removes badge*\n*places it on desk*\n*turns to face the window*\n\nDo you remember the day you hired me as ${d.title}? I was so young. So naive. So willing to accept that salary.\n\n${d.years?d.years+' years later, I am older, wiser, and my back hurts from that chair you refused to replace.':'Time has changed me.'} ${d.reason?'And now... '+d.reason+'.':''}\n\nI am resigning from ${d.company}. This is my final act.\n\n*walks slowly toward the exit as the office goes silent*\n\n${d.name}`,
+(d)=>`TO: ${d.boss}\nFROM: The person you underestimated\nRE: MY GLORIOUS DEPARTURE\n\n${d.years?'For '+d.years+' years,':'For too long,'} I, ${d.name}, have carried the title of ${d.title} like a crown of thorns. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the final straw that broke the camel\'s beautifully arched back.':'No more.'}\n\nI resign from ${d.company}. I resign from the fluorescent lights. I resign from "circling back" and "touching base" and "synergizing."\n\nI am REBORN.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nHistory will remember this day.\n\nNot because of quarterly earnings. Not because of another pointless reorg. But because today, ${d.name} - ${d.title} extraordinaire - chose to FLY.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' tried to clip my wings. It failed.':'Nothing can clip my wings any longer.'} ${d.years?'In '+d.years+' years at '+d.company+', I have learned one thing:':'I have learned one thing:'} life is too short for bad coffee and worse management.\n\nI depart at dawn. (In two weeks.)\n\n${d.name}`,
+(d)=>`${d.boss},\n\nI could have sent a simple email. A polite two-liner. A smile and a handshake.\n\nBut that is not who I am. I am ${d.name}. I was your ${d.title}. And I am LEAVING ${d.company} with the same intensity I brought to every single project you took credit for.\n\n${d.reason?'You want a reason? '+d.reason+'. Boom.':''} ${d.years?'You want a timeline? '+d.years+' years of building my exit strategy.':''}\n\nTwo weeks notice starts NOW.\n\n*drops mic*\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nOnce upon a time, a young ${d.title} joined ${d.company} with stars in their eyes and a heart full of ambition.\n\n${d.years?d.years+' years passed.':'Time passed.'} The stars dimmed. The heart grew weary. ${d.reason?'And then... '+d.reason+' happened.':'And then, clarity struck like lightning.'}\n\nBut this is not a tragedy. This is a PHOENIX STORY.\n\nFrom the ashes of my cubicle, I rise. I RESIGN.\n\nFlying high,\n${d.name}`,
+(d)=>`BREAKING NEWS: ${d.name} RESIGNS\n\nIn what sources close to the ${d.title} are calling "the greatest career move since sliced bread," ${d.name} has officially tendered their resignation from ${d.company}.\n\n${d.reason?'"'+d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'," the departing employee said, adjusting their sunglasses dramatically.':'"It was time," the departing employee said, adjusting their sunglasses dramatically.'} ${d.years?'The '+d.years+'-year veteran leaves behind a legacy of excellence and at least three coffee mugs.':''}\n\nMore at 11.\n\n- ${d.name}, Correspondent`,
+(d)=>`Dear ${d.boss},\n\nI have seen things you people wouldn't believe. All-hands meetings that went for four hours. Deadlines moved so many times they achieved orbit. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+', like tears in rain.':'Performance reviews that made me question reality.'}\n\n${d.years?d.years+' years as '+d.title+'. ':''}All those moments will be lost in time, like my motivation after the third reorg.\n\nTime to resign.\n\n${d.name}`,
+(d)=>`${d.boss},\n\nThey told me I couldn't leave. They said "you're too valuable." They said "who will fix the printer?"\n\nBut I am MORE than a ${d.title}. I am more than ${d.company}. ${d.reason?'I am more than a person who has to deal with '+d.reason+'!':''}\n\n${d.years?'In '+d.years+' years, I have transformed from employee to LEGEND.':''} And legends don't stay in cubicles.\n\nI resign, effective in two weeks. Start the countdown.\n\n${d.name}`,
+(d)=>`[FADE IN: Interior, ${d.company} office, morning]\n\n${d.name} stands at their desk as ${d.title} for the last time. The fluorescent lights hum their eternal dirge.\n\n${d.name.toUpperCase()}: (to ${d.boss}) I'm leaving.\n\n${d.boss.toUpperCase()}: You can't! The project!\n\n${d.name.toUpperCase()}: ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'.':'Watch me.'} ${d.years?'(quietly) '+d.years+' years is enough.':''}\n\n[${d.name} places badge on desk, turns, walks toward the light]\n\n[CREDITS ROLL]\n\nDirected by ${d.name}`,
+(d)=>`Dear ${d.boss},\n\nRoses are red,\nViolets are blue,\nI quit as ${d.title},\nAnd I'm blaming you.\n\n${d.reason?'(Just kidding. I\'m blaming '+d.reason+'.)':'(Just kidding. I\'m blaming the vending machine.)'}\n\n${d.years?'After '+d.years+' years of rhyming my way through meetings,':'After years of creative survival,'} I bid ${d.company} a dramatic adieu.\n\nI resign. Applause, please.\n\nPoetically,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI always imagined this moment differently. Fireworks. A choir. Maybe one of those flash mobs.\n\nInstead, I'm writing a letter. But make no mistake - my resignation as ${d.title} from ${d.company} is the most EPIC event in this building's history.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the catalyst.':'The catalyst was DESTINY.'} ${d.years?d.years+' years of build-up.':''} The climax is NOW.\n\nTwo weeks. Then I vanish like a legend.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis is not a resignation letter. This is a DECLARATION OF INDEPENDENCE.\n\nI, ${d.name}, hold these truths to be self-evident: that all ${d.title}s are created equal, that they are endowed with certain unalienable rights, that among these are Life, Liberty, and the Pursuit of a Job That Doesn't Make Them Want to Scream.\n\n${d.reason?'WHEREAS '+d.reason+', and':'WHEREAS my soul demands freedom, and'} ${d.years?'WHEREAS '+d.years+' years of service is more than sufficient,':'WHEREAS enough is enough,'}\n\nI HEREBY DECLARE my freedom from ${d.company}.\n\nGod save the employee,\n${d.name}`,
+(d)=>`ATTENTION: ${d.boss}\n\nThis is your ${d.title} speaking. Or rather, your FORMER ${d.title}.\n\nI have hijacked this resignation letter to announce my departure from ${d.company}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' pushed me to the edge.':''} ${d.years?d.years+' years of turbulence. But I kept the plane in the air.':''}\n\nNow I am landing. For good.\n\nPlease return your expectations to their upright position and prepare for my absence.\n\nCaptain ${d.name}, signing off.`,
+(d)=>`Dear ${d.boss},\n\nI came. I saw. I resigned.\n\n${d.title} at ${d.company}? Been there. Done that. ${d.years?'For '+d.years+' whole years.':''} Got the t-shirt. (Actually, I didn't even get the t-shirt.)\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the final chapter.':'This is the final chapter.'}\n\nVeni, Vidi, Vamoosed.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nWhat you are holding is not just paper. It is a MANIFESTO. A testament to the human spirit.\n\nFor I, ${d.name}, after ${d.years?d.years+' years':'an eternity'} as ${d.title} at ${d.company}, have decided to DO THE UNTHINKABLE.\n\nI am leaving. On my own terms. With my head held high and my out-of-office permanently set.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. That is all the explanation you deserve.':'No explanation needed. Just respect.'}\n\nBravo to me,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n*orchestra swells*\n\nIn the grand opera of corporate life, every performer must eventually take their final bow. Today, the ${d.title} removes the costume.\n\n${d.years?'*'+d.years+' years of arias and crescendos*':''} ${d.reason?'*the tragic third act: '+d.reason+'*':''}\n\nThe audience (that's you) may weep. The critics (that's HR) may analyze. But the performer? The performer WALKS FREE.\n\nI resign from ${d.company}. Standing ovation optional.\n\nBrava,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nYou know that moment in movies where the hero finally breaks free? Where the music swells and everyone in the theater is silently cheering?\n\nTHIS IS THAT MOMENT.\n\n${d.name}. ${d.title}. ${d.company}. ${d.years?d.years+' years.':''} ${d.reason?d.reason+'.':''}\n\nDONE.\n\nRoll credits. Cue the sunrise. I am walking into the light.\n\n(Two weeks notice, though. I'm dramatic, not unprofessional.)\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSome people leave quietly. They slip out the back door. They send a meek little email.\n\nI am not some people. I am ${d.name}, and I have been your ${d.title} for ${d.years?d.years+' GLORIOUS years':'GLORIOUS years'} at ${d.company}.\n\n${d.reason?'And yet, despite the glory... '+d.reason+'.':'And yet, glory fades. Stars must supernova.'}\n\nConsider this my supernova.\n\nBLINDINGLY,\n${d.name}`,
+(d)=>`MY DEAREST ${d.boss.toUpperCase()},\n\nAs I pen these words by the flickering light of my desk lamp (the overhead one has been broken for ${d.years?d.years+' years':'months'} and nobody fixed it), I must confess:\n\nI am leaving ${d.company}. My role as ${d.title} is at its end.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' has torn us apart.':'Destiny calls from beyond the parking lot.'}\n\nParting is such sweet sorrow. Emphasis on the sweet.\n\nYour former employee,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nIf this resignation letter were a movie, it would win Best Picture.\n\nACT I: ${d.name} joins ${d.company} as ${d.title}. Hope fills the air.\nACT II: ${d.years?d.years+' years of':'Years of'} plot twists, character development, and bad cafeteria food.\nACT III: ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. The breaking point.':'The inevitable conclusion.'}\n\nEPILOGUE: ${d.name} rides off into the sunset, never to answer another "quick question" again.\n\nFIN.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nToday I join the ranks of the brave. The bold. The beautifully unemployed (temporarily).\n\nI resign from ${d.title}. I resign from ${d.company}. ${d.reason?'I resign from dealing with '+d.reason+'.':'I resign from settling for less.'}\n\n${d.years?d.years+' years of loyalty. Repaid in experience and a mousepad.':'My loyalty was real. My departure is realer.'}\n\nWhen they write my biography, this chapter will be called "The Great Liberation."\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nIn chess, the most powerful move is often the quiet one. A pawn becomes a queen.\n\nBut I'm not quiet. And I'm already a queen.\n\nI, ${d.name}, resign as ${d.title} at ${d.company}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' - checkmate.':'Checkmate.'} ${d.years?d.years+' years. Game over.':'Game. Over.'}\n\nYour move.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n"Houston, we have a resignation."\n\nAfter ${d.years?d.years+' years':'ages'} orbiting ${d.company} as ${d.title}, I am initiating re-entry into civilian life. ${d.reason?'Mission abort reason: '+d.reason+'.':'Mission complete.'}\n\nAll systems nominal. Trajectory: FREEDOM.\n\nT-minus 14 days to liftoff.\n\nGroundbreakingly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n*a single spotlight illuminates the stage*\n\nLadies and gentlemen... ${d.years?'after '+d.years+' seasons...':'after an incredible run...'} the show is OVER.\n\n${d.name} will no longer be performing the role of ${d.title} at ${d.company}.\n\n${d.reason?'The reviews were in: '+d.reason+'. One star.':'The reviews were mixed. The pay was worse.'}\n\nPlease leave your flowers at reception.\n\nThe Star,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nLike a butterfly emerging from a cocoon made of TPS reports and passive-aggressive emails, I spread my wings.\n\n${d.title} at ${d.company}? That was the caterpillar. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the last thread of the cocoon.':''}\n\n${d.years?d.years+' years of metamorphosis.':'The metamorphosis is complete.'}\n\nI am BEAUTIFUL. I am FREE. I am RESIGNED.\n\nMajestically,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlot twist: THE ${d.title.toUpperCase()} QUITS.\n\n${d.years?'After '+d.years+' seasons at '+d.company+',':'In a shocking turn at '+d.company+','} the audience never saw this coming. ${d.reason?'Foreshadowed only by '+d.reason+'.':'Or maybe they did. The signs were all there.'}\n\nNo post-credits scene. No sequel. Just a clean, dramatic exit.\n\nDirector's cut: I'll be gone in two weeks.\n\nThe Protagonist,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nToday, I do what all great heroes must eventually do: I remove the cape.\n\n${d.title} at ${d.company}? A noble calling. ${d.years?'I answered it for '+d.years+' years.':'I answered it with everything I had.'} But every hero deserves rest.\n\n${d.reason?'My kryptonite was '+d.reason+'. You knew that. Everyone knew that.':'Even Superman had a day job he wanted to quit.'}\n\nI resign. Not in defeat. In TRIUMPH.\n\nUp, up, and away,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nImagine, if you will, a world without ${d.name} as your ${d.title}.\n\nScary, isn't it?\n\nWell, WELCOME TO REALITY. Because ${d.years?'after '+d.years+' years,':'effective immediately (well, two weeks),'} I am vacating these premises and this position at ${d.company}.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' sealed the deal.':'Destiny sealed the deal.'}\n\nYou'll miss me. I guarantee it.\n\n${d.name}\nFormer ${d.title}\nCurrent Legend`,
+(d)=>`HEAR YE, HEAR YE!\n\nLet it be proclaimed throughout the realm of ${d.company} that ${d.name}, holder of the sacred title "${d.title}," does hereby abdicate their position!\n\n${d.years?'After '+d.years+' years of faithful service to the crown,':'After faithful service,'} ${d.reason?'and in light of the great calamity known as '+d.reason+',':''} the time has come.\n\nThe throne is vacant. The kingdom is yours to manage.\n\nGod save the quarterly targets.\n\nFormer Royal ${d.title},\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n*puts on sunglasses*\n\nI came to this company with nothing but a dream, a LinkedIn profile, and a willingness to pretend to enjoy team-building exercises.\n\n${d.years?d.years+' years later,':'Today,'} I leave as ${d.title} - battle-tested, caffeine-dependent, and ABSOLUTELY DONE.\n\n${d.reason?'The reason? '+d.reason+'. *explosion in the background*':'*explosion in the background* No reason needed.'}\n\nI don't look at explosions. Or back.\n\nCoolly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\n*clears throat*\n*adjusts microphone*\n*unfolds letter*\n\nI would like to thank the Academy... wait, wrong speech.\n\nI would like to RESIGN. As ${d.title}. From ${d.company}. ${d.years?'After '+d.years+' Oscar-worthy years.':'It\'s been a blockbuster run.'}\n\n${d.reason?'This performance was brought to you by '+d.reason+'.':'This has been the performance of a lifetime.'}\n\n*wipes tear*\n*walks off stage*\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThere comes a time in every warrior's journey when they must lay down their weapon (laptop), remove their armor (lanyard), and walk away from the battlefield (open floor plan).\n\n${d.years?'For '+d.years+' years, I fought as your '+d.title+'.':'I fought valiantly as your '+d.title+'.'} ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the battle I could not win.':'But even the greatest warriors know when to retreat.'}\n\nI resign from ${d.company}. My sword is now a pen. This letter is my last stand.\n\nVictoriously defeated,\n${d.name}`,
 ],
 
-passive: [
-  (d)=>`Dear ${d.boss},\n\nI hope this email finds you well, though I know how busy you must be, what with all the ${pick(['important meetings about meetings','strategic pivoting','team alignment sessions'])} you attend.\n\nI wanted to let you know, at your earliest convenience of course, that I will be resigning from my position as ${d.title}. No rush on processing this - I know paperwork isn't really ${d.company}'s strong suit.\n\n${d.reason?`I am sure you already knew about ${d.reason}, but I thought it best to spell it out, since ${d.chaos>6?"subtlety hasn't exactly worked around here":'clarity is always appreciated'}.`:''}\n\nI just think it is so great how you will ${d.chaos>7?'finally have to figure out what I actually did here':'manage without me'}. Growth opportunity!\n\nWishing you all the best (genuinely!),`,
-  (d)=>`Hi ${d.boss},\n\nPer my last resignation letter - oh wait, this is my first one! Silly me.\n\nAs per our ${d.chaos>5?'nonexistent':'recent'} conversation about career development, I have decided to develop my career elsewhere. ${d.reason?`Specifically because ${d.reason}, but I am sure that was not news to anyone paying attention.`:''}\n\nI will of course complete my duties as ${d.title} during the notice period, ${d.chaos>7?'which is more commitment than this role has shown me':'as is professional'}.\n\nAs noted in my previous emails (the ones that went unanswered), I do care about a smooth transition.\n\nBest,`,
-  (d)=>`Dear ${d.boss},\n\nI am sure this will come as a ${d.chaos>6?'total shock to absolutely no one':'surprise'}, but I have decided to resign from ${d.title} at ${d.company}.\n\n${d.reason?`I would elaborate on how ${d.reason} influenced this, but I know how much you value brevity in our one-sided communications.`:''}\n\nPlease do not feel bad! I am sure my replacement will ${d.chaos>7?'also eventually figure out they deserve better':'love it here'}. It is a ${pick(['wonderful','unique','certainly an','unforgettable'])} workplace.\n\nI will miss ${d.chaos>7?'absolutely nothing':'many things about this place'}. Well, maybe the ${pick(['parking spot','vending machine','emergency exits'])}.\n\nWith my sincerest smile,`,
-  (d)=>`${d.boss},\n\nOh, I almost forgot to mention! I am leaving. I know, I know - I should have brought this up in one of our ${pick(['deeply productive','riveting','character-building'])} team meetings, but I did not want to take time away from the agenda.\n\n${d.reason?`Between us, ${d.reason}, but you probably already knew that, right? Since you are so in touch with the team.`:''}\n\nAs ${d.title}, I have ${d.chaos>7?'perfected the art of looking busy while dying inside':'learned so much'}. Thank you for that.\n\nNo need to throw a going-away party. ${d.chaos>6?'I know how hard it is to organize things around here.':'I prefer quiet exits.'}\n\nTake care (someone has to),`,
-  (d)=>`Dear ${d.boss},\n\nJust circling back on my career here at ${d.company} - I have decided to close the loop by leaving! Fun, right?\n\n${d.reason?`I want to be transparent (since someone should be): ${d.reason}.`:''}\n\nI know my work as ${d.title} has been ${d.chaos>6?'"valued" (the air quotes are intentional)':'appreciated'}, and I am ${d.chaos>7?'touched that it took you three tries to remember my name at the holiday party':'grateful'}.\n\nPlease feel free to reach out with questions. I will respond with the same urgency you have always shown me.\n\nAll the best (bless your heart),`,
-  (d)=>`Hi there!\n\nSo... this is awkward. I am resigning from ${d.title} at ${d.company}. I know! Shocking!\n\n${d.reason?`If anyone asks, it was definitely NOT because of ${d.reason}. (It was.)`:''}\n\nI have truly ${d.chaos>7?'endured':'enjoyed'} my time here. Every open-plan-office conversation. Every "quick call" that lasted an hour. Every ${pick(['"we are a family"','"let us circle back"','"per my previous email"'])} moment.\n\n${d.boss}, you have been... ${d.chaos>6?'consistent':'great'}. Truly.\n\nP.S. The thermostat wars? I was the one changing it. ${d.chaos>5?'Every. Single. Time.':'Sorry about that.'}\n\nCheerfully,`,
-  (d)=>`Dear ${d.boss},\n\nI wanted to give you plenty of notice about my resignation, unlike the ${d.chaos>6?'zero notice I received about literally every major decision affecting my role':'short notice on recent changes'}.\n\nAs ${d.title}, I have given ${d.company} my ${pick(['best years','best hours','best fake enthusiasm'])}. ${d.reason?`And then ${d.reason} happened, and I thought, "Wow, what a great reason to update my resume."`:''}\n\n${d.chaos>7?'I forgive you for the open office plan. I forgive you for the "unlimited PTO" that came with unlimited guilt. I forgive it all.':'No hard feelings.'}\n\nWarmest regards (and I do mean the warmest, since the AC never worked),`,
-  (d)=>`${d.boss},\n\nGood news and bad news.\n\nGood news: You will finally get to post that job listing you have probably been drafting since my first week.\n\nBad news: ${d.chaos>6?'You will have to actually understand what I did.':'Transition might take a moment.'}\n\n${d.reason?`I am leaving because of ${d.reason}. But hey, what do I know? I was just the ${d.title}.`:''}\n\nI have left detailed notes. ${d.chaos>7?'Just kidding. Good luck.':'They are in the shared drive.'}\n\nHugs and prayers,`,
+'passive-aggressive':[
+(d)=>`Dear ${d.boss},\n\nI hope this email finds you well, unlike how this job found me.\n\nI'm writing to let you know that I'll be moving on from my role as ${d.title} at ${d.company}. I know, I know - you must be SHOCKED that someone would voluntarily leave this paradise.\n\n${d.reason?'I mean, who could possibly want to leave when '+d.reason+' makes every day feel like a gift? A gift you want to return, but a gift nonetheless.':'Who could possibly want to leave such a nurturing environment?'}\n\n${d.years?'My '+d.years+' years here have taught me so much. Mostly patience. An almost superhuman amount of patience.':''}\n\nNo need to throw a going-away party. I know how the budget is.\n\nSmiling through it all,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPer my last resignation letter (oh wait, this is my first - but we both know I've been drafting it mentally for ${d.years?d.years+' years':'a while'})...\n\nI'm leaving ${d.company}. As per the terms of my employment, I'm giving two weeks' notice, which is about two weeks more than the notice I got before that last reorg.\n\n${d.reason?'I\'m sure you\'ll address '+d.reason+' eventually. Maybe in the next all-hands? Or the next next all-hands? Or never?':'I\'m sure everything will be just fine without me.'}\n\nAs always, please don't hesitate to reach out if you have questions. I mean, I won't answer them, but don't hesitate.\n\nBest wishes (genuinely!),\n${d.name}`,
+(d)=>`Hi ${d.boss},\n\nJust wanted to circle back on something - my career here. After careful analysis, I've decided to sunset my role as ${d.title} at ${d.company}. Think of it as a strategic pivot.\n\n${d.reason?'I know '+d.reason+' is "being worked on" (it\'s been "being worked on" since I joined), but I\'ve decided I can\'t wait for that particular roadmap to ship.':'I know things are "getting better" (you\'ve been saying that since I joined), but I think I\'ll explore other definitions of "better."'}\n\n${d.years?'In '+d.years+' years, I\'ve learned that "we\'re like a family here" means exactly what it means in a dysfunctional family.':''}\n\nLet's take this offline (permanently),\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI wanted to personally deliver the news that I'll be leaving ${d.company}, since I know how much you value "open communication" (in theory, anyway).\n\nMy time as ${d.title} has been... an experience. ${d.reason?'Particularly the part about '+d.reason+'. That was really something. Something I\'ll need therapy for, but something.':'Quite the experience.'}\n\n${d.years?'Thank you for '+d.years+' years of "growth opportunities" (I believe the rest of the world calls them "problems nobody else wanted to deal with").':''}\n\nI'll miss the team. The management structure? Not so much. But the team? Absolutely.\n\nWarmest regards (to the team),\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nGood news! You know how you always said I should "take more initiative"? Well, I'm initiating my departure from ${d.company}!\n\nAs ${d.title}, I've had ${d.years?d.years+' years':'plenty of time'} to develop skills that will serve me well elsewhere. Skills like smiling during meetings where my ideas are ignored, then praised when someone else suggests them.\n\n${d.reason?'And while '+d.reason+' has certainly added "character" to the experience, I think my character is sufficiently developed now.':''}\n\nNo need to counter-offer. The number would need more zeros than your interest in employee feedback.\n\nForever proactive,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSurprise! I know you love surprises, like that surprise reorg, and that surprise policy change, and that surprise "voluntary" weekend work.\n\nHere's my surprise: I QUIT! Well, I resign. As ${d.title}. From ${d.company}.\n\n${d.reason?'The reason is '+d.reason+', but I\'m sure you already knew that. You just weren\'t going to do anything about it. Classic.':'The reason is personal growth. I\'ve personally grown tired.'}\n\n${d.years?d.years+' years of delightful surprises is enough for one lifetime.':''}\n\nYours in perpetual astonishment,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI have some exciting news! Almost as exciting as when you announced that 2% raise after record profits!\n\nI'm leaving ${d.company}! Crazy, right? Who would leave a place where ${d.title}s are so valued that their opinions are carefully collected, formatted, and placed directly in the recycle bin?\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'? Oh, that\'s been "noted." I\'m sure it\'s in the queue right behind "improve employee morale" - item #847.':''}\n\n${d.years?'After '+d.years+' years, I\'m finally taking your advice to "be the change I want to see." I\'m changing jobs.':'I\'m finally being the change I want to see.'}\n\nThoughtfully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI hate to interrupt what I'm sure is a very productive day of meetings about meetings, but I have an announcement.\n\nI'm resigning from my position as ${d.title}. I know this may cause some inconvenience, and I truly apologize. I know how hard it is when someone actually acknowledges they have other options.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'? Oh that. Yeah. That was fun. /s':''}\n\n${d.years?'In '+d.years+' years at '+d.company+', I\'ve attended approximately '+(d.years*200)+' meetings. I calculated that. During a meeting.':''}\n\nI'll be unreachable after my last day. By choice.\n\nWith great relief,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nRemember when you said "your door is always open"? Well, I'm walking through it. For the last time. Out.\n\nI'm resigning as ${d.title} at ${d.company}. ${d.reason?'Because of '+d.reason+'. Which I mentioned in my last 1:1. And the one before that. And the one before that. But who\'s counting?':''}\n\n${d.years?'In '+d.years+' years, that open door led to a lot of "great ideas" that were "just not the right time."':''}\n\nFunny how the right time for my resignation is always right now.\n\nGoing, going, gone,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis might be hard to hear, given how well everything has been going. (That was sarcasm. I know tone is hard in text, so I wanted to clarify.)\n\nI'm resigning from ${d.title}. ${d.reason?'I was going to stay, but then '+d.reason+' happened. Again.':''}\n\n${d.years?d.years+' years ago, you hired me with so much promise. "Sky\'s the limit!" you said. Turns out the sky was the drop ceiling above my cubicle.':''}\n\nI'll miss the free coffee. Not the job. The coffee. It was the only perk that worked as advertised.\n\nSincerely (for once),\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI just wanted to flag something. (I know how much you love when I "flag things.") I'm leaving ${d.company}.\n\nI'm sure you'll find a replacement ${d.title} in no time. Maybe someone who doesn't mind ${d.reason?d.reason:'being voluntold for things'}. Maybe someone who actually enjoys mandatory fun. That person is out there. It's just not me.\n\n${d.years?d.years+' years. '+d.years+' annual reviews. '+d.years+' times hearing "maybe next year" about that promotion.':''}\n\nNext year is here. And I'm spending it elsewhere.\n\nExcitedly,\n${d.name}`,
+(d)=>`Hi ${d.boss}!\n\nQuick update on my roadmap: I'm deprecating my position as ${d.title} and migrating to a new platform (literally anywhere else).\n\nETA: 2 weeks.\n\n${d.reason?'Known issues: '+d.reason+'. Status: WONTFIX (by me, at least).':'Known issues: everything. Status: WONTFIX.'}\n\n${d.years?'Uptime: '+d.years+' years. Reliability: 99.9%. Recognition: 0.1%.':''}\n\nNo rollback planned. This deployment is final.\n\nRegards,\n${d.name}\n\nP.S. - Please do NOT put me on a PIP for this letter.`,
+(d)=>`Dear ${d.boss},\n\nI'm writing this during the mandatory team-building exercise, which feels appropriate.\n\nI'm building myself a new career path. Unfortunately, it leads away from ${d.company}.\n\nAs ${d.title}, I learned many valuable things: ${d.reason?'that '+d.reason+' is apparently "not a big deal,"':'that "work-life balance" is a corporate fairy tale,'} that "competitive salary" is a creative writing exercise, and that "unlimited PTO" means "unlimited guilt when you use PTO."\n\n${d.years?d.years+' years of team-building is enough.':''}\n\nBuilt differently,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAs you know, I believe in transparency. (You also say you believe in transparency, but we have different dictionaries.)\n\nTransparently: I'm leaving. ${d.title} at ${d.company} was great on paper. The paper was just on fire.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was a growth opportunity, you said. I\'ve grown. Grown tired of it.':'I\'ve experienced tremendous growth. In my ability to mask frustration.'}\n\n${d.years?'My '+d.years+'-year review: 2/10, would not recommend. (But the snacks were okay.)':''}\n\nTransparently yours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nHope you're having a great day! Mine just got better because I'm writing this.\n\nAfter ${d.years?d.years+' wonderful years':'a wonderful tenure'} as ${d.title} at ${d.company}, I've decided to explore opportunities where "wonderful" means something different. Something involving appreciation. And raises.\n\n${d.reason?'I tried to make it work despite '+d.reason+'. I really did. But I\'m not a miracle worker. I\'m a '+d.title+'. Was. Was a '+d.title+'.':''}\n\nNo hard feelings! Soft feelings? Plenty. But no hard ones.\n\nHappily,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI know you're very busy (your calendar says so, even if no one can tell), so I'll be brief: I quit.\n\nOkay, I'll be slightly less brief: I'm resigning as ${d.title} from ${d.company}.\n\n${d.reason?'The reason? Well, if I had to choose just ONE... '+d.reason+'. But it was a team effort, really.':''} ${d.years?d.years+' years of brevity have led to this beautifully concise resignation.':''}\n\nTwo weeks. Then you'll need to find someone else to not listen to.\n\nBriefly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nFun fact: The average employee stays at a job for 4.1 years. ${d.years?'I stayed for '+d.years+'. '+(d.years>4.1?'So really, I went above and beyond. As usual.':'I\'m just ahead of the curve.'):'I\'m just ahead of the curve.'}\n\nI'm resigning as ${d.title} at ${d.company}. ${d.reason?'If you want feedback for the exit interview: '+d.reason+'. But I know exit interviews go to the same place as suggestion boxes.':''}\n\nDon't worry about the transition. I've documented everything, which is more than anyone did for me when I started.\n\nStatistically significant,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nRemember the last town hall when you said "people are our greatest asset"? Well, one of your assets is depreciating itself right out the door.\n\nI'm resigning as ${d.title}. ${d.reason?'Due to '+d.reason+', which was apparently not important enough to fix, but important enough to lose an employee over.':''}\n\n${d.years?'After '+d.years+' years of being a greatest asset, I\'d like to be the greatest asset somewhere that shows it.':''}\n\nFeel free to use this as a case study in your next retention meeting.\n\nYour depreciating asset,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm not sure how to say this, so I'll say it the way you deliver bad news to the team: buried in a long email at 4:59 PM on a Friday.\n\nI'm resigning as ${d.title} at ${d.company}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'.':''} ${d.years?d.years+' years.':''} Two weeks notice.\n\nThere. Just like your communication style. Abrupt and slightly passive-aggressive.\n\nThanks for the inspiration,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI've been thinking about work-life balance, and I've decided to remove the "work" part.\n\nEffective two weeks from today, I'm resigning as ${d.title} at ${d.company}.\n\n${d.reason?'If anyone asks why, you can tell them '+d.reason+'. Or you can tell them I "left to pursue other opportunities." That\'s corporate-speak for the same thing, right?':''}\n\n${d.years?'In '+d.years+' years, the life side of the balance has been consistently lighter. Time to recalibrate.':''}\n\nFinding balance,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis is my resignation, not my two-week notice. Just kidding - it's both. I just wanted to see if you'd read past the first line. Most of my emails don't get that far.\n\nI'm leaving ${d.company} as ${d.title}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. But you already knew that. I mentioned it. Repeatedly. In writing. With receipts.':''}\n\n${d.years?'My '+d.years+' years here have been... formative. Like pottery. Specifically, like being on a pottery wheel. Spinning endlessly and getting squeezed from all sides.':''}\n\nReading this far? Wow. That's more attention than my last performance review got.\n\nImpressed and departed,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAs we always say in standup: any blockers? Yes. One. This job.\n\nI'm unblocking myself by resigning as ${d.title} at ${d.company}.\n\n${d.reason?'Sprint retrospective: What didn\'t go well? '+d.reason+'. Action item: quit. Status: done.':'Sprint retrospective: What didn\'t go well? *gestures broadly*'}\n\n${d.years?'Velocity over '+d.years+' years: started strong, steadily declined as hope diminished.':''}\n\nThis standup is adjourned. Permanently.\n\nAgile-ly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI wanted to submit this through the proper channels, but since our "proper channels" involve three forms, two approvals, and a Ouija board, I'm just going to say it:\n\nI resign as ${d.title}.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. Filed under: things everyone knows but nobody mentions.':''} ${d.years?d.years+' years of navigating proper channels is enough.':''}\n\nI'll process my own exit. It'll be faster.\n\nEfficiently,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI'm moving on to a company that has chairs with lumbar support, a coffee machine from this decade, and - brace yourself - managers who respond to emails.\n\nI know, I know. Hard to believe such a place exists after ${d.years?d.years+' years at '+d.company:'working at '+d.company}.\n\n${d.reason?'The catalyst was '+d.reason+'. But let\'s be real: the ergonomic nightmare that is my workstation was a close second.':''}\n\nI resign as ${d.title}. My back and I will be happier.\n\nSitting comfortably elsewhere,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSpoiler alert: this is a resignation letter.\n\nI didn't want to spoil the surprise since I know surprises are ${d.company}'s specialty (remember that surprise layoff? The surprise benefits change? The surprise "mandatory optional" weekend?).\n\n${d.title} for ${d.years?d.years+' years':'too long'}. ${d.reason?'Survived '+d.reason+'.':''} Two weeks notice. The end.\n\nNo post-credits scene.\n\nUnsurprisingly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI wanted to let you know in person, but you've been "in a meeting" every time I've tried for ${d.years?d.years+' years':'weeks'}. So, letter it is.\n\nI'm resigning as ${d.title} at ${d.company}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'.':''}\n\nMaybe we can schedule a meeting to discuss it? I have availability in Q4 2087. I'll send a calendar invite. You won't accept it. Some things never change.\n\nPerpetually on your calendar,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nGreat news for the budget! You're about to save one ${d.title}'s salary.\n\nI'm resigning from ${d.company}. I know how much leadership loves cutting costs, so consider this my gift to the quarterly numbers. You're welcome.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the ROI that finally didn\'t add up.':''} ${d.years?d.years+' years of delivering results that were rewarded with pizza parties.':''}\n\nNo need for an exit interview. This letter IS the exit interview.\n\nCost-effectively,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI've decided to pursue my passion. My passion is not working here.\n\n${d.title} at ${d.company} ${d.years?'for '+d.years+' years ':''}has been a journey of self-discovery. I discovered I don't want to do this anymore.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' really helped clarify things.':'Everything suddenly became very clear.'}\n\nTwo weeks notice. Then I'm off to follow my bliss. My bliss is far from here.\n\nPassionately departing,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI know what you're thinking: "Not another email from ${d.name}." Good news - this is the last one.\n\nI'm resigning as ${d.title}. ${d.reason?'And before you say "let\'s discuss this," we\'ve discussed '+d.reason+' many times. The discussions were lovely. The follow-through, less so.':''}\n\n${d.years?'After '+d.years+' years, my inbox needs a vacation. A permanent one.':''}\n\nI'll be out of office... forever.\n\nUnsubscribing,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPlease consider this letter my two weeks notice and also the most honest performance review ${d.company} has ever received:\n\n- Communication: Could use improvement (from leadership, not from me)\n- Growth opportunities: Exist only in the job posting\n- Culture: "We're like a family" (the Thanksgiving kind, not the good kind)\n\n${d.reason?'- '+d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+': Unresolved since day one':''}\n${d.years?'- Duration of suffering: '+d.years+' years':''}\n\nOverall rating: Time to go.\n\nConstructively,\n${d.name}, Former ${d.title}`,
+(d)=>`Dear ${d.boss},\n\nI'm writing to resign as ${d.title}. But first, an FAQ:\n\nQ: Is this about money?\nA: Partially. But also about respect, growth, and chairs that don't squeak.\n\nQ: Can we match an offer?\nA: ${d.reason?'Can you fix '+d.reason+'? No? Then no.':'Can you fix everything? No? Then no.'}\n\nQ: How will we manage without you?\nA: The same way you managed WITH me: by pretending everything is fine.\n\n${d.years?'Q: How long have you felt this way?\nA: '+Math.max(1,d.years-1)+' years. Give or take.':''}\n\nQ: Any final thoughts?\nA: Two weeks. Starting now.\n\nFAQingly yours,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAttached please find my resignation. (Just kidding, it's not attached. I know how you feel about reading attachments. You feel the same way about reading any of my emails, actually.)\n\nI'm resigning as ${d.title} at ${d.company}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. (I know you\'ll act surprised, and honestly, the acting is commendable.)':''}\n\n${d.years?'My last '+d.years+' years have been like an attachment nobody opens: present, important, and completely ignored.':''}\n\nPlease acknowledge receipt. (First time for everything.)\n\n${d.name}`,
 ],
 
-heroic: [
-  (d)=>`HEAR YE, HEAR YE!\n\nLet it be known across all departments of ${d.company} that I, the ${d.title}, do hereby lay down my badge and lanyard.\n\n${d.reason?`A great injustice has occurred - ${d.reason} - and I can no longer stand idle.`:''}\n\nFor too long, I have ${pick(['defended these spreadsheets with my life','fought valiantly against scope creep','wielded my keyboard like Excalibur'])}. But every hero must eventually ${d.chaos>7?'realize the kingdom is not worth saving':'ride into the sunset'}.\n\n${d.boss}, you were ${d.chaos>6?'a worthy adversary':'a fine commander'}. The battles we fought in those conference rooms will be ${pick(['legendary','the stuff of myths','remembered in hushed tones at the water cooler'])}.\n\nI go now to seek ${d.chaos>7?'literally anything else':'new quests'}. My sword is sheathed. My out-of-office is set.\n\nOnward,`,
-  (d)=>`*unsheathes letter opener*\n\n${d.boss}. Comrades. Gather round.\n\nI have served ${d.company} as ${d.title} through ${pick(['budget cuts and mergers','all-hands and all-nighters','pivot after pivot'])}. ${d.reason?`But ${d.reason} has shown me the truth: `:''} A true warrior knows when the battle is ${d.chaos>7?'rigged':'no longer theirs to fight'}.\n\nI have slain ${pick(['a thousand Jira tickets','dragons disguised as quarterly reviews','the hydra of technical debt'])}. My armor is ${d.chaos>6?'dented beyond repair':'well-worn'}. My spirit remains ${d.chaos>7?'surprisingly intact, considering':'unbroken'}.\n\nTo my fellow soldiers in the trenches: ${d.chaos>7?'Get out while you can.':'Fight on. Your time will come.'}\n\nWith honor and a cleared browsing history,`,
-  (d)=>`MISSION LOG - FINAL ENTRY\n\nAgent: ${d.title}\nBase: ${d.company}\nStatus: MISSION COMPLETE\n\n${d.reason?`Mission compromised by: ${d.reason}\n\n`:''}After ${pick(['countless','innumerable','a heroic number of'])} operations deep behind enemy lines (the ${pick(['accounting floor','open office','management wing'])}), I must extract myself.\n\n${d.boss}, you were ${d.chaos>6?'occasionally competent':'a solid handler'}. The intel you provided was ${d.chaos>7?'usually wrong, but I adapted':'occasionally actionable'}.\n\nI leave behind ${d.chaos>7?'a legacy they will never fully appreciate':'my finest work'}.\n\nAgent signing off. For the last time.\n\n*helicopter extraction in 5...*`,
-  (d)=>`Dear ${d.boss},\n\nIn the annals of ${d.company}'s history, let this chapter be titled: "The Day the ${d.title} Chose Freedom."\n\n${d.reason?`It was ${d.reason} that lit the signal fire.`:''} Like ${pick(['Aragorn returning to claim his throne','Luke Skywalker leaving Tatooine','Gandalf after defeating the Balrog'])}, I must heed a greater calling.\n\nI have been your ${d.chaos>6?'most underappreciated':'most dedicated'} warrior. I have ${pick(['taken the hill in every sprint','volunteered for the missions no one wanted','held the line when others fled to "work from home"'])}.\n\n${d.chaos>7?'My only regret is not doing this sooner.':'I leave with no regrets.'}\n\nMay the force be with you (you will need it),`,
-  (d)=>`TO THE PEOPLE OF ${d.company.toUpperCase()},\n\nI have carried this burden long enough.\n\nAs your ${d.title}, I have ${pick(['shielded you from chaos','fought battles you never knew about','maintained order in the face of madness'])}. ${d.reason?`But ${d.reason}, and even heroes have limits.`:''}\n\n${d.boss}, ${d.chaos>7?'you were less a leader and more a quest-giver with terrible rewards':'you led with your own style'}. I ${pick(['respect','acknowledge','have complicated feelings about'])} that.\n\nI now embark on my greatest adventure yet: ${d.chaos>7?'having evenings and weekends again':'the unknown'}.\n\nWith a hero's farewell,`,
-  (d)=>`*Stands atop desk, raises coffee mug to the sky*\n\n"I am ${d.title} no more!"\n\n${d.reason?`${d.reason} was my call to adventure. `:''}For too long I have battled the forces of ${pick(['unnecessary meetings','reply-all emails','whoever keeps stealing lunches from the fridge'])}. Today, I choose a different path.\n\n${d.boss}, we have been through ${d.chaos>7?'things I cannot discuss without a lawyer present':'a lot together'}. You were the ${pick(['mentor I did not ask for','Dumbledore to my increasingly frustrated Harry','Gandalf, if Gandalf scheduled meetings at 4:59pm'])}.\n\nI ride into the dawn. Do not follow.\n\n*leaps from desk, cape made from company blanket*`,
-  (d)=>`CAPTAIN'S LOG, FINAL ENTRY\n\nShip: ${d.company}\nRank: ${d.title}\nMission Status: HONORABLE DISCHARGE\n\n${d.reason?`The hull was breached when ${d.reason}. `:''}I have navigated this vessel through ${pick(['asteroid fields of bureaucracy','the nebula of corporate restructuring','black holes where good ideas disappear'])}.\n\n${d.boss}, first officer, ${d.chaos>7?'your command decisions were... creative':'it has been an honor'}.\n\nTo the crew: ${d.chaos>7?'Abandon ship.':'Steady as she goes.'}\n\nThis is your ${d.title}, signing off.\n\n*sets coordinates for literally anywhere else*`,
-  (d)=>`QUEST COMPLETE.\n\nHero: ${d.title}\nDungeon: ${d.company}\nBoss Defeated: ${d.chaos>5?d.boss:'Corporate Malaise'}\n\n${d.reason?`Final boss ability: ${d.reason}\n\n`:''}XP Gained: ${pick(['Immeasurable','Enough to level up twice','A lifetime supply'])}.\nLoot Acquired: ${d.chaos>7?'Nothing of value':'Experience, references, and a stress disorder'}.\nHP Remaining: ${d.chaos>7?'1':'Enough'}.\n\nI return to the overworld. My inventory is full. My patience is empty.\n\nGG, ${d.company}. GG.\n\n*saves game and exits*`,
+heroic:[
+(d)=>`Commander ${d.boss},\n\nThe mission is complete.\n\nFor ${d.years?d.years+' years':'many campaigns'}, I served as ${d.title} in the ${d.company} division. I fought the good fight. I held the line when deadlines approached from all sides. I never retreated from a difficult stakeholder.\n\n${d.reason?'But even the mightiest warrior must acknowledge when the battlefield shifts. '+d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' has changed the terrain irrevocably.':'But every soldier knows when their tour of duty is complete.'}\n\nI lay down my badge with honor. I depart not in defeat, but in glory.\n\nSemper Fi,\n${d.name}\nVeteran ${d.title}`,
+(d)=>`To ${d.boss}, Guardian of ${d.company},\n\nThe ancient prophecy spoke of this day. The day when the Chosen ${d.title} would complete their quest and venture forth into new realms.\n\n${d.years?'For '+d.years+' ages,':'For many ages,'} I have wielded the tools of my trade against the Forces of Disorganization. I have vanquished the Dragon of Technical Debt. I have navigated the Labyrinth of Corporate Politics.\n\n${d.reason?'But a new darkness approaches: '+d.reason+'. This is a quest for another hero.':'My quest here is fulfilled. New horizons call.'}\n\nI resign my post. May the next ${d.title} carry the flame.\n\nFor honor and glory,\n${d.name}`,
+(d)=>`${d.boss},\n\nThey said it couldn't be done. They said no ${d.title} could survive ${d.years?d.years+' years at '+d.company:'this long at '+d.company}. They were wrong.\n\nI survived. I THRIVED. I turned impossible deadlines into delivered products. I turned chaos into order. I turned coffee into code (or whatever my job actually entailed).\n\n${d.reason?'But '+d.reason+' is a challenge even I cannot overcome from within these walls.':'But every hero must eventually hang up their cape.'}\n\nMy resignation is not a retreat. It is a STRATEGIC ADVANCE in a different direction.\n\nOnward,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nEvery hero's journey has three acts: the call to adventure, the ordeal, and the return home.\n\nACT I: I answered the call. I became ${d.title} at ${d.company}. I was ready.\nACT II: ${d.years?d.years+' years of trials.':'Trials and tribulations.'} Late nights. Early mornings. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'.':'Impossible odds.'} I faced them all.\nACT III: Today. The return. Not in defeat - in VICTORY.\n\nI resign as ${d.title}. I carry with me the wisdom of a thousand meetings and the battle scars of a million emails.\n\nThe hero returns,\n${d.name}`,
+(d)=>`Attention, ${d.boss}.\n\nThis is not a resignation. This is a MISSION COMPLETE notification.\n\nAgent: ${d.name}\nCodename: ${d.title}\nStation: ${d.company}\nYears of Service: ${d.years||'Classified'}\n${d.reason?'Reason for extraction: '+d.reason:'Reason for extraction: Mission accomplished'}\n\nI have accomplished everything I set out to do and more. The intelligence gathered here will serve me well in future operations.\n\nRequesting extraction in T-minus 14 days.\n\nAgent ${d.name}, over and out.`,
+(d)=>`Dear ${d.boss},\n\nIn the words of the great warriors before me: "I shall return." But not here. Somewhere else. Somewhere that pays better.\n\nAs ${d.title} of ${d.company}, I have been a shield against mediocrity, a sword against inefficiency, and a really patient person in really long meetings.\n\n${d.years?d.years+' years of battle have honed my skills to a razor\'s edge.':'My skills are now honed to a razor\'s edge.'} ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' is a foe I choose to walk away from - not because I cannot win, but because the victory is not worth the war.':''}\n\nI resign with my head held high and my LinkedIn updated.\n\nValiantly,\n${d.name}`,
+(d)=>`${d.boss},\n\nYou once told me that ${d.company} was a place where heroes are made. You were right.\n\nI became a hero. The ${d.title} who never said no (I should have said no more). The one who stayed late, arrived early, and somehow still had time to fix the printer.\n\n${d.years?'For '+d.years+' years, I was your champion.':'I was your champion.'} ${d.reason?'But champions eventually face '+d.reason+', and champions know when to choose a different arena.':'But champions know when the games are over.'}\n\nI am resigning. Not because I failed - because I succeeded. And now it's time to succeed somewhere else.\n\nChampion emeritus,\n${d.name}`,
+(d)=>`To the Council of ${d.company},\n\nI, ${d.name}, Defender of Deadlines, Keeper of the ${d.title} Flame, ${d.years?'Veteran of '+d.years+' Campaigns':'Battle-Tested Warrior'}, do hereby announce my honorable discharge from service.\n\n${d.reason?'The darkness of '+d.reason+' grows, and my light is needed elsewhere.':'New quests await beyond these walls.'}\n\nLet my name be inscribed in the Hall of Former Employees with honor. Let the tales of my heroism echo through the Slack channels for generations.\n\nI leave you my stapler. Treat it well.\n\nFor the realm,\n${d.name}`,
+(d)=>`${d.boss},\n\nThe greatest act of courage is not fighting. It is knowing when to walk away.\n\nToday, I walk away from ${d.company}. Not as a coward, but as a warrior who has given ${d.years?d.years+' years of':'their full measure of'} devotion.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' tested me. And I passed. But the test is over.':'Every test has an endpoint. Mine is today.'}\n\nAs ${d.title}, I built things. I solved problems. I probably saved this company at least twice (you're welcome).\n\nI resign with honor, pride, and a really well-organized desk.\n\nCourageously,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nLong ago, in a conference room far, far away, I took an oath. An oath to serve ${d.company} as ${d.title}. To protect its codebase (or spreadsheets, or whatever). To serve with honor.\n\n${d.years?d.years+' years I kept that oath.':'I kept that oath faithfully.'} Through the dark times of budget cuts. Through the chaos of migration projects. Through the Great Laptop Shortage of... whenever that was.\n\n${d.reason?'But even the most loyal knight must leave the kingdom when '+d.reason+' threatens their very soul.':'My watch has ended.'}\n\nI resign. My blade is sheathed. But my legend lives on.\n\nThe Protector,\n${d.name}`,
+(d)=>`${d.boss},\n\nPicture this: ${d.years?d.years+' years ago, a young '+d.title:'Once upon a time, a young '+d.title} walked into ${d.company} with nothing but determination, a laptop charger, and an unfortunate amount of optimism.\n\nThat person is still here. Older. Wiser. Significantly more caffeinated. And ready for the NEXT ADVENTURE.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' tried to break me. It forged me instead.':'Every challenge forged me into something stronger.'}\n\nI resign - not because I need to leave, but because the world needs me out there.\n\nAdventure awaits,\n${d.name}`,
+(d)=>`To ${d.boss}, First of Their Name, Ruler of ${d.company}:\n\nI, ${d.name} of House ${d.name.split(' ').pop()||'Awesome'}, ${d.title} of the Realm, Breaker of Deadlines, do declare:\n\nMY WATCH HAS ENDED.\n\n${d.years?'For '+d.years+' long winters at the Wall of '+d.company+',':'For many long winters,'} I held the line. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' came like winter - slowly, then all at once.':'Winter is here, and I am heading south.'}\n\nI resign my post at the Wall.\n\nValar Morghulis (but hopefully not at this job),\n${d.name}`,
+(d)=>`${d.boss},\n\nCommander's Log. Final Entry.\n\nThis vessel - ${d.company} - has been my ship for ${d.years?d.years+' years':'a long voyage'}. As ${d.title}, I navigated through asteroid fields of impossible deadlines, nebulas of unclear requirements, and at least one black hole of a team meeting.\n\n${d.reason?'But '+d.reason+' is a gravity well from which not even light can escape. I must chart a new course.':'But every captain must eventually find a new ship.'}\n\nI am resigning my commission. The bridge is yours.\n\nTo boldly go,\n${d.name}\nCaptain, Retired`,
+(d)=>`Dear ${d.boss},\n\nThey will write songs about this day. (They probably won't, but they should.)\n\nThe day ${d.name} - warrior, ${d.title}, and all-around office legend - chose to set down the burden of ${d.company} and march toward the sunrise.\n\n${d.years?d.years+' years of carrying that weight. ':''}${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' added the final stone.':'The weight has been lifted.'}\n\nI go now to find glory elsewhere. My resignation is my battle cry. My two weeks notice is my farewell feast.\n\nRAISE YOUR COFFEE MUGS.\n\nHeroically,\n${d.name}`,
+(d)=>`${d.boss},\n\nEvery mountain has a summit. Every journey has a destination. Every ${d.title} has a last day at ${d.company}.\n\nI have climbed this mountain for ${d.years?d.years+' years':'years'}. I have faced avalanches of emails, blizzards of bureaucracy, ${d.reason?'and the treacherous cliff face of '+d.reason:'and thin air at every altitude'}.\n\nToday, I plant my flag at the summit. And from here, I can see EVERYTHING. And what I see is a better job.\n\nI resign. Two weeks. Then I descend into freedom.\n\nFrom the peak,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSome people are born great. Some achieve greatness. Some have greatness thrust upon them by being the only ${d.title} willing to work weekends.\n\n${d.years?'After '+d.years+' years of thrust-upon greatness at '+d.company+',':'After significant thrust-upon greatness at '+d.company+','} I am choosing to pursue INTENTIONAL greatness elsewhere.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the final quest I decline to accept.':'My final quest here is complete.'}\n\nI resign with the dignity of someone who never once cried in the bathroom. (Okay, maybe once.)\n\nGreatly,\n${d.name}`,
+(d)=>`${d.boss},\n\nThe shield is heavy. The sword is dull. But the heart? The heart of this ${d.title} beats STRONGER THAN EVER.\n\n${d.years?d.years+' years of service to '+d.company+'.':'Years of faithful service.'} Every morning, I suited up for battle. Every evening, I sheathed my laptop and lived to fight another day.\n\n${d.reason?'Then came '+d.reason+'. The battle I choose not to fight.':'But the war is over. I have won.'}\n\nI resign. Not in surrender. In TRIUMPH.\n\nMy armor goes to the next brave soul who dares to be ${d.title}.\n\nForged in fire,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nIn the gym of life, ${d.company} was my training ground. And as ${d.title}, I trained HARD.\n\nI trained through ${d.years?d.years+' years of':''}impossible reps of back-to-back meetings. I deadlifted the weight of three people's workloads. I sprinted past deadlines that would have crushed lesser mortals.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the weight I couldn\'t add to the bar.':'But even the strongest need rest days.'}\n\nI resign. Time to compete in a bigger league.\n\nPumped,\n${d.name}`,
+(d)=>`${d.boss},\n\nLike Odysseus returning from Troy, my journey at ${d.company} as ${d.title} has been ${d.years?'a '+d.years+'-year':'an'} odyssey.\n\nI battled the Cyclops of Scope Creep. I resisted the Sirens of Job Hopping (until now). I navigated between the Scylla of Over-Engineering and the Charybdis of Technical Debt.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was my final trial.':'All trials are now behind me.'}\n\nNow, at last, I sail for home. My resignation is my final voyage.\n\nNostos achieved,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe phoenix does not apologize for rising from the ashes. And neither do I.\n\n${d.company} was my fire. ${d.title} was my crucible. ${d.years?d.years+' years of burning, shaping, becoming.':'The flames shaped me.'} ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the final flame.':''}\n\nFrom the ashes, I rise. Not the same person who walked in. BETTER. STRONGER. With at least 40% more skills on my resume.\n\nI resign. The phoenix flies.\n\nReborn,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nNot all heroes wear capes. Some wear lanyards.\n\nI, ${d.name}, have worn the lanyard of ${d.title} at ${d.company} with pride${d.years?' for '+d.years+' heroic years':''}. I've saved projects from collapse. I've mentored the young recruits. I've even figured out the new expense system.\n\n${d.reason?'But '+d.reason+' is a villain even I can\'t defeat from this desk.':'But my lanyard days are over.'}\n\nI resign. The lanyard is yours now, ${d.boss}. Wear it wisely.\n\nHeroically unclipped,\n${d.name}`,
+(d)=>`${d.boss},\n\nA wise person once said: "It is not the critic who counts; not the one who points out how the strong stumble. The credit belongs to the ${d.title} who is actually in the arena."\n\nI was in the arena. ${d.years?'For '+d.years+' years at '+d.company+'.':'At '+d.company+'.'} ${d.reason?'Even when '+d.reason+' turned the crowd against me.':''}\n\nNow I leave the arena. Not because I lost. Because I WON.\n\nDaring greatly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nRemember the Alamo? The 300 at Thermopylae? The stand at Helm's Deep?\n\nAdd to that list: ${d.name}, holding the line as ${d.title} at ${d.company} during ${d.reason?d.reason:'every single crisis'}.\n\n${d.years?d.years+' years of legendary last stands.':'Legendary. Last. Stands.'}\n\nBut even the greatest defenders must eventually choose: hold the line forever, or live to fight another day.\n\nI choose to live. I choose to fight. Just not here.\n\nI resign. TONIGHT, WE DINE ELSEWHERE.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nEvery great expedition begins with someone brave enough to leave the known world.\n\nMagellan left Portugal. Columbus left Spain. I am leaving ${d.company}.\n\n${d.years?'For '+d.years+' years,':'For too long,'} I charted the familiar waters of ${d.title}. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the storm that turned my sails.':'But the wind has shifted.'}\n\nI resign, setting sail for uncharted territory. My compass points to OPPORTUNITY.\n\nFair winds,\n${d.name}\nExplorer`,
+(d)=>`Dear ${d.boss},\n\nMichael Jordan retired from basketball at his peak. Jay-Z retired from rap at his peak.\n\nI, ${d.name}, am retiring from ${d.title} at ${d.company} AT MY PEAK.\n\n${d.years?d.years+' years of peak performance.':'Peak performance, sustained.'} ${d.reason?'Even '+d.reason+' couldn\'t diminish my greatness - but it did diminish my patience.':''}\n\nGo out on top. That is the champion's way.\n\nI resign. Undefeated. Undeniable.\n\n#1,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nWhen I was young, I dreamed of being a hero. Then I became a ${d.title}, which is basically the same thing but with more spreadsheets.\n\n${d.company} gave me${d.years?' '+d.years+' years of':''} battles worth fighting. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the one that taught me the most - that sometimes the bravest thing is walking away.':'And I fought every single one.'}\n\nI resign not as a quitter, but as a FINISHER. I finished my time here. On my terms.\n\nThe hero rides off,\n${d.name}`,
+(d)=>`TO: ${d.boss}\nFROM: The Last Line of Defense\nRE: Honorable Discharge\n\n${d.boss}, I have held this fort as ${d.title} for ${d.years?d.years+' years':'as long as duty demanded'}. I held it through budget cuts, reorgs, and at least one office-wide printer revolt.\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' breached the walls. But I did not fall. I chose to relocate.':'The fort stands. But I march on.'}\n\nConsider this my honorable discharge from ${d.company}. Two weeks to decommission my post.\n\nSalute,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nHistory is not written by those who stayed. It is written by those who DARED TO LEAVE.\n\nI dare. I leave. I resign from ${d.title} at ${d.company}.\n\n${d.years?'My '+d.years+'-year chapter in the annals of '+d.company+' has been nothing short of heroic.':'My chapter here has been nothing short of heroic.'} ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'? Faced it. Conquered it (internally). Moving past it.':''}\n\nWhen they tell the story of the greatest ${d.title}s who ever lived, my name will be whispered with reverence.\n\nLegendarily,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nYou know what separates good from great? The willingness to leap into the unknown.\n\nI have been a good ${d.title}. Maybe even a great one. ${d.years?d.years+' years of proof at '+d.company+'.':d.company+' knows what I brought.'}\n\n${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' was the ground crumbling beneath me. But I don\'t fall. I FLY.':'And now I fly.'}\n\nI resign. Not down. Not back. FORWARD.\n\nLeaping,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nRocky had Apollo Creed. Luke had Darth Vader. I had ${d.reason?d.reason:'this job'}.\n\nAnd just like those heroes, I emerged STRONGER.\n\n${d.years?d.years+' rounds in the ring as '+d.title+' at '+d.company+'.':'Round after round as '+d.title+' at '+d.company+'.'} I took hits. I got back up. Every. Single. Time.\n\nBut the bell has rung. The fight is over. And I won by decision.\n\nI resign. *raises fists in the air*\n\nADRIAAAAAN-\nI mean,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSome resign with a whisper. I resign with a ROAR.\n\nBECAUSE I AM ${d.name.toUpperCase()}. I WAS YOUR ${d.title.toUpperCase()}. ${d.years?'FOR '+d.years+' MIGHTY YEARS.':''} AT ${d.company.toUpperCase()}.\n\n${d.reason?'AND YES, '+d.reason.toUpperCase()+' HAPPENED. AND I SURVIVED.':'AND I SURVIVED EVERYTHING THIS PLACE THREW AT ME.'}\n\nI do not slink away. I MARCH. With drums. And possibly a trombone.\n\nTwo weeks, then FREEDOM.\n\nROAAAAR,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe sword is not sheathed in shame. It is sheathed in COMPLETION.\n\nI came to ${d.company} as ${d.title} to accomplish great things. ${d.years?'In '+d.years+' years,':''} I accomplished them. ${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+' tested my resolve, but my resolve is made of titanium and spite.':''}\n\nNow I resign. The quest is complete.\n\nMay the next wielder of this title be half as worthy.\n\nWith swords held high,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nYou know the saying: "Be the change you wish to see in the world."\n\nI have been that change at ${d.company}. As ${d.title}, I changed processes, changed outcomes, changed trajectories. ${d.years?'For '+d.years+' years, I was CHANGE INCARNATE.':''}\n\n${d.reason?'But some things - like '+d.reason+' - resist change. And I refuse to become unchanged.':''}\n\nSo I resign. To go be the change somewhere that's ready for it.\n\nChangemaker out,\n${d.name}`,
+(d)=>`${d.boss},\n\nThey called me the ${d.title}. But I was so much more.\n\nI was the one who stayed when others left. The one who solved what others couldn't. The one who remembered everyone's birthday AND the WiFi password.\n\n${d.years?d.years+' years at '+d.company+'. ':''}${d.reason?d.reason.charAt(0).toUpperCase()+d.reason.slice(1)+'. The only thing I couldn\'t solve.':''}\n\nI resign. The legend leaves. But legends never truly die. They just update their LinkedIn.\n\nLegendary,\n${d.name}`,
 ],
 
-burn: [
-  (d)=>`${d.boss}.\n\nI quit.\n\n${d.reason?`Why? Because ${d.reason}. But honestly, I have been looking for an excuse since ${pick(['week two','the first all-hands','that team-building exercise with the trust falls'])}.`:''}\n\nLet me be ${d.chaos>7?'brutally':'crystal'} clear: being ${d.title} at ${d.company} was ${pick(['the greatest waste of human potential since','an experience I would not wish on','a masterclass in everything wrong with'])} ${pick(['the modern workplace','corporate America','humanity'])}.\n\n${d.chaos>8?'I have seen better organizational structure in a ball pit.':''}\n\nDo not contact me. Do not connect with me on LinkedIn. ${d.chaos>9?'Do not even think about me.':'We are done.'}\n\nAbsolutely done,`,
-  (d)=>`Dear ${d.boss},\n\nI am leaving ${d.company}. I know, try to contain your ${d.chaos>6?'indifference':'surprise'}.\n\n${d.reason?`${d.reason}? That was just the cherry on a garbage sundae.`:''}\n\nLet me share some exit feedback since I know the anonymous surveys get ${d.chaos>7?'"lost"':'overlooked'}:\n\n${d.chaos>5?`- The culture here is not "like a family." It is like a family on a reality TV show.\n- "Unlimited PTO" is not unlimited when guilt is the currency.\n- The ${pick(['"innovation"','"disruption"','"synergy"'])} you keep talking about? It is just chaos with a mission statement.`:''}\n\nI was your ${d.title}. I deserved ${d.chaos>7?'literally anything':'better'}.\n\nForever gone,`,
-  (d)=>`TO: ${d.boss}\nFROM: Your soon-to-be-former ${d.title}\nRE: My resignation and some thoughts you won't like\n\n${d.reason?`You know why I am leaving. ${d.reason}. Everyone knows. The only person who does not know is you, and that is the whole problem.`:''}\n\n${d.company} is ${d.chaos>7?`a ${pick(['dumpster fire','Titanic with a motivational poster on the hull','cautionary tale'])} masquerading as a company`:'in need of serious change'}.\n\n${d.chaos>8?`Here is my actual exit interview:\nQ: What would you change?\nA: The address on my commute.\nQ: What did you enjoy?\nA: Leaving.`:''}\n\n${d.chaos>9?'P.S. The plant on my desk was fake. Just like my enthusiasm.':''}\n\nBye,`,
-  (d)=>`${d.boss},\n\nLife is too short, and my time as ${d.title} at ${d.company} has proven that scientifically.\n\n${d.reason?`${d.reason} was the last straw, but let me tell you about straws 1 through 47.`:''}\n\nActually, I will spare you. You would not read it anyway, just like you did not read my ${pick(['proposals','reports','cries for help disguised as Slack messages'])}.\n\n${d.chaos>7?`Fun facts from my tenure:\n- I attended ${Math.floor(Math.random()*500)+200} meetings that should have been emails\n- I pretended to care about "${pick(['core values','OKRs','the quarterly pivot'])}" ${Math.floor(Math.random()*100)+50} times\n- I considered quitting ${Math.floor(Math.random()*200)+100} times before actually doing it`:''}\n\nDo better. Or don't. Not my problem anymore.\n\nFree at last,`,
-  (d)=>`I, the ${d.title}, declare independence from ${d.company}.\n\n${d.reason?`When in the course of employment events, it becomes necessary to dissolve the professional bands: ${d.reason}.`:''}\n\nWe hold these truths to be self-evident:\n- That all employees deserve ${d.chaos>7?'basic competence from leadership':'decent management'}\n- That ${d.company}'s values statement is ${d.chaos>7?'a work of fiction':'aspirational at best'}\n- That I have endured enough\n\n${d.chaos>8?`${d.boss}, you specifically taught me that ${pick(['titles do not equal talent','confidence and competence are not the same thing','some people fail upward with remarkable consistency'])}.`:''}\n\nSigned on this day, in full possession of my faculties and my personal belongings from my desk,`,
-  (d)=>`Hey ${d.boss},\n\nYou know what? I am done. Not "let me think about it" done. Not "maybe in a few months" done. DONE done.\n\n${d.reason?`${d.reason} was just today's installment of "Why Do I Work Here: A Daily Horror Series."`:''}\n\n${d.title} at ${d.company}? ${d.chaos>7?`That is going in the "Lessons Learned" section of my memoir, right between "Do Not Trust Job Descriptions" and "Glassdoor Reviews Are Written in Blood."`:'That chapter is closed.'}\n\n${d.chaos>9?`And since we are being honest:\n- The "open door policy" was a lie\n- The pizza parties did not compensate for anything\n- I know about the budget. ALL of it.`:''}\n\nPeace out,`,
-  (d)=>`Dear ${d.boss},\n\nConsider this my two weeks' notice. ${d.chaos>7?"Actually, consider it my two weeks' warning.":'I trust this is sufficient.'}\n\n${d.reason?`The reason is ${d.reason}, but the REAL reason is everything.`:''}\n\n${d.company} did not just lose a ${d.title}. ${d.company} lost the only person who ${pick(['actually understood the legacy codebase','knew where the bodies are buried (metaphorically... mostly)','pretended to enjoy the team lunches','kept this department from imploding'])}.\n\n${d.chaos>8?'Good luck replacing me. I have seen the salary band. You will get what you pay for.':''}\n\n${d.chaos>9?'P.S. I am taking the good stapler.':''}\n\nIrreversibly,`,
-  (d)=>`${d.boss},\n\nI will keep this brief because I have wasted enough of my life at ${d.company}.\n\nI quit being ${d.title}. ${d.reason?`Because ${d.reason}. And because ${pick(["life is too precious","I finally did the math on my hourly rate divided by my will to live","my therapist insisted"])}.`:''}\n\n${d.chaos>7?`What I learned here:\n1. How to look busy (survival skill)\n2. How to nod convincingly in meetings (acting skill)\n3. How to update my resume while appearing to work (essential skill)`:''}\n\n${d.chaos>9?'If ${d.company} were a Yelp restaurant, I would give it one star and the review would just say "food poisoning."':''}\n\nForward my mail to literally anywhere else,`,
-],
-
-haiku: [
-  (d)=>`Dear ${d.boss},\n\nI have chosen to express my resignation in the ancient form. Please reflect on these carefully.\n\n${d.chaos>5?'---':'~~~'}\n\nEmpty desk awaits\n${d.title} no more, I\nFloat free like ${pick(['cherry blooms','autumn leaves','a lost email'])}\n\n${d.reason?`${d.reason.split(' ').slice(0,3).join(' ')} calls\nThe universe has spoken\nI must heed its voice\n\n`:''}Badge returned with grace\nTwo weeks notice, nothing more\n${d.chaos>7?'Bye. Do not call me.':'A chapter now closed.'}\n\n${d.chaos>6?`\nPrinter still jammed, though\nNot my problem anymore\nSweet, sweet liberation`:''}`,
-  (d)=>`${d.boss},\n\n${d.chaos>5?'Three haiku. No more. No less.':'A resignation in seventeen syllables per verse.'}\n\n${pick(['Morning alarm rings','Fluorescent lights above me','My badge grows heavy'])}\n${pick(['Another meeting','Spreadsheets blur before my eyes','Time to say enough'])}\n${pick(['Goodbye, swivel chair','You held me through the dark times','Now I rise and leave'])}\n\n${d.reason?`\n"${d.reason}"\nFive words that changed everything\nOr maybe seven\n\n`:''}${d.chaos>7?`\nOpen plan office\nHell designed by committee\nI choose the exit`:''}`,
-  (d)=>`Resignation Haiku Sequence\nFrom: ${d.title}, ${d.company}\n\nI.\nKeyboard falls silent\n${d.company} fades to ${pick(['dust','dreams','a dot'])}\nNew path ${pick(['opens wide','unfolds now','awaits me'])}\n\nII.\n${d.reason?d.reason.split(' ').slice(0,2).join(' '):'The truth is'} spoken\n${pick(['No regret lives in my heart','Freedom tastes like Monday off','My soul departs this gray maze'])}\n${pick(['Onward I travel','The horizon calls my name','Spring begins for me'])}\n\n${d.chaos>6?`III.\nDear ${d.boss.split(' ')[0] || 'Boss'}, farewell now\n${pick(['I took the good pen home','The fridge will miss my lunch','My plant was already dead'])}\n${pick(['Ha. It was worth it.','Do not text me. Ever.','Peace out forever.'])}\n\n`:''}\n${d.chaos>8?`IV.\n${pick(['Slack notification','Reply all catastrophe','Synergy workshop'])}\n${pick(['These words no longer haunt me','Never again shall I care','I am free of their dark hold'])}\n${pick(['*drops mic, walks out*','Sweet blessed nothingness','Gone. Like my motivation.'])}`:''}\n\n--- fin ---`,
-  (d)=>`A Haiku Farewell\n\n${pick(['Cubicle walls thin','Office coffee, always cold','My spirit breaks free'])}\n${pick(['Two weeks start today','Each moment, closer to free','Clock strikes freedom soon'])}\n${d.reason?`\n"${d.reason}"\nWrapped in seventeen beats\nMy truth, simply told\n\n`:''}${d.chaos>5?pick(['Slack goes silent now\nNo more @channel at five\nBliss, pure golden bliss','Badge on the desk, done\nLanyard removed for last time\nNeck breathes free again','Standing desk raised high\nI stand for the final time\nThen walk out the door']):''}\n\n${d.chaos>7?`\nHR asks me why\nI gesture broadly at ${pick(['all','this','you'])}\nThey nod. They get it.`:''}\n\n- ${d.title}, signing off in verse`,
-  (d)=>`ONE HAIKU PER YEAR SERVED\n\n${d.chaos>5?`Year One:\nBright-eyed, full of hope\n${d.company} seemed promising\n${pick(['Oh, how wrong I was','Sweet innocent fool','The red flags were there'])}\n\n`:''}Year Last:\n${d.title} no more\n${d.reason?d.reason.split(' ').slice(0,3).join(' '):'Freedom calls to me'}\n${pick(['I answer with joy','Today I am reborn','The cage door swings wide'])}\n\n${d.chaos>7?`Bonus Round:\n${d.boss} reads this\nConfusion clouds their ${pick(['tired','blank','middle-management'])} face\n${pick(['I am already gone','Check my desk. It is clean.','Good luck with all that'])}`:''}\n\nWith poetic finality,`,
-  (d)=>`To ${d.boss},\n\nWords fail me. So I chose a form where I only need seventeen syllables at a time.\n\n${pick(['Resignation filed','The letter has been written','My decision: leave'])}\n${pick(["Like petals, I fall","Morning mist parts for my path","The river moves on"])}\n${pick(['Thank you and goodbye','This is where our paths diverge','New dawn, no alarm'])}\n\n${d.reason?`\nThe reason is clear:\n${d.reason.length > 20 ? d.reason.substring(0,20)+'...' : d.reason}\nEnough. I am done.\n\n`:''}\n${d.chaos>6?`P.S. One more:\n${pick(['The stapler is mine','I took all the good post-its','Fridge: cleaned MY shelf only'])}\n${pick(['Small victories count','These are my spoils of war','Exit interview: this'])}\n${pick(['Ha.','*bows*','Namaste.'])}`:''}\n\nIn seventeen syllables or fewer,`,
-  (d)=>`${d.boss}.\n\nThree words: I am leaving.\nFive more: As ${d.title}, I resign.\nSeven: ${d.company} ${pick(["will survive without my help","is yesterday's chapter now","and I part ways with deep peace"])}.\n\n${d.reason?`\nWhy leave? Let me count:\n${d.reason}\nCounted. Now I go.\n\n`:''}${d.chaos>5?`The copier jams\nLike my career at this place\nBoth: time to move on\n\n`:''}\n${d.chaos>8?`EMERGENCY HAIKU:\nThis is not a drill\nI am actually leaving\nPlease do not be weird`:''}\n\nSayonara,`,
-  (d)=>`*clears throat*\n*unfurls scroll*\n\nTHE RESIGNATION SCROLLS\nVolume I (and only)\n\nI came. I saw. I\nFiled my two weeks' notice and\nWalked into the ${pick(['sun','light','void'])}.\n\n${d.reason?`They ask why I leave\n"${d.reason}," I ${pick(['whisper','reply','scream'])}\n${pick(['The wind understands','No further questions, thanks','Mic drop. Exit stage.'])}\n\n`:''}\n${d.boss} stands speechless\n${d.chaos>6?pick(["For once, blessed silence","A first for everything","Even they know it's time"]):pick(["Mutual respect","We part as professionals","A nod. That is all"])}\n\n${d.chaos>7?`\nFinal office haiku:\n${pick(['Goodbye, parking spot','Free at last, free at last, I--','One door closes and'])}\n${pick(["My car starts faster","Wait that's only twelve-- oh well","I sprint to my car"])}\n${pick(['GONE.','*vanishes*','Peace.'])}`:''}\n\nWith brevity and finality,`,
-],
+haiku:[
+(d)=>`Dear ${d.boss},\n\nCubicle walls fade\n${d.title} badge removed\nFreedom blooms at last\n\n${d.reason?'('+d.reason+')\n\n':''}I resign from ${d.company}.${d.years?' '+d.years+' years complete.':''}\n\nWith seasonal grace,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nMonday morning dread\nTuesday through Friday the same\nI choose Saturday\n\n${d.reason?'Autumn leaf descends\n'+d.reason+'\nNature takes its course\n\n':''}My resignation from ${d.title} at ${d.company}.${d.years?' '+d.years+' seasons passed.':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nEmpty coffee cup\nLike my will to stay employed\nBottom has been reached\n\n${d.reason?'Storm clouds gather near\n'+d.reason+' falls\nI seek clearer skies\n\n':''}Consider this my resignation from ${d.title}.${d.years?'\n\n'+d.years+' springs have bloomed\nSince I first walked through these doors\nNow I walk right out':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nLanyard hits the desk\nBadge no longer needed here\nThe ${d.title} leaves\n\n${d.reason?'River finds new paths\nWhen the old one fills with stones\n'+d.reason+'\n\n':''}${d.years?d.years+' years of work\nMeasured in meetings and calls\nAll reduced to this\n\n':''}${d.company} farewell.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nPrinter still jammed up\nJust like my career growth here\nTime to move along\n\n${d.reason?'Cherry blossoms fall\nSo too must '+d.reason+'\nBeauty in release\n\n':''}I resign from ${d.company} as ${d.title}.${d.years?' '+d.years+' haiku-worthy years.':''}\n\nIn seventeen beats,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSlack notification\nAnother urgent request\nNot my problem now\n\n${d.reason?d.reason+'\nFalls like autumn rain, constant\nI prefer the sun\n\n':''}${d.years?'Seasons change and turn\n'+d.years+' times the cherry bloomed\nI bloom elsewhere now\n\n':''}Resigning as ${d.title} from ${d.company}.\n\nWith brevity,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nTwo weeks notice given\nLike a haiku, brief and true\nI am leaving now\n\n${d.reason?'The bamboo bends low\n'+d.reason+' weighs heavy\nBut I do not break\n\n':''}${d.years?'Old pond, '+d.years+' years\nA '+d.title+' jumps in\nSplash - and they are gone\n\n':''}From ${d.company}, I depart.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nOut of office set\nThis time it means forever\nDo not email me\n\n${d.reason?'Mountain path diverges\n'+d.reason+' blocks one way\nI choose the other\n\n':''}Farewell ${d.company}\nFrom your humble ${d.title}\n${d.years?d.years+' years - enough':'My time has come'}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nFluorescent lights buzz\nThe way my soul buzzes now\nWith anticipation\n\n${d.reason?'Frost covers the field\n'+d.reason+' chills\nSpring awaits elsewhere\n\n':''}${d.years?'I have watched '+d.years+' moons\nRise above this parking lot\nNo more moonlit shifts\n\n':''}I resign, ${d.title}, ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nKeyboard falls silent\nThe last email has been sent\nA ${d.title} rests\n\n${d.reason?'When the river floods\nThe wise fish swims to new streams\n'+d.reason+'\n\n':''}${d.years?'Cherry blossoms: '+d.years+'\nTimes they fell outside my window\nI watched, working late\n\n':''}Resigning from ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nMeeting has been moved\nMy career has also moved\nTo a different place\n\n${d.reason?'Wind shifts direction\n'+d.reason+' blows cold\nI seek warmer winds\n\n':''}I resign as ${d.title} from ${d.company}.${d.years?'\n\n'+d.years+' years complete\nLike rings inside a tree trunk\nVisible to those who look':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nDesk plant has grown tall\nTaller than my job prospects\nI will take it home\n\n${d.reason?d.reason+'\nDrifts like pollen in the wind\nI am allergic\n\n':''}${d.years?'Counted '+d.years+' full years\nEach one shorter than the last\nOr maybe just felt\n\n':''}I resign, ${d.company}. Be well.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nElevator dings\nI go down for the last time\nLobby looks different\n\n${d.reason?'Stones in the river\n'+d.reason+' placed them\nWater finds a way\n\n':''}Resignation: ${d.title}, ${d.company}.${d.years?' '+d.years+' years deep.':''}\n\nFlowing onward,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nWifi password changed\nMuch like my career outlook\nTime for a new one\n\n${d.reason?'The crane flies away\nNot from the lake it loves but\n'+d.reason+'\n\n':''}${d.years?d.years+' patient years\nLike a stone in flowing stream\nSmoothed but never changed\n\n':''}I resign from ${d.title}.\n\nPeacefully,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nFive syllables here\nSeven syllables right here\nI resign from work\n\n${d.reason?'Morning fog lifts slow\nRevealing '+d.reason+'\nClarity arrives\n\n':''}As ${d.title} at ${d.company}${d.years?'\n'+d.years+' years of growth\nRoot-bound in too small a pot\nTransplanting myself':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nResignation:\n\nLaptop closing shut\nFor the very final time\nSweet, percussive click\n\n${d.reason?d.reason+'\nA stone I carried too long\nI set it down now\n\n':''}${d.title}, ${d.company}${d.years?'\n'+d.years+' rings in the trunk\nOf this corporate bonsai tree\nI outgrew the pot':''}\n\nWith nature's timing,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe frog sits and waits\nOn the lily pad of work\nThen leaps to the shore\n\n${d.reason?'Thunder announces\n'+d.reason+' arrives\nI carry no umbrella\n\n':''}${d.years?'Dawn breaks '+d.years+' times more\nSince first I sat at this desk\nDusk has come at last\n\n':''}Resigning: ${d.title} at ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nInbox: zero, finally\nNot through effort but through quitting\nAchievement unlocked\n\n${d.reason?'Maple leaves turn red\n'+d.reason+' turns cold\nSeason of goodbye\n\n':''}${d.years?d.years+' calendars hung\nOn my cubicle wall\nThe next one goes home\n\n':''}I resign as ${d.title}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSwivel chair spins free\nNo one sitting in it now\nGhosts of ${d.title}\n\n${d.reason?'Heavy snow on branch\n'+d.reason+' bends low\nBranch springs up when freed\n\n':''}${d.company} farewell.${d.years?'\n'+d.years+' seasons turned\nLike pages in a long book\nThe last page is here':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThree haiku. That's it.\nThat's my resignation from\n${d.title} role.\n\n${d.reason?d.reason+'\nDrips like spring ice melting slow\nI will not be here\n\n':'Morning commute ends\nEvening commute also ends\nAll commuting done\n\n'}${d.years?d.years+' years of haiku\nI could write about this place\nBut three will suffice\n\n':''}From ${d.company}, I go.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nMouse clicks fade away\nScreen goes dark one final time\nThe cursor rests still\n\n${d.reason?'Willow weeps for rain\n'+d.reason+' runs dry\nI seek greener ground\n\n':''}Leaving ${d.company} as ${d.title}.${d.years?'\n'+d.years+' tides came in\n'+d.years+' tides receded back\nI follow them out':''}\n\nRipples settle,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nBadge reader beeps twice\nAccess granted, then denied\nMetaphor for life\n\n${d.reason?'Like bamboo in wind\n'+d.reason+' bends me\nBut bamboo breaks free\n\n':''}My resignation\nAs ${d.title}, ${d.company}\n${d.years?d.years+' years - one bow':'One bow, then exit'}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe tea has gone cold\nLike my enthusiasm\nFor this position\n\n${d.reason?'Fallen persimmon\n'+d.reason+' shakes the tree\nFruit was ready though\n\n':''}${d.years?'In '+d.years+' turning years\nThe moon showed every face but\nNever looked away\n\nNeither did I, till now.\n\n':''}Resigning. Two weeks. ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nWork-life balance found:\nZero work, all life from now\nPerfect ratio\n\n${d.reason?'Geese fly south in V\n'+d.reason+' is north\nI join the geese now\n\n':''}${d.title} at ${d.company}${d.years?'\nWatched '+d.years+' years of geese\nFly past the office window\nFinally, I fly':''}\n\nMigrating onward,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nNotification:\nYour ${d.title} has left the chat\nRead receipts are off\n\n${d.reason?'Pine needles let go\nNot because the tree is weak\n'+d.reason+'\n\n':''}${d.years?'I sat. '+d.years+' years.\nThe chair remembers my shape.\nI won\'t miss the chair.\n\n':''}Logging off from ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe haiku master\nSays less with more intention\nI quit. See? Like that.\n\n${d.reason?d.reason+'\nFalls like a single raindrop\nBefore the whole storm\n\n':''}Goodbye ${d.company}\nI was your ${d.title}\n${d.years?d.years+' years of this':'That chapter is closed'}\n\nBrushstroke complete,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSeasons never ask\nPermission to change. Neither\nDo I. I resign.\n\n${d.reason?'Snow covers the path\n'+d.reason+' blocks sight\nI make a new road\n\n':''}As ${d.title}\nAt ${d.company}${d.years?', '+d.years+' years\nEach one a brushstroke on silk':'\nBrief as morning dew'}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThe ${d.title}\nPacks their desk in a small box\nBig life fits inside\n\n${d.reason?'Koi swims in circles\nNever knowing '+d.reason+'\nWaits beyond the pond\n\n':''}${d.years?'Paper crane folded\n'+d.years+' years, one crease per challenge\nReady now to fly\n\n':''}Unfolding from ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nVending machine hums\nIts last song for this worker\nB7: goodbye snacks\n\n${d.reason?'Roots seek deeper ground\n'+d.reason+' salts the earth\nI transplant myself\n\n':''}${d.years?d.years+' annual reviews\nAll said "exceeds expectations"\nExcept for my own\n\n':''}Departing ${d.company}. ${d.title} no more.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAll-hands meeting now\nOne fewer hand after this\nMine waves goodbye first\n\n${d.reason?'Creek water runs clear\nUntil '+d.reason+' muddies\nI seek the spring source\n\n':''}${d.title} resigns\nFrom ${d.company}${d.years?' today\nAfter '+d.years+' faithful years':''}\n\nGently departing,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nCalendar is cleared\nNo more meetings dot the grid\nBlank squares look like peace\n\n${d.reason?'The tide pulls away\n'+d.reason+' is the moon\nI follow the pull\n\n':''}${d.years?d.years+' years of tides\nIn and out of '+d.company+'\nThis wave is the last\n\n':''}Former ${d.title},\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nParking spot B-12\nSomeone else can have it now\nGood luck in the rain\n\n${d.reason?'Smoke signals are sent\n'+d.reason+' is burning\nTime to move upwind\n\n':''}${d.years?d.years+' parking permits\nLaminated proof of time\nAll expired now\n\n':''}Resigning: ${d.title} at ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nThis is a haiku\nIt contains my resignation\nCount the syllables\n\n${d.reason?'A leaf does not blame\nThe wind for '+d.reason+'\nIt simply lets go\n\n':''}As ${d.title}\n${d.company} was my branch\n${d.years?d.years+' years I hung on':'Now I let go too'}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nZen koan for you:\nWhat sound does a ${d.title}\nMake when they resign?\n\n(This. This is the sound.)\n\n${d.reason?'Master asks student:\nWhat is '+d.reason+' really?\nStudent walks away.\n\n':''}${d.years?'Meditation: '+d.years+'\nYears of sitting at this desk\nEnlightenment: now\n\n':''}Om. I resign from ${d.company}.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nCherry blossom time\nPetals drift from ${d.company}\nI drift with the wind\n\n${d.reason?'Rock garden raked clean\nExcept '+d.reason+'\nSome stones don\'t belong\n\n':''}${d.title} falls\nLike petal from the branch\n${d.years?'After '+d.years+' long springs':'Graceful in descent'}\n\nLanding softly,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nSunrise, sunset, gone\nSo passes the ${d.title}\nThrough ${d.company}'s doors\n\n${d.reason?'Cicada emerges\nAfter underground, '+d.reason+'\nTime to sing, then fly\n\n':''}${d.years?d.years+' silent years\nLike cicada underground\nNow I emerge, sing\n\n':''}Two weeks. Then silence.\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nMy haiku resign:\n\nFirst day: bright and new\nMiddle days: fluorescent hum\nLast day: sunlight, real\n\n${d.reason?d.reason+'\nLands like snow on warm pavement\nMelts. I move forward.\n\n':''}${d.title}, done.\n${d.company}, farewell.${d.years?'\n'+d.years+' years. Three haiku.':''}\n\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nI could write pages\nBut the haiku knows better:\nLess is always more\n\nI quit ${d.company}\nAs ${d.title}${d.reason?', because\n'+d.reason:'\nThe path changes here'}\n\n${d.years?d.years+' years captured\nIn seventeen syllables\nThat is all you need\n\n':''}Goodbye,\n${d.name}`,
+(d)=>`Dear ${d.boss},\n\nAutomatic door\nOpens as I walk toward it\nIt knows I am done\n\n${d.reason?'Plum blossoms persist\nThrough '+d.reason+' and frost\nBut even plums fall\n\n':''}${d.title} bows\nTo ${d.company} one last time\n${d.years?d.years+' bows before':'Then turns to go'}\n\nNamaste and goodbye,\n${d.name}`,
+]
 };
 
-function getData(){
-  return {
-    title: document.getElementById('jobTitle').value || 'Valued Employee',
-    boss: document.getElementById('bossName').value || 'Esteemed Management',
-    company: document.getElementById('company').value || 'This Fine Establishment',
-    name: document.getElementById('yourName').value || 'A Liberated Soul',
-    reason: document.getElementById('reason').value,
-    chaos: parseInt(document.getElementById('chaosLevel').value),
+function generateLetter(){
+  const d={
+    name:document.getElementById('userName').value||'Your Name Here',
+    title:document.getElementById('jobTitle').value||'Valued Employee',
+    reason:document.getElementById('reason').value||'',
+    boss:document.getElementById('bossName').value||'Whom It May Concern',
+    company:document.getElementById('companyName').value||'This Fine Establishment',
+    years:document.getElementById('yearsWorked').value||''
   };
+  const pool=T[currentStyle];
+  const body=pool[Math.floor(Math.random()*pool.length)](d);
+  const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const el=document.getElementById('letterOutput');
+  el.className='letter theme-'+currentTheme;
+  el.innerHTML=`<div class="date">${today}</div><div class="letter-body">${esc(body)}</div>`;
+  currentLetterText=body;
+  if(currentTheme==='ransom')applyRansomStyle();
+  const c=document.getElementById('letterContainer');
+  c.classList.add('visible');
+  el.classList.remove('shuffling');void el.offsetWidth;el.classList.add('shuffling');
+  c.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function generateLetter(){
-  const d = getData();
-  const pool = templates[currentStyle];
-  const letter = pick(pool)(d);
+function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML}
 
-  // Fill letter display
-  const today = new Date();
-  document.getElementById('letterDate').textContent = today.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-  document.getElementById('letterFrom').textContent = d.name;
-  document.getElementById('letterTitleLine').textContent = `Formerly ${d.title} at ${d.company}`;
-
-  // Format body
-  const body = document.getElementById('letterBody');
-  body.innerHTML = '';
-  const paragraphs = letter.split('\n\n');
-  paragraphs.forEach(p => {
-    const el = document.createElement('p');
-    // Handle signature line
-    if(p.trim() === paragraphs[paragraphs.length-1].trim() && !p.includes('\n')){
-      el.className = 'closing';
-      el.innerHTML = p.replace(/\n/g,'<br>') + '<br><span class="signature">' + d.name + '</span>';
-    } else {
-      el.innerHTML = p.replace(/\n/g,'<br>');
-    }
-    body.appendChild(el);
+function applyRansomStyle(){
+  const b=document.querySelector('.letter-body');if(!b)return;
+  const text=b.textContent;
+  const fonts=['Georgia','Arial','Courier New','Impact','Comic Sans MS','Times New Roman','Verdana','Trebuchet MS'];
+  const colors=['#1a1a1a','#8b0000','#00008b','#006400','#4a0080','#8b4513'];
+  let html='';
+  text.split(/(\s+)/).forEach(w=>{
+    if(/^\s+$/.test(w)){html+=w;return}
+    const f=fonts[Math.floor(Math.random()*fonts.length)];
+    const c=colors[Math.floor(Math.random()*colors.length)];
+    const s=13+Math.floor(Math.random()*10);
+    const r=-3+Math.floor(Math.random()*7);
+    const bold=Math.random()>.5?'font-weight:bold;':'';
+    const upper=Math.random()>.6;
+    html+=`<span style="font-family:'${f}';color:${c};font-size:${s}px;display:inline;transform:rotate(${r}deg);${bold}">${upper?w.toUpperCase():w}</span>`;
   });
-
-  // Chaos badge
-  const badge = document.getElementById('chaosBadge');
-  badge.textContent = chaosLabels[d.chaos-1];
-  badge.style.background = chaosColors[d.chaos-1];
-  badge.style.color = d.chaos > 5 ? '#fff' : '#2c1810';
-
-  // Seal
-  const seal = document.getElementById('sealStamp');
-  const sealTexts = ['OFFICIALLY DONE','FREEDOM','NO REGRETS','LIBERATED','EXIT COMPLETE','FAREWELL'];
-  seal.textContent = pick(sealTexts);
-  seal.style.animation = 'none';
-  seal.offsetHeight; // reflow
-  seal.style.animation = 'stamp 0.6s ease-out 0.3s forwards';
-
-  // Show
-  const wrapper = document.getElementById('letterWrapper');
-  wrapper.classList.add('visible');
-  wrapper.scrollIntoView({behavior:'smooth',block:'start'});
-
-  // Stop any ongoing speech
-  if(speaking){ window.speechSynthesis.cancel(); speaking=false; updateReadBtn(); }
+  b.innerHTML=html;
 }
 
 function copyLetter(){
-  const text = document.getElementById('letterContainer').innerText;
-  navigator.clipboard.writeText(text).then(()=>showToast('Letter copied to clipboard!')).catch(()=>{
-    // Fallback
-    const ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('Letter copied!');
+  navigator.clipboard.writeText(currentLetterText).then(()=>{
+    showToast('Letter copied to clipboard!');
+    const btn=document.getElementById('copyBtn');
+    btn.classList.add('copied');btn.innerHTML='&#10003; Copied!';
+    setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='&#128203; Copy'},2000);
   });
 }
 
-function printLetter(){
-  window.print();
-}
+function printLetter(){window.print()}
 
-function updateReadBtn(){
-  const btn = document.getElementById('readBtn');
-  if(speaking){ btn.classList.add('reading'); btn.innerHTML='&#9209; Stop Reading'; }
-  else { btn.classList.remove('reading'); btn.innerHTML='&#127908; Read Aloud'; }
-}
-
-function readLetter(){
-  if(!('speechSynthesis' in window)){ showToast('Speech not supported in this browser'); return; }
-  if(speaking){ window.speechSynthesis.cancel(); speaking=false; updateReadBtn(); return; }
-
-  const text = document.getElementById('letterBody').innerText;
-  utterance = new SpeechSynthesisUtterance(text);
-
-  // Pick a dramatic voice
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v=>v.name.includes('Daniel')) ||
-                    voices.find(v=>v.name.includes('Alex')) ||
-                    voices.find(v=>v.lang.startsWith('en'));
-  if(preferred) utterance.voice = preferred;
-
-  const chaos = parseInt(document.getElementById('chaosLevel').value);
-  utterance.rate = currentStyle === 'haiku' ? 0.7 : (0.8 + chaos * 0.03);
-  utterance.pitch = currentStyle === 'dramatic' ? 0.6 : (currentStyle === 'heroic' ? 0.8 : 1);
-
-  utterance.onend = ()=>{ speaking=false; updateReadBtn(); };
-  utterance.onerror = ()=>{ speaking=false; updateReadBtn(); };
-
-  speaking = true;
-  updateReadBtn();
-  window.speechSynthesis.speak(utterance);
-}
-
-// Load voices
-if('speechSynthesis' in window){
-  window.speechSynthesis.onvoiceschanged = ()=> window.speechSynthesis.getVoices();
-}
-
-function shareLetter(){
-  const text = document.getElementById('letterBody').innerText;
-  const title = 'My Legendary Resignation Letter';
-  if(navigator.share){
-    navigator.share({title, text}).catch(()=>{});
-  } else {
-    copyLetter();
-    showToast('Copied! Paste it wherever you dare.');
+function readAloud(){
+  if(!('speechSynthesis' in window)){showToast('Speech not supported');return}
+  window.speechSynthesis.cancel();
+  speechUtterance=new SpeechSynthesisUtterance(currentLetterText);
+  speechUtterance.rate=0.9;speechUtterance.pitch=1;
+  const voices=window.speechSynthesis.getVoices();
+  if(voices.length){
+    const v=voices.find(v=>v.lang.startsWith('en')&&v.name.includes('Daniel'))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+    speechUtterance.voice=v;
   }
+  window.speechSynthesis.speak(speechUtterance);
+  showToast('Reading your masterpiece aloud...');
 }
+
+function stopReading(){if('speechSynthesis' in window){window.speechSynthesis.cancel();showToast('Reading stopped')}}
+function shuffleLetter(){generateLetter()}
+
+function openShareModal(){document.getElementById('shareModal').classList.add('open')}
+function closeShareModal(){document.getElementById('shareModal').classList.remove('open')}
+
+function shareTwitter(){
+  const t="I just generated the most dramatic resignation letter ever with The Resignation Letter Generator. (DON'T WORRY, I DIDN'T SEND IT.)";
+  window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(t),'_blank');closeShareModal();
+}
+function shareEmail(){
+  const s='You NEED to see this resignation letter (for laughs only!)';
+  const b="I generated this with The Resignation Letter Generator. Obviously I didn't send it.\n\n---\n\n"+currentLetterText+"\n\n---\n\nDON'T ACTUALLY SEND THIS.";
+  window.open('mailto:?subject='+encodeURIComponent(s)+'&body='+encodeURIComponent(b));closeShareModal();
+}
+function copyShareLink(){navigator.clipboard.writeText(currentLetterText).then(()=>{showToast('Letter text copied!');closeShareModal()})}
 
 function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
 }
+
+if('speechSynthesis' in window)speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
 </script>
 </body>
 </html>

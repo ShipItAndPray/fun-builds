@@ -6,181 +6,106 @@
 <title>Souvenir Shame</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0f;color:#e0e0e0;min-height:100vh}
-.container{max-width:500px;margin:0 auto;padding:20px}
-h1{text-align:center;font-size:1.8rem;margin-bottom:5px;background:linear-gradient(135deg,#ff44aa,#ffaa00);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.subtitle{text-align:center;color:#888;margin-bottom:20px;font-size:.85rem}
-.form-group{margin-bottom:14px}
-.form-group label{display:block;color:#888;font-size:.85rem;margin-bottom:6px}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:12px;background:#1a1a2e;border:1px solid #333;border-radius:10px;color:#fff;font-size:1rem}
-textarea{resize:vertical;min-height:60px}
-.upload-zone{border:2px dashed #333;border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:#111;margin-bottom:14px}
-.upload-zone:hover{border-color:#ff44aa}
-.upload-zone input{display:none}
-.upload-zone p{color:#666;font-size:.85rem}
-.preview{max-width:100%;border-radius:8px;margin:10px 0;display:none}
-.slider-container{margin:14px 0}
-.slider-container label{display:flex;justify-content:space-between;color:#888;font-size:.85rem;margin-bottom:8px}
-.slider{width:100%;-webkit-appearance:none;height:8px;border-radius:4px;background:linear-gradient(90deg,#44ff88,#ffaa00,#ff4444);outline:none}
-.slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;cursor:pointer;border:3px solid #ff44aa}
-.btn{width:100%;padding:16px;background:linear-gradient(135deg,#ff44aa,#ffaa00);border:none;border-radius:12px;color:#fff;font-size:1.1rem;font-weight:700;cursor:pointer;margin:16px 0;text-transform:uppercase;letter-spacing:2px}
-.btn:hover{transform:scale(1.02)}
-.result{display:none;animation:fadeIn .5s}
-.verdict-card{border-radius:16px;padding:24px;margin-bottom:14px;text-align:center;border:2px solid;background:#111}
-.verdict-emoji{font-size:3rem;margin-bottom:10px}
-.verdict-title{font-size:.8rem;text-transform:uppercase;letter-spacing:2px;margin-bottom:8px}
-.verdict-text{font-size:1.1rem;font-weight:600;line-height:1.5}
-.scale{display:flex;justify-content:space-between;align-items:center;background:#1a1a2e;border-radius:12px;padding:16px;margin:10px 0}
-.scale-end{font-size:.75rem;color:#888;max-width:80px;text-align:center}
-.scale-bar{flex:1;height:10px;background:#222;border-radius:5px;margin:0 10px;position:relative}
-.scale-marker{position:absolute;top:-8px;width:26px;height:26px;border-radius:50%;background:#ff44aa;border:3px solid #fff;transform:translateX(-50%);transition:left 1s}
-.share-btn{width:100%;padding:12px;background:#1a1a2e;border:1px solid #ff44aa;border-radius:12px;color:#ff44aa;font-size:.9rem;cursor:pointer;margin-top:10px}
-.share-btn:hover{background:#ff44aa22}
-.again{width:100%;padding:12px;background:#1a1a2e;border:1px solid #333;border-radius:12px;color:#888;font-size:.9rem;cursor:pointer;margin-top:10px}
-.again:hover{border-color:#ff44aa;color:#ff44aa}
-@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+body{font-family:system-ui,sans-serif;background:#0f0a1a;color:#ddd;min-height:100vh;padding:20px;display:flex;flex-direction:column;align-items:center}
+h1{font-size:2em;color:#e67e22;margin:15px 0 5px}
+.subtitle{color:#777;margin-bottom:25px}
+.form{max-width:420px;width:100%;display:flex;flex-direction:column;gap:12px}
+label{color:#888;font-size:0.85em}
+input,select{background:#1a1525;border:1px solid #2a2540;border-radius:8px;padding:12px;color:#ddd;font-size:1em;width:100%}
+button{background:#e67e22;color:#fff;border:none;padding:14px;border-radius:8px;font-size:1.1em;font-weight:bold;cursor:pointer}
+.result{max-width:420px;width:100%;margin-top:25px;display:none}
+.result.show{display:block;animation:pop 0.3s}
+@keyframes pop{from{transform:scale(0.95);opacity:0}to{transform:scale(1);opacity:1}}
+.scale{display:flex;height:30px;border-radius:15px;overflow:hidden;margin:15px 0;position:relative}
+.scale-fill{height:100%;transition:width 0.8s}
+.scale-labels{display:flex;justify-content:space-between;font-size:0.75em;color:#666}
+.verdict-card{background:#1a1525;border-radius:12px;padding:25px;text-align:center}
+.verdict-emoji{font-size:3em;margin-bottom:10px}
+.verdict-text{font-size:1.3em;font-weight:bold;margin-bottom:10px;line-height:1.3}
+.verdict-detail{color:#999;font-size:0.9em;line-height:1.5}
+.shame-score{font-size:2em;font-weight:bold;margin:10px 0}
+.tag{display:inline-block;padding:4px 10px;border-radius:12px;font-size:0.8em;margin:3px;background:#2a2540}
 </style>
 </head>
 <body>
-<div class="container">
 <h1>Souvenir Shame</h1>
-<p class="subtitle">Rate your travel purchases from meaningful to tourist trap</p>
-
-<div class="form-group">
-<label>What did you buy?</label>
-<input type="text" id="item" placeholder="e.g. Eiffel Tower keychain">
+<p class="subtitle">Rate your travel purchases. Face the truth.</p>
+<div class="form">
+<div><label>What did you buy?</label><input id="item" placeholder="e.g., miniature Eiffel Tower"></div>
+<div><label>How much did you pay?</label><input id="price" type="number" placeholder="USD"></div>
+<div><label>Where did you buy it?</label>
+<select id="where"><option value="airport">Airport gift shop</option><option value="tourist">Tourist attraction gift shop</option><option value="market">Local market</option><option value="street">Street vendor</option><option value="museum">Museum shop</option><option value="online">Online (after returning home)</option><option value="fancy">Boutique/gallery</option></select></div>
+<div><label>Who is it for?</label>
+<select id="who"><option value="self">Myself</option><option value="family">Family member</option><option value="friend">Friend</option><option value="coworker">Coworker (obligation)</option><option value="nobody">Nobody... yet</option></select></div>
+<button onclick="judge()">JUDGE MY SOUVENIR</button>
 </div>
-<div class="form-group">
-<label>Where did you buy it?</label>
-<input type="text" id="location" placeholder="e.g. Paris gift shop">
-</div>
-<div class="form-group">
-<label>How much did you pay?</label>
-<input type="text" id="price" placeholder="e.g. $15">
-</div>
-<div class="form-group">
-<label>Type of souvenir</label>
-<select id="type">
-<option value="magnet">Fridge magnet</option>
-<option value="keychain">Keychain</option>
-<option value="tshirt">T-shirt</option>
-<option value="mug">Mug</option>
-<option value="snowglobe">Snow globe</option>
-<option value="hat">Hat</option>
-<option value="postcard">Postcard</option>
-<option value="art">Art/painting</option>
-<option value="jewelry">Jewelry</option>
-<option value="food">Local food/spice</option>
-<option value="craft">Handmade craft</option>
-<option value="miniature">Miniature landmark</option>
-<option value="plate">Decorative plate</option>
-<option value="stuffed">Stuffed animal</option>
-<option value="other">Other</option>
-</select>
-</div>
-<div class="upload-zone" onclick="document.getElementById('photo').click()">
-<p>Tap to add a photo of your shame (optional)</p>
-<input type="file" id="photo" accept="image/*" onchange="handlePhoto(event)">
-</div>
-<img class="preview" id="preview">
-<div class="slider-container">
-<label><span>How much do you love it?</span><span id="loveVal">5/10</span></label>
-<input type="range" class="slider" id="love" min="1" max="10" value="5" oninput="document.getElementById('loveVal').textContent=this.value+'/10'">
-</div>
-
-<button class="btn" onclick="judge()">JUDGE MY PURCHASE</button>
 <div class="result" id="result"></div>
-</div>
-
 <script>
-function handlePhoto(e){
-  const f=e.target.files[0];if(!f)return;
-  const r=new FileReader();
-  r.onload=ev=>{const p=document.getElementById('preview');p.src=ev.target.result;p.style.display='block'};
-  r.readAsDataURL(f);
-}
-
-const verdicts={
-magnet:["Another fridge magnet. Your fridge door is basically a map of regret.","This magnet has more personality than some people I know. Which says more about them.","Your fridge is going to need therapy from all these magnets.","This magnet screams 'I was here and I have no imagination.'","Congratulations, you've purchased a rectangle of mild memory."],
-keychain:["A keychain! Because your keys needed to know you went on vacation.","This keychain will break in 3 weeks. The memory will last slightly longer.","Your keys are now more well-traveled than most of your friends.","A keychain. The 'I spent 30 seconds choosing a gift' of souvenirs.","Bold choice. A keychain. Really went all out there."],
-tshirt:["You WILL wear this once, take a photo, then it becomes a sleep shirt forever.","'I went to [place] and all I got was this lousy t-shirt' was supposed to be a JOKE.","This t-shirt will serve as a reminder of what you spent money on instead of experiences.","Ah yes, a t-shirt. The universal signal of 'I was a tourist here.'","In 6 months this will be your painting-the-house shirt."],
-mug:["A mug! Because your kitchen cabinet isn't crowded enough.","This mug will sit in the back of the cupboard, judging you silently.","Nothing says 'I love you' like a mug you bought at an airport.","Your mug collection is now a cry for help.","This mug holds 300ml of liquid and infinite regret."],
-snowglobe:["A snow globe. You've essentially purchased a small glass dome of buyer's remorse.","Shake it up and watch the snow fall, just like your savings.","This will collect dust on a shelf and outlive your marriage.","A snow globe. The 'participation trophy' of travel souvenirs.","At least when you shake it, something exciting happens. Unlike this purchase."],
-hat:["You'll wear this hat exactly once before realizing you look ridiculous.","This hat says 'I've been somewhere' and 'I've given up on hair' simultaneously.","A tourist hat. The universal 'please rob me' sign.","Your dignity called. It wants you to take off the hat.","This hat has more vacation memories than your actual brain."],
-postcard:["A postcard! The OG souvenir. Respect. Also, it cost 50 cents.","You bought a photo someone else took of a place you actually visited. Meta.","This postcard will never be sent. It will live in a drawer. Forever.","Postcards: for when you want to share your trip but not too much.","The most honest souvenir. Cheap, flat, and easily forgotten."],
-art:["If this is real local art, you might actually have taste. Suspicious.","Art from a tourist area. Bold claim calling this 'art.'","This either cost $5 or $500 and I can't tell which is worse.","At least art on the wall tells a story. Even if it's 'I overpaid.'","If you have to explain where it's from, it's not good enough."],
-jewelry:["Was this 'handmade' in a factory by any chance?","This jewelry screams 'I panicked at the gift shop.'","Wearing this at home will require explaining it to everyone. Every. Single. Time.","If it turns your skin green, it's authentic. Authentically cheap.","Jewelry from a market! Either a treasure or a $3 mistake. No in between."],
-food:["LOCAL FOOD. This is the only souvenir that makes sense. Well done.","Spices and food? You actually bought something useful. I'm suspicious.","This is the souvenir equivalent of a good life choice. Rare.","Food souvenirs: because the best memories are edible.","Finally, a souvenir your kitchen won't resent. Respect."],
-craft:["If this is genuinely handmade, you've done well. If not, welcome to tourist trap 101.","A handmade craft either shows cultural appreciation or cultural appropriation. Thin line.","This craft will be your conversation starter for the next decade. For better or worse.","Handmade is good. 'Handmade in China' is... less good.","If the artisan was actually there making it, you win. If it had a barcode, you lose."],
-miniature:["A tiny version of a landmark you SAW IN PERSON. The irony is delicious.","You visited the real thing. Then bought a 3-inch version. Logic.","This miniature will make an excellent paperweight and conversation ender.","Why have a memory when you can have a small plastic replica instead?","This landmark model costs more per square inch than the actual building."],
-plate:["A decorative plate. For decorating. You will never use it. It will watch you eat off normal plates.","This plate is the 'I have no idea what to buy' of souvenirs.","Decorative plates: because your wall needed a reminder of that one trip.","You've purchased a flat circle of regret. But a pretty one.","This plate will outlive civilizations. Archaeologists will be confused."],
-stuffed:["A stuffed animal! Either for a child or you're not okay.","This stuffed animal has seen things. Mainly the inside of a tourist shop.","At least it's soft. Unlike the financial decision to buy it.","A plush souvenir. Your bed/shelf didn't need this.","This stuffed animal will judge you from a shelf for years."],
-other:["You bought something so unique I can't even categorize it. Either genius or madness.","Mystery souvenir. Either deeply meaningful or deeply regrettable.","When the souvenir is unclassifiable, the shame is immeasurable.","I don't know what this is and I'm not sure you do either.","Points for originality. Minus points for whatever this actually is."]
-};
-
-const shameScale=[
-"GENUINE TREASURE - This actually means something",
-"PRETTY GOOD - Not bad, has actual value",
-"DECENT CHOICE - Could be worse, could be better",
-"MILD CRINGE - Your future self will raise an eyebrow",
-"CLASSIC TOURIST - You fell for it, but everyone does",
-"QUESTIONABLE - Your wallet is silently weeping",
-"PEAK TOURIST TRAP - They saw you coming from a mile away",
-"MAXIMUM SHAME - Return it if you still have the receipt",
-"LEGENDARY BAD - This purchase will haunt your dreams",
-"HALL OF SHAME - Museums should display this as a warning"
+const verdicts=[
+{min:0,max:10,emoji:"&#127942;",text:"Legitimately Meaningful Purchase",detail:"Against all odds, you bought something with actual cultural value. This will not collect dust. Probably.",tags:["Authentic","Tasteful","Actually useful"]},
+{min:10,max:20,emoji:"&#128077;",text:"Respectable Souvenir",detail:"A solid choice. You will display this for at least 6 months before it migrates to a drawer.",tags:["Decent","Will mention once","Drawer-bound"]},
+{min:20,max:35,emoji:"&#128528;",text:"Standard Tourist Purchase",detail:"You bought exactly what the tourism industry designed you to buy. The machine works perfectly.",tags:["Predictable","Mass-produced","Instagram only"]},
+{min:35,max:50,emoji:"&#128556;",text:"Questionable Decision",detail:"At some point during this purchase, a small voice said 'don't.' You ignored it. You shouldn't have.",tags:["Impulse buy","Regret pending","Overpriced"]},
+{min:50,max:65,emoji:"&#128561;",text:"Full Tourist Trap",detail:"You walked directly into the trap. The vendor's children will go to college because of you.",tags:["Tourist tax","Vendor's dream","Shameful"]},
+{min:65,max:80,emoji:"&#128166;",text:"Souvenir Rock Bottom",detail:"This purchase will haunt you. Every time you see it, you will remember your weakness.",tags:["Junk","Landfill-bound","Why"]},
+{min:80,max:100,emoji:"&#128369;",text:"International Shame Incident",detail:"This souvenir is so bad it transcends personal shame and becomes a cautionary tale for future travelers.",tags:["Legendary bad","Story material","Return it"]}
 ];
-
+const comments=[
+"The 'I Heart [City]' shirt industrial complex thanks you for your contribution.",
+"This will sit on a shelf until you move, at which point it goes directly in the trash.",
+"The person who made this was laughing the entire time.",
+"Your suitcase weeps at the space this will occupy.",
+"Future you will pick this up, sigh heavily, and put it back down.",
+"This is the souvenir equivalent of a participation trophy.",
+"At least it was cheaper than therapy. But only slightly.",
+"The manufacturing cost of this was approximately 3 cents.",
+"In 6 months, you will not remember buying this. But your credit card will.",
+"This purchase has 'airport desperation' written all over it.",
+"Congratulations on funding the global tchotchke economy.",
+"The dust this will collect could form its own ecosystem.",
+"Made in [definitely not the country you bought it in].",
+"Your grandchildren will find this and be deeply confused.",
+"This is what happens when vacation brain meets a credit card.",
+"The souvenir-to-regret pipeline is fully operational.",
+"At least you did not get a tattoo. That is the silver lining.",
+"This will make an excellent re-gift. For someone you do not like.",
+"The markup on this item could fund a small space program.",
+"You bought a physical manifestation of FOMO.",
+"This is peak 'I went somewhere and all I got was this' energy.",
+"The 'made with love' sticker is doing heavy lifting.",
+"Future archaeologists will be deeply confused by this artifact.",
+"Your carbon footprint just increased for THIS.",
+"A fridge magnet: the bare minimum of evidence you traveled.",
+"This keychain will outlive the memory of the trip itself.",
+"Shot glass collection: the souvenir equivalent of a cry for help.",
+"Snow globe: because nothing says 'tropical vacation' like fake snow.",
+"The miniature version is never as good. NEVER.",
+"You have become a data point in the tourism industry's quarterly report."
+];
 function judge(){
-  const item=document.getElementById('item').value;
-  const location=document.getElementById('location').value;
-  const type=document.getElementById('type').value;
-  const love=parseInt(document.getElementById('love').value);
-  if(!item||!location){alert('Tell us what you bought and where!');return}
-
-  const typeVerdicts=verdicts[type]||verdicts.other;
-  const verdict=typeVerdicts[Math.floor(Math.random()*typeVerdicts.length)];
-
-  // Calculate shame score (higher = more tourist trap)
-  const typeShame={magnet:7,keychain:6,tshirt:7,mug:6,snowglobe:8,hat:7,postcard:3,art:4,jewelry:5,food:2,craft:3,miniature:8,plate:8,stuffed:7,other:5};
-  const base=typeShame[type]||5;
-  const shame=Math.max(1,Math.min(10,Math.round(base+(10-love)*0.3+(Math.random()*2-1))));
-  const scaleText=shameScale[shame-1];
-
-  let emoji,color;
-  if(shame<=3){emoji='\u2728';color='#44ff88'}
-  else if(shame<=5){emoji='\ud83e\udd14';color='#ffaa00'}
-  else if(shame<=7){emoji='\ud83d\ude2c';color='#ff8844'}
-  else{emoji='\ud83d\udea8';color='#ff0044'}
-
-  const el=document.getElementById('result');
-  el.style.display='block';
-  el.innerHTML=`
-    <div class="verdict-card" style="border-color:${color}">
-      <div class="verdict-emoji">${emoji}</div>
-      <div class="verdict-title" style="color:${color}">${scaleText}</div>
-      <div class="verdict-text" style="color:${color}">${verdict}</div>
-    </div>
-    <div class="scale">
-      <div class="scale-end" style="color:#44ff88">Meaningful</div>
-      <div class="scale-bar"><div class="scale-marker" style="left:${shame*10}%;background:${color}"></div></div>
-      <div class="scale-end" style="color:#ff0044">Tourist Trap</div>
-    </div>
-    <div style="text-align:center;padding:10px;color:#888;font-size:.85rem">
-      <strong>"${item}"</strong> from <strong>${location}</strong><br>
-      Shame Score: <span style="color:${color};font-weight:700">${shame}/10</span>
-    </div>
-    <button class="share-btn" onclick="share()">Share Your Shame</button>
-    <button class="again" onclick="document.getElementById('result').style.display='none';window.scrollTo({top:0,behavior:'smooth'})">Rate Another Souvenir</button>
-  `;
-  el.scrollIntoView({behavior:'smooth'});
-}
-
-function share(){
-  const item=document.getElementById('item').value;
-  const text=encodeURIComponent(`I bought "${item}" and Souvenir Shame rated it. Check yours!`);
-  if(navigator.share){navigator.share({title:'Souvenir Shame',text:decodeURIComponent(text),url:location.href})}
-  else{window.open(`https://twitter.com/intent/tweet?text=${text}`,'_blank')}
+const item=document.getElementById('item').value.trim();
+const price=parseFloat(document.getElementById('price').value);
+const where=document.getElementById('where').value;
+const who=document.getElementById('who').value;
+if(!item){alert('What did you buy?');return}
+const whereMod={airport:25,tourist:20,market:5,street:8,museum:10,online:15,fancy:12};
+const whoMod={self:5,family:-5,friend:0,coworker:10,nobody:20};
+let shame=30+whereMod[where]+whoMod[who]+Math.min(20,(price||10)/5);
+const keywords={magnet:15,keychain:15,shotglass:20,'shot glass':20,snowglobe:25,'snow globe':25,miniature:15,tshirt:10,'t-shirt':10,mug:12,hat:8,postcard:-5,art:-10,book:-15,jewelry:0,spices:-8,print:5};
+const lower=item.toLowerCase();
+Object.entries(keywords).forEach(([k,v])=>{if(lower.includes(k))shame+=v});
+shame=Math.max(0,Math.min(99,shame));
+const v=verdicts.find(x=>shame>=x.min&&shame<x.max)||verdicts[verdicts.length-1];
+const comment=comments[Math.floor(Math.random()*comments.length)];
+const color=shame<20?'#44cc44':shame<40?'#88cc44':shame<60?'#cccc44':shame<80?'#ff8844':'#ff4444';
+const res=document.getElementById('result');
+res.innerHTML='<div class="verdict-card"><div class="verdict-emoji">'+v.emoji+'</div><div class="shame-score" style="color:'+color+'">Shame Score: '+Math.round(shame)+'/100</div><div class="verdict-text" style="color:'+color+'">'+v.text+'</div>'
++'<div class="scale" style="background:#1a1020"><div class="scale-fill" style="width:'+shame+'%;background:'+color+'"></div></div>'
++'<div class="scale-labels"><span>Meaningful</span><span>Tourist Trap</span></div>'
++'<div>'+v.tags.map(t=>'<span class="tag">'+t+'</span>').join('')+'</div>'
++'<div class="verdict-detail" style="margin-top:15px">'+v.detail+'</div>'
++'<div class="verdict-detail" style="margin-top:10px;font-style:italic">"'+comment+'"</div></div>';
+res.classList.add('show');
 }
 </script>
 </body>
